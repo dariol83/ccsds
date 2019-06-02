@@ -39,8 +39,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.GregorianCalendar;
 import java.util.Random;
+import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,6 +54,20 @@ import java.util.logging.Logger;
 public class PduFactoryUtil {
 
     private static final Logger LOG = Logger.getLogger(PduFactoryUtil.class.getName());
+
+    private static final int DAYS_FROM_1958_to_1970;
+
+    static {
+        GregorianCalendar d1958 = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        d1958.set(1958, 0, 1, 0, 0);
+        GregorianCalendar d1970 = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        d1970.set(1970, 0, 1, 0, 0);
+
+        Instant i1958 = d1958.toInstant();
+        Instant i1970 = d1970.toInstant();
+        Duration d = Duration.between(i1958, i1970);
+        DAYS_FROM_1958_to_1970 = (int) d.toDays();
+    }
 
     /**
      * This method builds the service instance identifier object starting from its string representation.
@@ -256,8 +274,9 @@ public class PduFactoryUtil {
         // Compute the number of seconds from Java epoch
         long secs = timeMillisSinceEpoch / 1000;
         // Compute the number of days from Java epoch and, to be compliant with the CCSDS epoch (1st Jan 1958)
-        // add 4383 days. 4383 is the difference from the two epochs dates (1st Jan 1970 - 1st Jan 1958)
-        long daysFromEpoch = secs / 86400 + 4383;
+        // add DAYS_FROM_1958_to_1970 days. DAYS_FROM_1958_to_1970 is the difference from the two epochs dates
+        // (1st Jan 1970 - 1st Jan 1958)
+        long daysFromEpoch = secs / 86400 + DAYS_FROM_1958_to_1970;
         // Now compute the milliseconds within the day: number of seconds in the day (remainder) times 1000 plus the
         // remainder of the milliseconds
         long millisecsInDay = (secs % 86400) * 1000 + timeMillisSinceEpoch % 1000;
@@ -335,11 +354,11 @@ public class PduFactoryUtil {
         int days = Short.toUnsignedInt(bb.getShort());
         long millisec = Integer.toUnsignedLong(bb.getInt());
         int microsec = Short.toUnsignedInt(bb.getShort());
-        // To move to the Java epoch, remove 4383 days
-        if (days < 4383) {
+        // To move to the Java epoch, remove DAYS_FROM_1958_to_1970 days
+        if (days < DAYS_FROM_1958_to_1970) {
             return null;
         }
-        days -= 4383;
+        days -= DAYS_FROM_1958_to_1970;
         return new long[]{days * 86400L * 1000L + millisec, microsec};
     }
 
@@ -356,10 +375,10 @@ public class PduFactoryUtil {
         long millisec = Integer.toUnsignedLong(bb.getInt());
         long picosec = Integer.toUnsignedLong(bb.getInt());
 
-        if (days < 4383) {
+        if (days < DAYS_FROM_1958_to_1970) {
             return null;
         }
-        days -= 4383;
+        days -= DAYS_FROM_1958_to_1970;
         return new long[]{days * 86400L * 1000L + millisec, picosec};
     }
 }
