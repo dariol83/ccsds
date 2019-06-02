@@ -34,52 +34,6 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class GVCID {
 
-	/**
-	 * This method parses a string with format (xxx,0|1,yyy|*)[,(xxx,0|1,yyy|*)]+ into a list of GVCIDs.
-	 * // TODO move away
-	 * @param string the string to parse
-	 * @return the list of parsed GVCIDs
-	 */
-	public static List<GVCID> parsePermittedGvcid(String string) {
-		List<GVCID> theList = new LinkedList<>();
-		fillGvcidRecursive(theList, string.trim());
-		return theList;
-	}
-
-	/**
-	 * This method parses a string with format (xxx,0|1,yyy|*) into a GVCID.
-	 * // TODO move away
-	 * @param string the string to parse
-	 * @return the parsed GVCID
-	 */
-	public static GVCID parseGvcid(String string) {
-		List<GVCID> theList = new LinkedList<>();
-		fillGvcidRecursive(theList, string.trim());
-		return theList.get(0);
-	}
-
-	// TODO move away
-	private static void fillGvcidRecursive(List<GVCID> theList, String trim) {
-		if (trim.isEmpty()) {
-			return;
-		}
-		if (trim.charAt(0) != ',' && trim.charAt(0) != '(') {
-			throw new IllegalArgumentException(trim + " is not a valid GVCID string");
-		}
-		int idx1 = trim.charAt(0) == ',' ? 2 : 1;
-		int idx2 = trim.indexOf(')');
-		String subs = trim.substring(idx1, idx2);
-		String[] spl = subs.split(",", -1);
-		if (spl.length != 3) {
-			throw new IllegalArgumentException(trim + " is not a valid GVCID string: block '" + subs + "' is invalid");
-		}
-		theList.add(new GVCID(Integer.parseInt(spl[0]), Integer.parseInt(spl[1]),
-				spl[2].trim().equals("*") ? null : Integer.parseInt(spl[2].trim())));
-		fillGvcidRecursive(theList, trim.substring(idx2 + 1));
-	}
-
-	// -----------------------------------------------------------------------------------
-
 	@XmlAttribute(name = "scid", required = true)
 	private int spacecraftId;
 	@XmlAttribute(name = "tfvn", required = true)

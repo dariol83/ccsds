@@ -67,27 +67,6 @@ public class RafServiceInstanceConfiguration extends ServiceInstanceConfiguratio
     public RafServiceInstanceConfiguration() {
     }
 
-    // TODO move away
-    public RafServiceInstanceConfiguration(Map<String, String> configuration) {
-        super(configuration);
-
-        this.minReportingCycle = configuration.containsKey(MIN_REPORTING_CYCLE_KEY)
-                ? Integer.parseInt(configuration.get(RafServiceInstanceConfiguration.MIN_REPORTING_CYCLE_KEY))
-                : null;
-        this.deliveryMode = parseDeliveryMode(configuration.get(DELIVERY_MODE_KEY));
-        this.transferBufferSize = Integer.parseInt(configuration.get(TRANSFER_BUFFER_SIZE_KEY));
-        this.latencyLimit = configuration.containsKey(LATENCY_LIMIT_KEY)
-                ? Integer.parseInt(configuration.get(RafServiceInstanceConfiguration.LATENCY_LIMIT_KEY))
-                : null;
-        this.permittedFrameQuality = parsePermittedFrameQuality(configuration.get(PERMITTED_FRAME_QUALITY_KEY));
-
-        String startTimeString = configuration.get(START_TIME_KEY);
-        this.startTime = startTimeString == null ? null : DatatypeConverter.parseDateTime(startTimeString).getTime();
-        String endTimeString = configuration.get(END_TIME_KEY);
-        this.endTime = endTimeString == null ? null : DatatypeConverter.parseDateTime(endTimeString).getTime();
-        this.requestedFrameQuality = RafRequestedFrameQualityEnum.fromConfigurationString(configuration.get(REQUESTED_FRAME_QUALITY_KEY));
-    }
-
     private List<RafRequestedFrameQualityEnum> parsePermittedFrameQuality(String string) {
         List<RafRequestedFrameQualityEnum> theList = new LinkedList<>();
         fillFrameQuality(theList, string.trim());

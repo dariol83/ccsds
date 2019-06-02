@@ -90,33 +90,6 @@ public class RocfServiceInstanceConfiguration extends ServiceInstanceConfigurati
 	public RocfServiceInstanceConfiguration() {
 	}
 
-	// TODO move away
-	public RocfServiceInstanceConfiguration(Map<String, String> configuration) {
-		super(configuration);
-
-		this.minReportingCycle = configuration.containsKey(MIN_REPORTING_CYCLE_KEY)
-				? Integer.parseInt(configuration.get(MIN_REPORTING_CYCLE_KEY))
-				: null;
-		this.deliveryMode = parseDeliveryMode(configuration.get(DELIVERY_MODE_KEY));
-		this.transferBufferSize = Integer.parseInt(configuration.get(TRANSFER_BUFFER_SIZE_KEY));
-		this.latencyLimit = configuration.containsKey(LATENCY_LIMIT_KEY)
-				? Integer.parseInt(configuration.get(LATENCY_LIMIT_KEY))
-				: null;
-		this.permittedGvcid = GVCID.parsePermittedGvcid(configuration.get(PERMITTED_VCIDS_KEY));
-		this.permittedTcVcids = parsePermittedTcVcid(configuration.get(PERMITTED_TCVCIDS_KEY));
-		this.permittedControlWordTypes = parsePermittedControlWordTypes(configuration.get(PERMITTED_CONTROL_WORD_TYPES_KEY));
-		this.permittedUpdateModes = parsePermittedUpdateModes(configuration.get(PERMITTED_UPDATE_MODES_KEY));
-
-		String startTimeString = configuration.get(START_TIME_KEY);
-		this.startTime = startTimeString == null ? null : DatatypeConverter.parseDateTime(startTimeString).getTime();
-		String endTimeString = configuration.get(END_TIME_KEY);
-		this.endTime = endTimeString == null ? null : DatatypeConverter.parseDateTime(endTimeString).getTime();
-		this.requestedGvcid = GVCID.parseGvcid(configuration.get(REQUESTED_VCID_KEY));
-		this.requestedTcVcid = configuration.get(REQUESTED_TC_VCID_KEY) != null ? Integer.parseInt(configuration.get(REQUESTED_TC_VCID_KEY)) : null;
-		this.requestedControlWordType = RocfControlWordTypeEnum.fromConfigurationString(configuration.get(REQUESTED_CONTROL_WORD_TYPE_KEY));
-		this.requestedUpdateMode = RocfUpdateModeEnum.fromConfigurationString(configuration.get(REQUESTED_UPDATE_MODE_KEY));
-	}
-
 	private List<RocfControlWordTypeEnum> parsePermittedControlWordTypes(String string) {
 		if(string != null && !string.isEmpty()) {
 			return Arrays.stream(string.split("\\.", -1)).map(RocfControlWordTypeEnum::fromConfigurationString).collect(Collectors.toList());

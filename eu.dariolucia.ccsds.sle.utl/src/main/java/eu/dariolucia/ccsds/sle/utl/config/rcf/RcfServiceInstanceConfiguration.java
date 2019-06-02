@@ -66,26 +66,6 @@ public class RcfServiceInstanceConfiguration extends ServiceInstanceConfiguratio
 	public RcfServiceInstanceConfiguration() {
 	}
 
-	// TODO move away
-	public RcfServiceInstanceConfiguration(Map<String, String> configuration) {
-		super(configuration);
-
-		this.minReportingCycle = configuration.containsKey(MIN_REPORTING_CYCLE_KEY)
-				? Integer.parseInt(configuration.get(MIN_REPORTING_CYCLE_KEY))
-				: null;
-		this.deliveryMode = parseDeliveryMode(configuration.get(DELIVERY_MODE_KEY));
-		this.transferBufferSize = Integer.parseInt(configuration.get(TRANSFER_BUFFER_SIZE_KEY));
-		this.latencyLimit = configuration.containsKey(LATENCY_LIMIT_KEY)
-				? Integer.parseInt(configuration.get(LATENCY_LIMIT_KEY))
-				: null;
-		this.permittedGvcid = GVCID.parsePermittedGvcid(configuration.get(PERMITTED_VCIDS_KEY));
-		String startTimeString = configuration.get(START_TIME_KEY);
-		this.startTime = startTimeString == null ? null : DatatypeConverter.parseDateTime(startTimeString).getTime();
-		String endTimeString = configuration.get(END_TIME_KEY);
-		this.endTime = endTimeString == null ? null : DatatypeConverter.parseDateTime(endTimeString).getTime();
-		this.requestedGvcid = GVCID.parseGvcid(configuration.get(REQUESTED_VCID_KEY));
-	}
-
 	public GVCID getRequestedGvcid() {
 		return requestedGvcid;
 	}

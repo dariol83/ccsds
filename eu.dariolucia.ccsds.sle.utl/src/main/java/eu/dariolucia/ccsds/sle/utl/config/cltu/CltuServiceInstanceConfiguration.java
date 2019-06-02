@@ -64,26 +64,6 @@ public class CltuServiceInstanceConfiguration extends ServiceInstanceConfigurati
 	public CltuServiceInstanceConfiguration() {
 	}
 
-	// TODO move away
-	public CltuServiceInstanceConfiguration(Map<String, String> configuration) {
-		super(configuration);
-
-		this.minReportingCycle = configuration.containsKey(MIN_REPORTING_CYCLE_KEY)
-				? Integer.parseInt(configuration.get(MIN_REPORTING_CYCLE_KEY))
-				: null;
-		this.maxCltuLength = Integer.parseInt(configuration.get(MAXIMUM_CLTU_LENGTH_KEY));
-		this.minCltuDelay = Integer.parseInt(configuration.get(MINIMUM_CLTU_DELAY_KEY));
-		this.bitlockRequired = Boolean.parseBoolean(configuration.get(BIT_LOCK_REQUIRED_KEY));
-		this.rfAvailableRequired = Boolean.parseBoolean(configuration.get(RF_AVAILABLE_REQUIRED_KEY));
-		this.protocolAbortClearEnabled = Boolean.parseBoolean(configuration.get(PROTOCOL_ABORT_CLEAR_ENABLED_KEY));
-
-		String startTimeString = configuration.get(START_TIME_KEY);
-		this.startTime = startTimeString == null ? null : DatatypeConverter.parseDateTime(startTimeString).getTime();
-		String endTimeString = configuration.get(END_TIME_KEY);
-		this.endTime = endTimeString == null ? null : DatatypeConverter.parseDateTime(endTimeString).getTime();
-		this.expectedCltuIdentification = Integer.parseInt(configuration.get(EXPECTED_CLTU_IDENTIFICATION_KEY));
-	}
-
 	public Integer getMinReportingCycle() {
 		return minReportingCycle;
 	}
