@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  ~  Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<TitledPane fx:id="logInspectionTitledPane" animated="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Logs" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.sle.utlfx.controller.LogInspectorController">
+	<content>
+		<ScrollPane fitToHeight="true" fitToWidth="true" pannable="true">
+			<content>
+				<VBox>
+					<children>
+						<ToolBar prefHeight="40.0" prefWidth="200.0">
+							<items>
+								<ToggleButton fx:id="enableSiLogButton" mnemonicParsing="false" onAction="#enableSiLogToggleButtonSelected" prefWidth="120.0" selected="true" text="Enable" />
+								<Button fx:id="saveAsSiLogButton" mnemonicParsing="false" onAction="#saveSiLogButtonSelected" prefWidth="120.0" text="Save As..." />
+								<Button fx:id="clearSiLogButton" mnemonicParsing="false" onAction="#clearSiLogButtonSelected" prefWidth="120.0" text="Clear..." />
+							</items>
+						</ToolBar>
+						<TableView fx:id="siLogTableView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+							<columns>
+								<TableColumn prefWidth="170.0" resizable="false" text="Time" />
+								<TableColumn prefWidth="75.0" resizable="false" text="Severity" />
+								<TableColumn prefWidth="840.0" resizable="false" text="Message" />
+							</columns>
+						</TableView>
+					</children>
+				</VBox>
+			</content>
+		</ScrollPane>
+	</content>
+</TitledPane>

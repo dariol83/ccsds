@@ -1,0 +1,135 @@
+CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES
+{  iso identified-organization(3) 
+   standards-producing-organization(112) ccsds(4)
+   space-link-extension(3) sle-transfer-services(1)
+   modules(1) common-modules(99) version-four(4) asn1-bind-types(2)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::=   BEGIN
+
+EXPORTS  SleBindInvocation
+,        SleBindReturn
+,        SlePeerAbort
+,        SleUnbindInvocation
+,        SleUnbindReturn
+;
+IMPORTS  Credentials
+,        IntPosShort
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+         ServiceInstanceIdentifier
+   FROM CCSDS-SLE-TRANSFER-SERVICE-SERVICE-INSTANCE-ID
+;
+
+-- =============================================================
+-- The first part of the module definition contains the SLE-PDUs
+-- =============================================================
+
+SleBindInvocation       ::=   SEQUENCE
+{  invokerCredentials         Credentials
+,  initiatorIdentifier        AuthorityIdentifier
+,  responderPortIdentifier    PortId
+,  serviceType                ApplicationIdentifier
+,  versionNumber              VersionNumber
+,  serviceInstanceIdentifier  ServiceInstanceIdentifier
+}
+
+SleBindReturn           ::=   SEQUENCE
+{  performerCredentials       Credentials
+,  responderIdentifier        AuthorityIdentifier
+,  result            CHOICE
+   {  positive    [0]   VersionNumber     
+   ,  negative    [1]   BindDiagnostic
+   }
+}
+
+SlePeerAbort            ::=   PeerAbortDiagnostic 
+
+SleUnbindInvocation     ::=   SEQUENCE
+{  invokerCredentials         Credentials
+,  unbindReason               UnbindReason
+}
+
+SleUnbindReturn         ::=   SEQUENCE
+{  responderCredentials       Credentials
+,  result            CHOICE
+   {  positive    [0]   NULL
+   }
+}
+
+-- =============================================================
+-- The second part of the module definition contains the types
+-- used by the SLE-PDUs declared in the first part.
+-- =============================================================
+
+ApplicationIdentifier   ::=   INTEGER
+{ rtnAllFrames          (0)
+, rtnInsert             (1)
+, rtnChFrames           (2)
+-- rtnChFrames includes rtnMcFrames and rtnVcFrames
+, rtnChFsh              (3)
+-- rtnChFsh includes rtnMcFsh and rtnVcFsh
+, rtnChOcf              (4)
+-- rtnChOcf includes rtnMcOcf and rtnVcOcf
+, rtnBitstr             (5) -- AOS
+, rtnSpacePkt           (6)
+, fwdAosSpacePkt        (7)
+, fwdAosVca             (8)
+, fwdBitstr             (9)
+, fwdProtoVcdu          (10)
+, fwdInsert             (11)
+, fwdCVcdu              (12)
+, fwdTcSpacePkt         (13) -- conventional telecommand
+, fwdTcVca              (14) -- conventional telecommand
+, fwdTcFrame            (15)
+, fwdCltu               (16)
+}
+
+AuthorityIdentifier     ::=   IdentifierString (SIZE (3 .. 16))
+
+BindDiagnostic          ::=   INTEGER
+{  accessDenied                     (0)
+,  serviceTypeNotSupported          (1)
+,  versionNotSupported              (2)
+,  noSuchServiceInstance            (3)
+,  alreadyBound                     (4)
+,  siNotAccessibleToThisInitiator   (5)
+,  inconsistentServiceType          (6)
+,  invalidTime                      (7)
+,  outOfService                     (8)
+,  otherReason                    (127)
+}
+
+IdentifierString        ::=   VisibleString (FROM (ALL EXCEPT " "))
+
+LogicalPortName         ::=   IdentifierString (SIZE (1 .. 128))
+
+PeerAbortDiagnostic     ::=   INTEGER 
+{  accessDenied                  (0)
+,  unexpectedResponderId         (1)
+,  operationalRequirement        (2)
+,  protocolError                 (3)
+,  communicationsFailure         (4)
+,  encodingError                 (5)
+,  returnTimeout                 (6)
+,  endOfServiceProvisionPeriod   (7)
+,  unsolicitedInvokeId           (8)
+,  otherReason                 (127)
+-- The range of this INTEGER shall be (0 .. 255).
+-- (128 .. 255) is reserved for diagnostic codes
+-- that are specific to the communications technology used.
+}
+
+PortId         ::=   LogicalPortName
+
+UnbindReason   ::=   INTEGER
+{  end                  (0)
+,  suspend              (1)
+,  versionNotSupported  (2)
+,  other              (127)
+}
+
+VersionNumber  ::=   IntPosShort
+
+END

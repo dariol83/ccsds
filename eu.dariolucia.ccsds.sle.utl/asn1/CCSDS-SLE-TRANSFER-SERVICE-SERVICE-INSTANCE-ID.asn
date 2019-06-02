@@ -1,0 +1,136 @@
+CCSDS-SLE-TRANSFER-SERVICE-SERVICE-INSTANCE-ID
+{ iso identified-organization (3) standards-producing-organization(112)
+ ccsds(4) space-link-extension(3) sle-transfer-services(1)
+ modules(1) common-modules(99) version-five(5)
+ asn1-service-id-type(4)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+EXPORTS ServiceInstanceIdentifier
+;
+
+-- Object Identifiers definition
+sagr OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 52}
+spack OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 53}
+fsl-fg OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 14}
+rsl-fg OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 38}
+cltu OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 7}
+fsp OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 10}
+raf OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 22}
+rcf OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 46}
+rcfsh OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 44}
+rocf OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 49}
+rsp OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 40}
+tcf OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 12}
+tcva OBJECT IDENTIFIER ::= {iso 3 112 4 3 1 2 16}
+
+ATTRIBUTE ::= CLASS
+{ &id OBJECT IDENTIFIER UNIQUE
+}
+WITH SYNTAX { ID &id }
+
+GeneralAttributes ATTRIBUTE ::=
+{ serviceAgreement
+| servicePackage
+| forwardService
+| returnService
+}
+
+ServiceInstanceAttribute ::= SET SIZE(1) OF SEQUENCE
+{ identifier ATTRIBUTE.&id
+ ({ServiceInstanceAttributes})
+, siAttributeValue VisibleString (SIZE (1 .. 256))
+}
+
+ServiceInstanceAttributes ATTRIBUTE ::=
+{ GeneralAttributes
+| ServiceNames
+}
+
+ServiceInstanceIdentifier ::= SEQUENCE OF ServiceInstanceAttribute
+
+ServiceNames ATTRIBUTE ::=
+{ rafService
+| rcfService
+| rcfshService
+| rocfService
+| rspService
+| cltuService
+| fspService
+| tcfService
+| tcvaService
+}
+
+-- +++++++++++++++++++++++++++++++++++++
+-- CLTU Service Definition
+-- The cltu Service Id starts with "cltu" and is
+-- followed by the instance number.
+cltuService ATTRIBUTE ::= { ID cltu }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- Forward Service Definition
+forwardService ATTRIBUTE ::= { ID fsl-fg }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- FSP Service Definition
+-- The fsp Service Id starts with "fsp" and is
+-- followed by the instance number.
+fspService ATTRIBUTE ::= { ID fsp }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- RAF Service Definition
+-- The raf Service Id starts with "onlc" or "onlt" or "offl" and is
+-- followed by the instance number.
+rafService ATTRIBUTE ::= { ID raf }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- RCF Service Definition
+-- The rcf Service Id starts with "onlc" or "onlt" or "offl" and is
+-- followed by the instance number.
+rcfService ATTRIBUTE ::= { ID rcf }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- RCFSH Service Definition
+-- The rcfsh Service Id starts with "onlc" or "onlt" or "offl" and is
+-- followed by the instance number.
+rcfshService ATTRIBUTE ::= { ID rcfsh }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- Return Service Definition
+returnService ATTRIBUTE ::= { ID rsl-fg }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- ROCF Service Definition
+-- The rocf Service Id starts with "onlc" or "onlt" or "offl" and is
+-- followed by the instance number.
+rocfService ATTRIBUTE ::= { ID rocf }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- RSP Service Definition
+-- The rocf Service Id starts with "onlc" or "onlt" or "offl" and is
+-- followed by the instance number.
+rspService ATTRIBUTE ::= { ID rsp }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- Service Agreement Definition
+serviceAgreement ATTRIBUTE ::= { ID sagr }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- Service Package Definition
+servicePackage ATTRIBUTE ::= { ID spack }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- TCF Service Definition
+-- The tcf Service Id starts with "tcf" and is
+-- followed by the instance number.
+tcfService ATTRIBUTE ::= { ID tcf }
+
+-- +++++++++++++++++++++++++++++++++++++
+-- TCVA Service Definition
+-- The tcva Service Id starts with "tcva" and is
+-- followed by the instance number.
+tcvaService ATTRIBUTE ::= { ID tcva }
+
+END

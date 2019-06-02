@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  ~  Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="806.0" prefWidth="1258.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.sle.utlfx.controller.MainController">
+   <children>
+      <ToolBar prefHeight="40.0" prefWidth="200.0">
+        <items>
+          <Button fx:id="createSiButton" mnemonicParsing="false" onAction="#createButtonSelected" prefWidth="120.0" text="Create...">
+               <tooltip>
+                  <Tooltip text="Create a new SLE service instance (user)" />
+               </tooltip>
+            </Button>
+            <Button fx:id="destroySiButton" disable="true" mnemonicParsing="false" onAction="#destroyButtonSelected" prefWidth="120.0" text="Destroy...">
+               <tooltip>
+                  <Tooltip text="Destroy the selected SLE service instance" />
+               </tooltip></Button>
+            <Button fx:id="settingsButton" mnemonicParsing="false" onAction="#settingsButtonSelected" prefWidth="120.0" text="Settings...">
+               <tooltip>
+                  <Tooltip text="Change the application settings" />
+               </tooltip></Button>
+            <Button fx:id="aboutButton" mnemonicParsing="false" onAction="#aboutButtonSelected" prefWidth="120.0" text="About...">
+               <tooltip>
+                  <Tooltip text="Information about this application" />
+               </tooltip></Button>
+        </items>
+      </ToolBar>
+      <SplitPane fx:id="mainSplitPane" dividerPositions="0.9" orientation="VERTICAL" VBox.vgrow="ALWAYS">
+         <items>
+            <SplitPane prefHeight="160.0" prefWidth="200.0">
+               <items>
+                  <HBox prefHeight="100.0" prefWidth="300.0">
+                     <children>
+                        <ListView fx:id="serviceInstanceListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="450" />
+                        <VBox prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                           <children>
+                              <StackPane fx:id="stackPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                                 <children>
+                                    <Pane fx:id="emptyPane" prefHeight="200.0" prefWidth="200.0" />
+                                 </children></StackPane>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </items>
+            </SplitPane>
+            <Accordion fx:id="logAccordion" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="1.0" style="-fx-background-color: -fx-background;" VBox.vgrow="ALWAYS">
+		        <panes>
+		          <TitledPane fx:id="logTitledPane" animated="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Application Log">
+		               <content>
+		               <ScrollPane fitToHeight="true" fitToWidth="true" pannable="false" minHeight="160.0">
+						<content>
+				            <VBox minHeight="140" >
+				               <children>
+				               	       <ToolBar prefHeight="40.0" prefWidth="200.0" minHeight="40.0">
+											<items>
+												<ToggleButton fx:id="enableLogButton" mnemonicParsing="false" onAction="#collectLogsMenuItemSelected" prefWidth="120.0" selected="true" text="Enable" />
+												<Button fx:id="saveAsLogButton" mnemonicParsing="false" onAction="#saveLogsMenuItemSelected" prefWidth="120.0" text="Save As..." />
+												<Button fx:id="clearLogButton" mnemonicParsing="false" onAction="#clearLogMenuItemSelected" prefWidth="120.0" text="Clear..." />
+											</items>
+										</ToolBar>
+				                  		<TableView fx:id="logTableView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="100" VBox.vgrow="ALWAYS">
+											<columns>
+												<TableColumn prefWidth="170.0" resizable="false" text="Time" />
+												<TableColumn prefWidth="80.0" resizable="false" text="Severity" />
+												<TableColumn prefWidth="840.0" resizable="false" text="Message" />
+											</columns>
+										</TableView>
+				               </children>
+				            </VBox>
+			             </content>
+			            </ScrollPane>
+		        	   </content>
+		       	  </TitledPane>
+		     	</panes>
+		    </Accordion>
+         </items>
+      </SplitPane>
+   </children>
+</VBox>

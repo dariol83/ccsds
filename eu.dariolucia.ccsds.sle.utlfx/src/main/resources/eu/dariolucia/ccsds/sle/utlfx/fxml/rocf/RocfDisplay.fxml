@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import eu.dariolucia.fx.charts.InstantAxis?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.AreaChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.TreeTableColumn?>
+<?import javafx.scene.control.TreeTableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<!--
+  ~  Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="663.0" prefWidth="1124.0" xmlns="http://javafx.com/javafx/8.0.141" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.sle.utlfx.controller.rocf.RocfDisplayController">
+   <children>
+      <ToolBar maxWidth="1.7976931348623157E308">
+         <items>
+            <Label prefHeight="24.0" text="Service Instance ID   " />
+            <Label fx:id="siidText" prefHeight="24.0" text="--SIID--">
+               <font>
+                  <Font name="System Bold" size="13.0" />
+               </font>
+            </Label>
+            <Region fx:id="springer" />
+            <fx:include fx:id="sleOperationsMenuButton" source="RocfMenuButton.fxml" />
+         </items>
+      </ToolBar>
+      <Accordion fx:id="accordion" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="1.0" minWidth="1.0" style="-fx-background-color: -fx-background;" VBox.vgrow="ALWAYS">
+        <panes>
+          <TitledPane fx:id="overviewTitledPane" animated="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Overview">
+               <content>
+                  <ScrollPane fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" pannable="true">
+                     <content>
+                        <VBox>
+                           <children>
+                              <HBox minHeight="700.0" minWidth="900.0" prefHeight="700.0" prefWidth="900.0">
+                                 <children>
+                                    <VBox fx:id="propertiesVBox" maxHeight="1.7976931348623157E308" maxWidth="430.0" minWidth="430.0" HBox.hgrow="ALWAYS">
+                                       <children />
+                                    </VBox>
+                                    <VBox maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" maxHeight="700.0">
+                                       <children>
+                                       	  <HBox minHeight="40.0" prefHeight="40.0" VBox.vgrow="NEVER">
+                                       	  	<children>
+                                       	  		<Label text="TX:" prefWidth="30.0" />
+                                       	  		<Label fx:id="txBitrateLabel" prefWidth="100.0" text="0" />
+                                       	  		<Label text="RX:" prefWidth="30.0" />
+                                       	  		<Label fx:id="rxBitrateLabel" prefWidth="100.0" text="0" />
+                                       	  		<Label text="Total TX:" prefWidth="90.0" />
+                                       	  		<Label fx:id="txDataLabel" prefWidth="100.0" text="0" />
+                                       	  		<Label text="Total RX:" prefWidth="90.0" />
+                                       	  		<Label fx:id="rxDataLabel" prefWidth="100.0" text="0" />
+                                       	  	</children>
+                                       	  	<VBox.margin>
+                                          		<Insets bottom="0.0" left="5.0" right="5.0" top="0.0" />
+                                       		</VBox.margin>
+                                       	  </HBox>
+                                          <AreaChart fx:id="pduSecChart" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                                            <xAxis>
+                                              <InstantAxis label="Time" side="BOTTOM" />
+                                            </xAxis>
+                                            <yAxis>
+                                              <NumberAxis label="PDU/sec" side="LEFT" />
+                                            </yAxis>
+                                          </AreaChart>
+                                          <AreaChart fx:id="mbitSecChart" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                                            <xAxis>
+                                              <InstantAxis label="Time" side="BOTTOM" />
+                                            </xAxis>
+                                            <yAxis>
+                                              <NumberAxis label="Mbits/sec" side="LEFT" />
+                                            </yAxis>
+                                          </AreaChart>
+                                       </children>
+                                       <HBox.margin>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </HBox.margin>
+                                    </VBox>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </content>
+                  </ScrollPane>
+               </content>
+          </TitledPane>
+          <fx:include fx:id="pduInspector" source="../PduInspector.fxml" />
+          <fx:include fx:id="logInspector" source="../LogInspector.fxml" />
+        </panes>
+      </Accordion>
+   </children>
+</VBox>

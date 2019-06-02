@@ -1,0 +1,115 @@
+CCSDS-SLE-TRANSFER-SERVICE-FSP-INCOMING-PDUS
+{  iso identified-organization(3) 
+   standards-producing-organization(112) ccsds(4)
+   space-link-extension(3) sle-transfer-services(1)
+   modules(1) forward-space-packet-service(24) version-four(4)
+   asn1-fsp-incoming-pdus(2)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::=   BEGIN
+
+IMPORTS  Credentials
+,        Duration
+,        IntPosLong
+,        IntPosShort
+,        IntUnsignedLong
+,        InvokeId
+,        SlduStatusNotification
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+         SleScheduleStatusReportInvocation
+,        SleStopInvocation
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+         BlockingUsage
+,        FspData
+,        FspParameterName
+,        FspParameterNameV4
+,        FspParameterNameV1toV3
+,        Map
+,        MapMuxControl
+,        PacketIdentification
+,        ProductionTime
+,        TransmissionMode
+   FROM CCSDS-SLE-TRANSFER-SERVICE-FSP-STRUCTURES
+         SleBindInvocation
+,        SlePeerAbort
+,        SleUnbindInvocation
+   FROM  CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES
+;
+
+FspUserToProviderPdu                ::=   CHOICE
+{  fspBindInvocation             [100] SleBindInvocation
+,  fspUnbindInvocation           [102] SleUnbindInvocation
+,  fspStartInvocation            [0]   FspStartInvocation
+,  fspStopInvocation             [2]   SleStopInvocation
+,  fspTransferDataInvocation     [10]  FspTransferDataInvocation
+,  fspScheduleStatusReportInvocation   [4]  SleScheduleStatusReportInvocation
+,  fspGetParameterInvocation     [6]   FspGetParameterInvocation
+,  fspThrowEventInvocation       [8]   FspThrowEventInvocation
+,  fspInvokeDirectiveInvocation  [14]  FspInvokeDirectiveInvocation
+,  fspPeerAbortInvocation        [104] SlePeerAbort
+}
+
+FspGetParameterInvocation        ::=   SEQUENCE
+{  invokerCredentials               Credentials
+,  invokeId                         InvokeId
+,  fspParameterName                 FspParameterName
+}
+
+FspInvokeDirectiveInvocation        ::=   SEQUENCE
+{  invokerCredentials                  Credentials
+,  invokeId                            InvokeId
+,  directiveIdentification             IntUnsignedLong
+,  directive                     CHOICE
+   {  initiateADserviceWithoutCLCW  [0]   NULL
+   ,  initiateADserviceWithCLCW     [1]   NULL
+   ,  initiateADserviceWithUnlock   [2]   NULL
+   ,  initiateADserviceWithSetVR    [3]   INTEGER (0 .. 255)
+   ,  terminateADservice            [4]   NULL
+   ,  resumeADservice               [5]   NULL
+   ,  setVS                         [6]   INTEGER (0 .. 255)
+   ,  setFOPslidingWindowWidth      [7]   INTEGER (1 .. 255)
+   ,  setT1Initial                  [8]   IntPosLong  -- in 
+                                                -- microseconds
+   ,  setTransmissionLimit          [9]   IntPosShort
+   ,  setTimeoutType                [10]  INTEGER
+      {  terminateAD                         (0)
+      ,  suspendAD                           (1)
+      }
+   ,  abortVC                       [11]  NULL
+   ,  modifyMapMuxControl           [12]  MapMuxControl
+   }
+}
+
+FspStartInvocation               ::=   SEQUENCE
+{  invokerCredentials               Credentials
+,  invokeId                         InvokeId
+,  firstPacketIdentification        PacketIdentification
+}
+
+FspThrowEventInvocation          ::=   SEQUENCE
+{  invokerCredentials               Credentials
+,  invokeId                         InvokeId
+,  eventIdentifier                  IntPosShort
+,  eventQualifier                   OCTET STRING (SIZE (1 .. 1024))
+,  eventInvocationIdentification    IntUnsignedLong
+}
+
+FspTransferDataInvocation        ::=   SEQUENCE
+{  invokerCredentials               Credentials
+,  invokeId                         InvokeId
+,  packetIdentification             PacketIdentification
+,  earliestProductionTime           ProductionTime
+,  latestProductionTime             ProductionTime
+,  delayTime                        Duration
+,  transmissionMode                 TransmissionMode
+,  map                              Map
+,  blocking                         BlockingUsage
+,  processingStartedNotification    SlduStatusNotification
+,  radiatedNotification             SlduStatusNotification
+,  acknowledgedNotification         SlduStatusNotification
+,  fspData                          FspData
+}
+
+END

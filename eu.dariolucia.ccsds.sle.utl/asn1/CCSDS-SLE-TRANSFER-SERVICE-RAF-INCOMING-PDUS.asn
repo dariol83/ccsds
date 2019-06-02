@@ -1,0 +1,66 @@
+CCSDS-SLE-TRANSFER-SERVICE-RAF-INCOMING-PDUS
+{iso identified-organization(3) standards-producing-organization(112) 
+    ccsds(4) space-link-extension(3) sle-transfer-services(1)
+    modules(1) return-all-frames-service(11) version-four(4)
+    asn1-raf-incoming-pdu(2)}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+
+IMPORTS     ConditionalTime
+,           Credentials
+,           InvokeId
+,           ParameterName
+    FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+            SleScheduleStatusReportInvocation
+,           SleStopInvocation
+    FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+            RafParameterName
+,           RequestedFrameQuality
+    FROM CCSDS-SLE-TRANSFER-SERVICE-RAF-STRUCTURES
+            SleBindInvocation
+,           SleBindReturn
+,           SlePeerAbort
+,           SleUnbindInvocation
+,           SleUnbindReturn
+    FROM CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES
+;
+
+-- =============================================================
+-- The first part of the module definition contains the RAF type
+-- that contains all the possible PDUs the provider may receive.
+-- =============================================================
+
+RafUserToProviderPdu            ::= CHOICE
+{ rafBindInvocation                 [100] SleBindInvocation
+, rafBindReturn                     [101] SleBindReturn
+, rafUnbindInvocation               [102] SleUnbindInvocation
+, rafUnbindReturn                   [103] SleUnbindReturn
+, rafStartInvocation                [0]   RafStartInvocation
+, rafStopInvocation                 [2]   SleStopInvocation
+, rafScheduleStatusReportInvocation [4]   SleScheduleStatusReportInvocation
+, rafGetParameterInvocation         [6]   RafGetParameterInvocation
+, rafPeerAbortInvocation            [104] SlePeerAbort
+}
+
+-- =============================================================
+-- The second part of the module definition contains the types
+-- used by the RAF-PDUs declared in the first part.
+-- =============================================================
+
+RafGetParameterInvocation       ::= SEQUENCE
+{   invokerCredentials                  Credentials
+,   invokeId                            InvokeId
+,   rafParameter                        RafParameterName
+}
+
+RafStartInvocation              ::= SEQUENCE
+{   invokerCredentials                  Credentials
+,   invokeId                            InvokeId
+,   startTime                           ConditionalTime
+,   stopTime                            ConditionalTime
+,   requestedFrameQuality               RequestedFrameQuality
+}
+
+END

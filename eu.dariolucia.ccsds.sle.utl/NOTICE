@@ -1,0 +1,36 @@
+CREDITS
+------------------------------------------------------------------------------
+eu.dariolucia.ccsds.sle.utl uses the jASN.1 library by beanit.com
+(http://www.beanit.com) to generate the class files from the CCSDS ASN.1 SLE
+specifications.
+
+jASN.1 is licensed under the terms of the Apache License, Version 2.0
+(http://www.apache.org/licenses/LICENSE-2.0)
+------------------------------------------------------------------------------
+eu.dariolucia.ccsds.sle.utl uses the JAXB runtime from the Glassfish
+project to read the defined configuration files.
+
+JAXB runtime is licensed under the terms of the Eclipse Distribution License,
+Version 1.0
+(https://www.eclipse.org/org/documents/edl-v10.php)
+------------------------------------------------------------------------------
+eu.dariolucia.ccsds.sle.utl includes, in its source tree, modified
+copies of the SLE ASN.1 as defined by the CCSDS SLE Blue Books
+(http://www.ccsds.org). The copies have been modified to support the different
+versions of the SLE specification.
+------------------------------------------------------------------------------
+eu.dariolucia.ccsds.sle.utl
+
+Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+
+<!--
+  ~  Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<MenuButton
+	mnemonicParsing="false" text="SLE Operations"
+	xmlns="http://javafx.com/javafx/8.0.141"
+	xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="eu.dariolucia.ccsds.sle.utlfx.controller.raf.RafMenuButtonController">
+	<items>
+		<MenuItem mnemonicParsing="false"
+			onAction="#bindMenuItemSelected" text="Bind..." />
+		<MenuItem mnemonicParsing="false"
+			onAction="#waitForBindMenuItemSelected" text="Wait Bind..." />
+		<MenuItem mnemonicParsing="false"
+			onAction="#unbindMenuItemSelected" text="Unbind..." />
+		<MenuItem mnemonicParsing="false"
+			onAction="#peerAbortMenuItemSelected" text="Peer abort..." />
+		<SeparatorMenuItem mnemonicParsing="false" />
+		<MenuItem mnemonicParsing="false"
+			onAction="#startMenuItemSelected" text="Start..." />
+		<MenuItem mnemonicParsing="false"
+			onAction="#stopMenuItemSelected" text="Stop..." />
+		<MenuItem mnemonicParsing="false"
+			onAction="#scheduleStatusReportMenuItemSelected"
+			text="Schedule status report..." />
+		<MenuItem mnemonicParsing="false"
+			onAction="#getParameterMenuItemSelected" text="Get parameter..." />
+	</items>
+</MenuButton>

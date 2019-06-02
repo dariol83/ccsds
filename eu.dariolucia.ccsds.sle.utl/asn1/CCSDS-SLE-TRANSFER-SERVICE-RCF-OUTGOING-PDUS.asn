@@ -1,0 +1,170 @@
+CCSDS-SLE-TRANSFER-SERVICE-RCF-OUTGOING-PDUS
+{iso identified-organization(3) standards-producing-organization(112) 
+    ccsds(4) space-link-extension(3) sle-transfer-services(1)
+    modules(1) return-channel-frames-service(13) version-four(4)
+    asn1-outgoing-pdu(3)}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+
+IMPORTS     Credentials
+,           IntUnsignedLong
+,           InvokeId
+,           SpaceLinkDataUnit
+,           Time
+    FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+            SleAcknowledgement
+,           SleScheduleStatusReportReturn
+    FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+            AntennaId
+,           CarrierLockStatus
+,           DiagnosticRcfGet
+,           DiagnosticRcfStart
+,           FrameSyncLockStatus
+,           LockStatus
+,           Notification
+,           RcfGetParameter
+,           RcfGetParameterV1toV4
+,           RcfProductionStatus
+,           SymbolLockStatus
+    FROM  CCSDS-SLE-TRANSFER-SERVICE-RCF-STRUCTURES
+            SleBindInvocation
+,           SleBindReturn
+,           SlePeerAbort
+,           SleUnbindInvocation
+,           SleUnbindReturn
+    FROM CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES
+;
+
+-- =============================================================
+-- The first part of the module definition contains the RCF type
+-- that contains all the possible PDUs the provider may send.
+-- =============================================================
+
+RcfProviderToUserPdu        ::= CHOICE
+{ rcfBindInvocation                 [100]   SleBindInvocation
+, rcfBindReturn                     [101]   SleBindReturn
+, rcfUnbindInvocation               [102]   SleUnbindInvocation
+, rcfUnbindReturn                   [103]   SleUnbindReturn
+, rcfStartReturn                    [1]     RcfStartReturn
+, rcfStopReturn                     [3]     SleAcknowledgement
+, rcfTransferBuffer                 [8]     RcfTransferBuffer
+, rcfScheduleStatusReportReturn     [5]     SleScheduleStatusReportReturn
+, rcfStatusReportInvocation         [9]     RcfStatusReportInvocation
+, rcfGetParameterReturn             [7]     RcfGetParameterReturn
+, rcfPeerAbortInvocation            [104]   SlePeerAbort
+}
+
+RcfProviderToUserPduV1        ::= CHOICE
+{ rcfBindInvocation                 [100]   SleBindInvocation
+, rcfBindReturn                     [101]   SleBindReturn
+, rcfUnbindInvocation               [102]   SleUnbindInvocation
+, rcfUnbindReturn                   [103]   SleUnbindReturn
+, rcfStartReturn                    [1]     RcfStartReturn
+, rcfStopReturn                     [3]     SleAcknowledgement
+, rcfTransferBuffer                 [8]     RcfTransferBuffer
+, rcfScheduleStatusReportReturn     [5]     SleScheduleStatusReportReturn
+, rcfStatusReportInvocation         [9]     RcfStatusReportInvocationV1
+, rcfGetParameterReturn             [7]     RcfGetParameterReturnV1toV4
+, rcfPeerAbortInvocation            [104]   SlePeerAbort
+}
+
+RcfProviderToUserPduV2toV4        ::= CHOICE
+{ rcfBindInvocation                 [100]   SleBindInvocation
+, rcfBindReturn                     [101]   SleBindReturn
+, rcfUnbindInvocation               [102]   SleUnbindInvocation
+, rcfUnbindReturn                   [103]   SleUnbindReturn
+, rcfStartReturn                    [1]     RcfStartReturn
+, rcfStopReturn                     [3]     SleAcknowledgement
+, rcfTransferBuffer                 [8]     RcfTransferBuffer
+, rcfScheduleStatusReportReturn     [5]     SleScheduleStatusReportReturn
+, rcfStatusReportInvocation         [9]     RcfStatusReportInvocation
+, rcfGetParameterReturn             [7]     RcfGetParameterReturnV1toV4
+, rcfPeerAbortInvocation            [104]   SlePeerAbort
+}
+
+-- =============================================================
+-- The second part of the module definition contains the types
+-- used by the RCF-PDUs declared in the first part.
+-- =============================================================
+
+FrameOrNotification             ::= CHOICE
+{   annotatedFrame                      [0] RcfTransferDataInvocation
+,   syncNotification                    [1] RcfSyncNotifyInvocation
+}
+
+RcfGetParameterReturn           ::= SEQUENCE
+{   performerCredentials                Credentials
+,   invokeId                            InvokeId
+,   result                              CHOICE
+    {   positiveResult                      [0] RcfGetParameter
+    ,   negativeResult                      [1] DiagnosticRcfGet
+    }
+}
+
+RcfStartReturn                  ::= SEQUENCE
+{   performerCredentials                Credentials
+,   invokeId                            InvokeId
+,   result                              CHOICE
+    {   positiveResult                      [0] NULL
+    ,   negativeResult                      [1] DiagnosticRcfStart
+    }
+}
+
+RcfStatusReportInvocation       ::= SEQUENCE
+{   invokerCredentials                  Credentials
+,   deliveredFrameNumber                IntUnsignedLong
+,   frameSyncLockStatus                 FrameSyncLockStatus
+,   symbolSyncLockStatus                SymbolLockStatus
+,   subcarrierLockStatus                LockStatus
+,   carrierLockStatus                   CarrierLockStatus
+,   productionStatus                    RcfProductionStatus
+}
+
+RcfSyncNotifyInvocation         ::= SEQUENCE
+{   invokerCredentials                  Credentials
+,   notification                        Notification
+}
+
+RcfTransferBuffer               ::= SEQUENCE OF FrameOrNotification
+
+RcfTransferDataInvocation   ::= SEQUENCE
+{   invokerCredentials              Credentials
+,   earthReceiveTime                Time
+,   antennaId                       AntennaId
+,   dataLinkContinuity              INTEGER (-1 .. 16777215)
+,   privateAnnotation               CHOICE
+    {   null                            [0] NULL
+    ,   notNull                         [1] OCTET STRING (SIZE (1 .. 128))
+    }
+,   data                            SpaceLinkDataUnit
+}
+
+-- SLE TEST TOOL ADD START
+
+-- Old structure required to maintain backward compatibility with
+-- previous SLE versions
+
+RcfGetParameterReturnV1toV4         ::= SEQUENCE
+{   performerCredentials                Credentials
+,   invokeId                            InvokeId
+,   result                              CHOICE
+    {   positiveResult                      [0] RcfGetParameterV1toV4
+    ,   negativeResult                      [1] DiagnosticRcfGet
+    }
+}
+
+RcfStatusReportInvocationV1       ::= SEQUENCE
+{   invokerCredentials                  Credentials
+,   deliveredFrameNumber                IntUnsignedLong
+,   frameSyncLockStatus                 LockStatus
+,   symbolSyncLockStatus                LockStatus
+,   subcarrierLockStatus                LockStatus
+,   carrierLockStatus                   LockStatus
+,   productionStatus                    RcfProductionStatus
+}
+
+-- SLE TEST TOOL ADD END
+
+END

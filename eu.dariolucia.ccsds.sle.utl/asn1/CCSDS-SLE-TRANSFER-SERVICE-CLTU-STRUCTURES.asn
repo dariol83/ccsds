@@ -1,0 +1,482 @@
+CCSDS-SLE-TRANSFER-SERVICE-CLTU-STRUCTURES
+{  iso identified-organization (3) standards-producing-organization(112)
+   ccsds(4) space-link-extension(3) sle-transfer-services(1)
+   modules(1) forward-cltu-service(21) version-five(5)
+   asn1-transfer-structures(1)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+
+EXPORTS  BufferSize
+,           CltuData
+,           CltuGetParameter
+,           CltuGetParameterV4
+,           CltuGetParameterV1toV3
+,           CltuIdentification
+,           CltuLastProcessed
+,           CltuLastOk
+,           CltuNotification 
+,           CltuParameterName
+,           CltuStatus
+,           DiagnosticCltuGetParameter
+,           DiagnosticCltuStart 
+,           DiagnosticCltuThrowEvent
+,           DiagnosticCltuTransferData
+,           EventInvocationId
+,           NumberOfCltusProcessed 
+,           NumberOfCltusRadiated
+,           NumberOfCltusReceived
+,           ProductionStatus
+,           UplinkStatus
+;
+IMPORTS  ConditionalTime
+,           DeliveryMode
+,           Diagnostics
+,           Duration
+,           ForwardDuStatus
+,           IntPosLong
+,           IntPosShort
+,           IntUnsignedLong
+,           IntUnsignedShort
+,           ParameterName
+,           SpaceLinkDataUnit
+,           Time
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+            ReportingCycle
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+;
+
+BufferSize                       ::=   IntUnsignedLong
+
+ClcwGvcId 						 ::= CHOICE
+{ 		congigured 		[0] 	GvcId
+, 		notConfigured 	[1] 	NULL
+}
+
+ClcwPhysicalChannel 			 ::= CHOICE
+{ 		configured 		[0] 	VisibleString (SIZE (1..32))
+, 		notConfigured 	[1] 	NULL
+}
+
+CltuData                         ::=   SpaceLinkDataUnit
+
+CltuDeliveryMode                 ::=   DeliveryMode
+(  fwdOnline
+)
+
+CltuGetParameter ::= CHOICE
+{ parAcquisitionSequenceLength [0] SEQUENCE
+{ parameterName ParameterName
+(acquisitionSequenceLength)
+, parameterValue IntUnsignedShort
+}
+, parBitLockRequired [1] SEQUENCE
+{ parameterName ParameterName (bitLockRequired)
+, parameterValue INTEGER
+{ yes (0)
+, no (1)
+}
+}
+, parClcwGlobalVcId [2] SEQUENCE
+{ parameterName ParameterName (clcwGlobalVcId)
+, parameterValue ClcwGvcId
+}
+, parClcwPhysicalChannel [3] SEQUENCE
+{ parameterName ParameterName (clcwPhysicalChannel)
+, parameterValue ClcwPhysicalChannel
+}
+, parDeliveryMode [4] SEQUENCE
+{ parameterName ParameterName (deliveryMode)
+, parameterValue CltuDeliveryMode
+}
+, parCltuIdentification [5] SEQUENCE
+{ parameterName ParameterName
+(expectedSlduIdentification)
+, parameterValue CltuIdentification
+}
+, parEventInvocationIdentification [6] SEQUENCE
+{ parameterName ParameterName
+(expectedEventInvocationIdentification)
+, parameterValue EventInvocationId
+}
+, parMaximumCltuLength [7] SEQUENCE
+{ parameterName ParameterName (maximumSlduLength)
+, parameterValue INTEGER (12 .. 4096)
+}
+, parMinimumDelayTime [8] SEQUENCE
+{ parameterName ParameterName (minimumDelayTime)
+, parameterValue Duration
+}
+, parMinReportingCycle [19] SEQUENCE
+{ parameterName ParameterName (minReportingCycle)
+, parameterValue IntPosShort (1 .. 600)
+}
+, parModulationFrequency [9] SEQUENCE
+{ parameterName ParameterName (modulationFrequency)
+, parameterValue ModulationFrequency
+}
+, parModulationIndex [10] SEQUENCE
+{ parameterName ParameterName (modulationIndex)
+, parameterValue ModulationIndex
+}
+, parNotificationMode [11] SEQUENCE
+{ parameterName ParameterName (notificationMode)
+, parameterValue INTEGER
+{ deferred (0)
+, immediate (1)
+}
+}
+, parPlop1IdleSequenceLength [12] SEQUENCE
+{ parameterName ParameterName
+(plop1IdleSequenceLength)
+, parameterValue IntUnsignedShort
+}
+, parPlopInEffect [13] SEQUENCE
+{ parameterName ParameterName (plopInEffect)
+, parameterValue INTEGER
+{ plop1 (0)
+, plop2 (1)
+}
+}
+, parProtocolAbortMode [14] SEQUENCE
+{ parameterName ParameterName (protocolAbortMode)
+, parameterValue INTEGER
+{ abort (0)
+, continue (1)
+}
+}
+, parReportingCycle [15] SEQUENCE
+{ parameterName ParameterName (reportingCycle)
+, parameterValue CurrentReportingCycle
+}
+, parReturnTimeout [16] SEQUENCE
+{ parameterName ParameterName (returnTimeoutPeriod)
+, parameterValue TimeoutPeriod
+}
+, parRfAvailableRequired [17] SEQUENCE
+{ parameterName ParameterName (rfAvailableRequired)
+, parameterValue INTEGER
+{ yes (0)
+, no (1)
+}
+}
+, parSubcarrierToBitRateRatio [18] SEQUENCE
+{ parameterName ParameterName
+(subcarrierToBitRateRatio)
+, parameterValue SubcarrierDivisor
+}
+}
+
+CltuGetParameterV4 ::= CHOICE
+{ parAcquisitionSequenceLength [0] SEQUENCE
+{ parameterName ParameterName
+(acquisitionSequenceLength)
+, parameterValue IntUnsignedShort
+}
+, parBitLockRequired [1] SEQUENCE
+{ parameterName ParameterName (bitLockRequired)
+, parameterValue INTEGER
+{ yes (0)
+, no (1)
+}
+}
+, parGlobalVcid [2] SEQUENCE
+{ parameterName ParameterName (clcwGlobalVcid)
+, parameterValue GvcId
+}
+, parClcwPhysicalChannel [3] SEQUENCE
+{ parameterName ParameterName (clcwPhysicalChannel)
+, parameterValue VisibleString (SIZE (1..32))
+}
+, parDeliveryMode [4] SEQUENCE
+{ parameterName ParameterName (deliveryMode)
+, parameterValue CltuDeliveryMode
+}
+, parCltuIdentification [5] SEQUENCE
+{ parameterName ParameterName
+(expectedSlduIdentification)
+, parameterValue CltuIdentification
+}
+, parEventInvocationIdentification [6] SEQUENCE
+{ parameterName ParameterName
+(expectedEventInvocationIdentification)
+, parameterValue EventInvocationId
+}
+, parMaximumCltuLength [7] SEQUENCE
+{ parameterName ParameterName (maximumSlduLength)
+, parameterValue INTEGER (12 .. 4096)
+}
+, parMinimumDelayTime [8] SEQUENCE
+{ parameterName ParameterName (minimumDelayTime)
+, parameterValue Duration
+}
+, parModulationFrequency [9] SEQUENCE
+{ parameterName ParameterName (modulationFrequency)
+, parameterValue ModulationFrequency
+}
+, parModulationIndex [10] SEQUENCE
+{ parameterName ParameterName (modulationIndex)
+, parameterValue ModulationIndex
+}
+, parNotificationMode [11] SEQUENCE
+{ parameterName ParameterName (notificationMode)
+, parameterValue INTEGER
+{ deferred (0)
+, immediate (1)
+}
+}
+, parPlop1IdleSequenceLength [12] SEQUENCE
+{ parameterName ParameterName
+(plop1IdleSequenceLength)
+, parameterValue IntUnsignedShort
+}
+, parPlopInEffect [13] SEQUENCE
+{ parameterName ParameterName (plopInEffect)
+, parameterValue INTEGER
+{ plop1 (0)
+, plop2 (1)
+}
+}
+, parProtocolAbortMode [14] SEQUENCE
+{ parameterName ParameterName (protocolAbortMode)
+, parameterValue INTEGER
+{ abort (0)
+, continue (1)
+}
+}
+, parReportingCycle [15] SEQUENCE
+{ parameterName ParameterName (reportingCycle)
+, parameterValue CurrentReportingCycle
+}
+, parReturnTimeout [16] SEQUENCE
+{ parameterName ParameterName (returnTimeoutPeriod)
+, parameterValue TimeoutPeriod
+}
+, parRfAvailableRequired [17] SEQUENCE
+{ parameterName ParameterName (rfAvailableRequired)
+, parameterValue INTEGER
+{ yes (0)
+, no (1)
+}
+}
+, parSubcarrierToBitRateRatio [18] SEQUENCE
+{ parameterName ParameterName
+(subcarrierToBitRateRatio)
+, parameterValue SubcarrierDivisor
+}
+}
+
+CltuIdentification               ::=   IntUnsignedLong
+
+CltuLastOk                       ::=   CHOICE
+{ noCltuOk                             [0]   NULL
+,  cltuOk                              [1]   SEQUENCE
+{  cltuIdentification               CltuIdentification
+,  stopRadiationTime               Time
+}
+}
+
+CltuLastProcessed             ::=   CHOICE
+{ noCltuProcessed                   [0]   NULL
+,  cltuProcessed                    [1]   SEQUENCE
+{  cltuIdentification               CltuIdentification
+,  startRadiationTime               ConditionalTime
+,  cltuStatus                       CltuStatus
+}
+}
+
+CltuNotification                 ::=   CHOICE
+{  cltuRadiated                     [0]   NULL
+,  slduExpired                      [1]   NULL
+,  productionInterrupted            [2]   NULL
+,  productionHalted                 [3]   NULL
+,  productionOperational            [4]   NULL
+,  bufferEmpty                      [5]   NULL
+,  actionListCompleted              [6]   EventInvocationId
+,  actionListNotCompleted           [7]   EventInvocationId
+,  eventConditionEvFalse            [8]   EventInvocationId
+}
+
+CltuParameterName             ::=   ParameterName
+(  acquisitionSequenceLength
+|  bitLockRequired
+|  clcwGlobalVcid
+|  clcwPhysicalChannel
+|  deliveryMode
+|  expectedSlduIdentification
+|  expectedEventInvocationIdentification
+|  maximumSlduLength 
+|  minimumDelayTime 
+|  minReportingCycle
+|  modulationFrequency 
+|  modulationIndex 
+|  notificationMode 
+|  plop1IdleSequenceLength
+|  plopInEffect
+|  protocolAbortMode
+|  reportingCycle
+|  returnTimeoutPeriod
+|  rfAvailableRequired  
+|  subcarrierToBitRateRatio 
+)
+
+CltuStatus                       ::=   ForwardDuStatus
+(  radiated
+|  expired
+|  interrupted
+|  productionStarted            -- radiation started
+|  productionNotStarted         -- radiation not started
+)
+ 
+CurrentReportingCycle            ::=   CHOICE
+{  periodicReportingOff          [0]   NULL
+,  periodicReportingOn           [1]   ReportingCycle
+}
+
+DiagnosticCltuGetParameter    ::=   CHOICE
+{  common                           [0]   Diagnostics
+,  specific                         [1]   INTEGER
+   {  unknownParameter                    (0)
+   }
+}
+
+DiagnosticCltuStart              ::=   CHOICE
+{  common                           [0]   Diagnostics
+,  specific                         [1]   INTEGER
+   {  outOfService                     (0)
+   ,  unableToComply                   (1)
+   ,  productionTimeExpired            (2)
+   ,  invalidCltuId                    (3)
+   }
+}
+
+DiagnosticCltuThrowEvent      ::=   CHOICE
+{  common                           [0]   Diagnostics
+,  specific                         [1]   INTEGER
+   {  operationNotSupported            (0)
+   ,  eventInvocIdOutOfSequence        (1)
+   ,  noSuchEvent                      (2)
+   }
+}
+
+DiagnosticCltuTransferData    ::=   CHOICE
+{  common                              [0]   Diagnostics
+,  specific                            [1]   INTEGER
+   {  unableToProcess                     (0)
+   ,  unableToStore                       (1)
+   ,  outOfSequence                       (2)
+   ,  inconsistentTimeRange               (3)
+   ,  invalidTime                         (4)
+   ,  lateSldu                            (5)
+   ,  invalidDelayTime                    (6)
+   ,  cltuError                           (7)
+   }
+}
+
+EventInvocationId             ::=   IntUnsignedLong
+
+GvcId                         ::=   SEQUENCE
+{ spacecraftId INTEGER (0 .. 1023)
+, versionNumber INTEGER (0 .. 3)
+, vcId CHOICE
+    { masterChannel [0] NULL
+    , virtualChannel [1] VcId
+    }
+}
+
+ModulationFrequency           ::=   IntPosLong
+
+ModulationIndex               ::=   IntPosShort
+
+NumberOfCltusProcessed        ::=   IntUnsignedLong
+
+NumberOfCltusRadiated         ::=   IntUnsignedLong
+
+NumberOfCltusReceived         ::=   IntUnsignedLong
+
+ProductionStatus              ::=   INTEGER
+{  operational                      (0)
+,  configured                       (1)
+,  interrupted                      (2)
+,  halted                           (3)
+}
+
+SubcarrierDivisor             ::=   IntPosShort
+
+TimeoutPeriod                 ::=   INTEGER (1 .. 600)
+
+UplinkStatus                  ::=   INTEGER
+{  uplinkStatusNotAvailable         (0)
+,  noRfAvailable                    (1)
+,  noBitLock                        (2)
+,  nominal                          (3)
+} 
+
+VcId                          ::= INTEGER (0..63)
+
+CltuGetParameterV1toV3              ::=  CHOICE
+{ parBitLockRequired [0] SEQUENCE
+{ parameterName ParameterName (bitLockRequired)
+, parameterValue INTEGER
+{ yes (0)
+, no (1)
+}
+}
+, parCltuIdentification [1] SEQUENCE
+{ parameterName ParameterName
+(expectedSlduIdentification)
+, parameterValue CltuIdentification
+}
+, parEventInvocationIdentification [2] SEQUENCE
+{ parameterName ParameterName
+(expectedEventInvocationIdentification)
+, parameterValue EventInvocationId
+}
+, parSubcarrierToBitRateRatio [3] SEQUENCE
+{ parameterName ParameterName
+(subcarrierToBitRateRatio)
+, parameterValue SubcarrierDivisor
+}
+, parDeliveryMode [4] SEQUENCE
+{ parameterName ParameterName (deliveryMode)
+, parameterValue CltuDeliveryMode
+}
+, parMaximumCltuLength [5] SEQUENCE
+{ parameterName ParameterName (maximumSlduLength)
+, parameterValue INTEGER (12 .. 4098)
+}
+, parModulationFrequency [6] SEQUENCE
+{ parameterName ParameterName (modulationFrequency)
+, parameterValue ModulationFrequency
+}
+, parModulationIndex [7] SEQUENCE
+{ parameterName ParameterName (modulationIndex)
+, parameterValue ModulationIndex
+}
+, parPlopInEffect [8] SEQUENCE
+{ parameterName ParameterName (plopInEffect)
+, parameterValue INTEGER
+{ plop1 (0)
+, plop2 (1)
+}
+}
+, parReportingCycle [9] SEQUENCE
+{ parameterName ParameterName (reportingCycle)
+, parameterValue CurrentReportingCycle
+}
+, parReturnTimeout [10] SEQUENCE
+{ parameterName ParameterName (returnTimeoutPeriod)
+, parameterValue TimeoutPeriod
+}
+, parRfAvailableRequired [11] SEQUENCE
+{ parameterName ParameterName (rfAvailableRequired)
+, parameterValue INTEGER
+{ yes (0)
+, no (1)
+}
+}
+}
+
+END

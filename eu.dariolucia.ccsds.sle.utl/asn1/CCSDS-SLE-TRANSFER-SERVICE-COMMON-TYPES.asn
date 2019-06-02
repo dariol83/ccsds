@@ -1,0 +1,178 @@
+CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+{  iso identified-organization(3) 
+   standards-producing-organization(112) ccsds(4)
+   space-link-extension(3) sle-transfer-services(1)
+   modules(1) common-modules(99) version-five(5) asn1-common-types(1)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::=   BEGIN
+
+EXPORTS  ConditionalTime
+,        Credentials
+,        DeliveryMode
+,        Diagnostics
+,        Duration
+,        ForwardDuStatus
+,        IntPosLong
+,        IntPosShort
+,        IntUnsignedLong
+,        IntUnsignedShort
+,        InvokeId
+,        ParameterName
+,        SlduStatusNotification
+,        SpaceLinkDataUnit
+,        Time
+;
+
+ConditionalTime      ::=   CHOICE
+{  undefined   [0]   NULL
+,  known       [1]   Time
+}
+               
+-- If credentials are used, it will be necessary that
+-- the internal structure of the octet string is known
+-- to both parties. Since the structure will depend on 
+-- algorithm used, it is not specified here. However, 
+-- the peer entities may use ASN.1 encoding to make the 
+-- internal structure visible.
+Credentials       ::=   CHOICE
+{  unused      [0]   NULL
+,  used        [1]   OCTET STRING (SIZE (8 .. 256))
+}
+
+DeliveryMode      ::=   INTEGER
+{  rtnTimelyOnline         (0)
+,  rtnCompleteOnline       (1)
+,  rtnOffline              (2)
+,  fwdOnline               (3)
+,  fwdOffline              (4)
+}
+
+Diagnostics       ::=   INTEGER
+{  duplicateInvokeId       (100)
+,  otherReason             (127)
+}
+
+-- The Duration is expressed in microseconds
+Duration          ::=   IntUnsignedLong
+
+ForwardDuStatus   ::=   INTEGER
+{  radiated                      (0)
+,  expired                       (1)
+,  interrupted                   (2)
+,  acknowledged                  (3)   -- FSP
+,  productionStarted             (4)   -- CLTU: 'radiation started'
+,  productionNotStarted          (5)   -- CLTU: 'radiation not started'
+,  unsupportedTransmissionMode   (6)   -- FSP
+}
+
+-- 1 to (2^32)-1
+IntPosLong        ::=   INTEGER (1 .. 4294967295)
+
+-- 1 to (2^16)-1
+IntPosShort       ::=   INTEGER (1 .. 65535)
+
+-- 0 to (2^32)-1
+IntUnsignedLong   ::=   INTEGER (0 .. 4294967295)
+
+-- 0 to (2^16)-1
+IntUnsignedShort  ::=   INTEGER (0 .. 65535)
+
+InvokeId          ::=   IntUnsignedShort
+
+ParameterName     ::=           INTEGER
+{ acquisitionSequenceLength     (201)
+, apidList                      (2)
+, bitLockRequired               (3)
+, blockingTimeoutPeriod         (0)
+, blockingUsage                 (1)
+, bufferSize                    (4)
+, clcwGlobalVcId                (202)
+, clcwPhysicalChannel           (203)
+, copCntrFramesRepetition       (300)
+, deliveryMode                  (6)
+, directiveInvocation           (7)
+, directiveInvocationOnline     (108)
+, expectedDirectiveIdentification (8)
+, expectedEventInvocationIdentification (9)
+, expectedSlduIdentification    (10)
+, fopSlidingWindow              (11)
+, fopState                      (12)
+, latencyLimit                  (15)
+, mapList                       (16)
+, mapMuxControl                 (17)
+, mapMuxScheme                  (18)
+, maximumFrameLength            (19)
+, maximumPacketLength           (20)
+, maximumSlduLength             (21)
+, minimumDelayTime              (204)
+, minReportingCycle             (301)
+, modulationFrequency           (22)
+, modulationIndex               (23)
+, notificationMode              (205)
+, permittedControlWordTypeSet   (101)
+, permittedFrameQuality         (302)
+, permittedGvcidSet             (24)
+, permittedTcVcidSet            (102)
+, permittedTransmissionMode     (107)
+, permittedUpdateModeSet        (103)
+, plop1IdleSequenceLength       (206)
+, plopInEffect                  (25)
+, protocolAbortMode             (207)
+, reportingCycle                (26)
+, requestedControlWordType      (104)
+, requestedFrameQuality         (27)
+, requestedGvcid                (28)
+, requestedTcVcid               (105)
+, requestedUpdateMode           (106)
+, returnTimeoutPeriod           (29)
+, rfAvailable                   (30)
+, rfAvailableRequired           (31)
+, segmentHeader                 (32)
+, sequCntrFramesRepetition      (303)
+, subcarrierToBitRateRatio      (34)
+, throwEventOperation           (304)
+, timeoutType                   (35)
+, timerInitial                  (36)
+, transmissionLimit             (37)
+, transmitterFrameSequenceNumber (38)
+, vcMuxControl                  (39)
+, vcMuxScheme                   (40)
+, virtualChannel                (41)
+}
+
+SlduStatusNotification  ::=   INTEGER
+{  produceNotification           (0)
+,  doNotProduceNotification      (1)
+}
+
+SpaceLinkDataUnit       ::=   OCTET STRING (SIZE (1 .. 65536))
+
+Time                    ::=   CHOICE
+{  ccsdsFormat      [0]     TimeCCSDS
+,  ccsdsPicoFormat  [1]     TimeCCSDSpico
+}
+
+TimeCCSDS               ::=   OCTET STRING (SIZE(8))
+-- P-field is implicit (not present, defaulted to 41 hex
+-- T-field:
+-- 2 octets: number of days since 1958/01/01 00:00:00
+-- 4 octets: number of milliseconds of the day
+-- 2 octets: number of microseconds of the millisecond
+-- (set to 0 if not used)
+-- This definition reflects exactly the format of the CCSDS defined
+-- time tag as used in spacelink data units (see reference [7]).
+
+TimeCCSDSpico ::= OCTET STRING (SIZE(10))
+-- P-field is implicit (not present, defaulted to 42 hex
+-- T-field:
+-- 2 octets: number of days since 1958/01/01 00:00:00
+-- 4 octets: number of milliseconds of the day
+-- 4 octets: number of picoseconds of the millisecond
+-- (set to 0 if not used)
+-- This definition reflects exactly the format of the CCSDS defined
+-- time tag as used in spacelink data units (see reference [7]).
+
+END

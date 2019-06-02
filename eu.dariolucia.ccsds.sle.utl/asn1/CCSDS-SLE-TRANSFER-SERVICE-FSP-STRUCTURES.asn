@@ -1,0 +1,841 @@
+CCSDS-SLE-TRANSFER-SERVICE-FSP-STRUCTURES
+{  iso identified-organization(3) 
+   standards-producing-organization(112) ccsds(4)
+   space-link-extension(3) sle-transfer-services(1)
+   modules(1) forward-space-packet-service(24) version-five(5)
+   asn1-fsp-structures(1)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::=   BEGIN
+
+EXPORTS  BlockingUsage
+,        BufferSize
+,        DiagnosticFspGet
+,        DiagnosticFspInvokeDirective
+,        DiagnosticFspStart
+,        DiagnosticFspThrowEvent
+,        DiagnosticFspTransferData
+,        FspData
+,        FspGetParameter
+,        FspGetParameterV4
+,        FspGetParameterV1toV3
+,        FspNotification
+,        FspNotificationV1toV4
+,        FspPacketCount
+,        FspPacketLastOk
+,        FspPacketLastProcessed
+,        FspParameterName
+,        FspProductionStatus
+,        Map
+,        MapMuxControl
+,        PacketIdentification
+,        ProductionTime
+,        TransmissionMode
+;
+IMPORTS  DeliveryMode
+,        Diagnostics
+,        ForwardDuStatus
+,        IntPosShort
+,        IntPosLong
+,        IntUnsignedLong
+,        ParameterName
+,        SpaceLinkDataUnit
+,        Time
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+         ReportingCycle
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+;
+
+AbsolutePriority     ::=   SEQUENCE
+{  vcOrMapId         VcOrMapId
+,  priority          Priority
+}
+
+Apid              ::=   INTEGER (0 .. 2047)
+
+-- The entries shall be in ascending order.
+-- Added 1 suffix to fix jASN1 generation issue
+ApidList ::= CHOICE
+{   any         [0]     NULL
+,   apidList1   [1]     SEQUENCE SIZE (1 .. 2048) OF Apid
+}
+
+BlockingUsage     ::=   INTEGER
+{  permitted            (0)
+,  notPermitted         (1)
+}
+
+-- measured in milliseconds
+BlockingTimeoutPeriod      ::=   INTEGER (100 .. 100000)
+
+-- The minimum Telecommand size is 7 octets.
+-- The maximum Telecommand size is 64 K-Octets + overhead.
+BufferSize     ::=  INTEGER (7 .. 66560)
+
+ClcwGvcId ::= CHOICE
+{   congigured      [0]     GvcId
+,   notConfigured   [1]     NULL
+}
+
+ClcwPhysicalChannel ::= CHOICE
+{   configured      [0]     VisibleString (SIZE (1..32))
+,   notConfigured   [1]     NULL
+}
+
+CurrentReportingCycle   ::= CHOICE
+{  periodicReportingOff [0]   NULL
+,  periodicReportingOn  [1]   ReportingCycle
+}
+
+DiagnosticFspGet     ::=   CHOICE
+{  common      [0]   Diagnostics
+,  specific    [1]   INTEGER
+   {  unknownParameter        (0)
+   }
+}
+
+DiagnosticFspInvokeDirective           ::=   CHOICE
+{  common                     [0]   Diagnostics
+,  specific                   [1]   INTEGER
+   {  directiveInvocationNotAllowed          (0)
+   ,  directiveIdentificationOutOfSequence   (1)
+   ,  directiveError                         (2)
+   }
+}
+
+DiagnosticFspStart      ::=   CHOICE
+{  common      [0]   Diagnostics
+,  specific    [1]   INTEGER
+   {  outOfService            (0)
+   ,  unableToComply          (1)
+   ,  productionTimeExpired   (2)
+   }
+}
+
+DiagnosticFspThrowEvent          ::=   CHOICE
+{  common               [0]   Diagnostics
+,  specific             [1]   INTEGER
+   {  operationNotSupported            (0)
+   ,  eventIdentificationOutOfSequence (1)
+   ,  noSuchEvent                      (2)
+   }
+}
+
+DiagnosticFspTransferData           ::=   CHOICE
+{  common                  [0]   Diagnostics
+,  specific                [1]   INTEGER
+   {  unableToProcess                     (0)
+   ,  unableToStore                       (1)
+   ,  packetIdentificationOutOfSequence   (2)
+   ,  duplicatePacketIdentification       (3)
+,  inconsistentTimeRange                  (4)
+   ,  invalidTime                         (5)
+   ,  conflictingProductionTimeIntervals  (6)
+   ,  lateSldu                            (7)
+   ,  invalidDelayTime                    (8)
+   ,  invalidTransmissionMode             (9)
+   ,  invalidMap                          (10)
+   ,  invalidNotificationRequest          (11)
+   ,  packetTooLong                       (12)
+   ,  unsupportedPacketVersion            (13)
+   ,  incorrectPacketType                 (14)
+   ,  invalidPacketApid                   (15)  
+   }
+}
+
+DirectiveExecutedId     ::=   IntUnsignedLong
+
+EventInvocationId    ::=   IntUnsignedLong
+
+FopAlert          ::=   INTEGER
+{  noAlert                 (0)
+,  limit                   (1)
+,  lockOutDetected         (2)
+,  synch                   (3)
+,  invalidNR               (4)
+,  clcw                    (5)
+,  lowerLayerOutOfSync     (6)
+,  terminateADService      (7)
+}
+
+FspData           ::=   SpaceLinkDataUnit
+
+FspDeliveryMode      ::=   DeliveryMode
+(  fwdOnline
+)
+
+-- Structure changed to fix errors in the specification (duplicated tags)
+FspGetParameter ::= CHOICE
+{   parApidList [0] SEQUENCE
+    {   parameterName ParameterName (apidList)
+    ,   parameterValue ApidList
+    }
+,   parBitLockRequired [27] SEQUENCE
+    {   parameterName ParameterName (bitLockRequired)
+    ,   parameterValue INTEGER
+        {   yes     (0)
+        ,   no      (1)
+        }
+    }
+,   parBlockingTimeout [1] SEQUENCE
+    {   parameterName ParameterName(blockingTimeoutPeriod)
+    ,   parameterValue CHOICE
+        {   blockingOff [0] NULL
+        ,   blockingOn  [1] BlockingTimeoutPeriod
+        }
+    }
+,   parBlockingUsage [2] SEQUENCE
+    {   parameterName ParameterName (blockingUsage)
+    ,   parameterValue BlockingUsage
+    }
+,   parClcwGlobalVcId [29] SEQUENCE
+    {   parameterName ParameterName (clcwGlobalVcId)
+    ,   parameterValue ClcwGvcId
+    }
+,   parClcwPhysicalChannel [30] SEQUENCE
+    {   parameterName ParameterName (clcwPhysicalChannel)
+    ,   parameterValue ClcwPhysicalChannel
+    }
+,   parCopCntrFramesRepetition [31] SEQUENCE
+    {   parameterName ParameterName (copCntrFramesRepetition)
+    ,   parameterValue IntPosShort
+    }
+,   parDeliveryMode [3] SEQUENCE
+    {   parameterName ParameterName (deliveryMode)
+    ,   parameterValue FspDeliveryMode
+    }
+,   parDirectiveInvoc [4] SEQUENCE
+    {   parameterName ParameterName (directiveInvocation)
+    ,   parameterValue INTEGER
+        {   enabled     (0)
+        ,   disabled    (1)
+        }
+    }
+,   parDirInvocOnl [5] SEQUENCE
+    {   parameterName ParameterName (directiveInvocationOnline)
+    ,   parameterValue INTEGER
+        {   yes (0)
+        ,   no  (1)
+        }
+    }
+,   parExpectDirectiveId [6] SEQUENCE
+    {   parameterName ParameterName (expectedDirectiveIdentification)
+    ,   parameterValue IntUnsignedLong
+    }
+,   parExpectEventInvId [7] SEQUENCE
+    {   parameterName ParameterName (expectedEventInvocationIdentification)
+    ,   parameterValue IntUnsignedLong
+    }
+,   parExpectSlduId [8] SEQUENCE
+    {   parameterName ParameterName (expectedSlduIdentification)
+    ,   parameterValue PacketIdentification
+    }
+,   parFopSlidWindow [9] SEQUENCE
+    {   parameterName ParameterName (fopSlidingWindow)
+    ,   parameterValue INTEGER (1 .. 255)
+    }
+,   parFopState [10] SEQUENCE
+    {   parameterName ParameterName (fopState)
+    ,   fopState INTEGER
+        {   active (0)
+        ,   retransmitWithoutWait (1)
+        ,   retransmitWithWait (2)
+        ,   initialisingWithoutBCFrame (3)
+        ,   initialisingWithBCFrame (4)
+        ,   initial (5)
+        }
+    }
+,   parMapList [11] SEQUENCE
+    {   parameterName ParameterName (mapList)
+    ,   mapList MapList
+    }
+,   parMapMuxControl [12] SEQUENCE
+    {   parameterName ParameterName (mapMuxControl)
+    ,   parameterValue MuxControl
+    }
+,   parMapMuxScheme [13] SEQUENCE
+    {   parameterName ParameterName (mapMuxScheme)
+    ,   parameterValue MuxScheme
+    }
+,   parMaxFrameLength [14] SEQUENCE
+    {   parameterName ParameterName (maximumFrameLength)
+    ,   parameterValue INTEGER (12 .. 1024) -- octets
+    }
+,   parMaxPacketLength [15] SEQUENCE
+    {   parameterName ParameterName (maximumPacketLength)
+    ,   parameterValue INTEGER (7 .. 65542)
+    }
+,   parMinReportingCycle [32] SEQUENCE
+    {   parameterName ParameterName (minReportingCycle)
+    ,   parameterValue IntPosShort (1 .. 600)
+    }
+,   parPermTransMode [16] SEQUENCE
+    {   parameterName ParameterName (permittedTransmissionMode)
+    ,   parameterValue PermittedTransmissionMode
+    }
+,   parReportingCycle [17] SEQUENCE
+    {   parameterName ParameterName (reportingCycle)
+    ,   parameterValue CurrentReportingCycle
+    }
+,   parReturnTimeout [18] SEQUENCE
+    {   parameterName ParameterName (returnTimeoutPeriod)
+    ,   parameterValue TimeoutPeriod
+    }
+,   parRfAvailableRequired [28] SEQUENCE
+    {   parameterName ParameterName (rfAvailableRequired)
+    ,   parameterValue INTEGER
+        {   yes (0)
+        ,   no (1)
+        }
+    }
+,   parSegmHeader [19] SEQUENCE
+    {   parameterName ParameterName (segmentHeader)
+    ,   parameterValue INTEGER
+        {   present (0)
+        ,   absent (1)
+        }
+    }
+,   parSequCntrFramesRepetition [33] SEQUENCE
+    {   parameterName ParameterName (sequCntrFramesRepetition)
+    ,   parameterValue IntPosShort
+    }
+,   parThrowEventOperation [34] SEQUENCE
+    {   parameterName ParameterName (throwEventOperation)
+    ,   parameterValue INTEGER
+        {   enabled (0)
+        ,   disabled (1)
+        }
+    }
+,   parTimeoutType [20] SEQUENCE
+    {   parameterName ParameterName (timeoutType)
+    ,   parameterValue INTEGER
+        {   generateAlert (0)
+        ,   suspendSequenceControlled (1)
+        }
+    }
+,   parTimerInitial [21] SEQUENCE
+    {   parameterName ParameterName (timerInitial)
+    ,   parameterValue IntPosLong -- in microseconds
+    }
+,   parTransmissLimit [22] SEQUENCE
+    {   parameterName ParameterName (transmissionLimit)
+    ,   parameterValue INTEGER (1 .. 255)
+    }
+,   parTrFrSeqNumber [23] SEQUENCE
+    {   parameterName ParameterName (transmitterFrameSequenceNumber)
+    ,   parameterValue INTEGER (0 .. 255)
+    }
+,   parVcMuxControl [24] SEQUENCE
+    {   parameterName ParameterName (vcMuxControl)
+    ,   parameterValue MuxControl
+    }
+,   parVcMuxScheme [25] SEQUENCE
+    {   parameterName ParameterName (vcMuxScheme)
+    ,   parameterValue MuxScheme
+    }
+,   parVirtualChannel [26] SEQUENCE
+    {   parameterName ParameterName (virtualChannel)
+    ,   parameterValue VcOrMapId
+    }
+}
+
+FspGetParameterV4 ::= CHOICE
+{   parApidList [0] SEQUENCE
+    {   parameterName ParameterName (apidList)
+    ,   parameterValue ApidList
+    }
+,   parBitLockRequired [27] SEQUENCE
+    {   parameterName ParameterName (bitLockRequired)
+    ,   parameterValue INTEGER
+        {   yes     (0)
+        ,   no      (1)
+        }
+    }
+,   parBlockingTimeout [1] SEQUENCE
+    {   parameterName ParameterName(blockingTimeoutPeriod)
+    ,   parameterValue CHOICE
+        {   blockingOff [0] NULL
+        ,   blockingOn  [1] BlockingTimeoutPeriod
+        }
+    }
+,   parBlockingUsage [2] SEQUENCE
+    {   parameterName ParameterName (blockingUsage)
+    ,   parameterValue BlockingUsage
+    }
+,   parDeliveryMode [3] SEQUENCE
+    {   parameterName ParameterName (deliveryMode)
+    ,   parameterValue FspDeliveryMode
+    }
+,   parDirectiveInvoc [4] SEQUENCE
+    {   parameterName ParameterName (directiveInvocation)
+    ,   parameterValue INTEGER
+        {   enabled     (0)
+        ,   disabled    (1)
+        }
+    }
+,   parDirInvocOnl [5] SEQUENCE
+    {   parameterName ParameterName (directiveInvocationOnline)
+    ,   parameterValue INTEGER
+        {   yes (0)
+        ,   no  (1)
+        }
+    }
+,   parExpectDirectiveId [6] SEQUENCE
+    {   parameterName ParameterName (expectedDirectiveIdentification)
+    ,   parameterValue IntUnsignedLong
+    }
+,   parExpectEventInvId [7] SEQUENCE
+    {   parameterName ParameterName (expectedEventInvocationIdentification)
+    ,   parameterValue IntUnsignedLong
+    }
+,   parExpectSlduId [8] SEQUENCE
+    {   parameterName ParameterName (expectedSlduIdentification)
+    ,   parameterValue PacketIdentification
+    }
+,   parFopSlidWindow [9] SEQUENCE
+    {   parameterName ParameterName (fopSlidingWindow)
+    ,   parameterValue INTEGER (1 .. 255)
+    }
+,   parFopState [10] SEQUENCE
+    {   parameterName ParameterName (fopState)
+    ,   fopState INTEGER
+        {   active (0)
+        ,   retransmitWithoutWait (1)
+        ,   retransmitWithWait (2)
+        ,   initialisingWithoutBCFrame (3)
+        ,   initialisingWithBCFrame (4)
+        ,   initial (5)
+        }
+    }
+,   parMapList [11] SEQUENCE
+    {   parameterName ParameterName (mapList)
+    ,   mapList MapList
+    }
+,   parMapMuxControl [12] SEQUENCE
+    {   parameterName ParameterName (mapMuxControl)
+    ,   parameterValue MuxControl
+    }
+,   parMapMuxScheme [13] SEQUENCE
+    {   parameterName ParameterName (mapMuxScheme)
+    ,   parameterValue MuxScheme
+    }
+,   parMaxFrameLength [14] SEQUENCE
+    {   parameterName ParameterName (maximumFrameLength)
+    ,   parameterValue INTEGER (12 .. 1024) -- octets
+    }
+,   parMaxPacketLength [15] SEQUENCE
+    {   parameterName ParameterName (maximumPacketLength)
+    ,   parameterValue INTEGER (7 .. 65542)
+    }
+,   parPermTransMode [16] SEQUENCE
+    {   parameterName ParameterName (permittedTransmissionMode)
+    ,   parameterValue PermittedTransmissionMode
+    }
+,   parReportingCycle [17] SEQUENCE
+    {   parameterName ParameterName (reportingCycle)
+    ,   parameterValue CurrentReportingCycle
+    }
+,   parReturnTimeout [18] SEQUENCE
+    {   parameterName ParameterName (returnTimeoutPeriod)
+    ,   parameterValue TimeoutPeriod
+    }
+,   parRfAvailableRequired [28] SEQUENCE
+    {   parameterName ParameterName (rfAvailableRequired)
+    ,   parameterValue INTEGER
+        {   yes (0)
+        ,   no (1)
+        }
+    }
+,   parSegmHeader [19] SEQUENCE
+    {   parameterName ParameterName (segmentHeader)
+    ,   parameterValue INTEGER
+        {   present (0)
+        ,   absent (1)
+        }
+    }
+,   parTimeoutType [20] SEQUENCE
+    {   parameterName ParameterName (timeoutType)
+    ,   parameterValue INTEGER
+        {   generateAlert (0)
+        ,   suspendSequenceControlled (1)
+        }
+    }
+,   parTimerInitial [21] SEQUENCE
+    {   parameterName ParameterName (timerInitial)
+    ,   parameterValue IntPosLong -- in microseconds
+    }
+,   parTransmissLimit [22] SEQUENCE
+    {   parameterName ParameterName (transmissionLimit)
+    ,   parameterValue INTEGER (1 .. 255)
+    }
+,   parTrFrSeqNumber [23] SEQUENCE
+    {   parameterName ParameterName (transmitterFrameSequenceNumber)
+    ,   parameterValue INTEGER (0 .. 255)
+    }
+,   parVcMuxControl [24] SEQUENCE
+    {   parameterName ParameterName (vcMuxControl)
+    ,   parameterValue MuxControl
+    }
+,   parVcMuxScheme [25] SEQUENCE
+    {   parameterName ParameterName (vcMuxScheme)
+    ,   parameterValue MuxScheme
+    }
+,   parVirtualChannel [26] SEQUENCE
+    {   parameterName ParameterName (virtualChannel)
+    ,   parameterValue VcOrMapId
+    }
+}
+
+FspGetParameterV1toV3 ::= CHOICE
+{   parApidList [0] SEQUENCE
+    {   parameterName ParameterName (apidList)
+    ,   parameterValue ApidList
+    }
+,   parBlockingTimeout [1] SEQUENCE
+    {   parameterName ParameterName(blockingTimeoutPeriod)
+    ,   parameterValue CHOICE
+        {   blockingOff [0] NULL
+        ,   blockingOn  [1] BlockingTimeoutPeriod
+        }
+    }
+,   parBlockingUsage [2] SEQUENCE
+    {   parameterName ParameterName (blockingUsage)
+    ,   parameterValue BlockingUsage
+    }
+,   parDeliveryMode [3] SEQUENCE
+    {   parameterName ParameterName (deliveryMode)
+    ,   parameterValue FspDeliveryMode
+    }
+,   parDirectiveInvoc [4] SEQUENCE
+    {   parameterName ParameterName (directiveInvocation)
+    ,   parameterValue INTEGER
+        {   enabled     (0)
+        ,   disabled    (1)
+        }
+    }
+,   parDirInvocOnl [5] SEQUENCE
+    {   parameterName ParameterName (directiveInvocationOnline)
+    ,   parameterValue INTEGER
+        {   yes (0)
+        ,   no  (1)
+        }
+    }
+,   parExpectDirectiveId [6] SEQUENCE
+    {   parameterName ParameterName (expectedDirectiveIdentification)
+    ,   parameterValue IntUnsignedLong
+    }
+,   parExpectEventInvId [7] SEQUENCE
+    {   parameterName ParameterName (expectedEventInvocationIdentification)
+    ,   parameterValue IntUnsignedLong
+    }
+,   parExpectSlduId [8] SEQUENCE
+    {   parameterName ParameterName (expectedSlduIdentification)
+    ,   parameterValue PacketIdentification
+    }
+,   parFopSlidWindow [9] SEQUENCE
+    {   parameterName ParameterName (fopSlidingWindow)
+    ,   parameterValue INTEGER (1 .. 255)
+    }
+,   parFopState [10] SEQUENCE
+    {   parameterName ParameterName (fopState)
+    ,   fopState INTEGER
+        {   active (0)
+        ,   retransmitWithoutWait (1)
+        ,   retransmitWithWait (2)
+        ,   initialisingWithoutBCFrame (3)
+        ,   initialisingWithBCFrame (4)
+        ,   initial (5)
+        }
+    }
+,   parMapList [11] SEQUENCE
+    {   parameterName ParameterName (mapList)
+    ,   mapList MapList
+    }
+,   parMapMuxControl [12] SEQUENCE
+    {   parameterName ParameterName (mapMuxControl)
+    ,   parameterValue MuxControl
+    }
+,   parMapMuxScheme [13] SEQUENCE
+    {   parameterName ParameterName (mapMuxScheme)
+    ,   parameterValue MapMuxScheme
+    }
+,   parMaxFrameLength [14] SEQUENCE
+    {   parameterName ParameterName (maximumFrameLength)
+    ,   parameterValue INTEGER (12 .. 1024) -- octets
+    }
+,   parMaxPacketLength [15] SEQUENCE
+    {   parameterName ParameterName (maximumPacketLength)
+    ,   parameterValue INTEGER (7 .. 65542)
+    }
+,   parPermTransMode [16] SEQUENCE
+    {   parameterName ParameterName (permittedTransmissionMode)
+    ,   parameterValue PermittedTransmissionMode
+    }
+,   parReportingCycle [17] SEQUENCE
+    {   parameterName ParameterName (reportingCycle)
+    ,   parameterValue CurrentReportingCycle
+    }
+,   parReturnTimeout [18] SEQUENCE
+    {   parameterName ParameterName (returnTimeoutPeriod)
+    ,   parameterValue TimeoutPeriod
+    }
+,   parSegmHeader [19] SEQUENCE
+    {   parameterName ParameterName (segmentHeader)
+    ,   parameterValue INTEGER
+        {   present (0)
+        ,   absent (1)
+        }
+    }
+,   parTimeoutType [20] SEQUENCE
+    {   parameterName ParameterName (timeoutType)
+    ,   parameterValue INTEGER
+        {   generateAlert (0)
+        ,   suspendSequenceControlled (1)
+        }
+    }
+,   parTimerInitial [21] SEQUENCE
+    {   parameterName ParameterName (timerInitial)
+    ,   parameterValue IntPosLong -- in microseconds
+    }
+,   parTransmissLimit [22] SEQUENCE
+    {   parameterName ParameterName (transmissionLimit)
+    ,   parameterValue INTEGER (1 .. 255)
+    }
+,   parTrFrSeqNumber [23] SEQUENCE
+    {   parameterName ParameterName (transmitterFrameSequenceNumber)
+    ,   parameterValue INTEGER (0 .. 255)
+    }
+,   parVcMuxControl [24] SEQUENCE
+    {   parameterName ParameterName (vcMuxControl)
+    ,   parameterValue MuxControl
+    }
+,   parVcMuxScheme [25] SEQUENCE
+    {   parameterName ParameterName (vcMuxScheme)
+    ,   parameterValue MuxScheme
+    }
+,   parVirtualChannel [26] SEQUENCE
+    {   parameterName ParameterName (virtualChannel)
+    ,   parameterValue VcOrMapId
+    }
+}
+
+FspNotification                        ::=   CHOICE
+{  packetProcessingStarted             [0]   PacketIdentificationList
+,  packetRadiated                      [1]   PacketRadiatedInfo
+,  packetAcknowledged                  [2]   PacketIdentificationList
+,  slduExpired                         [3]   PacketIdentificationList
+,  packetTransmissionModeMismatch      [4]   PacketIdentificationList
+,  transmissionModeCapabilityChange    [5]   FopAlert
+,  bufferEmpty                         [6]   NULL
+,  noInvokeDirectiveCapabilityOnthisVC [7]   NULL
+,  invokeDirectiveCapabilityOnthisVC   [17]  NULL
+,  positiveConfirmResponceToDirective  [8]   DirectiveExecutedId
+,  negativeConfirmResponseToDirective  [9]   NegativeConfirmResponseToDirective
+,  vcAborted                           [10]  PacketIdentificationList
+,  productionInterrupted               [11]  PacketIdentificationList
+,  productionHalted                    [12]  PacketIdentificationList
+,  productionOperational               [13]  NULL
+,  actionListCompleted                 [14]  EventInvocationId
+,  actionListNotCompleted              [15]  EventInvocationId
+,  eventConditionEvaluatedToFalse      [16]  EventInvocationId
+}
+
+FspNotificationV1toV4                  ::=   CHOICE
+{  packetProcessingStarted             [0]   PacketIdentificationList
+,  packetRadiated                      [1]   PacketIdentificationList
+,  packetAcknowledged                  [2]   PacketIdentificationList
+,  slduExpired                         [3]   PacketIdentificationList
+,  packetTransmissionModeMismatch      [4]   PacketIdentificationList
+,  transmissionModeCapabilityChange    [5]   FopAlert
+,  bufferEmpty                         [6]   NULL
+,  noInvokeDirectiveCapabilityOnthisVC [7]   NULL
+,  invokeDirectiveCapabilityOnthisVC   [17]  NULL
+,  positiveConfirmResponceToDirective  [8]   DirectiveExecutedId
+,  negativeConfirmResponseToDirective  [9]   NegativeConfirmResponseToDirective
+,  vcAborted                           [10]  PacketIdentificationList
+,  productionInterrupted               [11]  PacketIdentificationList
+,  productionHalted                    [12]  PacketIdentificationList
+,  productionOperational               [13]  NULL
+,  actionListCompleted                 [14]  EventInvocationId
+,  actionListNotCompleted              [15]  EventInvocationId
+,  eventConditionEvaluatedToFalse      [16]  EventInvocationId
+}
+
+FspPacketCount    ::=   SEQUENCE
+{  adCount           IntUnsignedLong   
+,  bdCount           IntUnsignedLong
+}
+
+FspPacketLastOk      ::=   CHOICE
+{  noPacketOk  [0]   NULL
+,  packetOk    [1]   SEQUENCE 
+   {  packetIdentification    PacketIdentification
+   ,  processingStopTime      Time
+   }
+}
+
+FspPacketLastProcessed  ::=   CHOICE
+{  noPacketProcessed [0]   NULL
+,  packetProcessed   [1]   SEQUENCE
+   {  packetIdentification    PacketIdentification
+   ,  processingStartTime     Time
+   ,  packetStatus            FspPacketStatus
+   }
+}
+
+FspPacketStatus      ::=   ForwardDuStatus
+(  acknowledged
+|  radiated
+|  productionStarted
+|  productionNotStarted
+|  expired
+|  unsupportedTransmissionMode
+|  interrupted
+)
+
+FspParameterName ::= ParameterName
+( apidList
+| bitLockRequired
+| blockingTimeoutPeriod
+| blockingUsage
+| clcwGlobalVcId
+| clcwPhysicalChannel
+| copCntrFramesRepetition
+| deliveryMode
+| directiveInvocation
+| directiveInvocationOnline
+| expectedDirectiveIdentification
+| expectedSlduIdentification
+| expectedEventInvocationIdentification
+| fopSlidingWindow
+| fopState
+| mapList
+| mapMuxControl
+| mapMuxScheme
+| maximumFrameLength
+| maximumPacketLength
+| minReportingCycle
+| permittedTransmissionMode
+| reportingCycle
+| returnTimeoutPeriod
+| rfAvailableRequired
+| segmentHeader
+| sequCntrFramesRepetition
+| throwEventOperation
+| timeoutType
+| timerInitial
+| transmissionLimit
+| transmitterFrameSequenceNumber
+| vcMuxControl
+| vcMuxScheme
+| virtualChannel
+)
+
+FspProductionStatus     ::=   INTEGER
+{  configured              (0)
+,  operationalBd           (1)
+,  operationalAdAndBd      (2)
+,  operationalAdSuspended  (3)
+,  interrupted             (4)
+,  halted                  (5)
+}
+
+GvcId ::= SEQUENCE
+{   spacecraftId INTEGER (0 .. 1023)
+,   versionNumber INTEGER (0 .. 3)
+,   vcId CHOICE
+     {  masterChannel   [0] NULL
+     ,  virtualChannel  [1] VcId
+     }
+}
+-- Notes:
+-- The permissible range of the spacecraftId depends on the versionNumber.
+-- PTM and AOS frames are supported.
+-- In case of AOS the permissible range is 0 to 255 (8 bits).
+-- In case of PTM the permissible range is 0 to 1023 (10 bits).
+
+Map               ::=   CHOICE
+{ none         [0]   NULL
+,  mapUsed     [1]   MapId
+}
+
+MapId             ::=   VcOrMapId
+
+-- The entries shall be in ascending order.
+MapList           ::=   CHOICE
+{  mapsNotUsed [0]   NULL
+,  mapsUsed    [1]   SEQUENCE SIZE (1 .. 64) OF MapId
+}
+
+MapMuxControl     ::=   CHOICE
+{  absolutePriority  [0]   SEQUENCE SIZE (1 .. 64) OF AbsolutePriority
+,  pollingVector     [1]   SEQUENCE SIZE (1 .. 192) OF MapId
+}
+
+MuxControl           ::=   CHOICE
+{  muxSchemeIsFifo      [0]   NULL
+,  muxSchemeIsPriority  [1]   SEQUENCE SIZE (1 .. 64) OF AbsolutePriority
+,  muxSchemeIsVector    [2]   SEQUENCE SIZE (1 .. 192) OF VcOrMapId
+}
+
+MapMuxScheme ::= CHOICE
+{   noMapsUsed [0] NULL
+,   mapsUsed [1] MuxScheme
+}
+
+MuxScheme         ::=   INTEGER
+{  fifo                    (0)
+,  absolute-priority       (1)
+,  polling-vector          (2)
+}
+
+NegativeConfirmResponseToDirective  ::=   SEQUENCE
+{  directiveExecutedId           DirectiveExecutedId
+,  fopAlert                      FopAlert
+}
+
+PacketIdentification       ::=   IntUnsignedLong
+
+PacketIdentificationList   ::=   SEQUENCE OF PacketIdentification
+
+PacketRadiatedInfo ::= SEQUENCE
+{   packetIdentificationList PacketIdentificationList
+,   frameSequenceNumber INTEGER (0 .. 255)
+}
+
+PermittedTransmissionMode  ::=   INTEGER
+{  sequenceControlled         (0)
+,  expedited                  (1)
+,  any                        (2)
+}
+
+-- Highest priority: 1
+-- Lowest priority: 64
+Priority          ::= INTEGER (1 .. 64)
+
+ProductionTime    ::=   CHOICE
+{  unspecified [0]   NULL
+,  specified   [1]   Time
+}
+
+-- measured in seconds
+TimeoutPeriod      ::=   INTEGER (1 .. 600)
+
+TransmissionMode   ::=   INTEGER
+{  sequenceControlled         (0)   -- AD mode
+,  expedited                  (1)   -- BD mode
+,  sequenceControlledUnblock  (2)   -- AD mode with unblocking
+}
+
+VcOrMapId         ::=   INTEGER (0 .. 63)
+
+VcId ::= INTEGER (0 .. 63)
+-- The actual permissible range depends on the version number of the
+-- associated GVCID.
+-- In case of TM the permissible range is 0 to 7 (3 bits).
+-- In case of AOS the permissible range is 0 to 63 (6 bits).
+-- Added because it is missing in the standard
+
+END

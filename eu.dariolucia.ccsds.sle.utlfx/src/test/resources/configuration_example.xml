@@ -1,0 +1,147 @@
+<utl-configuration-file>
+    <peer-configuration id="TEST-USER" password="AABBCCDDEEFF00" auth-delay="180">
+        <port-mappings>
+            <mapping port-name="TEST_TM_OLT" address="127.0.0.1:23232" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
+            <mapping port-name="TEST_TM_ONC" address="127.0.0.1:23233" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
+            <mapping port-name="TEST_TC" address="127.0.0.1:23234" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
+        </port-mappings>
+        <remote-peers>
+            <peer id="TEST-PROVIDER" auth-mode="NONE" auth-hash="SHA_256" password="AABBCCDDEEFF00" />
+        </remote-peers>
+    </peer-configuration>
+    <service-instances>
+        <cltu>
+            <service-instance-id>sagr=1000.spack=ANT.fsl-fg=1.cltu=cltu01</service-instance-id>
+            <service-version-number>2</service-version-number> <!-- optional -->
+            <initiator>USER</initiator>
+            <initiator-id>TEST-USER</initiator-id>
+            <responder-id>TEST-PROVIDER</responder-id>
+            <responder-port-id>TEST_TC</responder-port-id>
+            <return-timeout-period>120</return-timeout-period>
+            <!-- Everything below is optional -->
+            <reporting-cycle>30</reporting-cycle>
+
+            <maximum-cltu-length>1000</maximum-cltu-length>
+            <minimum-cltu-delay>5000</minimum-cltu-delay>
+            <bit-lock-required>false</bit-lock-required>
+            <rf-available-required>false</rf-available-required>
+            <protocol-abort-clear-enabled>false</protocol-abort-clear-enabled>
+            <minimum-reporting-cycle>0</minimum-reporting-cycle>
+
+            <expected-cltu-identification>1</expected-cltu-identification>
+            <!-- start-time and end-time omitted: both null -->
+        </cltu>
+        <raf>
+            <service-instance-id>sagr=1000.spack=ANT.rsl-fg=1.raf=onlc99</service-instance-id>
+            <service-version-number>2</service-version-number> <!-- optional -->
+            <initiator>USER</initiator>
+            <initiator-id>TEST-USER</initiator-id>
+            <responder-id>TEST-PROVIDER</responder-id>
+            <responder-port-id>TEST_TM_OLC</responder-port-id>
+            <return-timeout-period>120</return-timeout-period>
+            <!-- Everything below is optional -->
+            <reporting-cycle>30</reporting-cycle>
+
+            <delivery-mode>COMPLETE_ONLINE</delivery-mode>
+            <latency-limit>3</latency-limit>
+            <transfer-buffer-size>10</transfer-buffer-size>
+            <minimum-reporting-cycle>0</minimum-reporting-cycle>
+            <permitted-frame-quality-set>
+                <quality>GOOD_FRAMES_ONLY</quality>
+                <quality>BAD_FRAMES_ONLY</quality>
+                <quality>ALL_FRAMES</quality>
+            </permitted-frame-quality-set>
+
+            <requested-frame-quality>GOOD_FRAMES_ONLY</requested-frame-quality>
+            <!-- start-time and end-time omitted: both null -->
+        </raf>
+        <rcf>
+            <service-instance-id>sagr=1000.spack=ANT.rsl-fg=1.rcf=onlt00</service-instance-id>
+            <service-version-number>2</service-version-number> <!-- optional -->
+            <initiator>USER</initiator>
+            <initiator-id>TEST-USER</initiator-id>
+            <responder-id>TEST-PROVIDER</responder-id>
+            <responder-port-id>TEST_TM_OLT</responder-port-id>
+            <return-timeout-period>120</return-timeout-period>
+            <!-- Everything below is optional -->
+            <reporting-cycle>30</reporting-cycle>
+
+            <delivery-mode>COMPLETE_ONLINE</delivery-mode>
+            <latency-limit>3</latency-limit>
+            <transfer-buffer-size>10</transfer-buffer-size>
+            <minimum-reporting-cycle>0</minimum-reporting-cycle>
+            <permitted-global-VCID-set>
+                <gvcid scid="100" tfvn="0" vcid="0" />
+                <gvcid scid="100" tfvn="0" vcid="1" />
+                <gvcid scid="100" tfvn="0" vcid="2" />
+                <gvcid scid="100" tfvn="0" vcid="3" />
+                <gvcid scid="100" tfvn="0" />
+            </permitted-global-VCID-set>
+
+            <requested-global-VCID scid="100" tfvn="0" />
+            <!-- start-time and end-time omitted: both null -->
+        </rcf>
+        <rcf>
+            <service-instance-id>sagr=1000.spack=ANT.rsl-fg=1.rcf=onlc01</service-instance-id>
+            <service-version-number>2</service-version-number> <!-- optional -->
+            <initiator>USER</initiator>
+            <initiator-id>TEST-USER</initiator-id>
+            <responder-id>TEST-PROVIDER</responder-id>
+            <responder-port-id>TEST_TM_OLC</responder-port-id>
+            <return-timeout-period>120</return-timeout-period>
+            <!-- Everything below is optional -->
+            <reporting-cycle>30</reporting-cycle>
+
+            <delivery-mode>COMPLETE_ONLINE</delivery-mode>
+            <latency-limit>3</latency-limit>
+            <transfer-buffer-size>10</transfer-buffer-size>
+            <minimum-reporting-cycle>0</minimum-reporting-cycle>
+            <permitted-global-VCID-set>
+                <gvcid scid="100" tfvn="0" vcid="0" />
+                <gvcid scid="100" tfvn="0" vcid="1" />
+            </permitted-global-VCID-set>
+
+            <requested-global-VCID scid="100" tfvn="0" vcid="0" />
+            <!-- start-time and end-time omitted: both null -->
+        </rcf>
+        <rocf>
+            <service-instance-id>sagr=1000.spack=ANT.rsl-fg=1.rocf=onlt88</service-instance-id>
+            <service-version-number>2</service-version-number> <!-- optional -->
+            <initiator>USER</initiator>
+            <initiator-id>TEST-USER</initiator-id>
+            <responder-id>TEST-PROVIDER</responder-id>
+            <responder-port-id>TEST_TM_OLT</responder-port-id>
+            <return-timeout-period>120</return-timeout-period>
+            <!-- Everything below is optional -->
+            <reporting-cycle>30</reporting-cycle>
+
+            <delivery-mode>COMPLETE_ONLINE</delivery-mode>
+            <latency-limit>3</latency-limit>
+            <transfer-buffer-size>10</transfer-buffer-size>
+            <minimum-reporting-cycle>0</minimum-reporting-cycle>
+            <permitted-global-VCID-set>
+                <gvcid scid="100" tfvn="0" vcid="0" />
+                <gvcid scid="100" tfvn="0" vcid="1" />
+            </permitted-global-VCID-set>
+            <permitted-tc-vcid-set>
+                <tcvcid>0</tcvcid>
+                <tcvcid>1</tcvcid>
+            </permitted-tc-vcid-set>
+            <permitted-control-word-type-set>
+                <control-word-type>ALL</control-word-type>
+                <control-word-type>CLCW</control-word-type>
+                <control-word-type>NO_CLCW</control-word-type>
+            </permitted-control-word-type-set>
+            <permitted-update-mode-set>
+                <update-mode>CONTINUOUS</update-mode>
+                <update-mode>CHANGE_BASED</update-mode>
+            </permitted-update-mode-set>
+
+            <requested-global-VCID scid="100" tfvn="0" vcid="0" />
+            <requested-tc-vcid>0</requested-tc-vcid>
+            <requested-control-word-type>CLCW</requested-control-word-type>
+            <requested-update-mode>CONTINUOUS</requested-update-mode>
+            <!-- start-time and end-time omitted: both null -->
+        </rocf>
+    </service-instances>
+</utl-configuration-file>

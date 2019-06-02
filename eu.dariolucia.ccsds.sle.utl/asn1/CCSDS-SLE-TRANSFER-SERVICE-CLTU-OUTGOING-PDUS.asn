@@ -1,0 +1,169 @@
+CCSDS-SLE-TRANSFER-SERVICE-CLTU-OUTGOING-PDUS
+{  iso identified-organization (3) standards-producing-organization(112)
+   ccsds(4) space-link-extension(3) sle-transfer-services(1)
+   modules(1) forward-cltu-service(21) version-four(4) 
+   asn1-outgoing-pdus(3)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+
+IMPORTS        ConditionalTime
+,              Credentials
+,              InvokeId
+,              Time
+FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+               SleAcknowledgement
+,              SleScheduleStatusReportReturn
+FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+               SleBindReturn
+,              SleUnbindReturn
+,              SlePeerAbort
+FROM CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES
+               BufferSize
+,              CltuGetParameter
+,			   CltuGetParameterV4
+,              CltuGetParameterV1toV3
+,              CltuIdentification
+,              CltuLastProcessed
+,              CltuLastOk
+,              CltuNotification
+,              CltuStatus              
+,              DiagnosticCltuGetParameter
+,              DiagnosticCltuStart
+,              DiagnosticCltuThrowEvent
+,              DiagnosticCltuTransferData
+,              EventInvocationId
+,              NumberOfCltusProcessed
+,              NumberOfCltusRadiated
+,              NumberOfCltusReceived
+,              ProductionStatus
+,              UplinkStatus
+FROM CCSDS-SLE-TRANSFER-SERVICE-CLTU-STRUCTURES
+;
+
+CltuProviderToUserPdu         ::=   CHOICE
+{  cltuBindReturn                       [101] SleBindReturn
+,  cltuUnbindReturn                     [103] SleUnbindReturn
+,  cltuStartReturn                        [1] CltuStartReturn
+,  cltuStopReturn                         [3] SleAcknowledgement
+,  cltuScheduleStatusReportReturn         [5] SleScheduleStatusReportReturn
+,  cltuGetParameterReturn                 [7] CltuGetParameterReturn
+,  cltuThrowEventReturn                   [9] CltuThrowEventReturn
+,  cltuTransferDataReturn                [11] CltuTransferDataReturn
+,  cltuAsyncNotifyInvocation             [12] CltuAsyncNotifyInvocation
+,  cltuStatusReportInvocation            [13] CltuStatusReportInvocation
+,  cltuPeerAbortInvocation              [104] SlePeerAbort
+}
+
+CltuProviderToUserPduV1toV3         ::=   CHOICE
+{  cltuBindReturn                       [101] SleBindReturn
+,  cltuUnbindReturn                     [103] SleUnbindReturn
+,  cltuStartReturn                        [1] CltuStartReturn
+,  cltuStopReturn                         [3] SleAcknowledgement
+,  cltuScheduleStatusReportReturn         [5] SleScheduleStatusReportReturn
+,  cltuGetParameterReturn                 [7] CltuGetParameterReturnV1toV3
+,  cltuThrowEventReturn                   [9] CltuThrowEventReturn
+,  cltuTransferDataReturn                [11] CltuTransferDataReturn
+,  cltuAsyncNotifyInvocation             [12] CltuAsyncNotifyInvocation
+,  cltuStatusReportInvocation            [13] CltuStatusReportInvocation
+,  cltuPeerAbortInvocation              [104] SlePeerAbort
+}
+
+CltuProviderToUserPduV4         ::=   CHOICE
+{  cltuBindReturn                       [101] SleBindReturn
+,  cltuUnbindReturn                     [103] SleUnbindReturn
+,  cltuStartReturn                        [1] CltuStartReturn
+,  cltuStopReturn                         [3] SleAcknowledgement
+,  cltuScheduleStatusReportReturn         [5] SleScheduleStatusReportReturn
+,  cltuGetParameterReturn                 [7] CltuGetParameterReturnV4
+,  cltuThrowEventReturn                   [9] CltuThrowEventReturn
+,  cltuTransferDataReturn                [11] CltuTransferDataReturn
+,  cltuAsyncNotifyInvocation             [12] CltuAsyncNotifyInvocation
+,  cltuStatusReportInvocation            [13] CltuStatusReportInvocation
+,  cltuPeerAbortInvocation              [104] SlePeerAbort
+}
+
+CltuAsyncNotifyInvocation     ::=   SEQUENCE
+{  invokerCredentials               Credentials
+,  cltuNotification                 CltuNotification
+,  cltuLastProcessed                CltuLastProcessed
+,  cltuLastOk                       CltuLastOk
+,  productionStatus                 ProductionStatus
+,  uplinkStatus                     UplinkStatus
+}
+
+CltuGetParameterReturn        ::=   SEQUENCE
+{  performerCredentials             Credentials
+,  invokeId                         InvokeId
+,  result                           CHOICE
+   {  positiveResult                   [0]   CltuGetParameter
+   ,  negativeResult                   [1]   DiagnosticCltuGetParameter
+   }
+}
+
+CltuStartReturn               ::=   SEQUENCE
+{  performerCredentials             Credentials
+,  invokeId                         InvokeId
+,  result                           CHOICE
+{  positiveResult                      [0]   SEQUENCE
+      {  startRadiationTime                 Time
+      ,  stopRadiationTime                  ConditionalTime
+      }
+   ,  negativeResult                   [1]   DiagnosticCltuStart
+   }
+}
+
+CltuStatusReportInvocation    ::=   SEQUENCE
+{  invokerCredentials               Credentials
+,  cltuLastProcessed                CltuLastProcessed
+,  cltuLastOk                       CltuLastOk
+,  cltuProductionStatus             ProductionStatus
+,  uplinkStatus                     UplinkStatus
+,  numberOfCltusReceived            NumberOfCltusReceived
+,  numberOfCltusProcessed           NumberOfCltusProcessed
+,  numberOfCltusRadiated            NumberOfCltusRadiated
+,  cltuBufferAvailable              BufferSize
+}
+
+CltuThrowEventReturn          ::=   SEQUENCE
+{  performerCredentials             Credentials
+,  invokeId                         InvokeId
+,  eventInvocationIdentification    EventInvocationId
+,  result                           CHOICE
+   {  positiveResult                   [0]   NULL
+   ,  negativeResult                   [1]   DiagnosticCltuThrowEvent
+   }
+}
+
+CltuTransferDataReturn        ::=   SEQUENCE
+{  performerCredentials             Credentials
+,  invokeId                         InvokeId
+,  cltuIdentification               CltuIdentification
+,  cltuBufferAvailable              BufferSize
+,  result                           CHOICE
+{  positiveResult                      [0]   NULL
+,  negativeResult                      [1]   DiagnosticCltuTransferData
+}
+}
+
+CltuGetParameterReturnV1toV3  ::=   SEQUENCE
+{  performerCredentials             Credentials
+,  invokeId                         InvokeId
+,  result                           CHOICE
+   {  positiveResult                   [0]   CltuGetParameterV1toV3
+   ,  negativeResult                   [1]   DiagnosticCltuGetParameter
+   }
+}
+
+CltuGetParameterReturnV4  ::=   SEQUENCE
+{  performerCredentials             Credentials
+,  invokeId                         InvokeId
+,  result                           CHOICE
+   {  positiveResult                   [0]   CltuGetParameterV4
+   ,  negativeResult                   [1]   DiagnosticCltuGetParameter
+   }
+}
+
+END

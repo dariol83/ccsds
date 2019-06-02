@@ -1,0 +1,160 @@
+/*
+ * Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package eu.dariolucia.ccsds.inspector.connectors.file;
+
+import eu.dariolucia.ccsds.inspector.api.*;
+import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
+import eu.dariolucia.ccsds.tmtc.util.AnnotatedObject;
+import eu.dariolucia.ccsds.tmtc.util.StringUtil;
+
+import java.io.*;
+import java.time.Instant;
+
+public abstract class AbstractFileConnector extends AbstractConnector {
+
+	public static final String FILE_PATH_ID = "file";
+	public static final String FECF_PRESENT_ID = "fecf";
+	public static final String DATA_RATE_ID = "bitrate";
+	public static final String CYCLE_ID = "cycle";
+
+	private volatile boolean running;
+	private volatile Thread worker;
+
+	private final File filePath;
+	private final boolean cycle;
+	private final int bitrate;
+
+	private volatile BufferedReader fileReader;
+
+	// Readible by subclasses
+	protected final boolean fecfPresent;
+
+	public AbstractFileConnector(String name, String description, String version, ConnectorConfiguration configuration, IConnectorObserver observer) {
+		super(name, description, version, configuration, observer);
+		this.cycle = configuration.getBooleanProperty(AbstractFileConnector.CYCLE_ID);
+		this.fecfPresent = configuration.getBooleanProperty(AbstractFileConnector.FECF_PRESENT_ID);
+		this.bitrate = configuration.getIntProperty(AbstractFileConnector.DATA_RATE_ID);
+		this.filePath = configuration.getFileProperty(AbstractFileConnector.FILE_PATH_ID);
+	}
+
+	@Override
+	protected void doStart() {
+		if (running) {
+			notifyInfo(SeverityEnum.WARNING, "Connector already started");
+			return;
+		}
+		running = true;
+		worker = new Thread(this::generate);
+		worker.setDaemon(true);
+		worker.start();
+
+		notifyInfo(SeverityEnum.INFO, getName() + " started");
+	}
+
+	protected void generate() {
+		try {
+			do {
+				if(this.fileReader != null) {
+					try {
+						this.fileReader.close();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					this.fileReader = null;
+				}
+				// Open the file
+				this.fileReader = new BufferedReader(new InputStreamReader(new FileInputStream(this.filePath)));
+				// Read the first line and use it to compute the frame size
+				String line = readNextLine();
+				int frameSizeInBits = line.length() * 4; // line.length() / 2 * 8
+				// Compute the interleave time
+				int msecBetweenFrames = (int) (1000.0 / ((double) bitrate / (double)(frameSizeInBits)));
+				while (running && line != null) {
+					byte[] frame = StringUtil.toByteArray(line.toUpperCase());
+					AnnotatedObject ttf = getData(frame);
+					ttf.setAnnotationValue(AbstractConnector.ANNOTATION_TIME_KEY, Instant.now());
+					notifyData(ttf);
+					try {
+						Thread.sleep(msecBetweenFrames);
+					} catch (InterruptedException e) {
+						Thread.interrupted();
+					}
+					line = readNextLine();
+				}
+			} while(this.cycle && this.running);
+		} catch (IOException e) {
+			notifyInfo(SeverityEnum.ALARM, "Error processing file " + this.filePath.getAbsolutePath() + ": " + e.getMessage());
+		} catch (Exception e) {
+			e.printStackTrace();
+			notifyInfo(SeverityEnum.ALARM, "Error processing file " + this.filePath.getAbsolutePath() + ": " + e.getMessage());
+		}
+		if(this.fileReader != null) {
+			try {
+				this.fileReader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private String readNextLine() throws IOException {
+		while(true) {
+			String line = this.fileReader.readLine();
+			if (line == null) {
+				return null;
+			} else if (!line.isBlank()) {
+				return line;
+			}
+		}
+	}
+
+	protected abstract AnnotatedObject getData(byte[] frame);
+
+	@Override
+	protected void doStop() {
+		if (!running) {
+			return;
+		}
+		running = false;
+		if (worker != null) {
+			try {
+				worker.interrupt();
+				worker.join(2000, 0);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				Thread.interrupted();
+			}
+		}
+		worker = null;
+		notifyInfo(SeverityEnum.INFO, getName() + " stopped");
+	}
+
+	@Override
+	protected void doDispose() {
+		if(getState() != ConnectorState.IDLE) {
+			stop();
+		}
+		if(this.fileReader != null) {
+			try {
+				this.fileReader.close();
+			} catch (IOException e) {
+				// What can you do here?
+			}
+		}
+		this.fileReader = null;
+	}
+}

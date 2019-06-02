@@ -1,0 +1,252 @@
+CCSDS-SLE-TRANSFER-SERVICE-RCF-STRUCTURES
+{iso identified-organization(3) standards-producing-organization(112)
+    ccsds(4) space-link-extension(3) sle-transfer-services(1)
+    modules(1) return-channel-frames-service(13) version-five(5)
+    asn1-rcf-structures(1)}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+
+EXPORTS     AntennaId
+,           CarrierLockStatus
+,           DiagnosticRcfGet
+,           DiagnosticRcfStart
+,           FrameSyncLockStatus
+,           GvcId
+,           LockStatus
+,           Notification
+,           RcfGetParameter
+,           RcfGetParameterV1toV4
+,           RcfParameterName
+,           RcfProductionStatus
+,           SymbolLockStatus
+;
+IMPORTS     DeliveryMode
+,           Diagnostics
+,           IntPosShort
+,           ParameterName
+,           Time
+    FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+            ReportingCycle
+    FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+;
+
+AntennaId                   ::=  CHOICE
+{   globalForm                      [0] OBJECT IDENTIFIER
+,   localForm                       [1] OCTET STRING (SIZE (1 .. 16))
+}
+
+CarrierLockStatus           ::=   LockStatus
+(  inLock
+|  outOfLock
+|  unknown
+)
+
+CurrentReportingCycle       ::= CHOICE
+{   periodicReportingOff            [0] NULL
+,   periodicReportingOn             [1] ReportingCycle
+}
+
+DiagnosticRcfGet            ::= CHOICE
+{   common                          [0] Diagnostics
+,   specific                        [1] INTEGER
+    {   unknownParameter                    (0)
+    }
+}
+
+DiagnosticRcfStart          ::= CHOICE
+{   common                          [0] Diagnostics
+,   specific                        [1] INTEGER
+    {   outOfService                        (0)
+    ,   unableToComply                      (1)
+    ,   invalidStartTime                    (2)
+    ,   invalidStopTime                     (3)
+    ,   missingTimeValue                    (4)
+    ,   invalidGvcId                        (5)
+    }
+}
+
+FrameSyncLockStatus     ::=   LockStatus
+(  inLock
+|  outOfLock
+|  unknown
+)
+
+GvcId                       ::= SEQUENCE
+{   spacecraftId                   INTEGER (0 .. 1023)   
+,   versionNumber                  INTEGER (0 .. 3)
+,   vcId                           CHOICE
+    {  masterChannel                [0]   NULL
+ , virtualChannel                   [1]   VcId
+    }
+}
+-- Notes:
+-- The permissible range of the spacecraftId depends on the versionNumber.
+-- PTM and AOS frames are supported.
+-- In case of AOS the permissible range is 0 to 255 (8 bits).
+-- In case of PTM the permissible range is 0 to 1023 (10 bits).
+
+GvcIdSet                    ::= SET OF MasterChannelComposition
+
+GvcIdSetV1toV4              ::= SEQUENCE OF MasterChannelCompositionV1toV4
+
+LockStatus                  ::= INTEGER
+{   inLock                          (0)
+,   outOfLock                       (1)
+,   notInUse                        (2)
+,   unknown                         (3)
+}
+
+LockStatusReport            ::= SEQUENCE
+{   time                            Time
+,   carrierLockStatus               CarrierLockStatus
+,   subcarrierLockStatus            LockStatus
+,   symbolSyncLockStatus            SymbolLockStatus
+}
+
+MasterChannelComposition    ::= SEQUENCE
+{   spacecraftId                   INTEGER (0 .. 1023)
+,   versionNumber                  INTEGER (0 .. 3)
+,   mcOrVcList                     CHOICE
+ { masterChannel                [0] NULL
+ , vcList                       [1] SET OF VcId
+ }
+}
+
+MasterChannelCompositionV1toV4    ::= SEQUENCE
+{   spacecraftId                   INTEGER (0 .. 1023)
+,   versionNumber                  INTEGER (0 .. 3)
+,   mcOrVcList                     CHOICE
+ { masterChannel                [0] NULL
+ , vcList                       [1] SEQUENCE OF VcId
+ }
+}
+
+RequestedGvcId       ::= CHOICE
+{  gvcid          [0]   GvcId
+,  undefined      [1]   NULL
+}
+
+Notification                ::= CHOICE
+{   lossFrameSync                   [0] LockStatusReport
+,   productionStatusChange          [1] RcfProductionStatus
+,   excessiveDataBacklog            [2] NULL
+,   endOfData                       [3] NULL
+}
+
+RcfDeliveryMode             ::= DeliveryMode
+(   rtnTimelyOnline
+|   rtnCompleteOnline
+|   rtnOffline
+)
+
+RcfGetParameter     ::= CHOICE
+{   parBufferSize           [0] SEQUENCE
+    { parameterName                 ParameterName (bufferSize)
+    , parameterValue                IntPosShort
+    }
+,   parDeliveryMode         [1] SEQUENCE
+    { parameterName                 ParameterName (deliveryMode)
+    , parameterValue                RcfDeliveryMode
+    }
+,   parLatencyLimit         [2] SEQUENCE
+    { parameterName                 ParameterName (latencyLimit)
+    , parameterValue                CHOICE
+      {   online                [0] IntPosShort
+      ,   offline               [1] NULL
+      }
+    }
+, 	parMinReportingCycle 	[7] SEQUENCE
+	{ parameterName 				ParameterName (minReportingCycle)
+	, parameterValue 				IntPosShort (1 .. 600)
+	} 
+,   parPermittedGvcidSet    [3] SEQUENCE
+    { parameterName                 ParameterName (permittedGvcidSet)
+    , parameterValue                GvcIdSet
+    }
+,   parReportingCycle       [4] SEQUENCE
+    { parameterName                 ParameterName (reportingCycle)
+    , parameterValue                CurrentReportingCycle
+    }
+,   parReqGvcId             [5] SEQUENCE
+    { parameterName                 ParameterName (requestedGvcid)
+    , parameterValue                RequestedGvcId
+    }
+,   parReturnTimeout        [6] SEQUENCE
+    { parameterName                 ParameterName (returnTimeoutPeriod)
+    , parameterValue                TimeoutPeriod
+    }
+}
+
+RcfParameterName            ::= ParameterName
+(   bufferSize
+|   deliveryMode
+|   latencyLimit
+|   minReportingCycle
+|   permittedGvcidSet
+|   reportingCycle
+|   requestedGvcid
+|   returnTimeoutPeriod
+)
+
+RcfProductionStatus         ::= INTEGER
+{   running                         (0)
+,   interrupted                     (1)
+,   halted                          (2)
+}
+
+SymbolLockStatus     ::=   LockStatus
+(  inLock
+|  outOfLock
+|  unknown
+)
+
+TimeoutPeriod               ::= INTEGER (1 .. 600)
+
+VcId                        ::= INTEGER (0 .. 63)
+-- The actual permissible range depends on the version number of the
+-- associated GVCID.
+
+-- SLE TEST TOOL ADD START
+
+-- Old structure required to maintain backward compatibility with
+-- previous SLE versions
+
+RcfGetParameterV1toV4   ::= CHOICE
+{   parBufferSize           [0] SEQUENCE
+    { parameterName                 RcfParameterName (bufferSize)
+    , parameterValue                IntPosShort
+    }
+,   parDeliveryMode         [1] SEQUENCE
+    { parameterName                 RcfParameterName (deliveryMode)
+    , parameterValue                RcfDeliveryMode
+    }
+,   parLatencyLimit         [2] SEQUENCE
+    { parameterName                 RcfParameterName (latencyLimit)
+    , parameterValue                CHOICE
+      {   online                  [0] IntPosShort
+      ,   offline                 [1] NULL
+      }
+    }
+,   parPermittedGvcidSet    [3] SEQUENCE
+    { parameterName                 RcfParameterName (permittedGvcidSet)
+    , parameterValue                GvcIdSetV1toV4
+    }
+,   parReportingCycle       [4] SEQUENCE
+    { parameterName                 RcfParameterName (reportingCycle)
+    , parameterValue                CurrentReportingCycle
+    }
+,   parReqGvcId             [5] SEQUENCE
+    { parameterName                 RcfParameterName (requestedGvcid)
+    , parameterValue                GvcId
+    }
+,   parReturnTimeout        [6] SEQUENCE
+    { parameterName                 RcfParameterName (returnTimeoutPeriod)
+    , parameterValue                TimeoutPeriod
+    }
+}
+
+-- SLE TEST TOOL ADD END
+
+END

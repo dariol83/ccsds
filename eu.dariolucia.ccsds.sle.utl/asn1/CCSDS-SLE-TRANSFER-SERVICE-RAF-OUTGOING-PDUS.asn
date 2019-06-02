@@ -1,0 +1,174 @@
+CCSDS-SLE-TRANSFER-SERVICE-RAF-OUTGOING-PDUS
+{iso identified-organization(3) standards-producing-organization(112) 
+    ccsds(4) space-link-extension(3) sle-transfer-services(1)
+    modules(1) return-all-frames-service(11) version-four(4)
+    asn1-outgoing-pdu(3)}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+
+IMPORTS     Credentials
+,           IntUnsignedLong
+,           InvokeId
+,           SpaceLinkDataUnit
+,           Time
+    FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+            SleAcknowledgement
+,           SleScheduleStatusReportReturn
+    FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+            AntennaId
+,           CarrierLockStatus
+,           DiagnosticRafGet
+,           DiagnosticRafStart
+,           FrameQuality
+,           FrameSyncLockStatus
+,           LockStatus
+,           Notification
+,           RafGetParameter
+,           RafGetParameterV1toV4
+,           RafProductionStatus
+,           SymbolLockStatus
+    FROM  CCSDS-SLE-TRANSFER-SERVICE-RAF-STRUCTURES
+            SleBindInvocation
+,           SleBindReturn
+,           SlePeerAbort
+,           SleUnbindInvocation
+,           SleUnbindReturn
+    FROM CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES
+;
+
+-- =============================================================
+-- The first part of the module definition contains the RAF type
+-- that contains all the possible PDUs the provider may send.
+-- =============================================================
+
+RafProviderToUserPdu        ::= CHOICE
+{ rafBindInvocation                 [100]   SleBindInvocation
+, rafBindReturn                     [101]   SleBindReturn
+, rafUnbindInvocation               [102]   SleUnbindInvocation
+, rafUnbindReturn                   [103]   SleUnbindReturn
+, rafStartReturn                    [1]     RafStartReturn
+, rafStopReturn                     [3]     SleAcknowledgement
+, rafTransferBuffer                 [8]     RafTransferBuffer
+, rafScheduleStatusReportReturn     [5]     SleScheduleStatusReportReturn
+, rafStatusReportInvocation         [9]     RafStatusReportInvocation
+, rafGetParameterReturn             [7]     RafGetParameterReturn
+, rafPeerAbortInvocation            [104]   SlePeerAbort
+}
+
+RafProviderToUserPduV1toV2        ::= CHOICE
+{ rafBindInvocation                 [100]   SleBindInvocation
+, rafBindReturn                     [101]   SleBindReturn
+, rafUnbindInvocation               [102]   SleUnbindInvocation
+, rafUnbindReturn                   [103]   SleUnbindReturn
+, rafStartReturn                    [1]     RafStartReturn
+, rafStopReturn                     [3]     SleAcknowledgement
+, rafTransferBuffer                 [8]     RafTransferBuffer
+, rafScheduleStatusReportReturn     [5]     SleScheduleStatusReportReturn
+, rafStatusReportInvocation         [9]     RafStatusReportInvocationV1toV2
+, rafGetParameterReturn             [7]     RafGetParameterReturnV1toV4
+, rafPeerAbortInvocation            [104]   SlePeerAbort
+}
+
+RafProviderToUserPduV3toV4        ::= CHOICE
+{ rafBindInvocation                 [100]   SleBindInvocation
+, rafBindReturn                     [101]   SleBindReturn
+, rafUnbindInvocation               [102]   SleUnbindInvocation
+, rafUnbindReturn                   [103]   SleUnbindReturn
+, rafStartReturn                    [1]     RafStartReturn
+, rafStopReturn                     [3]     SleAcknowledgement
+, rafTransferBuffer                 [8]     RafTransferBuffer
+, rafScheduleStatusReportReturn     [5]     SleScheduleStatusReportReturn
+, rafStatusReportInvocation         [9]     RafStatusReportInvocation
+, rafGetParameterReturn             [7]     RafGetParameterReturnV1toV4
+, rafPeerAbortInvocation            [104]   SlePeerAbort
+}
+
+-- =============================================================
+-- The second part of the module definition contains the types
+-- used by the RAF-PDUs declared in the first part.
+-- =============================================================
+
+FrameOrNotification             ::= CHOICE
+{   annotatedFrame                      [0] RafTransferDataInvocation
+,   syncNotification                    [1] RafSyncNotifyInvocation
+}
+
+RafGetParameterReturn           ::= SEQUENCE
+{   performerCredentials                Credentials
+,   invokeId                            InvokeId
+,   result                              CHOICE
+    {   positiveResult                      [0] RafGetParameter
+    ,   negativeResult                      [1] DiagnosticRafGet
+    }
+}
+
+RafStartReturn                  ::= SEQUENCE
+{   performerCredentials                Credentials
+,   invokeId                            InvokeId
+,   result                              CHOICE
+    {   positiveResult                      [0] NULL
+    ,   negativeResult                      [1] DiagnosticRafStart
+    }
+}
+
+RafStatusReportInvocation       ::= SEQUENCE
+{   invokerCredentials                  Credentials
+,   errorFreeFrameNumber                IntUnsignedLong
+,   deliveredFrameNumber                IntUnsignedLong
+,   frameSyncLockStatus                 FrameSyncLockStatus
+,   symbolSyncLockStatus                SymbolLockStatus
+,   subcarrierLockStatus                LockStatus
+,   carrierLockStatus                   CarrierLockStatus
+,   productionStatus                    RafProductionStatus
+}
+
+RafTransferBuffer               ::= SEQUENCE OF FrameOrNotification
+
+RafSyncNotifyInvocation         ::= SEQUENCE
+{   invokerCredentials                  Credentials
+,   notification                        Notification
+}
+
+RafTransferDataInvocation   ::= SEQUENCE
+{   invokerCredentials              Credentials
+,   earthReceiveTime                Time
+,   antennaId                       AntennaId
+,   dataLinkContinuity              INTEGER (-1 .. 16777215)
+,   deliveredFrameQuality           FrameQuality
+,   privateAnnotation               CHOICE
+    {   null                            [0] NULL
+    ,   notNull                         [1] OCTET STRING (SIZE (1 .. 128))
+    }
+,   data                            SpaceLinkDataUnit
+}
+
+-- SLE TEST TOOL ADD START
+
+-- Old structure required to maintain backward compatibility with
+-- previous SLE versions
+
+RafStatusReportInvocationV1toV2     ::= SEQUENCE
+{   invokerCredentials                  Credentials
+,   errorFreeFrameNumber                IntUnsignedLong
+,   deliveredFrameNumber                IntUnsignedLong
+,   frameSyncLockStatus                 LockStatus
+,   symbolSyncLockStatus                LockStatus
+,   subcarrierLockStatus                LockStatus
+,   carrierLockStatus                   LockStatus
+,   productionStatus                    RafProductionStatus
+}
+
+RafGetParameterReturnV1toV4           ::= SEQUENCE
+{   performerCredentials                Credentials
+,   invokeId                            InvokeId
+,   result                              CHOICE
+    {   positiveResult                      [0] RafGetParameterV1toV4
+    ,   negativeResult                      [1] DiagnosticRafGet
+    }
+}
+
+-- SLE TEST TOOL ADD END
+
+END

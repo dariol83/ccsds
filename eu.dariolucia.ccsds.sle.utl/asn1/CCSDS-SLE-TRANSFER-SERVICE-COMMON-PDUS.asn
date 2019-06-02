@@ -1,0 +1,83 @@
+CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+{  iso identified-organization(3) 
+   standards-producing-organization(112) ccsds(4)
+   space-link-extension(3) sle-transfer-services(1)
+   modules(1) common-modules(99) version-four(4) asn1-common-pdu(3)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::=   BEGIN
+
+EXPORTS  ReportingCycle
+,        SleAcknowledgement
+,        SleScheduleStatusReportInvocation
+,        SleScheduleStatusReportReturn
+,        SleStopInvocation
+;
+
+IMPORTS  Credentials
+,        Diagnostics
+,        InvokeId
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+;
+
+-- =============================================================
+-- The first part of the module definition contains the SLE-PDUs
+-- =============================================================
+
+SleAcknowledgement      ::=   SEQUENCE
+{  credentials       Credentials
+,  invokeId          InvokeId
+,  result            CHOICE
+   {  positiveResult    [0]   NULL
+   ,  negativeResult    [1]   Diagnostics
+   }
+}
+
+SleScheduleStatusReportInvocation   ::=   SEQUENCE
+{  invokerCredentials            Credentials
+,  invokeId                      InvokeId
+,  reportRequestType             ReportRequestType
+}
+
+SleScheduleStatusReportReturn ::=   SEQUENCE
+{  performerCredentials          Credentials
+,  invokeId                InvokeId
+,  result                  CHOICE
+   {  positiveResult          [0]   NULL
+   ,  negativeResult          [1]   DiagnosticScheduleStatusReport
+   }
+}
+
+SleStopInvocation    ::=   SEQUENCE
+{  invokerCredentials      Credentials
+,  invokeId                InvokeId
+}
+
+-- =============================================================
+-- The second part of the module definition contains the types
+-- used by the SLE-PDUs declared in the first part.
+-- =============================================================
+
+DiagnosticScheduleStatusReport   ::=   CHOICE
+{  common               [0]   Diagnostics
+,  specific             [1]   INTEGER
+   { notSupportedInThisDeliveryMode     (0) -- not used for
+                                            -- version 1 forward transfer
+                                            -- services
+   ,     alreadyStopped                (1)
+   ,     invalidReportingCycle         (2)
+   }
+}
+
+-- The cycle duration is expressed in seconds
+ReportingCycle    ::=   INTEGER (2 .. 600)
+
+ReportRequestType    ::=   CHOICE
+{  immediately    [0]   NULL
+,  periodically   [1]   ReportingCycle
+,  stop           [2]   NULL
+}
+
+END

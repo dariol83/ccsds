@@ -1,0 +1,377 @@
+CCSDS-SLE-TRANSFER-SERVICE-ROCF-STRUCTURES
+{  iso identified-organization(3) 
+   standards-producing-organization(112) ccsds(4)
+   space-link-extension(3) sle-transfer-services(1)
+   modules (1) return-operational-control-field-service(14) version-four(5)
+   asn1-rocf-structures(1)}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+
+EXPORTS  AntennaId
+,        CarrierLockStatus
+,        ControlWordType
+,        DiagnosticRocfGet
+,        DiagnosticRocfStart
+,        FrameSyncLockStatus
+,        GvcId
+,        LockStatus
+,        Notification
+,        RocfGetParameter
+,        RocfGetParameterV1toV4
+,        RocfParameterName
+,        RocfProductionStatus
+,        SymbolLockStatus
+,        TcVcid
+,        UpdateMode
+;
+IMPORTS  DeliveryMode
+,        Diagnostics
+,        IntPosShort
+,        ParameterName
+,        Time
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+         ReportingCycle
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+;
+
+AntennaId         ::= CHOICE
+{  globalForm  [0]   OBJECT IDENTIFIER
+,  localForm   [1]   OCTET STRING (SIZE (1 .. 16))
+}
+
+CarrierLockStatus    ::=   LockStatus
+(  inLock
+|  outOfLock
+|  unknown
+)
+
+ControlWordType            ::=   CHOICE
+{  allControlWords         [0]   NULL
+,  clcw              [1]   TcVcid
+,  notClcw           [2]   NULL
+}        
+
+ControlWordTypeNumber   ::=   RequestedControlWordTypeNumber
+(  allControlWords
+|  clcw
+|  notClcw
+)        
+
+CurrentReportingCycle      ::= CHOICE
+{  periodicReportingOff [0]   NULL
+,  periodicReportingOn  [1]   ReportingCycle
+}
+
+DiagnosticRocfGet    ::=   CHOICE
+{  common      [0]   Diagnostics
+,  specific    [1]   INTEGER
+   {  unknownParameter        (0)
+   }
+}
+
+DiagnosticRocfStart     ::=   CHOICE
+{  common      [0]   Diagnostics
+,  specific    [1]   INTEGER
+   {  outOfService            (0)
+   ,  unableToComply          (1)
+   ,  invalidStartTime        (2)
+   ,  invalidStopTime         (3)
+   ,  missingTimeValue        (4)
+   ,  invalidGvcId            (5)
+   ,  invalidControlWordType  (6)
+   ,  invalidTcVcid           (7)
+   ,  invalidUpdateMode       (8)
+   }
+}
+
+FrameSyncLockStatus     ::=   LockStatus
+(  inLock
+|  outOfLock
+|  unknown
+)
+
+GvcId             ::= SEQUENCE
+{  spacecraftId         INTEGER (0 .. 1023)  
+,  versionNumber        INTEGER (0 .. 3)
+,  vcId                 CHOICE
+   {  masterChannel     [0]   NULL
+   ,  virtualChannel    [1]   VcId
+   }
+}
+-- Notes:
+-- The permissible range of the spacecraftId depends on the versionNumber.
+-- TM Transfer Frames and AOS Transfer Frames are supported.
+-- In case of TM the permissible range is 0 to 1023 (10 bits).
+-- In case of AOS the permissible range is 0 to 255 (8 bits).
+GvcIdSet          ::= SET OF MasterChannelComposition
+
+LockStatus        ::= INTEGER
+{  inLock                  (0)
+,  outOfLock               (1)
+,  notInUse                (2)
+,  unknown                 (3)
+}
+
+LockStatusReport     ::= SEQUENCE
+{  time              Time
+,  carrierLockStatus       CarrierLockStatus
+,  subcarrierLockStatus    LockStatus
+,  symbolSyncLockStatus    SymbolLockStatus
+}
+
+MasterChannelComposition   ::= SEQUENCE
+{  spacecraftId            INTEGER (0 .. 1023)
+,  versionNumber           INTEGER (0 .. 3)
+,  mcOrVcList              CHOICE
+   {  masterChannel  [0]   NULL
+   ,  vcList         [1]   SET OF VcId
+   }
+}
+
+Notification ::= CHOICE
+{ lossFrameSync [0] LockStatusReport
+, productionStatusChange [1] RocfProductionStatus
+, excessiveDataBacklog [2] NULL
+, endOfData [3] NULL
+}
+
+RequestedControlWordTypeNumber   ::=   INTEGER
+{  allControlWords                        (0)
+,  clcw                             (1)
+,  notClcw                          (2)
+}
+
+RequestedControlWordTypeNumberV1toV4   ::=   INTEGER
+{  allControlWords                  (0)
+,  clcw                             (1)
+,  notClcw                          (2)
+,  undefined                        (3) 
+}        
+
+RequestedGvcId    ::=  GvcId
+
+RequestedTcVcid   ::=   TcVcid
+
+RequestedUpdateMode     ::=   INTEGER
+{  continuous              (0)
+,  changeBased             (1)
+}
+
+RocfDeliveryMode     ::=   DeliveryMode
+(  rtnTimelyOnline
+|  rtnCompleteOnline
+|  rtnOffline
+)
+
+RocfGetParameter           ::=   CHOICE
+{  parBufferSize           [0]   SEQUENCE
+   {  parameterName                 ParameterName (bufferSize)
+   ,  parameterValue                IntPosShort
+   }
+,  parDeliveryMode         [1]   SEQUENCE
+   {  parameterName                 ParameterName (deliveryMode)
+   ,  parameterValue                RocfDeliveryMode
+   }
+,  parLatencyLimit         [2]   SEQUENCE
+   {  parameterName                 ParameterName (latencyLimit)
+   ,  parameterValue                CHOICE
+      {  online               [0]   IntPosShort
+      ,  offline              [1]   NULL
+      }
+   }
+,  parMinReportingCycle    [13]   SEQUENCE -- In the standard it is 7 but it is a mistake
+   {  parameterName 			    ParameterName (minReportingCycle)
+   ,  parameterValue 				IntPosShort (1 .. 600)
+   }
+,  parPermittedGvcidSet    [3]   SEQUENCE
+   {  parameterName                 ParameterName (permittedGvcidSet)
+   ,  parameterValue                GvcIdSet
+   }
+,  parPermittedRprtTypeSet [4]   SEQUENCE
+   {  parameterName                 ParameterName (permittedControlWordTypeSet)
+   ,  parameterValue                SEQUENCE OF ControlWordTypeNumber
+   }
+,  parPermittedTcVcidSet   [5]   SEQUENCE
+   {  parameterName                 ParameterName (permittedTcVcidSet)
+   ,  parameterValue                TcVcidSet
+   }
+,  parPermittedUpdModeSet  [6]   SEQUENCE
+   {  parameterName                 ParameterName (permittedUpdateModeSet)
+   ,  parameterValue                SEQUENCE OF UpdateMode
+   }
+,  parReportingCycle       [7]   SEQUENCE
+   {  parameterName                 ParameterName (reportingCycle)
+   ,  parameterValue                CurrentReportingCycle
+   }
+,  parReqGvcId             [8]   SEQUENCE
+   {  parameterName                 ParameterName (requestedGvcid)
+   ,  parameterValue                RequestedGvcId
+   }
+,  parReqControlWordType   [9]   SEQUENCE
+   {  parameterName                 ParameterName (requestedControlWordType)
+   ,  parameterValue                RequestedControlWordTypeNumber
+   }
+,  parReqTcVcid            [10]  SEQUENCE
+   {  parameterName                 ParameterName (requestedTcVcid)
+   ,  parameterValue                RequestedTcVcid
+   }
+,  parReqUpdateMode        [11]  SEQUENCE
+   {  parameterName                 ParameterName (requestedUpdateMode)
+   ,  parameterValue                RequestedUpdateMode
+   }
+,  parReturnTimeout        [12]  SEQUENCE
+   {  parameterName                 ParameterName (returnTimeoutPeriod)
+   ,  parameterValue                TimeoutPeriod
+   }
+}
+
+
+RocfParameterName    ::= ParameterName
+(  bufferSize
+|  deliveryMode
+|  latencyLimit
+|  minReportingCycle
+|  permittedControlWordTypeSet
+|  permittedGvcidSet
+|  permittedTcVcidSet
+|  permittedUpdateModeSet
+|  reportingCycle
+|  requestedControlWordType
+|  requestedGvcid
+|  requestedTcVcid
+|  requestedUpdateMode
+|  returnTimeoutPeriod
+)
+
+RocfProductionStatus    ::=   INTEGER
+{  running                 (0)
+,  interrupted             (1)
+,  halted                  (2)
+}
+
+SymbolLockStatus     ::=   LockStatus
+(  inLock
+|  outOfLock
+|  unknown
+)
+
+TcVcid            ::=   CHOICE
+{  noTcVC      [0]   NULL
+,  tcVcid      [1]   VcId
+}  
+
+TcVcidSet         ::=   CHOICE
+{  noTcVC      [0]   NULL
+,  tcVcids     [1]   SEQUENCE OF VcId
+}
+
+TimeoutPeriod     ::=   INTEGER (1 .. 600)
+                        -- measured in seconds
+
+UpdateMode        ::=   RequestedUpdateMode
+(  continuous
+|  changeBased
+)     
+
+VcId              ::=   INTEGER (0 .. 63)
+-- The actual permissible range depends on the version number of the
+-- associated GVCID.
+-- In case of TM the permissible range is 0 to 7 (3 bits).
+-- In case of AOS the permissible range is 0 to 63 (6 bits).
+
+
+-- SLE TEST TOOL ADD START
+
+-- Old structure required to maintain backward compatibility with
+-- previous SLE versions
+
+GvcIdSetV1toV4          ::= SEQUENCE OF MasterChannelCompositionV1toV4
+
+MasterChannelCompositionV1toV4   ::= SEQUENCE
+{  spacecraftId            INTEGER (0 .. 1023)
+,  versionNumber           INTEGER (0 .. 3)
+,  mcOrVcList              CHOICE
+   {  masterChannel  [0]   NULL
+   ,  vcList         [1]   SEQUENCE OF VcId
+   }
+}
+
+RequestedGvcIdV1toV4    ::=  CHOICE
+{  gvcid       [0]   GvcId
+,  undefined   [1]   NULL
+}
+
+RequestedUpdateModeV1toV4     ::=   INTEGER
+{  continuous              (0)
+,  changeBased             (1)
+,  undefined               (3)
+}
+
+RequestedTcVcidV1toV4   ::=   CHOICE
+{  tcVcid      [0]   TcVcid
+,  undefined   [1]   NULL
+}
+
+RocfGetParameterV1toV4           ::=   CHOICE
+{  parBufferSize           [0]   SEQUENCE
+   {  parameterName                 ParameterName (bufferSize)
+   ,  parameterValue                IntPosShort
+   }
+,  parDeliveryMode         [1]   SEQUENCE
+   {  parameterName                 ParameterName (deliveryMode)
+   ,  parameterValue                RocfDeliveryMode
+   }
+,  parLatencyLimit         [2]   SEQUENCE
+   {  parameterName                 ParameterName (latencyLimit)
+   ,  parameterValue                CHOICE
+      {  online               [0]   IntPosShort
+      ,  offline              [1]   NULL
+      }
+   }
+,  parPermittedGvcidSet    [3]   SEQUENCE
+   {  parameterName                 ParameterName (permittedGvcidSet)
+   ,  parameterValue                GvcIdSetV1toV4
+   }
+,  parPermittedRprtTypeSet [4]   SEQUENCE
+   {  parameterName                 ParameterName (permittedControlWordTypeSet)
+   ,  parameterValue                SEQUENCE OF ControlWordTypeNumber
+   }
+,  parPermittedTcVcidSet   [5]   SEQUENCE
+   {  parameterName                 ParameterName (permittedTcVcidSet)
+   ,  parameterValue                TcVcidSet
+   }
+,  parPermittedUpdModeSet  [6]   SEQUENCE
+   {  parameterName                 ParameterName (permittedUpdateModeSet)
+   ,  parameterValue                SEQUENCE OF UpdateMode
+   }
+,  parReportingCycle       [7]   SEQUENCE
+   {  parameterName                 ParameterName (reportingCycle)
+   ,  parameterValue                CurrentReportingCycle
+   }
+,  parReqGvcId             [8]   SEQUENCE
+   {  parameterName                 ParameterName (requestedGvcid)
+   ,  parameterValue                RequestedGvcIdV1toV4
+   }
+,  parReqControlWordType   [9]   SEQUENCE
+   {  parameterName                 ParameterName (requestedControlWordType)
+   ,  parameterValue                RequestedControlWordTypeNumberV1toV4
+   }
+,  parReqTcVcid            [10]  SEQUENCE
+   {  parameterName                 ParameterName (requestedTcVcid)
+   ,  parameterValue                RequestedTcVcidV1toV4
+   }
+,  parReqUpdateMode        [11]  SEQUENCE
+   {  parameterName                 ParameterName (requestedUpdateMode)
+   ,  parameterValue                RequestedUpdateModeV1toV4
+   }
+,  parReturnTimeout        [12]  SEQUENCE
+   {  parameterName                 ParameterName (returnTimeoutPeriod)
+   ,  parameterValue                TimeoutPeriod
+   }
+}
+
+-- SLE TEST TOOL ADD END
+
+END

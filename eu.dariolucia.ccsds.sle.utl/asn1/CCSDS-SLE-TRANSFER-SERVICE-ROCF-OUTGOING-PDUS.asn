@@ -1,0 +1,142 @@
+CCSDS-SLE-TRANSFER-SERVICE-ROCF-OUTGOING-PDUS
+{  iso identified-organization(3) 
+   standards-producing-organization(112) ccsds(4)
+   space-link-extension(3) sle-transfer-services(1)
+   modules (1) return-operational-control-field-service(14) version-four(4)
+   asn1-outgoing-pdu(3)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+
+IMPORTS  Credentials
+,        IntUnsignedLong
+,        InvokeId
+,        SpaceLinkDataUnit
+,        Time
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+         SleAcknowledgement
+,        SleScheduleStatusReportReturn
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+         AntennaId
+,        CarrierLockStatus
+,        DiagnosticRocfGet
+,        DiagnosticRocfStart
+,        FrameSyncLockStatus
+,        LockStatus
+,        Notification
+,        RocfGetParameter
+,        RocfGetParameterV1toV4
+,        RocfProductionStatus
+,        SymbolLockStatus
+   FROM CCSDS-SLE-TRANSFER-SERVICE-ROCF-STRUCTURES
+         SleBindInvocation
+,        SleBindReturn
+,        SlePeerAbort
+,        SleUnbindInvocation
+,        SleUnbindReturn
+   FROM CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES
+;
+
+-- =============================================================
+-- The first part of the module definition contains the ROCF type
+-- that contains all the possible PDUs the provider may send.
+-- =============================================================
+
+RocfProviderToUserPdu                  ::=   CHOICE
+{  rocfBindInvocation               [100] SleBindInvocation
+,  rocfBindReturn                   [101] SleBindReturn
+,  rocfUnbindInvocation             [102] SleUnbindInvocation
+,  rocfUnbindReturn                 [103] SleUnbindReturn
+,  rocfStartReturn                  [1]   RocfStartReturn
+,  rocfStopReturn                   [3]   SleAcknowledgement
+,  rocfTransferBuffer               [8]   RocfTransferBuffer
+,  rocfScheduleStatusReportReturn   [5]   SleScheduleStatusReportReturn
+,  rocfStatusReportInvocation       [9]   RocfStatusReportInvocation
+,  rocfGetParameterReturn           [7]   RocfGetParameterReturn
+,  rocfPeerAbortInvocation          [104] SlePeerAbort
+}
+
+RocfProviderToUserPduV1toV4                  ::=   CHOICE
+{  rocfBindInvocation               [100] SleBindInvocation
+,  rocfBindReturn                   [101] SleBindReturn
+,  rocfUnbindInvocation             [102] SleUnbindInvocation
+,  rocfUnbindReturn                 [103] SleUnbindReturn
+,  rocfStartReturn                  [1]   RocfStartReturn
+,  rocfStopReturn                   [3]   SleAcknowledgement
+,  rocfTransferBuffer               [8]   RocfTransferBuffer
+,  rocfScheduleStatusReportReturn   [5]   SleScheduleStatusReportReturn
+,  rocfStatusReportInvocation       [9]   RocfStatusReportInvocation
+,  rocfGetParameterReturn           [7]   RocfGetParameterReturnV1toV4
+,  rocfPeerAbortInvocation          [104] SlePeerAbort
+}
+
+-- =============================================================
+-- The second part of the module definition contains the types
+-- used by the ROCF-PDUs declared in the first part.
+-- =============================================================
+
+OcfOrNotification    ::=   CHOICE
+{  annotatedOcf      [0]   RocfTransferDataInvocation
+,  syncNotification  [1]   RocfSyncNotifyInvocation
+}
+
+RocfGetParameterReturn  ::=   SEQUENCE
+{  performerCredentials    Credentials
+,  invokeId          InvokeId
+,  result            CHOICE
+   {  positiveResult    [0]   RocfGetParameter
+   ,  negativeResult    [1]   DiagnosticRocfGet
+   }
+}
+
+RocfGetParameterReturnV1toV4  ::=   SEQUENCE
+{  performerCredentials    Credentials
+,  invokeId          InvokeId
+,  result            CHOICE
+   {  positiveResult    [0]   RocfGetParameterV1toV4
+   ,  negativeResult    [1]   DiagnosticRocfGet
+   }
+}
+
+RocfStartReturn      ::=   SEQUENCE
+{  performerCredentials    Credentials
+,  invokeId          InvokeId
+,  result            CHOICE
+   {  positiveResult    [0]   NULL
+   ,  negativeResult    [1]   DiagnosticRocfStart
+   }
+}
+
+RocfStatusReportInvocation    ::=   SEQUENCE
+{  invokerCredentials            Credentials
+,  processedFrameNumber          IntUnsignedLong
+,  deliveredOcfsNumber           IntUnsignedLong
+,  frameSyncLockStatus           FrameSyncLockStatus
+,  symbolSyncLockStatus          SymbolLockStatus
+,  subcarrierLockStatus          LockStatus
+,  carrierLockStatus             CarrierLockStatus
+,  productionStatus              RocfProductionStatus
+}
+
+RocfSyncNotifyInvocation   ::=   SEQUENCE
+{  invokerCredentials         Credentials
+,  notification               Notification
+}
+
+RocfTransferBuffer      ::=   SEQUENCE OF OcfOrNotification
+
+RocfTransferDataInvocation    ::=   SEQUENCE
+{  invokerCredentials            Credentials
+,  earthReceiveTime              Time
+,  antennaId                     AntennaId
+,  dataLinkContinuity            INTEGER (-1 .. 16777215)
+,  privateAnnotation             CHOICE
+   {  null              [0]   NULL
+   ,  notNull           [1]   OCTET STRING (SIZE (1 .. 128))
+   }
+,  data                    SpaceLinkDataUnit
+}
+
+END

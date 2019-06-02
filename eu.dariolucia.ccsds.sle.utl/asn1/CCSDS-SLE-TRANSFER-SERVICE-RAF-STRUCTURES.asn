@@ -1,0 +1,230 @@
+CCSDS-SLE-TRANSFER-SERVICE-RAF-STRUCTURES
+{iso identified-organization(3) standards-producing-organization(112)
+    ccsds(4) space-link-extension(3) sle-transfer-services(1)
+    modules(1) return-all-frames-service(11) version-five(5)
+    asn1-raf-structures(1)}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+
+EXPORTS     AntennaId
+,           CarrierLockStatus
+,           DiagnosticRafGet
+,           DiagnosticRafStart
+,           FrameQuality
+,           FrameSyncLockStatus
+,           LockStatus
+,           Notification
+,           RafGetParameterV1toV4
+,           RafGetParameter
+,           RafProductionStatus
+,           RafParameterName
+,           RequestedFrameQuality
+,           SymbolLockStatus
+;
+IMPORTS     DeliveryMode
+,           Diagnostics
+,           IntPosShort
+,           IntPosLong
+,           ParameterName
+,           Time
+    FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+            ReportingCycle
+    FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+;
+
+AntennaId                   ::= CHOICE
+{   globalForm                      [0] OBJECT IDENTIFIER
+,   localForm                       [1] OCTET STRING (SIZE (1 .. 16))
+}
+
+CarrierLockStatus ::=   LockStatus
+(  inLock
+|  outOfLock
+|  unknown
+)
+
+CurrentReportingCycle       ::= CHOICE
+{   periodicReportingOff            [0] NULL
+,   periodicReportingOn             [1] ReportingCycle
+}
+
+DiagnosticRafGet            ::= CHOICE
+{   common                          [0] Diagnostics
+,   specific                        [1] INTEGER
+    {   unknownParameter                    (0)
+    }
+}
+
+DiagnosticRafStart          ::= CHOICE
+{   common                          [0] Diagnostics
+,   specific                        [1] INTEGER
+    {   outOfService                        (0)
+    ,   unableToComply                      (1)
+    ,   invalidStartTime                    (2)
+    ,   invalidStopTime                     (3)
+    ,   missingTimeValue                    (4)
+    }
+}
+
+FrameQuality               ::= INTEGER
+{   good                            (0)
+,   erred                           (1)
+,   undetermined                    (2)
+}
+
+FrameSyncLockStatus        ::=   LockStatus
+(  inLock
+|  outOfLock
+|  unknown
+)
+
+LockStatus                 ::= INTEGER
+{   inLock                          (0)
+,   outOfLock                       (1)
+,   notInUse                        (2)
+,   unknown                         (3)
+}
+
+LockStatusReport            ::= SEQUENCE
+{   time                            Time
+,   carrierLockStatus               CarrierLockStatus
+,   subcarrierLockStatus            LockStatus
+,   symbolSyncLockStatus            SymbolLockStatus
+}
+
+Notification                ::= CHOICE
+{   lossFrameSync                   [0] LockStatusReport
+,   productionStatusChange          [1] RafProductionStatus
+,   excessiveDataBacklog            [2] NULL
+,   endOfData                       [3] NULL
+}
+
+RafGetParameter ::= CHOICE
+{ parBufferSize [0] SEQUENCE
+ { parameterName ParameterName (bufferSize)
+ , parameterValue IntPosShort
+ }
+, parDeliveryMode [1] SEQUENCE
+ { parameterName ParameterName (deliveryMode)
+ , parameterValue RafDeliveryMode
+ }
+, parLatencyLimit [2] SEQUENCE
+ { parameterName ParameterName (latencyLimit)
+ , parameterValue CHOICE
+ { online [0] IntPosShort
+ , offline [1] NULL
+ }
+ }
+, parMinReportingCycle [7] SEQUENCE
+ { parameterName ParameterName (minReportingCycle)
+ , parameterValue IntPosShort (1 .. 600)
+ }
+, parPermittedFrameQuality [6] SEQUENCE
+ { parameterName ParameterName (permittedFrameQuality)
+ , parameterValue PermittedFrameQualitySet
+ }
+, parReportingCycle [3] SEQUENCE
+ { parameterName ParameterName (reportingCycle)
+ , parameterValue CurrentReportingCycle
+ }
+, parReqFrameQuality [4] SEQUENCE
+ { parameterName ParameterName (requestedFrameQuality)
+ , parameterValue INTEGER
+ { goodFramesOnly (0)
+ , erredFrameOnly (1)
+ , allFrames (2)
+ }
+ }
+, parReturnTimeout [5] SEQUENCE
+ { parameterName ParameterName (returnTimeoutPeriod)
+ , parameterValue TimeoutPeriod
+ }
+} 
+
+PermittedFrameQualitySet ::= SET SIZE (1 .. 3) OF RequestedFrameQuality 
+
+RafDeliveryMode             ::= DeliveryMode
+(   rtnTimelyOnline
+|   rtnCompleteOnline
+|   rtnOffline
+)
+
+RafParameterName            ::= ParameterName
+(   bufferSize
+|   deliveryMode
+|   latencyLimit
+|   minReportingCycle
+|   reportingCycle
+|   requestedFrameQuality
+|   returnTimeoutPeriod
+)
+
+RafProductionStatus         ::= INTEGER
+{   running                         (0)
+,   interrupted                     (1)
+,   halted                          (2)
+}
+
+RequestedFrameQuality       ::= INTEGER
+{   goodFramesOnly                  (0)
+,   erredFrameOnly                  (1)
+,   allFrames                       (2)
+}
+
+SymbolLockStatus     ::=   LockStatus
+(  inLock
+|  outOfLock
+|  unknown
+)
+
+TimeoutPeriod               ::= INTEGER (1 .. 600)
+                                -- measured in seconds
+
+-- SLE TEST TOOL ADD START
+
+-- Old structure required to maintain backward compatibility with
+-- previous SLE versions
+
+RafGetParameterV1toV4     ::= CHOICE
+{   parBufferSize           [0] SEQUENCE
+    {   parameterName               ParameterName (bufferSize)
+    ,   parameterValue              IntPosShort
+                                    -- bufferSize in number of invocations
+                                    -- that can be held in buffer
+    }
+,   parDeliveryMode         [1] SEQUENCE
+    {   parameterName               ParameterName (deliveryMode)
+    ,   parameterValue              RafDeliveryMode
+    }
+,   parLatencyLimit         [2] SEQUENCE
+    {   parameterName               ParameterName (latencyLimit)
+    ,   parameterValue              CHOICE
+        {   online                    [0] IntPosShort
+                                            -- latencyLimit in seconds
+        ,   offline                 [1] NULL
+        }
+    }
+,   parReportingCycle       [3] SEQUENCE
+    {   parameterName               ParameterName (reportingCycle)
+    ,   parameterValue              CurrentReportingCycle
+    }
+,   parReqFrameQuality      [4] SEQUENCE
+    {   parameterName               ParameterName (requestedFrameQuality)
+    ,   parameterValue              INTEGER
+        {   goodFramesOnly              (0)
+        ,   erredFrameOnly              (1)
+        ,   allFrames                   (2)
+        ,   undefined                   (3)
+        }
+    }
+,   parReturnTimeout        [5] SEQUENCE
+    {   parameterName               ParameterName (returnTimeoutPeriod)
+    ,   parameterValue              TimeoutPeriod
+    }
+}
+
+-- SLE TEST TOOL ADD END
+
+END

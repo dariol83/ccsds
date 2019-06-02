@@ -1,0 +1,190 @@
+CCSDS-SLE-TRANSFER-SERVICE-FSP-OUTGOING-PDUS
+{  iso identified-organization(3) 
+   standards-producing-organization(112) ccsds(4)
+   space-link-extension(3) sle-transfer-services(1)
+   modules(1) forward-space-packet-service(24) version-four(4)
+   asn1-fsp-outgoing-pdus(3)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::=   BEGIN
+
+IMPORTS  ConditionalTime
+,        Credentials
+,        IntUnsignedLong
+,        InvokeId
+,        Time
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+         SleAcknowledgement
+,        SleScheduleStatusReportReturn
+   FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+         BufferSize
+,        DiagnosticFspGet
+,        DiagnosticFspInvokeDirective
+,        DiagnosticFspStart
+,        DiagnosticFspThrowEvent
+,        DiagnosticFspTransferData
+,        FspGetParameter
+,        FspGetParameterV1toV3
+,        FspGetParameterV4
+,        FspNotification
+,        FspPacketCount
+,        FspPacketLastOk
+,        FspPacketLastProcessed
+,        FspProductionStatus
+,        PacketIdentification
+   FROM CCSDS-SLE-TRANSFER-SERVICE-FSP-STRUCTURES
+         SleBindReturn
+,        SlePeerAbort
+,        SleUnbindReturn
+   FROM CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES
+;
+
+-- =============================================================
+-- The first part of the module definition contains the FSP type
+-- that contains all the possible PDUs the provider may send.
+-- =============================================================
+
+FspProviderToUserPdu                ::=   CHOICE
+{  fspBindReturn                 [101] SleBindReturn
+,  fspUnbindReturn               [103] SleUnbindReturn
+,  fspStartReturn                [1]   FspStartReturn
+,  fspStopReturn                 [3]   SleAcknowledgement
+,  fspTransferDataReturn         [11]  FspTransferDataReturn
+,  fspAsyncNotifyInvocation      [12]  FspAsyncNotifyInvocation
+,  fspScheduleStatusReportReturn [5]   SleScheduleStatusReportReturn
+,  fspStatusReportInvocation     [13]  FspStatusReportInvocation
+,  fspGetParameterReturn         [7]   FspGetParameterReturn
+,  fspThrowEventReturn           [9]   FspThrowEventReturn
+,  fspInvokeDirectiveReturn      [15]  FspInvokeDirectiveReturn
+,  fspPeerAbortInvocation        [104] SlePeerAbort
+}
+
+FspProviderToUserPduV1toV3                ::=   CHOICE
+{  fspBindReturn                 [101] SleBindReturn
+,  fspUnbindReturn               [103] SleUnbindReturn
+,  fspStartReturn                [1]   FspStartReturn
+,  fspStopReturn                 [3]   SleAcknowledgement
+,  fspTransferDataReturn         [11]  FspTransferDataReturn
+,  fspAsyncNotifyInvocation      [12]  FspAsyncNotifyInvocation
+,  fspScheduleStatusReportReturn [5]   SleScheduleStatusReportReturn
+,  fspStatusReportInvocation     [13]  FspStatusReportInvocation
+,  fspGetParameterReturn         [7]   FspGetParameterReturnV1toV3
+,  fspThrowEventReturn           [9]   FspThrowEventReturn
+,  fspInvokeDirectiveReturn      [15]  FspInvokeDirectiveReturn
+,  fspPeerAbortInvocation        [104] SlePeerAbort
+}
+
+FspProviderToUserPduV4                ::=   CHOICE
+{  fspBindReturn                 [101] SleBindReturn
+,  fspUnbindReturn               [103] SleUnbindReturn
+,  fspStartReturn                [1]   FspStartReturn
+,  fspStopReturn                 [3]   SleAcknowledgement
+,  fspTransferDataReturn         [11]  FspTransferDataReturn
+,  fspAsyncNotifyInvocation      [12]  FspAsyncNotifyInvocation
+,  fspScheduleStatusReportReturn [5]   SleScheduleStatusReportReturn
+,  fspStatusReportInvocation     [13]  FspStatusReportInvocation
+,  fspGetParameterReturn         [7]   FspGetParameterReturnV4
+,  fspThrowEventReturn           [9]   FspThrowEventReturn
+,  fspInvokeDirectiveReturn      [15]  FspInvokeDirectiveReturn
+,  fspPeerAbortInvocation        [104] SlePeerAbort
+}
+
+-- =============================================================
+-- The second part of the module definition contains the types
+-- used by the FSP-PDUs declared in the first part.
+-- =============================================================
+
+FspAsyncNotifyInvocation   ::=   SEQUENCE
+{  invokerCredentials         Credentials
+,  fspNotification            FspNotification
+,  fspPacketLastProc          FspPacketLastProcessed
+,  fspPacketLastOk            FspPacketLastOk
+,  productionStatus           FspProductionStatus
+}
+
+FspGetParameterReturn      ::=   SEQUENCE
+{  performerCredentials       Credentials
+,  invokeId                   InvokeId
+,  result                     CHOICE
+   {  positiveResult       [0]   FspGetParameter
+   ,  negativeResult       [1]   DiagnosticFspGet
+   }
+}
+
+FspGetParameterReturnV4      ::=   SEQUENCE
+{  performerCredentials       Credentials
+,  invokeId                   InvokeId
+,  result                     CHOICE
+   {  positiveResult       [0]   FspGetParameterV4
+   ,  negativeResult       [1]   DiagnosticFspGet
+   }
+}
+
+FspGetParameterReturnV1toV3      ::=   SEQUENCE
+{  performerCredentials       Credentials
+,  invokeId                   InvokeId
+,  result                     CHOICE
+   {  positiveResult       [0]   FspGetParameterV1toV3
+   ,  negativeResult       [1]   DiagnosticFspGet
+   }
+}
+
+FspInvokeDirectiveReturn   ::=   SEQUENCE
+{  performerCredentials       Credentials
+,  invokeId                   InvokeId
+,  directiveIdentification    IntUnsignedLong
+,  result                     CHOICE
+   {  positiveResult       [0]   NULL
+   ,  negativeResult       [1]   DiagnosticFspInvokeDirective
+   }
+}
+
+FspStartReturn    ::=   SEQUENCE
+{  performerCredentials    Credentials
+,  invokeId                InvokeId
+,  result                  CHOICE
+   {  positiveResult       [0]   SEQUENCE
+      {  startProductionTime     Time
+      ,  stopProductionTime      ConditionalTime
+      }
+   ,  negativeResult       [1]   DiagnosticFspStart
+   }
+}
+
+FspStatusReportInvocation  ::=   SEQUENCE
+{  invokerCredentials            Credentials
+,  fspPacketLastProcessed        FspPacketLastProcessed
+,  fspPacketLastOk               FspPacketLastOk
+,  productionStatus              FspProductionStatus
+,  numberOfPacketsReceived       FspPacketCount
+,  numberOfPacketsProcessed      FspPacketCount
+,  numberOfPacketsRadiated       FspPacketCount
+,  numberOfPacketsAcknowledged   IntUnsignedLong
+,  fspBufferAvailable            BufferSize
+}
+
+FspThrowEventReturn     ::=   SEQUENCE
+{  performerCredentials    Credentials
+,  invokeId                InvokeId
+,  eventInvokeId           IntUnsignedLong
+,  result                  CHOICE
+   {  positiveResult    [0]   NULL
+   ,  negativeResult    [1]   DiagnosticFspThrowEvent
+   }
+}
+
+FspTransferDataReturn         ::=   SEQUENCE
+{  performerCredentials          Credentials
+,  invokeId                      InvokeId
+,  expectedPacketIdentification  PacketIdentification
+,  packetBufferAvailable         BufferSize
+,  result                        CHOICE
+   {  positiveResult          [0]   NULL
+   ,  negativeResult          [1]   DiagnosticFspTransferData
+   }
+}
+
+
+END

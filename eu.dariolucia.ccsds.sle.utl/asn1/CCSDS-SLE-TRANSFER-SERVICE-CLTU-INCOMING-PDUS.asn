@@ -1,0 +1,88 @@
+CCSDS-SLE-TRANSFER-SERVICE-CLTU-INCOMING-PDUS
+{  iso identified-organization(3) standards-producing-organization(112)
+   ccsds(4) space-link-extension(3) sle-transfer-services(1)
+   modules(1) forward-cltu-service(21) version-four(4) 
+   asn1-incoming-pdus(2)
+}
+
+DEFINITIONS
+IMPLICIT TAGS
+::= BEGIN
+
+IMPORTS     ConditionalTime
+,           Credentials
+,           Duration
+,           IntPosShort
+,           InvokeId
+,           SlduStatusNotification
+FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES
+            SleScheduleStatusReportInvocation
+,           SleStopInvocation
+FROM CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS
+            CltuData
+,           CltuIdentification
+,           CltuParameterName
+,           EventInvocationId
+FROM CCSDS-SLE-TRANSFER-SERVICE-CLTU-STRUCTURES
+            SleBindInvocation
+,           SlePeerAbort
+,           SleUnbindInvocation
+,           SleBindReturn
+,           SleUnbindReturn
+FROM CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES
+;
+
+-- =============================================================
+-- The first part of the module definition contains the CLTU type
+-- that contains all the possible PDUs the provider may receive.
+-- =============================================================
+
+CltuUserToProviderPdu         ::=   CHOICE
+{  cltuBindInvocation                  [100] SleBindInvocation
+,  cltuUnbindInvocation                [102] SleUnbindInvocation
+,  cltuStartInvocation                 [0]   CltuStartInvocation
+,  cltuStopInvocation                  [2]   SleStopInvocation
+,  cltuScheduleStatusReportInvocation  [4]   SleScheduleStatusReportInvocation
+,  cltuGetParameterInvocation          [6]   CltuGetParameterInvocation
+,  cltuThrowEventInvocation            [8]   CltuThrowEventInvocation
+,  cltuTransferDataInvocation          [10]  CltuTransferDataInvocation
+,  cltuPeerAbortInvocation             [104] SlePeerAbort
+}
+
+-- =============================================================
+-- The second part of the module definition contains the types
+-- used by the CLTU-PDUs declared in the first part.
+-- =============================================================
+
+CltuGetParameterInvocation    ::=   SEQUENCE
+{  invokerCredentials               Credentials
+,  invokeId                         InvokeId
+,  cltuParameter                    CltuParameterName
+}
+
+CltuStartInvocation           ::=   SEQUENCE
+{  invokerCredentials               Credentials
+,  invokeId                         InvokeId
+,  firstCltuIdentification          CltuIdentification
+}
+
+CltuThrowEventInvocation      ::=   SEQUENCE
+{  invokerCredentials               Credentials
+,  invokeId                         InvokeId
+,  eventInvocationIdentification    EventInvocationId 
+,  eventIdentifier                  IntPosShort 
+,  eventQualifier                   OCTET STRING (SIZE (1 .. 1024))
+}
+
+CltuTransferDataInvocation    ::=   SEQUENCE
+{  invokerCredentials               Credentials
+,  invokeId                         InvokeId
+,  cltuIdentification               CltuIdentification
+,  earliestTransmissionTime         ConditionalTime
+,  latestTransmissionTime           ConditionalTime
+,  delayTime                        Duration
+,  slduRadiationNotification        SlduStatusNotification
+,  cltuData                         CltuData
+}
+
+END
