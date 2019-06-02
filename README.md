@@ -1,6 +1,6 @@
 # An open source implementation of the CCSDS protocols and formats in Java 11
-This repository contains an attempt to code an open source, not validated and not tested implementation of some of the publicly 
-available CCSDS standards (SLE, TM/TC/AOS data link protocols, space packets). The implementation has been done in Java and follows the
+This repository contains an attempt to code an open source (not validated and not tested) implementation of some of the publicly 
+available CCSDS standards (SLE, TM/TC/AOS data link protocols, Space Packet). The implementation has been done in Java and follows the
 latest modular changes in the Java platform since version 9.
 
 Since this code is implemented as personal activity, without any use of external systems or software to validated its implementation,
@@ -34,12 +34,16 @@ relative time formats, strings, octet streams, bit streams).
 
 # License
 All source code on this repository is released under the terms and conditions of the Apache License 2.0. The source code includes code
-and resources from other authors, which can be freely obtained from the web. In the specific:
+and resources from other authors, which can be freely obtained from the web. To be more specific:
 - eu.dariolucia.ccsds.inspector and eu.dariolucia.ccsds.sle.utlfx contains a derivation of the DateAxis class from Christian
 Schudt, Diego Cirujano "DateAxis" and Pedro Duque Vieira (http://myjavafx.blogspot.com/2013/09/javafx-charts-display-date-values-on.html)
 - eu.dariolucia.ccsds.inspector contains icons derived from the work made by Chanut and Smashicons from www.flaticon.com;
+- eu.dariolucia.ccsds.sle.utlfx contains part of the open source icon set Eva Icons
+by Akveo (https://github.com/akveo/eva-icons), released under the terms of the MIT License
 - eu.dariolucia.ccsds.sle.utl contains copy of the ASN.1 definition as listed on https://public.ccsds.org/Publications/BlueBooks.aspx, 
 with modifications to include support for older SLE versions, which can be retrieved at https://public.ccsds.org/Publications/SilverBooks.aspx;
+
+All other source code and resources, such as test data files, are genuine new implementation or generated using the library itself (e.g. TM data file, SLE configuration file).
 
 I tried to make sure that each external contribution is acknowledged where the contribution appears.
 Each module contains a NOTICE file that contains all the required attributions. By using any of the resources on this repository, you need
