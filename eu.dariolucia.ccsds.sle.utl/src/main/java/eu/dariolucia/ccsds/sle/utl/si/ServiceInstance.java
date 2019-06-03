@@ -21,9 +21,9 @@ import com.beanit.jasn1.ber.types.BerType;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Credentials;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
+import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.network.PortMapping;
 import eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer;
-import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.network.tml.ITmlChannelObserver;
 import eu.dariolucia.ccsds.sle.utl.network.tml.TmlChannel;
 import eu.dariolucia.ccsds.sle.utl.network.tml.TmlChannelException;
@@ -362,7 +362,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		if (port.isPresent()) {
 			// Create a new TML channel
 			try {
-				this.tmlChannel = TmlChannel.createServerTmlChannel(port.get().getRemotePort(), this);
+				this.tmlChannel = TmlChannel.createServerTmlChannel(port.get().getRemotePort(), this, port.get().getTcpTxBufferSize(), port.get().getTcpRxBufferSize());
 			} catch (TmlChannelException e) {
 				setError("TML channel cannot be created: " + e.getMessage(), e);
 				notifyStateUpdate();
@@ -464,7 +464,8 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		if (port.isPresent()) {
 			// Create a new TML channel
 			this.tmlChannel = TmlChannel.createClientTmlChannel(port.get().getRemoteHost(),
-					port.get().getRemotePort(), port.get().getHeartbeatInterval(), port.get().getDeadFactor(), this);
+					port.get().getRemotePort(), port.get().getHeartbeatInterval(), port.get().getDeadFactor(), this,
+					port.get().getTcpTxBufferSize(), port.get().getTcpRxBufferSize());
 		} else {
 			setError("Foreign local port " + getResponderPortIdentifier()
 					+ " not found in the SLE configuration file for service instance "

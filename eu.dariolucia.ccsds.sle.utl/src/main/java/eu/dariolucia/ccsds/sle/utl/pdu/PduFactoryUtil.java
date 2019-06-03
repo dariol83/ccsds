@@ -164,10 +164,10 @@ public class PduFactoryUtil {
     public static Credentials buildCredentials(boolean fillCredentials, String username, byte[] password, HashFunctionEnum hashToUse) {
         Credentials c = new Credentials();
         if (fillCredentials) {
-            // Current time, as per CCSDS 913.1-B-2 3.1.2.1.1
+            // Current time, as per CCSDS 913.1-B-2, 3.1.2.1.1
             long time = System.currentTimeMillis();
-            // Random number, as per CCSDS 913.1-B-2 3.1.2.1.1
-            long randomNumber = (Math.abs(new Random(time).nextLong())) % Integer.MAX_VALUE;
+            // Random number, as per CCSDS 913.1-B-2, 3.1.2.1.1
+            long randomNumber = (int) (Math.abs(new Random(time).nextLong()));
 
             // No support for microsecond resolution
             byte[] buffer = hashCredentialsData(time, 0, randomNumber, username, password);
@@ -188,7 +188,7 @@ public class PduFactoryUtil {
             ISP1Credentials isp1Credentials = new ISP1Credentials();
 
             // Set the time: CDS with implicit P-Field, epoch 1st Jan 1958, microseconds resolution
-            // (ref. CCSDS 913.1-B-2
+            // (ref. CCSDS 913.1-B-2)
             isp1Credentials.setTime(new BerOctetString(buildCDSTime(time, 0)));
 
             // Set the protected credentials data (hashed)
@@ -335,11 +335,8 @@ public class PduFactoryUtil {
         // Local hash using random number and time from the ISP1Credentials object, and locally stored user and pass
         byte[] localCredentialsData = hashCredentialsData(timeMillis[0], timeMillis[1],
                 isp1Credentials.getRandomNumber().longValue(), remotePeer.getId(), remotePeer.getPassword());
-        // Received hash signature
-        byte[] receivedCredentialsData = isp1Credentials.getTheProtected().value;
-
         // Comparison
-        return Arrays.equals(localCredentialsData, receivedCredentialsData);
+        return Arrays.equals(localCredentialsData, isp1Credentials.getTheProtected().value);
     }
 
     /**

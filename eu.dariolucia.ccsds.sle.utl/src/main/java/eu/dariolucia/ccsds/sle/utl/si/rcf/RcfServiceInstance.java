@@ -452,31 +452,26 @@ public class RcfServiceInstance extends ServiceInstance {
 		// PDU received
 		if (pdu.getResult().getPositiveResult() != null) {
 			if (pdu.getResult().getPositiveResult().getParBufferSize() != null) {
-				int val = pdu.getResult().getPositiveResult().getParBufferSize().getParameterValue().intValue();
-				this.transferBufferSize = val;
+				this.transferBufferSize = pdu.getResult().getPositiveResult().getParBufferSize().getParameterValue().intValue();
 			} else if (pdu.getResult().getPositiveResult().getParDeliveryMode() != null) {
-				DeliveryModeEnum val = DeliveryModeEnum.values()[pdu.getResult().getPositiveResult()
+				this.deliveryMode = DeliveryModeEnum.values()[pdu.getResult().getPositiveResult()
 						.getParDeliveryMode().getParameterValue().intValue()];
-				this.deliveryMode = val;
 			} else if (pdu.getResult().getPositiveResult().getParReturnTimeout() != null) {
-				int val = pdu.getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue();
-				this.returnTimeoutPeriod = val;
+				this.returnTimeoutPeriod = pdu.getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue();
 			} else if (pdu.getResult().getPositiveResult().getParLatencyLimit() != null) {
 				if (pdu.getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOffline() != null) {
 					this.latencyLimit = null;
 				} else {
-					int val = pdu.getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOnline()
+					this.latencyLimit = pdu.getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOnline()
 							.intValue();
-					this.latencyLimit = val;
 				}
 			} else if (pdu.getResult().getPositiveResult().getParReportingCycle() != null) {
 				if (pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
 						.getPeriodicReportingOff() != null) { // this is the reporting cycle
 					this.reportingCycle = null;
 				} else {
-					int val = pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
+					this.reportingCycle = pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
 							.getPeriodicReportingOn().intValue();
-					this.reportingCycle = val;
 				}
 			} else if (pdu.getResult().getPositiveResult().getParReqGvcId() != null) {
 				this.requestedGvcid = new GVCID(

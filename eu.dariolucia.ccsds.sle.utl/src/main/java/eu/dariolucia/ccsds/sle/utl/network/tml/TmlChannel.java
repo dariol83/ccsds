@@ -16,11 +16,16 @@
 
 package eu.dariolucia.ccsds.sle.utl.network.tml;
 
+import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
+import eu.dariolucia.ccsds.sle.utl.util.DataRateCalculator;
+import eu.dariolucia.ccsds.sle.utl.util.DataRateSample;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -31,10 +36,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
-import eu.dariolucia.ccsds.sle.utl.util.DataRateCalculator;
-import eu.dariolucia.ccsds.sle.utl.util.DataRateSample;
 
 /**
  * This class implements all the required TML features as specified by CCSDS 913.1-B-2:
@@ -65,6 +66,10 @@ public class TmlChannel {
 		return new TmlChannel(host, port, heartbeatTimer, deadFactor, observer);
 	}
 
+	public static TmlChannel createClientTmlChannel(String host, int port, int heartbeatTimer, int deadFactor, ITmlChannelObserver observer, int txBuffer, int rxBuffer) {
+		return new TmlChannel(host, port, heartbeatTimer, deadFactor, observer, txBuffer, rxBuffer);
+	}
+
 	/**
 	 * Static creation function to instantiate a server TML channel, i.e. a channel that can be used by the SLE User
      * Test Library to wait for connections from a remote SLE service instance.
@@ -76,6 +81,10 @@ public class TmlChannel {
 	 */
 	public static TmlChannel createServerTmlChannel(int port, ITmlChannelObserver observer) throws TmlChannelException {
 		return new TmlChannel(port, observer);
+	}
+
+	public static TmlChannel createServerTmlChannel(int port, ITmlChannelObserver observer, int txBuffer, int rxBuffer) throws TmlChannelException {
+		return new TmlChannel(port, observer, txBuffer, rxBuffer);
 	}
 	
 	private static final Logger LOG = Logger.getLogger(TmlChannel.class.getName());
@@ -97,7 +106,10 @@ public class TmlChannel {
 	private final boolean serverMode;
 	
 	private final ServerSocket serverSocket;
-	
+
+	private final int txBuffer;
+	private final int rxBuffer;
+
 	private Socket sock;
 	private InputStream rxStream;
 	private OutputStream txStream;
@@ -110,7 +122,7 @@ public class TmlChannel {
 	private volatile boolean running = false;
 	
 	private final DataRateCalculator statsCounter = new DataRateCalculator();
-	
+
 	/**
 	 * Create a client TML channel, which will connect to the TML server upon invoking connect().
 	 *
@@ -119,8 +131,10 @@ public class TmlChannel {
 	 * @param heartbeatTimer the heartbeat interval to use (set in the TML context message)
 	 * @param deadFactor the dead factor to use (set in the TML context message)
 	 * @param observer the callback interface
+	 * @param txBuffer the TCP transmission buffer in bytes (less or equal 0 means 'do not set')
+	 * @param rxBuffer the TCP reception buffer in bytes (less or equal 0 means 'do not set')
 	 */
-	private TmlChannel(String host, int port, int heartbeatTimer, int deadFactor, ITmlChannelObserver observer) {
+	private TmlChannel(String host, int port, int heartbeatTimer, int deadFactor, ITmlChannelObserver observer, int txBuffer, int rxBuffer) {
 		if(host == null) {
 			throw new NullPointerException("Host cannot be null");
 		}
@@ -134,16 +148,33 @@ public class TmlChannel {
 		this.observer = observer;
 		this.serverMode = false;
 		this.serverSocket = null;
+		this.txBuffer = txBuffer;
+		this.rxBuffer = rxBuffer;
 	}
-	
+
+	/**
+	 * Create a client TML channel, which will connect to the TML server upon invoking connect().
+	 *
+	 * @param host the remote host to connect to
+	 * @param port the remote TCP port to connect to
+	 * @param heartbeatTimer the heartbeat interval to use (set in the TML context message)
+	 * @param deadFactor the dead factor to use (set in the TML context message)
+	 * @param observer the callback interface
+	 */
+	private TmlChannel(String host, int port, int heartbeatTimer, int deadFactor, ITmlChannelObserver observer) {
+		this(host, port, heartbeatTimer, deadFactor, observer, 0, 0);
+	}
+
 	/**
 	 * Create a server TML channel, which will wait for the connection by a TML client, upon invoking connect().
-	 * 
+	 *
 	 * @param port the port used to bind the server socket
 	 * @param observer the callback interface
+	 * @param txBuffer the TCP transmission buffer in bytes (less or equal 0 means 'do not set')
+	 * @param rxBuffer the TCP reception buffer in bytes (less or equal 0 means 'do not set')
 	 * @throws TmlChannelException if the server socket cannot be bound to the specified port
 	 */
-	private TmlChannel(int port, ITmlChannelObserver observer) throws TmlChannelException {
+	private TmlChannel(int port, ITmlChannelObserver observer, int txBuffer, int rxBuffer) throws TmlChannelException {
 		if(observer == null) {
 			throw new NullPointerException("Channel observer cannot be null");
 		}
@@ -158,6 +189,26 @@ public class TmlChannel {
 		} catch(IOException e) {
 			throw new TmlChannelException("Cannot create server socket on port " + port, e);
 		}
+		this.txBuffer = txBuffer;
+		this.rxBuffer = rxBuffer;
+		if(this.rxBuffer > 0) {
+			try {
+				this.serverSocket.setReceiveBufferSize(this.rxBuffer);
+			} catch (SocketException e) {
+				throw new TmlChannelException("Cannot set RX buffer size " + this.rxBuffer + " on server socket on port " + port, e);
+			}
+		}
+	}
+
+	/**
+	 * Create a server TML channel, which will wait for the connection by a TML client, upon invoking connect().
+	 * 
+	 * @param port the port used to bind the server socket
+	 * @param observer the callback interface
+	 * @throws TmlChannelException if the server socket cannot be bound to the specified port
+	 */
+	private TmlChannel(int port, ITmlChannelObserver observer) throws TmlChannelException {
+		this(port, observer, 0, 0);
 	}
 
 	/**
@@ -239,7 +290,13 @@ public class TmlChannel {
 	}
 	
 	private void connectEndpoint() throws IOException {
-		this.sock = new Socket(this.host, this.port);
+		this.sock = new Socket();
+		if(this.rxBuffer > 0) {
+			this.sock.setReceiveBufferSize(this.rxBuffer);
+		}
+		if(this.txBuffer > 0) {
+			this.sock.setSendBufferSize(this.txBuffer);
+		}
 		this.rxStream = this.sock.getInputStream();
 		this.txStream = this.sock.getOutputStream();
 		this.aboutToDisconnect = false;
@@ -259,6 +316,9 @@ public class TmlChannel {
 					this.sock = this.serverSocket.accept();
 					// Activate the reception of OOB inline (needed for peer abort detection)
 					this.sock.setOOBInline(true);
+					if(this.txBuffer > 0) {
+						this.sock.setSendBufferSize(this.txBuffer);
+					}
 				} catch(IOException e) {
 					if(!this.aboutToDisconnect) {
 						// inform remote disconnection

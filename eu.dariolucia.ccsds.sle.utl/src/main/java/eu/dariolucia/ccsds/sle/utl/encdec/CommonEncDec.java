@@ -26,15 +26,15 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * jASN.1 implements the encoding/decoding logic directly in each generated ASN.1 object.
+ * JASN.1 implements the encoding/decoding logic directly in each generated ASN.1 object.
  *
  * To handle different SLE versions, this class has a method called useSleVersion, which is used by the SLE User Test
  * Library to inform the decoder of the selected SLE version to be used. Hence specialisations of this class can
- * set the decoding function of specific PDUs, according to the selected version.
+ * set the decoding function to use the correct PDU CHOICE class.
  *
  * Wrapping and unwrapping of PDUs is done by the related specialisations, since the wrapping and unwrapping are
- * type-specific behaviours (different classes). The coding is hardcoded and does not use reflection for performance
- * reasons. Unfortunately jASN.1 does not generate a method that allows to directly get the selected choice object.
+ * type-specific (different classes). The coding is hardcoded and does not use reflection for performance
+ * reasons. Unfortunately JASN.1 does not generate a method that allows to directly get the selected CHOICE object.
  */
 public abstract class CommonEncDec {
 

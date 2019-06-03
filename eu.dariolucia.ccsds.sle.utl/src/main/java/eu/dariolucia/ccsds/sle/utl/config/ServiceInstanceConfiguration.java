@@ -16,8 +16,6 @@
 
 package eu.dariolucia.ccsds.sle.utl.config;
 
-import java.util.Map;
-
 import eu.dariolucia.ccsds.sle.utl.si.ApplicationIdentifierEnum;
 import eu.dariolucia.ccsds.sle.utl.si.DeliveryModeEnum;
 import eu.dariolucia.ccsds.sle.utl.si.InitiatorRoleEnum;
@@ -70,25 +68,6 @@ public abstract class ServiceInstanceConfiguration {
 	private int reportingCycle;
 
 	public ServiceInstanceConfiguration() {
-	}
-
-	public ServiceInstanceConfiguration(Map<String, String> configuration) {
-		this.initiator = parseInitiator(configuration.get(INITIATOR_KEY));
-		this.serviceInstanceIdentifier = configuration.get(SERVICE_INSTANCE_ID_KEY);
-		this.initiatorIdentifier = configuration.get(INITIATOR_ID_KEY);
-		this.responderIdentifier = configuration.get(RESPONDER_ID_KEY);
-		this.responderPortIdentifier = configuration.get(RESPONDER_PORT_ID_KEY);
-		this.returnTimeoutPeriod = Integer.parseInt(configuration.get(RETURN_TIMEOUT_PERIOD_KEY));
-		this.reportingCycle = Integer.parseInt(configuration.get(REPORTING_CYCLE_KEY));
-		this.serviceVersionNumber = Integer.parseInt(configuration.get(SERVICE_VERSION_NUMBER_KEY));
-	}
-	
-	private InitiatorRoleEnum parseInitiator(String string) {
-		if(string == null) {
-			return null;
-		} else {
-			return InitiatorRoleEnum.valueOf(string);
-		}
 	}
 
 	public int getReportingCycle() {

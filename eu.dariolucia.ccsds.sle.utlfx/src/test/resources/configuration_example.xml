@@ -11,7 +11,7 @@
     </peer-configuration>
     <service-instances>
         <cltu>
-            <service-instance-id>sagr=1000.spack=ANT.fsl-fg=1.cltu=cltu01</service-instance-id>
+            <service-instance-id>sagr=abc.spack=xyz.fsl-fg=1.cltu=cltu01</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
@@ -32,7 +32,7 @@
             <!-- start-time and end-time omitted: both null -->
         </cltu>
         <raf>
-            <service-instance-id>sagr=1000.spack=ANT.rsl-fg=1.raf=onlc99</service-instance-id>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlc99</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
@@ -56,7 +56,7 @@
             <!-- start-time and end-time omitted: both null -->
         </raf>
         <rcf>
-            <service-instance-id>sagr=1000.spack=ANT.rsl-fg=1.rcf=onlt00</service-instance-id>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rcf=onlt00</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
@@ -82,7 +82,7 @@
             <!-- start-time and end-time omitted: both null -->
         </rcf>
         <rcf>
-            <service-instance-id>sagr=1000.spack=ANT.rsl-fg=1.rcf=onlc01</service-instance-id>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rcf=onlc01</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
@@ -105,7 +105,7 @@
             <!-- start-time and end-time omitted: both null -->
         </rcf>
         <rocf>
-            <service-instance-id>sagr=1000.spack=ANT.rsl-fg=1.rocf=onlt88</service-instance-id>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rocf=onlt88</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>

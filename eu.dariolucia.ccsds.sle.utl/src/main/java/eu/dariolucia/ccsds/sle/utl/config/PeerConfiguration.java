@@ -36,14 +36,14 @@ import java.util.List;
 public class PeerConfiguration {
 
 	/**
-	 * The authentication delay in milliseconds (ref. 913.1-B-2 3.1.2.2.1)
+	 * The authentication delay in seconds (ref. CCSDS 913.1-B-2, 3.1.2.2.1)
 	 */
 	@XmlAttribute(name = "auth-delay")
-	private int authenticationDelay = 6000;
+	private int authenticationDelay = 6;
 
 	/**
 	 * The local peer ID: this must be equal to the corresponding role specified for the service instance that
-	 * is intended to be used (ref. 3.1.1, point a), comma 2).
+	 * is intended to be used (ref. CCSDS 913.1-B-2, 3.1.1, point a), comma 2).
 	 */
 	@XmlAttribute(name = "id")
 	private String localId = "";
