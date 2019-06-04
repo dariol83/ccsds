@@ -1,9 +1,7 @@
 # An open source implementation of the CCSDS protocols and formats in Java 11
-This repository contains an attempt to code an open source (not validated and not tested) implementation of some of the publicly 
-available CCSDS standards (SLE, TM/TC/AOS data link protocols, Space Packet). The implementation has been done in Java and follows the
-latest modular changes in the Java platform since version 9.
+This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS, Space Packet) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
 
-Since this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested), compliance to standard is not guaranteed. Use this library at your own risk. 
+**Disclaimer: this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested). It is not endorsed by any organization, association or company. It is the result of my passion for software engineering and coding, and hours spent developing during evenings (often with a beer or snacks in front of me, and my ukulele on the side). Compliance to the different standards is not guaranteed. As the Apache License makes clear, use the modules of this repository at your own risk.**
 
 ## SLE
 The SLE User Test Library (eu.dariolucia.ccsds.sle.utl) is a test library that implements the user side of an SLE data exchange session. 
@@ -23,9 +21,20 @@ The TM/TC Library (eu.dariolucia.ccsds.tmtc) is a library that provide support t
 A simple graphical interface to inspect TM/TC/AOS/Space Packet data is provided as separate module (eu.dariolucia.ccsds.inspector). It is possible to implement custom connectors to allow inspection of data delivered from a custom source/protocol/format by implement a new 
 service (in Java 11 terms) implementing the interface eu.dariolucia.ccsds.inspector.api.IConnectorFactory.
 
-## ENC/DEC (coming soon)
+## ENC/DEC
 A packet identification/encoding/decoding library, which supports basic data types (integer, real, enumeration, CCSDS absolute and 
-relative time formats, strings, octet streams, bit streams). Focus on this implementation is on identification and decoding performance.
+relative time formats, strings, octet streams, bit streams) and array structures, as derived from the ECSS Packet Utilisation Standard (http://everyspec.com/ESA/download.php?spec=ECSS-E-70-41A.047794.pdf). The focus on this implementation is on reliable and efficient packet identification and decoding performance. Encoding performance has not been measured. 
+The packet structure is defined using a custom XML format definition, built by means of JAXB annotations.
+
+# Goals
+The purpose of this repository is to produce, as far as my possibilities allow, simple, well-designed, well-documented, well-tested code with top performance. For each module (graphical elements and tools excluded) I have the following targets:
+- at least 90% line coverage with unit tests (easy to check with IntelliJ);
+- a set of performance tests;
+- no warnings when compiling;
+- good documentation at package, class, instance variable and method level;
+- provide specific code, and not generic, one-fits-all code: generic code is usually slow because it is over-engineered. No way. Simplicity is the key.
+
+Each module is built using Maven and can be compiled out of the box (if all its dependencies are satisfied) with Maven.
 
 # License
 All original source code on this repository is released under the terms and conditions of the Apache License 2.0. The source code includes code and resources from other authors, which can be freely obtained from the web. To be more specific:
@@ -58,3 +67,4 @@ Too often we give things for granted, forgetting the amazing amount of work that
 If you find any issue with the provided code or you would like to see a specific feature implemented, please raise a request on GitHub.
 If you spot and fix any issue by using the provided code, please consider contributing back to the project, by raising the issue on 
 GitHub, hopefully with your solution attached and/or a pull request :)
+If you want to actively contribute to this project, please contact me.
