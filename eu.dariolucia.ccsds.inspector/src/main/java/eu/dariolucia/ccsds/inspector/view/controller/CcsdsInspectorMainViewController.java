@@ -86,17 +86,17 @@ public class CcsdsInspectorMainViewController implements Initializable, IConnect
 	@Override
 	public void initialize(URL arg0, ResourceBundle arg1) {
 		// button images
-		Image m1 = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/add.png"), 24, 24,
+		Image m1 = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/plus-circle.png"), 24, 24,
 				true, true);
 		ImageView addButtonImage = new ImageView(m1);
 		this.addButton.setGraphic(addButtonImage);
 
-		Image m11 = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/remove.png"), 24, 24,
+		Image m11 = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/minus-circle.png"), 24, 24,
 				true, true);
 		ImageView removeButtonImage = new ImageView(m11);
 		this.removeButton.setGraphic(removeButtonImage);
 
-		Image m2 = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/exit.png"), 24, 24,
+		Image m2 = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/stop-circle.png"), 24, 24,
 				true, true);
 		this.exitButton.setGraphic(new ImageView(m2));
 
@@ -165,8 +165,7 @@ public class CcsdsInspectorMainViewController implements Initializable, IConnect
 		alert.setTitle(CcsdsInspector.NAME);
 		alert.setHeaderText(null);
 		alert.setContentText("Version: " + CcsdsInspector.VERSION + " - Author: Dario Lucia - 2019\n\n" +
-				"Icons made by Chanut from www.flaticon.com\n" +
-				"Icons made by Smashicons from www.flaticon.com\n");
+				"Icons made by Akveo (https://github.com/akveo/eva-icons)\n");
 		alert.show();
 	}
 

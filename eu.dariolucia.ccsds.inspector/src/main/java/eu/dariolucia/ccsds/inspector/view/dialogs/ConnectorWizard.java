@@ -191,7 +191,7 @@ public class ConnectorWizard extends Dialog<ConnectorManager> {
 			add(connectors, 0, 1, 2, 5);
 			GridPane.setHgrow(connectors, Priority.ALWAYS);
 
-			this.image = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/link.png"), 32, 32,
+			this.image = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/cast.png"), 24, 24,
 					true, true);
 			this.connectors.setCellFactory(param -> new FancyListCell<>(this::connectorFactoryName, this::connectorFactoryDescription, (o) -> image));
 

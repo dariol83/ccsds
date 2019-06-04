@@ -61,7 +61,7 @@ public class CcsdsInspector extends Application {
 
 		stage.setTitle(TITLE);
 		stage.getIcons().add(new Image(
-				CcsdsInspector.class.getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/main_icon.png")));
+				CcsdsInspector.class.getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/activity.png")));
 		stage.setScene(scene);
 		stage.setResizable(false);
 		stage.show();
