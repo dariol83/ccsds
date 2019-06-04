@@ -1,7 +1,7 @@
 # An open source implementation of the CCSDS protocols and formats in Java 11
 This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS, Space Packet) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
 
-**Disclaimer: this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested). It is not endorsed by any organization, association or company. It is the result of my passion for software engineering and coding, and hours spent developing during evenings (often with a beer or snacks in front of me, and my ukulele on the side). Compliance to the different standards is not guaranteed. As the Apache License makes clear, use the modules of this repository at your own risk.**
+**Disclaimer: this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested). It is not endorsed by any organization, association or company. It is the result of my passion for software engineering and coding, and of hours spent developing during my evenings (often with a beer in front of me and my ukulele on the side). Even if I put the best of me into this, compliance to the different standards as well as correct behaviour is not guaranteed. As the Apache License makes clear, use the modules of this repository at your own risk.**
 
 ## SLE
 The SLE User Test Library (eu.dariolucia.ccsds.sle.utl) is a test library that implements the user side of an SLE data exchange session. 
@@ -61,10 +61,14 @@ Too often we give things for granted, forgetting the amazing amount of work that
 - The jASN.1 development team;
 - Akveo for the amazing Eva Icons;
 - Christian Schudt, Diego Cirujano "DateAxis" and Pedro Duque Vieira for their DateAxis class;
-- The StackOverflow community.
+- Millau Julien, author of the Bit-lib4j library (https://github.com/devnied/Bit-lib4j), whose code has been adapted and improved to implement an efficient bit encoder/decoder;
+- David Overeem, author of the xtcetools library (https://gitlab.com/dovereem/xtcetools), whose MIL-STD-1750A code has been adapted and improvded to implement MIL real values conversion from/to native Java values;
+- The StackOverflow community;
+- ... and many many others.
 
 # Contributions
 If you find any issue with the provided code or you would like to see a specific feature implemented, please raise a request on GitHub.
 If you spot and fix any issue by using the provided code, please consider contributing back to the project, by raising the issue on 
 GitHub, hopefully with your solution attached and/or a pull request :)
-If you want to actively contribute to this project, please contact me.
+
+I am not looking for active contributors, because I would pretend from them the same goals I set a few paragraphs above. However, if you want to actively contribute to this project and you think you can accept my way of dealing with the code, please contact me :) 
