@@ -168,7 +168,7 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
             throw new IllegalArgumentException("Only B_PDU AOS frames can contain bitstream data");
         }
         return addData(data, 0 , data.length, true, validDataBits);
-    };
+    }
 
     public int addSpacePacket(byte[] packet) {
         if(userDataType != AosTransferFrame.UserDataType.M_PDU) {
@@ -263,7 +263,7 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
             bb.put(this.ocf);
         }
 
-        byte[] encodedFrame = null;
+        byte[] encodedFrame;
 
         // Compute and write the FECF (if present, 2 bytes)
         if(this.fecfPresent) {
@@ -342,7 +342,7 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
     private short computeBPDUBitstreamDataPointer() {
         if(this.idle) {
             return AosTransferFrame.AOS_B_PDU_FIRST_HEADER_POINTER_IDLE;
-        } else if(this.payloadUnits.stream().noneMatch((o) -> o.hasSpuriousData())) {
+        } else if(this.payloadUnits.stream().noneMatch(PayloadUnit::hasSpuriousData)) {
             return AosTransferFrame.AOS_B_PDU_FIRST_HEADER_POINTER_ALL_DATA;
         } else {
             short lastValidBit = (short) 0;

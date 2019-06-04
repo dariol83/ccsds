@@ -27,6 +27,8 @@ public class StringUtil {
         return toReturn;
     }
 
+    // Stackoverflow snippet (Creative Common License):
+    // https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
     private final static char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
     public static String toHexDump(byte[] data) {
