@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  ~   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~   Licensed under the Apache License, Version 2.0 (the "License");
+  ~   you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  -->
+
+<ns1:packet_definitions xmlns:ns1="http://dariolucia.eu/ccsds/encdec">
+    <id_fields>
+        <field id="APID" offset="0" len="2" and="2047" or="0" lshift="0" rshift="0"/>
+        <field id="PUS Type" offset="7" len="1" and="-1" or="0" lshift="0" rshift="0"/>
+        <field id="PUS Subtype" offset="8" len="1" and="-1" or="0" lshift="0" rshift="0"/>
+        <field id="P1" offset="10" len="1" and="-1" or="0" lshift="0" rshift="0"/>
+        <field id="P2" offset="11" len="1" and="-1" or="0" lshift="0" rshift="0"/>
+        <field id="P3" offset="14" len="3" and="-1" or="0" lshift="0" rshift="0"/>
+    </id_fields>
+    <packets>
+        <packet id="DEF1">
+            <identification>
+                <match field="APID" value="300"/>
+                <match field="PUS Type" value="3"/>
+                <match field="PUS Subtype" value="25"/>
+            </identification>
+        </packet>
+        <packet id="DEF2">
+            <identification>
+                <match field="APID" value="301"/>
+                <match field="PUS Type" value="3"/>
+                <match field="PUS Subtype" value="25"/>
+            </identification>
+        </packet>
+        <packet id="DEF3">
+            <identification>
+                <match field="APID" value="302"/>
+                <match field="PUS Type" value="3"/>
+                <match field="PUS Subtype" value="25"/>
+            </identification>
+        </packet>
+        <packet id="DEF4">
+            <identification>
+                <match field="APID" value="303"/>
+                <match field="PUS Type" value="3"/>
+                <match field="PUS Subtype" value="25"/>
+            </identification>
+        </packet>
+        <packet id="DEF5">
+            <identification>
+                <match field="APID" value="304"/>
+                <match field="PUS Type" value="3"/>
+                <match field="PUS Subtype" value="25"/>
+                <match field="P1" value="1"/>
+            </identification>
+        </packet>
+        <packet id="DEF6">
+            <identification>
+                <match field="APID" value="304"/>
+                <match field="PUS Type" value="3"/>
+                <match field="PUS Subtype" value="25"/>
+                <match field="P1" value="2"/>
+            </identification>
+        </packet>
+        <packet id="DEF7">
+            <identification>
+                <match field="PUS Type" value="1"/>
+                <match field="PUS Subtype" value="1"/>
+            </identification>
+        </packet>
+        <packet id="DEF8">
+            <identification>
+                <match field="PUS Type" value="1"/>
+                <match field="PUS Subtype" value="2"/>
+            </identification>
+        </packet>
+        <packet id="DEF9">
+            <identification>
+                <match field="PUS Type" value="1"/>
+                <match field="PUS Subtype" value="3"/>
+            </identification>
+        </packet>
+        <packet id="DEF10">
+            <identification>
+                <match field="PUS Type" value="1"/>
+                <match field="PUS Subtype" value="4"/>
+            </identification>
+        </packet>
+        <packet id="DEF11">
+            <identification>
+                <match field="P3" value="45923"/>
+            </identification>
+        </packet>
+    </packets>
+</ns1:packet_definitions>

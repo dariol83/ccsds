@@ -10,9 +10,10 @@ jASN.1 is licensed under the terms of the Apache License, Version 2.0
 eu.dariolucia.ccsds.sle.utl uses the JAXB runtime from the Glassfish
 project to read the defined configuration files.
 
-JAXB runtime is licensed under the terms of the Eclipse Distribution License,
-Version 1.0
-(https://www.eclipse.org/org/documents/edl-v10.php)
+JAXB runtime from Glassfish is distributed under the terms of the CDDI,
+Version 1.1.
+
+(https://javaee.github.io/glassfish/LICENSE)
 ------------------------------------------------------------------------------
 eu.dariolucia.ccsds.sle.utl includes, in its source tree, modified
 copies of the SLE ASN.1 as defined by the CCSDS SLE Blue Books
@@ -21,7 +22,7 @@ versions of the SLE specification.
 ------------------------------------------------------------------------------
 eu.dariolucia.ccsds.sle.utl
 
-Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
+Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

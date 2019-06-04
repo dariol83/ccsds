@@ -1,0 +1,57 @@
+/*
+ *   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ */
+
+package eu.dariolucia.ccsds.encdec.structure;
+
+import java.time.Instant;
+
+public class ParameterValue {
+
+    private final String id;
+    private final Object value;
+    private final Instant generationTime;
+
+    public ParameterValue(String id, Object value, Instant time) {
+        this.id = id;
+        this.value = value;
+        this.generationTime = time;
+    }
+
+    public ParameterValue(String id, Object value) {
+        this(id, value, null);
+    }
+
+    public Instant getGenerationTime() {
+        return generationTime;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public Object getValue() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return "ParameterValue {" +
+                "id='" + id + '\'' +
+                ", value=" + value +
+                ", generationTime=" + generationTime +
+                '}';
+    }
+}
