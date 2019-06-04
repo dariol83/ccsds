@@ -44,23 +44,26 @@ Schudt, Diego Cirujano "DateAxis" and Pedro Duque Vieira (http://myjavafx.blogsp
 by Akveo (https://github.com/akveo/eva-icons), released under the terms of the MIT License;
 - eu.dariolucia.ccsds.sle.utl contains copy of the ASN.1 definition as listed on https://public.ccsds.org/Publications/BlueBooks.aspx, 
 with modifications to include support for older SLE versions, which can be retrieved at https://public.ccsds.org/Publications/SilverBooks.aspx;
+- eu.dariolucia.ccsds.encdec contains code derived from the work of Millau Julien, author of the Bit-lib4j library (https://github.com/devnied/Bit-lib4j), released under the terms of the Apache License, 2.0;
+- eu.dariolucia.ccsds.encdec contains code derived from the work of David Overeem, author of the xtcetools library (https://gitlab.com/dovereem/xtcetools), released under the terms of the Apache License, 2.0;
 - Snippets from StackOverflow should be reported with their SO link and are released under Creative Commons. I might have missed some though. In such case, please inform me.
 
 All other source code and resources, such as test data files, FXML and some images are genuine new implementation or generated using the library itself (e.g. TM data file, SLE configuration file). These resources are therefore released under the terms of the Apache License, 2.0.
 
-As a general rule, I tried to make sure that each external contribution is acknowledged where the contribution appears. Each module contains a NOTICE file that contains all the required attributions. By using any of the resources on this repository, you need to comply with the terms and conditions of the Apache License, including the carry-over and distribution of the NOTICE file in derived code/software/products.
+As a general rule, I tried to make sure that each external contribution is acknowledged where the contribution appears. Each module contains a NOTICE file that contains all the required attributions. By using any of the resources on this repository, you need to comply with the terms and conditions of the Apache License, including the distribution of the NOTICE files of the modules you use/modify in any software/products you deliver commercially or free of charge, in binary or source code. 
+A copy of the relevant licenses must be provided: I usually include the relevant links in the NOTICE file. **_Make sure you comply with all license terms._**
 
-If by any chance I forgot/missed to provide due credits to authors, please contact me here on GitHub and I will provide to add the credits in this page and in the NOTICE file.
+If by any chance I forgot/missed to provide due credits to authors or I made inappropriate use of any license terms, please contact me here on GitHub.
 
 # Acknowledgements
 I would like to thank the people behind the following technologies/libraries, which the code in this repository depends on. 
 Too often we give things for granted, forgetting the amazing amount of work that people spend everyday to deliver good resources, efficient code and effective solutions to everybody free of charge:
-- The OpenJDK development team;
-- The OpenJFX development team;
-- The Glassfish/JAXB development team;
-- The jASN.1 development team;
-- Akveo for the amazing Eva Icons;
-- Christian Schudt, Diego Cirujano "DateAxis" and Pedro Duque Vieira for their DateAxis class;
+- The OpenJDK development team (https://openjdk.java.net);
+- The OpenJFX development team (https://openjfx.io);
+- The Glassfish/JAXB development team (https://javaee.github.io/glassfish);
+- The jASN.1 development team (https://github.com/beanit/jasn1);
+- Akveo for the amazing Eva Icons (https://akveo.github.io/eva-icons);
+- Christian Schudt, Diego Cirujano "DateAxis" and Pedro Duque Vieira for their DateAxis class (http://myjavafx.blogspot.com/2013/09/javafx-charts-display-date-values-on.html) (https://github.com/dukke/FXCharts);
 - Millau Julien, author of the Bit-lib4j library (https://github.com/devnied/Bit-lib4j), whose code has been adapted and improved to implement an efficient bit encoder/decoder;
 - David Overeem, author of the xtcetools library (https://gitlab.com/dovereem/xtcetools), whose MIL-STD-1750A code has been adapted and improvded to implement MIL real values conversion from/to native Java values;
 - The StackOverflow community;
