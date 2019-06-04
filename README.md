@@ -3,8 +3,7 @@ This repository contains an attempt to code an open source (not validated and no
 available CCSDS standards (SLE, TM/TC/AOS data link protocols, Space Packet). The implementation has been done in Java and follows the
 latest modular changes in the Java platform since version 9.
 
-Since this code is implemented as personal activity, without any use of external systems or software to validated its implementation,
-and it is neither operationally nor effectively tested, compliance to standard is not guaranteed. Use this library at your own risk. 
+Since this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested), compliance to standard is not guaranteed. Use this library at your own risk. 
 
 ## SLE
 The SLE User Test Library (eu.dariolucia.ccsds.sle.utl) is a test library that implements the user side of an SLE data exchange session. 
@@ -26,7 +25,7 @@ service (in Java 11 terms) implementing the interface eu.dariolucia.ccsds.inspec
 
 ## ENC/DEC (coming soon)
 A packet identification/encoding/decoding library, which supports basic data types (integer, real, enumeration, CCSDS absolute and 
-relative time formats, strings, octet streams, bit streams).
+relative time formats, strings, octet streams, bit streams). Focus on this implementation is on identification and decoding performance.
 
 # License
 All original source code on this repository is released under the terms and conditions of the Apache License 2.0. The source code includes code and resources from other authors, which can be freely obtained from the web. To be more specific:
