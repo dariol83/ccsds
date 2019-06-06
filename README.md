@@ -1,4 +1,4 @@
-# An open source implementation of the CCSDS protocols and formats in Java 11
+# An open source implementation of CCSDS protocols and formats in Java 11
 This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS, Space Packet) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
 
 **Disclaimer: this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested). It is not endorsed by any organization, association or company. It is the result of my passion for software engineering and coding, and of hours spent developing during my evenings (often with a beer in front of me and my ukulele on the side). Even if I put the best of me into this, compliance to the different standards as well as correct behaviour is not guaranteed. As the Apache License makes clear, use the modules of this repository at your own risk.**
