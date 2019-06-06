@@ -19,6 +19,7 @@ package eu.dariolucia.ccsds.sle.utl.config.rcf;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.ApplicationIdentifierEnum;
@@ -135,4 +136,24 @@ public class RcfServiceInstanceConfiguration extends ServiceInstanceConfiguratio
 		return ApplicationIdentifierEnum.RCF;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		if (!super.equals(o)) return false;
+		RcfServiceInstanceConfiguration that = (RcfServiceInstanceConfiguration) o;
+		return transferBufferSize == that.transferBufferSize &&
+				deliveryMode == that.deliveryMode &&
+				Objects.equals(latencyLimit, that.latencyLimit) &&
+				Objects.equals(minReportingCycle, that.minReportingCycle) &&
+				Objects.equals(permittedGvcid, that.permittedGvcid) &&
+				Objects.equals(requestedGvcid, that.requestedGvcid) &&
+				Objects.equals(startTime, that.startTime) &&
+				Objects.equals(endTime, that.endTime);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), deliveryMode, latencyLimit, transferBufferSize, minReportingCycle, permittedGvcid, requestedGvcid, startTime, endTime);
+	}
 }

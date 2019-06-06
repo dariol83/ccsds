@@ -19,6 +19,7 @@ package eu.dariolucia.ccsds.sle.utl.config.network;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import java.util.Objects;
 
 /**
  * This class is used to specify the connection characteristics of the Transmission Mapping Layer (ref.
@@ -74,8 +75,20 @@ public class PortMapping {
 	/**
 	 * The size of the TCP reception buffer in bytes. By default is 0, i.e. not set.
 	 */
-	@XmlAttribute(name = "tcp-tx-buffer")
+	@XmlAttribute(name = "tcp-rx-buffer")
 	private int tcpRxBufferSize = 0;
+
+	public PortMapping() {
+	}
+
+	public PortMapping(String portName, int deadFactor, int heartbeatInterval, String address, int tcpTxBufferSize, int tcpRxBufferSize) {
+		this.portName = portName;
+		this.deadFactor = deadFactor;
+		this.heartbeatInterval = heartbeatInterval;
+		this.address = address;
+		this.tcpTxBufferSize = tcpTxBufferSize;
+		this.tcpRxBufferSize = tcpRxBufferSize;
+	}
 
 	public String getPortName() {
 		return portName;
@@ -132,5 +145,22 @@ public class PortMapping {
 	public int getRemotePort() {
 		return Integer.parseInt(getAddress().substring(getAddress().lastIndexOf(':') + 1));
 	}
-	
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		PortMapping that = (PortMapping) o;
+		return deadFactor == that.deadFactor &&
+				heartbeatInterval == that.heartbeatInterval &&
+				tcpTxBufferSize == that.tcpTxBufferSize &&
+				tcpRxBufferSize == that.tcpRxBufferSize &&
+				Objects.equals(portName, that.portName) &&
+				Objects.equals(address, that.address);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(portName, deadFactor, heartbeatInterval, address, tcpTxBufferSize, tcpRxBufferSize);
+	}
 }

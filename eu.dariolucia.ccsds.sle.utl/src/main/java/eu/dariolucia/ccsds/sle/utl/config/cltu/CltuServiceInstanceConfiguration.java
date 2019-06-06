@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.sle.utl.config.cltu;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.ApplicationIdentifierEnum;
@@ -141,4 +142,25 @@ public class CltuServiceInstanceConfiguration extends ServiceInstanceConfigurati
 		return ApplicationIdentifierEnum.CLTU;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		if (!super.equals(o)) return false;
+		CltuServiceInstanceConfiguration that = (CltuServiceInstanceConfiguration) o;
+		return bitlockRequired == that.bitlockRequired &&
+				rfAvailableRequired == that.rfAvailableRequired &&
+				protocolAbortClearEnabled == that.protocolAbortClearEnabled &&
+				expectedCltuIdentification == that.expectedCltuIdentification &&
+				Objects.equals(maxCltuLength, that.maxCltuLength) &&
+				Objects.equals(minCltuDelay, that.minCltuDelay) &&
+				Objects.equals(minReportingCycle, that.minReportingCycle) &&
+				Objects.equals(startTime, that.startTime) &&
+				Objects.equals(endTime, that.endTime);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), maxCltuLength, minCltuDelay, bitlockRequired, rfAvailableRequired, protocolAbortClearEnabled, minReportingCycle, expectedCltuIdentification, startTime, endTime);
+	}
 }

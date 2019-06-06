@@ -23,6 +23,7 @@ import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.annotation.*;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This class contains the mapping configuration and authentication configuration of the local peer, the different
@@ -111,4 +112,20 @@ public class PeerConfiguration {
 		this.remotePeers = remotePeers;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		PeerConfiguration that = (PeerConfiguration) o;
+		return authenticationDelay == that.authenticationDelay &&
+				Objects.equals(localId, that.localId) &&
+				Objects.equals(localPassword, that.localPassword) &&
+				Objects.equals(portMappings, that.portMappings) &&
+				Objects.equals(remotePeers, that.remotePeers);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(authenticationDelay, localId, localPassword, portMappings, remotePeers);
+	}
 }

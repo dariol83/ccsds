@@ -90,38 +90,6 @@ public class RocfServiceInstanceConfiguration extends ServiceInstanceConfigurati
 	public RocfServiceInstanceConfiguration() {
 	}
 
-	private List<RocfControlWordTypeEnum> parsePermittedControlWordTypes(String string) {
-		if(string != null && !string.isEmpty()) {
-			return Arrays.stream(string.split("\\.", -1)).map(RocfControlWordTypeEnum::fromConfigurationString).collect(Collectors.toList());
-		} else {
-			return Collections.emptyList();
-		}
-	}
-	
-	private List<RocfUpdateModeEnum> parsePermittedUpdateModes(String string) {
-		if(string != null && !string.isEmpty()) {
-			return Arrays.stream(string.split("\\.", -1)).map(o -> RocfUpdateModeEnum.fromConfigurationString(o)).collect(Collectors.toList());
-		} else {
-			return Collections.emptyList();
-		}
-	}
-
-	private List<Integer> parsePermittedTcVcid(String string) {
-		if(string != null && !string.isEmpty()) {
-			return Arrays.stream(string.split("\\.", -1)).map(this::toInteger).filter(o -> o != null).collect(Collectors.toList());
-		} else {
-			return Collections.emptyList();
-		}
-	}
-
-	private Integer toInteger(String s) {
-		try {
-			return Integer.parseInt(s);
-		} catch(NumberFormatException e) {
-			return null;
-		}
-	}
-
 	public DeliveryModeEnum getDeliveryMode() {
 		return deliveryMode;
 	}
@@ -239,4 +207,30 @@ public class RocfServiceInstanceConfiguration extends ServiceInstanceConfigurati
 		return ApplicationIdentifierEnum.ROCF;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		if (!super.equals(o)) return false;
+		RocfServiceInstanceConfiguration that = (RocfServiceInstanceConfiguration) o;
+		return transferBufferSize == that.transferBufferSize &&
+				deliveryMode == that.deliveryMode &&
+				Objects.equals(latencyLimit, that.latencyLimit) &&
+				Objects.equals(minReportingCycle, that.minReportingCycle) &&
+				Objects.equals(permittedGvcid, that.permittedGvcid) &&
+				Objects.equals(permittedTcVcids, that.permittedTcVcids) &&
+				Objects.equals(permittedControlWordTypes, that.permittedControlWordTypes) &&
+				Objects.equals(permittedUpdateModes, that.permittedUpdateModes) &&
+				Objects.equals(requestedGvcid, that.requestedGvcid) &&
+				Objects.equals(requestedTcVcid, that.requestedTcVcid) &&
+				requestedControlWordType == that.requestedControlWordType &&
+				requestedUpdateMode == that.requestedUpdateMode &&
+				Objects.equals(startTime, that.startTime) &&
+				Objects.equals(endTime, that.endTime);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), deliveryMode, latencyLimit, transferBufferSize, minReportingCycle, permittedGvcid, permittedTcVcids, permittedControlWordTypes, permittedUpdateModes, requestedGvcid, requestedTcVcid, requestedControlWordType, requestedUpdateMode, startTime, endTime);
+	}
 }

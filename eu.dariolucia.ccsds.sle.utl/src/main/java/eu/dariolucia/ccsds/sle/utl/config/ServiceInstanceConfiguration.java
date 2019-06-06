@@ -23,6 +23,7 @@ import eu.dariolucia.ccsds.sle.utl.si.InitiatorRoleEnum;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import java.util.Objects;
 
 /**
  * This abstract class encapsulates the service management parameters that are common to all service instances.
@@ -143,5 +144,25 @@ public abstract class ServiceInstanceConfiguration {
 	@Override
 	public String toString() {
 		return "(" + getType().name() + ") " +  getServiceInstanceIdentifier();
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		ServiceInstanceConfiguration that = (ServiceInstanceConfiguration) o;
+		return serviceVersionNumber == that.serviceVersionNumber &&
+				returnTimeoutPeriod == that.returnTimeoutPeriod &&
+				reportingCycle == that.reportingCycle &&
+				Objects.equals(serviceInstanceIdentifier, that.serviceInstanceIdentifier) &&
+				initiator == that.initiator &&
+				Objects.equals(initiatorIdentifier, that.initiatorIdentifier) &&
+				Objects.equals(responderIdentifier, that.responderIdentifier) &&
+				Objects.equals(responderPortIdentifier, that.responderPortIdentifier);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(serviceInstanceIdentifier, serviceVersionNumber, initiator, initiatorIdentifier, responderIdentifier, responderPortIdentifier, returnTimeoutPeriod, reportingCycle);
 	}
 }

@@ -24,6 +24,8 @@ import javax.xml.bind.annotation.XmlAttribute;
 import eu.dariolucia.ccsds.sle.utl.si.AuthenticationModeEnum;
 import eu.dariolucia.ccsds.sle.utl.si.HashFunctionEnum;
 
+import java.util.Objects;
+
 @XmlAccessorType(XmlAccessType.FIELD)
 public class RemotePeer {
 
@@ -38,6 +40,16 @@ public class RemotePeer {
 
 	@XmlAttribute(name = "password")
 	private String password = null;
+
+	public RemotePeer() {
+	}
+
+	public RemotePeer(String id, AuthenticationModeEnum authenticationMode, HashFunctionEnum authenticationHash, String password) {
+		this.id = id;
+		this.authenticationMode = authenticationMode;
+		this.authenticationHash = authenticationHash;
+		this.password = password;
+	}
 
 	public String getId() {
 		return id;
@@ -69,5 +81,21 @@ public class RemotePeer {
 
 	public void setAuthenticationHash(HashFunctionEnum authenticationHash) {
 		this.authenticationHash = authenticationHash;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		RemotePeer that = (RemotePeer) o;
+		return Objects.equals(id, that.id) &&
+				authenticationMode == that.authenticationMode &&
+				authenticationHash == that.authenticationHash &&
+				Objects.equals(password, that.password);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, authenticationMode, authenticationHash, password);
 	}
 }

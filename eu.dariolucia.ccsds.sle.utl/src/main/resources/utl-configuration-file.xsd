@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  ~   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~   Licensed under the Apache License, Version 2.0 (the "License");
+  ~   you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  -->
+
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:element name="utl-configuration-file" type="utlConfigurationFile"/>
+
+    <xs:complexType name="utlConfigurationFile">
+        <xs:sequence>
+            <xs:element name="peer-configuration" type="peerConfiguration"/>
+            <xs:element name="service-instances" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:choice minOccurs="0" maxOccurs="unbounded">
+                            <xs:element name="raf" type="rafServiceInstanceConfiguration"/>
+                            <xs:element name="rcf" type="rcfServiceInstanceConfiguration"/>
+                            <xs:element name="rocf" type="rocfServiceInstanceConfiguration"/>
+                            <xs:element name="cltu" type="cltuServiceInstanceConfiguration"/>
+                        </xs:choice>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="peerConfiguration">
+        <xs:sequence>
+            <xs:element name="port-mappings" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="mapping" type="portMapping" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="remote-peers" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="peer" type="remotePeer" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="auth-delay" type="xs:int" use="required"/>
+        <xs:attribute name="id" type="xs:string"/>
+        <xs:attribute name="password" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="portMapping">
+        <xs:sequence/>
+        <xs:attribute name="port-name" type="xs:string"/>
+        <xs:attribute name="dead-factor" type="xs:int" use="required"/>
+        <xs:attribute name="heartbeat-interval" type="xs:int" use="required"/>
+        <xs:attribute name="address" type="xs:string"/>
+        <xs:attribute name="tcp-tx-buffer" type="xs:int" use="required"/>
+        <xs:attribute name="tcp-rx-buffer" type="xs:int" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="remotePeer">
+        <xs:sequence/>
+        <xs:attribute name="id" type="xs:string"/>
+        <xs:attribute name="auth-mode" type="authenticationModeEnum"/>
+        <xs:attribute name="auth-hash" type="hashFunctionEnum"/>
+        <xs:attribute name="password" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="rafServiceInstanceConfiguration">
+        <xs:complexContent>
+            <xs:extension base="serviceInstanceConfiguration">
+                <xs:sequence>
+                    <xs:element name="delivery-mode" type="deliveryModeEnum" minOccurs="0"/>
+                    <xs:element name="latency-limit" type="xs:int" minOccurs="0"/>
+                    <xs:element name="transfer-buffer-size" type="xs:int"/>
+                    <xs:element name="minimum-reporting-cycle" type="xs:int" minOccurs="0"/>
+                    <xs:element name="permitted-frame-quality-set" minOccurs="0">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element name="quality" type="rafRequestedFrameQualityEnum" minOccurs="0" maxOccurs="unbounded"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="requested-frame-quality" type="rafRequestedFrameQualityEnum" minOccurs="0"/>
+                    <xs:element name="start-time" type="xs:dateTime" minOccurs="0"/>
+                    <xs:element name="end-time" type="xs:dateTime" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="serviceInstanceConfiguration" abstract="true">
+        <xs:sequence>
+            <xs:element name="service-instance-id" type="xs:string"/>
+            <xs:element name="service-version-number" type="xs:int"/>
+            <xs:element name="initiator" type="initiatorRoleEnum"/>
+            <xs:element name="initiator-id" type="xs:string"/>
+            <xs:element name="responder-id" type="xs:string"/>
+            <xs:element name="responder-port-id" type="xs:string"/>
+            <xs:element name="return-timeout-period" type="xs:int"/>
+            <xs:element name="reporting-cycle" type="xs:int"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="rcfServiceInstanceConfiguration">
+        <xs:complexContent>
+            <xs:extension base="serviceInstanceConfiguration">
+                <xs:sequence>
+                    <xs:element name="delivery-mode" type="deliveryModeEnum" minOccurs="0"/>
+                    <xs:element name="latency-limit" type="xs:int" minOccurs="0"/>
+                    <xs:element name="transfer-buffer-size" type="xs:int"/>
+                    <xs:element name="minimum-reporting-cycle" type="xs:int" minOccurs="0"/>
+                    <xs:element name="permitted-global-VCID-set" minOccurs="0">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element name="gvcid" type="gvcid" minOccurs="0" maxOccurs="unbounded"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="requested-global-VCID" type="gvcid" minOccurs="0"/>
+                    <xs:element name="start-time" type="xs:dateTime" minOccurs="0"/>
+                    <xs:element name="end-time" type="xs:dateTime" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="gvcid">
+        <xs:sequence/>
+        <xs:attribute name="scid" type="xs:int" use="required"/>
+        <xs:attribute name="tfvn" type="xs:int" use="required"/>
+        <xs:attribute name="vcid" type="xs:int"/>
+    </xs:complexType>
+
+    <xs:complexType name="rocfServiceInstanceConfiguration">
+        <xs:complexContent>
+            <xs:extension base="serviceInstanceConfiguration">
+                <xs:sequence>
+                    <xs:element name="delivery-mode" type="deliveryModeEnum" minOccurs="0"/>
+                    <xs:element name="latency-limit" type="xs:int" minOccurs="0"/>
+                    <xs:element name="transfer-buffer-size" type="xs:int"/>
+                    <xs:element name="minimum-reporting-cycle" type="xs:int" minOccurs="0"/>
+                    <xs:element name="permitted-global-VCID-set" minOccurs="0">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element name="gvcid" type="gvcid" minOccurs="0" maxOccurs="unbounded"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="permitted-tc-vcid-set" minOccurs="0">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element name="tcvcid" type="xs:int" minOccurs="0" maxOccurs="unbounded"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="permitted-control-word-type-set" minOccurs="0">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element name="control-word-type" type="rocfControlWordTypeEnum" minOccurs="0" maxOccurs="unbounded"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="permitted-update-mode-set" minOccurs="0">
+                        <xs:complexType>
+                            <xs:sequence>
+                                <xs:element name="update-mode" type="rocfUpdateModeEnum" minOccurs="0" maxOccurs="unbounded"/>
+                            </xs:sequence>
+                        </xs:complexType>
+                    </xs:element>
+                    <xs:element name="requested-global-VCID" type="gvcid" minOccurs="0"/>
+                    <xs:element name="requested-tc-vcid" type="xs:int" minOccurs="0"/>
+                    <xs:element name="requested-control-word-type" type="rocfControlWordTypeEnum" minOccurs="0"/>
+                    <xs:element name="requested-update-mode" type="rocfUpdateModeEnum" minOccurs="0"/>
+                    <xs:element name="start-time" type="xs:dateTime" minOccurs="0"/>
+                    <xs:element name="end-time" type="xs:dateTime" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="cltuServiceInstanceConfiguration">
+        <xs:complexContent>
+            <xs:extension base="serviceInstanceConfiguration">
+                <xs:sequence>
+                    <xs:element name="maximum-cltu-length" type="xs:int" minOccurs="0"/>
+                    <xs:element name="minimum-cltu-delay" type="xs:int" minOccurs="0"/>
+                    <xs:element name="bit-lock-required" type="xs:boolean"/>
+                    <xs:element name="rf-available-required" type="xs:boolean"/>
+                    <xs:element name="protocol-abort-clear-enabled" type="xs:boolean"/>
+                    <xs:element name="minimum-reporting-cycle" type="xs:int" minOccurs="0"/>
+                    <xs:element name="expected-cltu-identification" type="xs:int"/>
+                    <xs:element name="start-time" type="xs:dateTime" minOccurs="0"/>
+                    <xs:element name="end-time" type="xs:dateTime" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:simpleType name="authenticationModeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NONE"/>
+            <xs:enumeration value="BIND"/>
+            <xs:enumeration value="ALL"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="hashFunctionEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="SHA_1"/>
+            <xs:enumeration value="SHA_256"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="deliveryModeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="TIMELY_ONLINE"/>
+            <xs:enumeration value="COMPLETE_ONLINE"/>
+            <xs:enumeration value="OFFLINE"/>
+            <xs:enumeration value="FWD_ONLINE"/>
+            <xs:enumeration value="FWD_OFFLINE"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="rafRequestedFrameQualityEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="GOOD_FRAMES_ONLY"/>
+            <xs:enumeration value="BAD_FRAMES_ONLY"/>
+            <xs:enumeration value="ALL_FRAMES"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="initiatorRoleEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="USER"/>
+            <xs:enumeration value="PROVIDER"/>
+            <xs:enumeration value="USER_OR_PROVIDER"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="rocfControlWordTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="ALL"/>
+            <xs:enumeration value="CLCW"/>
+            <xs:enumeration value="NO_CLCW"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="rocfUpdateModeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="CONTINUOUS"/>
+            <xs:enumeration value="CHANGE_BASED"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>
