@@ -16,17 +16,15 @@
 
 package eu.dariolucia.ccsds.sle.utl.config.cltu;
 
-import java.util.Date;
-import java.util.Map;
-import java.util.Objects;
-
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.ApplicationIdentifierEnum;
+import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuProtocolAbortModeEnum;
 
-import javax.xml.bind.DatatypeConverter;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import java.util.Date;
+import java.util.Objects;
 
 /**
  * CLTU Service Instance configuration specification.
@@ -34,133 +32,171 @@ import javax.xml.bind.annotation.XmlElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class CltuServiceInstanceConfiguration extends ServiceInstanceConfiguration {
 
-	public static final String MAXIMUM_CLTU_LENGTH_KEY = "maximum-cltu-length";
-	public static final String MINIMUM_CLTU_DELAY_KEY = "minimum-cltu-delay";
-	public static final String BIT_LOCK_REQUIRED_KEY = "bit-lock-required";
-	public static final String RF_AVAILABLE_REQUIRED_KEY = "rf-available-required";
-	public static final String PROTOCOL_ABORT_CLEAR_ENABLED_KEY = "protocol-abort-clear-enabled";
-	public static final String EXPECTED_CLTU_IDENTIFICATION_KEY = "expected-cltu-identification";
+    public static final String MAXIMUM_CLTU_LENGTH_KEY = "maximum-cltu-length";
+    public static final String MINIMUM_CLTU_DELAY_KEY = "minimum-cltu-delay";
+    public static final String BIT_LOCK_REQUIRED_KEY = "bit-lock-required";
+    public static final String RF_AVAILABLE_REQUIRED_KEY = "rf-available-required";
+    public static final String PROTOCOL_ABORT_MODE_KEY = "protocol-abort-mode";
+    public static final String EXPECTED_CLTU_IDENTIFICATION_KEY = "expected-cltu-identification";
 
+    /**
+     * The size, in octets, of the maximum-length CLTU that will be accepted by the provider for this service
+     * instance. By default is not set.
+     */
+    @XmlElement(name = MAXIMUM_CLTU_LENGTH_KEY)
+    private Integer maxCltuLength;
+    /**
+     * The minimum guard time the F-CLTU provider will accept between two consecutive CLTUs. By default set to 0.
+     * By default is not set.
+     */
+    @XmlElement(name = MINIMUM_CLTU_DELAY_KEY)
+    private Integer minCltuDelay;
+    /**
+     * If the value is true, the no-bit-lock flag in the CLCW must be false in order for the provider to set
+     * production-status to operational. By default set to false.
+     */
+    @XmlElement(name = BIT_LOCK_REQUIRED_KEY)
+    private boolean bitlockRequired;
+    /**
+     * If the value is true, the no-RF-available flag in the CLCW must be false in order for the provider to set
+     * production status to operational. By default set to false.
+     */
+    @XmlElement(name = RF_AVAILABLE_REQUIRED_KEY)
+    private boolean rfAvailableRequired;
+    /**
+     * The protocol-abort-mode may be set to clear or continue. If it is abort, service production shall cease in
+     * the event of a protocol abort. If it is continue, service production shall disregard this event and continue
+     * radiating the CLTUs already buffered at that time. By default set to ABORT.
+     */
+    @XmlElement(name = PROTOCOL_ABORT_MODE_KEY)
+    private CltuProtocolAbortModeEnum protocolAbortMode = CltuProtocolAbortModeEnum.ABORT_MODE;
+    /**
+     * The minimum setting (in seconds) of the reporting cycle for status reports that the F-CLTU service user may
+     * request in an CLTU-SCHEDULE-STATUS-REPORT invocation. By default is not set.
+     */
+    @XmlElement(name = MIN_REPORTING_CYCLE_KEY)
+    private Integer minReportingCycle;
+    /**
+     * The expected value of the cltu-identification parameter to be received in the next CLTU-TRANSFERDATA
+     * invocation. If no CLTU-START has been received, zero shall be returned as the default value of this parameter.
+     * By default is set to 0.
+     */
+    @XmlElement(name = EXPECTED_CLTU_IDENTIFICATION_KEY)
+    private int expectedCltuIdentification;
+    /**
+     * Start time. If not set, VOID is used. By default is not set.
+     * <p>
+     * This parameter is a hint.
+     */
+    @XmlElement(name = START_TIME_KEY)
+    private Date startTime;
+    /**
+     * End time. If not set, VOID is used. By default is not set.
+     * <p>
+     * This parameter is a hint.
+     */
+    @XmlElement(name = END_TIME_KEY)
+    private Date endTime;
 
-	@XmlElement(name = MAXIMUM_CLTU_LENGTH_KEY)
-	private Integer maxCltuLength;
-	@XmlElement(name = MINIMUM_CLTU_DELAY_KEY)
-	private Integer minCltuDelay;
-	@XmlElement(name = BIT_LOCK_REQUIRED_KEY)
-	private boolean bitlockRequired;
-	@XmlElement(name = RF_AVAILABLE_REQUIRED_KEY)
-	private boolean rfAvailableRequired;
-	@XmlElement(name = PROTOCOL_ABORT_CLEAR_ENABLED_KEY)
-	private boolean protocolAbortClearEnabled;
-	@XmlElement(name = MIN_REPORTING_CYCLE_KEY)
-	private Integer minReportingCycle;
+    public CltuServiceInstanceConfiguration() {
+    }
 
-	@XmlElement(name = EXPECTED_CLTU_IDENTIFICATION_KEY)
-	private int expectedCltuIdentification;
-	@XmlElement(name = START_TIME_KEY)
-	private Date startTime;
-	@XmlElement(name = END_TIME_KEY)
-	private Date endTime;
+    public Integer getMinReportingCycle() {
+        return minReportingCycle;
+    }
 
-	public CltuServiceInstanceConfiguration() {
-	}
+    public void setMinReportingCycle(Integer minReportingCycle) {
+        this.minReportingCycle = minReportingCycle;
+    }
 
-	public Integer getMinReportingCycle() {
-		return minReportingCycle;
-	}
+    public Integer getMaxCltuLength() {
+        return maxCltuLength;
+    }
 
-	public void setMinReportingCycle(Integer minReportingCycle) {
-		this.minReportingCycle = minReportingCycle;
-	}
+    public void setMaxCltuLength(Integer maxCltuLength) {
+        this.maxCltuLength = maxCltuLength;
+    }
 
-	public Integer getMaxCltuLength() {
-		return maxCltuLength;
-	}
+    public Integer getMinCltuDelay() {
+        return minCltuDelay;
+    }
 
-	public void setMaxCltuLength(Integer maxCltuLength) {
-		this.maxCltuLength = maxCltuLength;
-	}
+    public void setMinCltuDelay(Integer minCltuDelay) {
+        this.minCltuDelay = minCltuDelay;
+    }
 
-	public Integer getMinCltuDelay() {
-		return minCltuDelay;
-	}
+    public boolean isBitlockRequired() {
+        return bitlockRequired;
+    }
 
-	public void setMinCltuDelay(Integer minCltuDelay) {
-		this.minCltuDelay = minCltuDelay;
-	}
+    public void setBitlockRequired(boolean bitlockRequired) {
+        this.bitlockRequired = bitlockRequired;
+    }
 
-	public boolean isBitlockRequired() {
-		return bitlockRequired;
-	}
+    public boolean isRfAvailableRequired() {
+        return rfAvailableRequired;
+    }
 
-	public void setBitlockRequired(boolean bitlockRequired) {
-		this.bitlockRequired = bitlockRequired;
-	}
+    public void setRfAvailableRequired(boolean rfAvailableRequired) {
+        this.rfAvailableRequired = rfAvailableRequired;
+    }
 
-	public boolean isRfAvailableRequired() {
-		return rfAvailableRequired;
-	}
+    public CltuProtocolAbortModeEnum getProtocolAbortMode() {
+        return protocolAbortMode;
+    }
 
-	public void setRfAvailableRequired(boolean rfAvailableRequired) {
-		this.rfAvailableRequired = rfAvailableRequired;
-	}
+    public void setProtocolAbortMode(CltuProtocolAbortModeEnum protocolAbortMode) {
+        this.protocolAbortMode = protocolAbortMode;
+    }
 
-	public boolean isProtocolAbortClearEnabled() {
-		return protocolAbortClearEnabled;
-	}
+    public int getExpectedCltuIdentification() {
+        return expectedCltuIdentification;
+    }
 
-	public void setProtocolAbortClearEnabled(boolean protocolAbortClearEnabled) {
-		this.protocolAbortClearEnabled = protocolAbortClearEnabled;
-	}
+    public void setExpectedCltuIdentification(int expectedCltuIdentification) {
+        this.expectedCltuIdentification = expectedCltuIdentification;
+    }
 
-	public int getExpectedCltuIdentification() {
-		return expectedCltuIdentification;
-	}
+    public Date getStartTime() {
+        return startTime;
+    }
 
-	public void setExpectedCltuIdentification(int expectedCltuIdentification) {
-		this.expectedCltuIdentification = expectedCltuIdentification;
-	}
+    public void setStartTime(Date startTime) {
+        this.startTime = startTime;
+    }
 
-	public Date getStartTime() {
-		return startTime;
-	}
+    public Date getEndTime() {
+        return endTime;
+    }
 
-	public void setStartTime(Date startTime) {
-		this.startTime = startTime;
-	}
+    public void setEndTime(Date endTime) {
+        this.endTime = endTime;
+    }
 
-	public Date getEndTime() {
-		return endTime;
-	}
+    @Override
+    public ApplicationIdentifierEnum getType() {
+        return ApplicationIdentifierEnum.CLTU;
+    }
 
-	public void setEndTime(Date endTime) {
-		this.endTime = endTime;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        CltuServiceInstanceConfiguration that = (CltuServiceInstanceConfiguration) o;
+        return bitlockRequired == that.bitlockRequired &&
+                rfAvailableRequired == that.rfAvailableRequired &&
+                protocolAbortMode == that.protocolAbortMode &&
+                expectedCltuIdentification == that.expectedCltuIdentification &&
+                Objects.equals(maxCltuLength, that.maxCltuLength) &&
+                Objects.equals(minCltuDelay, that.minCltuDelay) &&
+                Objects.equals(minReportingCycle, that.minReportingCycle) &&
+                Objects.equals(startTime, that.startTime) &&
+                Objects.equals(endTime, that.endTime);
+    }
 
-	@Override
-	public ApplicationIdentifierEnum getType() {
-		return ApplicationIdentifierEnum.CLTU;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		if (!super.equals(o)) return false;
-		CltuServiceInstanceConfiguration that = (CltuServiceInstanceConfiguration) o;
-		return bitlockRequired == that.bitlockRequired &&
-				rfAvailableRequired == that.rfAvailableRequired &&
-				protocolAbortClearEnabled == that.protocolAbortClearEnabled &&
-				expectedCltuIdentification == that.expectedCltuIdentification &&
-				Objects.equals(maxCltuLength, that.maxCltuLength) &&
-				Objects.equals(minCltuDelay, that.minCltuDelay) &&
-				Objects.equals(minReportingCycle, that.minReportingCycle) &&
-				Objects.equals(startTime, that.startTime) &&
-				Objects.equals(endTime, that.endTime);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(super.hashCode(), maxCltuLength, minCltuDelay, bitlockRequired, rfAvailableRequired, protocolAbortClearEnabled, minReportingCycle, expectedCltuIdentification, startTime, endTime);
-	}
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), maxCltuLength, minCltuDelay, bitlockRequired, rfAvailableRequired, protocolAbortMode, minReportingCycle, expectedCltuIdentification, startTime, endTime);
+    }
 }

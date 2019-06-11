@@ -57,7 +57,7 @@ public class CltuDisplayController extends AbstractDisplayController {
 		registerLabel("Max. CLTU Delay", "The maximum CLTU delay", CltuServiceInstanceState.class, (state) -> toString(state.getMaxCltuDelay()));
 		registerLabel("Bitlock Required", "Bitlock required for radiation", CltuServiceInstanceState.class, (state) -> String.valueOf(state.isBitlockRequired()));
 		registerLabel("RF Available Required", "RF available required for radiation", CltuServiceInstanceState.class, (state) -> String.valueOf(state.isRfAvailableRequired()));
-		registerLabel("Protocol Abort Clear Enabled", "Protocol abort clear enablement", CltuServiceInstanceState.class, (state) -> String.valueOf(state.isProtocolAbortClearEnabled()));
+		registerLabel("Protocol Abort Mode", "Protocol abort mode selection", CltuServiceInstanceState.class, (state) -> Objects.toString(state.getProtocolAbortMode(), ""));
 		registerLabel("Min. Reporting Cycle", "The minimum reporting cycle for status reports", CltuServiceInstanceState.class, (state) -> toString(state.getMinReportingCycle()));
 		registerLabel("Reporting Cycle", "The current reporting cycle for status reports", CltuServiceInstanceState.class, (state) -> toString(state.getReportingCycle()));
 		registerLabel("Delivery Mode", "The configured delivery mode", CltuServiceInstanceState.class, (state) -> Objects.toString(state.getDeliveryMode(), ""));

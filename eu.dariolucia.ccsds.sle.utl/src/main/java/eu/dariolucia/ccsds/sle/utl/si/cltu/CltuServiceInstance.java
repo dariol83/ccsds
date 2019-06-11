@@ -50,7 +50,6 @@ public class CltuServiceInstance extends ServiceInstance {
 	private Integer minCltuDelay;
 	private boolean bitlockRequired;
 	private boolean rfAvailableRequired;
-	private boolean protocolAbortClearEnabled;
 	private Integer minReportingCycle;
 	private Integer reportingCycle;
 	private int returnTimeoutPeriod;
@@ -1153,7 +1152,6 @@ public class CltuServiceInstance extends ServiceInstance {
 		state.setMinCltuDelay(this.minCltuDelay);
 		state.setBitlockRequired(this.bitlockRequired);
 		state.setRfAvailableRequired(this.rfAvailableRequired);
-		state.setProtocolAbortClearEnabled(this.protocolAbortClearEnabled);
 		state.setMinReportingCycle(this.minReportingCycle);
 		state.setReportingCycle(this.reportingCycle);
 		state.setReturnTimeoutPeriod(this.returnTimeoutPeriod);
@@ -1215,7 +1213,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		this.minCltuDelay = getCltuConfiguration().getMinCltuDelay();
 		this.bitlockRequired = getCltuConfiguration().isBitlockRequired();
 		this.rfAvailableRequired = getCltuConfiguration().isRfAvailableRequired();
-		this.protocolAbortClearEnabled = getCltuConfiguration().isProtocolAbortClearEnabled();
+		this.protocolAbortMode = getCltuConfiguration().getProtocolAbortMode();
 		this.minReportingCycle = getCltuConfiguration().getMinReportingCycle();
 		this.reportingCycle = null;
 		this.returnTimeoutPeriod = getCltuConfiguration().getReturnTimeoutPeriod();
@@ -1230,7 +1228,6 @@ public class CltuServiceInstance extends ServiceInstance {
 		this.notificationMode = null;
 		this.plop1IdleSequenceLength = null;
 		this.plopInEffect = null;
-		this.protocolAbortMode = null;
 		this.subcarrierToBitRateRation = null;
 		this.deliveryMode = DeliveryModeEnum.FWD_ONLINE;
 

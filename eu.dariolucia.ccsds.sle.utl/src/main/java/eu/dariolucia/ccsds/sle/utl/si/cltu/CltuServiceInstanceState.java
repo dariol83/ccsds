@@ -28,7 +28,6 @@ public class CltuServiceInstanceState extends ServiceInstanceState {
 	private Integer maxCltuDelay;
 	private boolean bitlockRequired;
 	private boolean rfAvailableRequired;
-	private boolean protocolAbortClearEnabled;
 	private Integer minReportingCycle;
 	private Integer reportingCycle;
 	//
@@ -98,14 +97,6 @@ public class CltuServiceInstanceState extends ServiceInstanceState {
 
 	public final void setRfAvailableRequired(boolean rfAvailableRequired) {
 		this.rfAvailableRequired = rfAvailableRequired;
-	}
-
-	public final boolean isProtocolAbortClearEnabled() {
-		return protocolAbortClearEnabled;
-	}
-
-	public final void setProtocolAbortClearEnabled(boolean protocolAbortClearEnabled) {
-		this.protocolAbortClearEnabled = protocolAbortClearEnabled;
 	}
 
 	public final Integer getMinReportingCycle() {

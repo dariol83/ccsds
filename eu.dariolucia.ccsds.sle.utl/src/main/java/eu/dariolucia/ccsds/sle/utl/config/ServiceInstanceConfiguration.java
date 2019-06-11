@@ -31,163 +31,164 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class ServiceInstanceConfiguration {
 
-	public static final String SERVICE_INSTANCE_ID_KEY = "service-instance-id";
-	public static final String INITIATOR_KEY = "initiator";
-	public static final String INITIATOR_ID_KEY = "initiator-id";
-	public static final String RESPONDER_ID_KEY = "responder-id";
-	public static final String RESPONDER_PORT_ID_KEY = "responder-port-id";
-	public static final String RETURN_TIMEOUT_PERIOD_KEY = "return-timeout-period";
-	public static final String REPORTING_CYCLE_KEY = "reporting-cycle";
-	public static final String SERVICE_VERSION_NUMBER_KEY = "service-version-number";
+    public static final String SERVICE_INSTANCE_ID_KEY = "service-instance-id";
+    public static final String INITIATOR_KEY = "initiator";
+    public static final String INITIATOR_ID_KEY = "initiator-id";
+    public static final String RESPONDER_ID_KEY = "responder-id";
+    public static final String RESPONDER_PORT_ID_KEY = "responder-port-id";
+    public static final String RETURN_TIMEOUT_PERIOD_KEY = "return-timeout-period";
+    public static final String REPORTING_CYCLE_KEY = "reporting-cycle";
+    public static final String SERVICE_VERSION_NUMBER_KEY = "service-version-number";
 
-	public static final String MIN_REPORTING_CYCLE_KEY = "minimum-reporting-cycle";
-	public static final String START_TIME_KEY = "start-time";
-	public static final String END_TIME_KEY = "end-time";
+    public static final String MIN_REPORTING_CYCLE_KEY = "minimum-reporting-cycle";
+    public static final String START_TIME_KEY = "start-time";
+    public static final String END_TIME_KEY = "end-time";
 
-	/**
-	 * The service instance identifier, in the ASCII format defined by CCSDS.
-	 */
-	@XmlElement(name = SERVICE_INSTANCE_ID_KEY, required = true)
-	private String serviceInstanceIdentifier;
-	/**
-	 * The SLE version number to be used when sending the BIND operation.
-	 *
-	 * This parameter is a hint.
-	 */
+    /**
+     * The service instance identifier, in the ASCII format defined by CCSDS.
+     */
+    @XmlElement(name = SERVICE_INSTANCE_ID_KEY, required = true)
+    private String serviceInstanceIdentifier;
+    /**
+     * The SLE version number to be used when sending the BIND operation.
+     * <p>
+     * This parameter is a hint.
+     */
     @XmlElement(name = SERVICE_VERSION_NUMBER_KEY)
     private int serviceVersionNumber;
-	/**
-	 * The role of the initiator: can be USER, PPROVIDER or USER_OR_PROVIDER.
-	 */
-	@XmlElement(name = INITIATOR_KEY, required = true)
-	private InitiatorRoleEnum initiator;
-	/**
-	 * The ID of the initiator: if the initiator is the user, this ID must be equal to the LOCAL_ID defined in the
-	 * {@link PeerConfiguration} section. If the initiator is the provider, this ID must be one of those defined as
-	 * {@link eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer} in the {@link PeerConfiguration} section.
-	 */
+    /**
+     * The role of the initiator: can be USER, PPROVIDER or USER_OR_PROVIDER.
+     */
+    @XmlElement(name = INITIATOR_KEY, required = true)
+    private InitiatorRoleEnum initiator;
+    /**
+     * The ID of the initiator: if the initiator is the user, this ID must be equal to the LOCAL_ID defined in the
+     * {@link PeerConfiguration} section. If the initiator is the provider, this ID must be one of those defined as
+     * {@link eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer} in the {@link PeerConfiguration} section.
+     */
     @XmlElement(name = INITIATOR_ID_KEY, required = true)
-	private String initiatorIdentifier;
-	/**
-	 * The ID of the responder: if the responder is the user, this ID must be equal to the LOCAL_ID defined in the
-	 * {@link PeerConfiguration} section. If the responder is the provider, this ID must be one of those defined as
-	 * {@link eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer} in the {@link PeerConfiguration} section.
-	 */
-	@XmlElement(name = RESPONDER_ID_KEY, required = true)
-	private String responderIdentifier;
-	/**
-	 * Logical port used to access the SLE servicen instance.
-	 */
+    private String initiatorIdentifier;
+    /**
+     * The ID of the responder: if the responder is the user, this ID must be equal to the LOCAL_ID defined in the
+     * {@link PeerConfiguration} section. If the responder is the provider, this ID must be one of those defined as
+     * {@link eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer} in the {@link PeerConfiguration} section.
+     */
+    @XmlElement(name = RESPONDER_ID_KEY, required = true)
+    private String responderIdentifier;
+    /**
+     * Logical port used to access the SLE servicen instance.
+     */
     @XmlElement(name = RESPONDER_PORT_ID_KEY, required = true)
-	private String responderPortIdentifier;
-	/**
-	 * Maximum return timeout in seconds for confirmed operations.
-	 */
+    private String responderPortIdentifier;
+    /**
+     * The maximum time period (in seconds) permitted from when a confirmed SLE operation is invoked until the return is
+     * received by the invoker.
+     */
     @XmlElement(name = RETURN_TIMEOUT_PERIOD_KEY, required = true)
     private int returnTimeoutPeriod;
-	/**
-	 * Reporting cycle for schedule status report.
-	 *
-	 * This parameter is a hint.
-	 */
-	@XmlElement(name = REPORTING_CYCLE_KEY)
-	private int reportingCycle;
+    /**
+     * Reporting cycle for schedule status report.
+     * <p>
+     * This parameter is a hint.
+     */
+    @XmlElement(name = REPORTING_CYCLE_KEY)
+    private int reportingCycle;
 
-	public ServiceInstanceConfiguration() {
-	}
+    public ServiceInstanceConfiguration() {
+    }
 
-	public int getReportingCycle() {
-		return reportingCycle;
-	}
+    public int getReportingCycle() {
+        return reportingCycle;
+    }
 
-	public InitiatorRoleEnum getInitiator() {
-		return initiator;
-	}
-	
-	public String getServiceInstanceIdentifier() {
-		return serviceInstanceIdentifier;
-	}
+    public InitiatorRoleEnum getInitiator() {
+        return initiator;
+    }
 
-	public String getInitiatorIdentifier() {
-		return initiatorIdentifier;
-	}
+    public String getServiceInstanceIdentifier() {
+        return serviceInstanceIdentifier;
+    }
 
-	public String getResponderIdentifier() {
-		return responderIdentifier;
-	}
+    public String getInitiatorIdentifier() {
+        return initiatorIdentifier;
+    }
 
-	public String getResponderPortIdentifier() {
-		return responderPortIdentifier;
-	}
+    public String getResponderIdentifier() {
+        return responderIdentifier;
+    }
 
-	public int getReturnTimeoutPeriod() {
-		return returnTimeoutPeriod;
-	}
+    public String getResponderPortIdentifier() {
+        return responderPortIdentifier;
+    }
 
-	public int getServiceVersionNumber() {
-		return serviceVersionNumber;
-	}
+    public int getReturnTimeoutPeriod() {
+        return returnTimeoutPeriod;
+    }
 
-	public void setInitiator(InitiatorRoleEnum initiator) {
-		this.initiator = initiator;
-	}
+    public int getServiceVersionNumber() {
+        return serviceVersionNumber;
+    }
 
-	public void setServiceInstanceIdentifier(String serviceInstanceIdentifier) {
-		this.serviceInstanceIdentifier = serviceInstanceIdentifier;
-	}
+    public void setInitiator(InitiatorRoleEnum initiator) {
+        this.initiator = initiator;
+    }
 
-	public void setInitiatorIdentifier(String initiatorIdentifier) {
-		this.initiatorIdentifier = initiatorIdentifier;
-	}
+    public void setServiceInstanceIdentifier(String serviceInstanceIdentifier) {
+        this.serviceInstanceIdentifier = serviceInstanceIdentifier;
+    }
 
-	public void setResponderIdentifier(String responderIdentifier) {
-		this.responderIdentifier = responderIdentifier;
-	}
+    public void setInitiatorIdentifier(String initiatorIdentifier) {
+        this.initiatorIdentifier = initiatorIdentifier;
+    }
 
-	public void setResponderPortIdentifier(String responderPortIdentifier) {
-		this.responderPortIdentifier = responderPortIdentifier;
-	}
+    public void setResponderIdentifier(String responderIdentifier) {
+        this.responderIdentifier = responderIdentifier;
+    }
 
-	public void setReportingCycle(int reportingCycle) {
-		this.reportingCycle = reportingCycle;
-	}
+    public void setResponderPortIdentifier(String responderPortIdentifier) {
+        this.responderPortIdentifier = responderPortIdentifier;
+    }
 
-	public void setReturnTimeoutPeriod(int returnTimeoutPeriod) {
-		this.returnTimeoutPeriod = returnTimeoutPeriod;
-	}
+    public void setReportingCycle(int reportingCycle) {
+        this.reportingCycle = reportingCycle;
+    }
 
-	public void setServiceVersionNumber(int serviceVersionNumber) {
-		this.serviceVersionNumber = serviceVersionNumber;
-	}
+    public void setReturnTimeoutPeriod(int returnTimeoutPeriod) {
+        this.returnTimeoutPeriod = returnTimeoutPeriod;
+    }
 
-	public abstract ApplicationIdentifierEnum getType();
-	
-	protected final DeliveryModeEnum parseDeliveryMode(String s) {
-		return DeliveryModeEnum.valueOf(s);
-	}
-	
-	@Override
-	public String toString() {
-		return "(" + getType().name() + ") " +  getServiceInstanceIdentifier();
-	}
+    public void setServiceVersionNumber(int serviceVersionNumber) {
+        this.serviceVersionNumber = serviceVersionNumber;
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		ServiceInstanceConfiguration that = (ServiceInstanceConfiguration) o;
-		return serviceVersionNumber == that.serviceVersionNumber &&
-				returnTimeoutPeriod == that.returnTimeoutPeriod &&
-				reportingCycle == that.reportingCycle &&
-				Objects.equals(serviceInstanceIdentifier, that.serviceInstanceIdentifier) &&
-				initiator == that.initiator &&
-				Objects.equals(initiatorIdentifier, that.initiatorIdentifier) &&
-				Objects.equals(responderIdentifier, that.responderIdentifier) &&
-				Objects.equals(responderPortIdentifier, that.responderPortIdentifier);
-	}
+    public abstract ApplicationIdentifierEnum getType();
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(serviceInstanceIdentifier, serviceVersionNumber, initiator, initiatorIdentifier, responderIdentifier, responderPortIdentifier, returnTimeoutPeriod, reportingCycle);
-	}
+    protected final DeliveryModeEnum parseDeliveryMode(String s) {
+        return DeliveryModeEnum.valueOf(s);
+    }
+
+    @Override
+    public String toString() {
+        return "(" + getType().name() + ") " + getServiceInstanceIdentifier();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ServiceInstanceConfiguration that = (ServiceInstanceConfiguration) o;
+        return serviceVersionNumber == that.serviceVersionNumber &&
+                returnTimeoutPeriod == that.returnTimeoutPeriod &&
+                reportingCycle == that.reportingCycle &&
+                Objects.equals(serviceInstanceIdentifier, that.serviceInstanceIdentifier) &&
+                initiator == that.initiator &&
+                Objects.equals(initiatorIdentifier, that.initiatorIdentifier) &&
+                Objects.equals(responderIdentifier, that.responderIdentifier) &&
+                Objects.equals(responderPortIdentifier, that.responderPortIdentifier);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(serviceInstanceIdentifier, serviceVersionNumber, initiator, initiatorIdentifier, responderIdentifier, responderPortIdentifier, returnTimeoutPeriod, reportingCycle);
+    }
 }

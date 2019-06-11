@@ -50,19 +50,49 @@ public abstract class CommonEncDec {
 		currentDecodingProvider = defaultDecodingProvider;
 	}
 
+	/**
+	 * This method registers a constructor function, which is used to allocate the correct object factory of the
+	 * SLE PDU wrapper class depending on the currently selected version.
+	 *
+	 * @param version the SLE version
+	 * @param decoderProvider the supplier providing instances capable to deserialize SLE PDUs of the specified version
+	 */
 	protected final void register(int version, Supplier<? extends BerType> decoderProvider) {
 		this.decodingTemplateProvider.put(version, decoderProvider);
 	}
 
+	/**
+	 * This method is used by the {@link eu.dariolucia.ccsds.sle.utl.si.ServiceInstance} class to notify the encoder/
+	 * decoder of a change in the version number.
+	 *
+	 * @param version the new SLE version to use for encoding/decoding
+	 */
 	public final void useSleVersion(int version) {
 		this.version = version;
 		currentDecodingProvider = decodingTemplateProvider.getOrDefault(version, defaultDecodingProvider);
 	}
 
+	/**
+	 * This method returns the currently used SLE version.
+	 *
+	 * @return the currently used SLE version.
+	 */
 	protected final int getVersion() {
 		return version;
 	}
 
+	/**
+	 * This method performs a generic encoding of the provided SLE operation:
+	 * <ul>
+	 *     <li>Wrapping the operation in the appropriate wrapper class, depending on the version</li>
+	 *     <li>Allocating a dynamic output stream</li>
+	 *     <li>Encoding the wrapped object</li>
+	 *     <li>Returning the produced byte array</li>
+	 * </ul>
+	 * @param toEncode the SLE PDU to encode
+	 * @return the BER representation of the SLE PDU
+	 * @throws IOException in case of problems during the encoding process
+	 */
 	public final byte[] encode(BerType toEncode) throws IOException {
 		BerType o = wrapPdu(toEncode);
 		ReverseByteArrayOutputStream os = new ReverseByteArrayOutputStream(140, true);
@@ -70,7 +100,19 @@ public abstract class CommonEncDec {
 		os.close();
 		return os.getArray();
 	}
-	
+
+	/**
+	 * This method is used to decode a BER-encoded SLE PDU using the currently selected decoding wrapper class. This is
+	 * selected depending on the notified SLE version. The decoding is performed using the following approach:
+	 * <ul>
+	 *     <li>The decoding wrapper class factory is called to build a clean instance of the wrapper class</li>
+	 *     <li>The wrapper class instance is used to decode the SLE PDU</li>
+	 *     <li>The result is unwrapped and returned</li>
+	 * </ul>
+	 * @param toDecode the BER representation of the SLE PDU
+	 * @return the decoded SLE PDU
+	 * @throws IOException in case of problems during the decoding process
+	 */
 	public final BerType decode(byte[] toDecode) throws IOException {
 		if(currentDecodingProvider != null) {
 			BerType wrapped = currentDecodingProvider.get();

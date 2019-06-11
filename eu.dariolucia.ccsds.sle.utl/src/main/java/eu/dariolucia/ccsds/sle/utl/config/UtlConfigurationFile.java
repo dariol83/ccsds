@@ -36,9 +36,10 @@ import java.util.Objects;
 /**
  * This class represents the entry point for the configuration of the SLE User Test Library. The configuration shall
  * specify:
- * - the configuration of the peers, i.e. the remote entities that will be connected to the library;
- * - the configuration of the service instances, according to the service management parameters as per Blue Book.
- *
+ * <ul>
+ * <li>the configuration of the peers, i.e. the remote entities that will be connected to the library;</li>
+ * <li>the configuration of the service instances, according to the service management parameters as per Blue Book.</li>
+ * </ul>
  * Some of the service management parameters are not used during initialisation (e.g. the SLE version number to be
  * used, or the start-end times), but are added to the configuration of the service instance to have a self-contained
  * configure of the SLE service that one wants to use.
@@ -61,7 +62,7 @@ public class UtlConfigurationFile {
             UtlConfigurationFile o = (UtlConfigurationFile) u.unmarshal(is);
             return o;
         } catch (JAXBException e) {
-            throw  new IOException(e);
+            throw new IOException(e);
         }
     }
 
@@ -69,7 +70,7 @@ public class UtlConfigurationFile {
      * Save the SLE User Test Library configuration to an output stream.
      *
      * @param configuration the configuration to serialize
-     * @param out the output stream of the serialized configuration
+     * @param out           the output stream of the serialized configuration
      * @throws IOException if there are problems encountered when writing to the output stream
      */
     public static void save(UtlConfigurationFile configuration, OutputStream out) throws IOException {
@@ -92,7 +93,7 @@ public class UtlConfigurationFile {
     /**
      * The configuration of the service instances.
      */
-    @XmlElementWrapper(name="service-instances")
+    @XmlElementWrapper(name = "service-instances")
     @XmlElements({
             @XmlElement(name = "raf", type = RafServiceInstanceConfiguration.class),
             @XmlElement(name = "rcf", type = RcfServiceInstanceConfiguration.class),

@@ -198,7 +198,7 @@
                     <xs:element name="minimum-cltu-delay" type="xs:int" minOccurs="0"/>
                     <xs:element name="bit-lock-required" type="xs:boolean"/>
                     <xs:element name="rf-available-required" type="xs:boolean"/>
-                    <xs:element name="protocol-abort-clear-enabled" type="xs:boolean"/>
+                    <xs:element name="protocol-abort-mode" type="cltuProtocolAbortModeEnum" minOccurs="0"/>
                     <xs:element name="minimum-reporting-cycle" type="xs:int" minOccurs="0"/>
                     <xs:element name="expected-cltu-identification" type="xs:int"/>
                     <xs:element name="start-time" type="xs:dateTime" minOccurs="0"/>
@@ -261,6 +261,13 @@
         <xs:restriction base="xs:string">
             <xs:enumeration value="CONTINUOUS"/>
             <xs:enumeration value="CHANGE_BASED"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="cltuProtocolAbortModeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="ABORT_MODE"/>
+            <xs:enumeration value="CONTINUE_MODE"/>
         </xs:restriction>
     </xs:simpleType>
 </xs:schema>

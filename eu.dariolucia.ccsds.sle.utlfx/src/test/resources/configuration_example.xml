@@ -25,7 +25,7 @@
             <minimum-cltu-delay>5000</minimum-cltu-delay>
             <bit-lock-required>false</bit-lock-required>
             <rf-available-required>false</rf-available-required>
-            <protocol-abort-clear-enabled>false</protocol-abort-clear-enabled>
+            <protocol-abort-mode>ABORT_MODE</protocol-abort-mode>
             <minimum-reporting-cycle>0</minimum-reporting-cycle>
 
             <expected-cltu-identification>1</expected-cltu-identification>

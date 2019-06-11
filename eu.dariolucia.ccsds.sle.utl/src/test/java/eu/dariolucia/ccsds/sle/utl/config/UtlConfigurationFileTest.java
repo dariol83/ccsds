@@ -23,6 +23,7 @@ import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rocf.RocfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
+import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuProtocolAbortModeEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafRequestedFrameQualityEnum;
 import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfControlWordTypeEnum;
 import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfUpdateModeEnum;
@@ -153,7 +154,7 @@ class UtlConfigurationFileTest {
         rocf.setRequestedUpdateMode(RocfUpdateModeEnum.CONTINUOUS);
         file.getServiceInstances().add(rocf);
 
-        // RCF SI
+        // CLTU SI
         CltuServiceInstanceConfiguration cltuSi = new CltuServiceInstanceConfiguration();
         cltuSi.setInitiator(InitiatorRoleEnum.USER);
         cltuSi.setInitiatorIdentifier("LOCAL-ID");
@@ -163,7 +164,7 @@ class UtlConfigurationFileTest {
         cltuSi.setServiceVersionNumber(2);
         cltuSi.setBitlockRequired(false);
         cltuSi.setRfAvailableRequired(true);
-        cltuSi.setProtocolAbortClearEnabled(false);
+        cltuSi.setProtocolAbortMode(CltuProtocolAbortModeEnum.ABORT_MODE);
         cltuSi.setReportingCycle(30);
         cltuSi.setMinReportingCycle(20);
         cltuSi.setStartTime(null);

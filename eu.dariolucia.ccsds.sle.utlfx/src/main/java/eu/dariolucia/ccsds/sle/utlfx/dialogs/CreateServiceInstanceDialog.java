@@ -145,7 +145,7 @@ public class CreateServiceInstanceDialog extends Dialog<Object[]> {
 				// update configurationFileText field in case OK
 				this.configurationFileText.setText(file.getAbsolutePath());
 				this.peerConfiguration = configurationFile.getPeerConfiguration();
-			} catch (JAXBException | IOException e1) {
+			} catch (IOException e1) {
 				LOG.log(Level.WARNING, "Cannot parse the selected file " + file.getAbsolutePath(), e1);
 				this.serviceInstanceConfigurations = null;
 				this.serviceInstanceTableView.getItems().clear();
