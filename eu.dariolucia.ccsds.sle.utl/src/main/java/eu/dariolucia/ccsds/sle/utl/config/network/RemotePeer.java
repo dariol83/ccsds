@@ -26,18 +26,37 @@ import eu.dariolucia.ccsds.sle.utl.si.HashFunctionEnum;
 
 import java.util.Objects;
 
+/**
+ * This class is used to specify the properties of each remote peer:
+ * - Peer ID
+ * - Peer Password
+ * - Authentication mode to be used for the SLE operations (ALL, NONE, BIND)
+ * - Hash function to be used for the computation of 'the protected' (SHA_1 or SHA_256)
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class RemotePeer {
 
+	/**
+	 * The ID of the remote peer. This ID shall match the one delivered through a BIND operation.
+	 */
 	@XmlAttribute(name = "id")
 	private String id = null;
-	
+
+	/**
+	 * The authentication mode for SLE operation. If not set, then no authentication is used.
+	 */
 	@XmlAttribute(name = "auth-mode")
 	private AuthenticationModeEnum authenticationMode = AuthenticationModeEnum.NONE;
 
+	/**
+	 * The authentication hash function used for the signature of the credentials data. If not set, then SHA-1 is used.
+	 */
 	@XmlAttribute(name = "auth-hash")
 	private HashFunctionEnum authenticationHash = HashFunctionEnum.SHA_1;
 
+	/**
+	 * The password of the remote peer.
+	 */
 	@XmlAttribute(name = "password")
 	private String password = null;
 

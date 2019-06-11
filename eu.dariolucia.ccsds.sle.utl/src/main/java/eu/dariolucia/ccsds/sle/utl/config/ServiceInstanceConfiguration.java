@@ -27,13 +27,6 @@ import java.util.Objects;
 
 /**
  * This abstract class encapsulates the service management parameters that are common to all service instances.
- * There are two ways to initialise this class programmatically:
- * - using the setters;
- * - using the constructor that takes as argument a map of properties.
- *
- * If the map is used, the key is the name of the service management property as defined by the CCSDS Blue Books, while
- * the key is the assigned value, as string. For the initiator role, the string value must have one of the possible
- * value of the enumeration {@link InitiatorRoleEnum}.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class ServiceInstanceConfiguration {
@@ -51,20 +44,52 @@ public abstract class ServiceInstanceConfiguration {
 	public static final String START_TIME_KEY = "start-time";
 	public static final String END_TIME_KEY = "end-time";
 
+	/**
+	 * The service instance identifier, in the ASCII format defined by CCSDS.
+	 */
 	@XmlElement(name = SERVICE_INSTANCE_ID_KEY, required = true)
 	private String serviceInstanceIdentifier;
+	/**
+	 * The SLE version number to be used when sending the BIND operation.
+	 *
+	 * This parameter is a hint.
+	 */
     @XmlElement(name = SERVICE_VERSION_NUMBER_KEY)
     private int serviceVersionNumber;
+	/**
+	 * The role of the initiator: can be USER, PPROVIDER or USER_OR_PROVIDER.
+	 */
 	@XmlElement(name = INITIATOR_KEY, required = true)
 	private InitiatorRoleEnum initiator;
+	/**
+	 * The ID of the initiator: if the initiator is the user, this ID must be equal to the LOCAL_ID defined in the
+	 * {@link PeerConfiguration} section. If the initiator is the provider, this ID must be one of those defined as
+	 * {@link eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer} in the {@link PeerConfiguration} section.
+	 */
     @XmlElement(name = INITIATOR_ID_KEY, required = true)
 	private String initiatorIdentifier;
-    @XmlElement(name = RESPONDER_ID_KEY, required = true)
+	/**
+	 * The ID of the responder: if the responder is the user, this ID must be equal to the LOCAL_ID defined in the
+	 * {@link PeerConfiguration} section. If the responder is the provider, this ID must be one of those defined as
+	 * {@link eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer} in the {@link PeerConfiguration} section.
+	 */
+	@XmlElement(name = RESPONDER_ID_KEY, required = true)
 	private String responderIdentifier;
+	/**
+	 * Logical port used to access the SLE servicen instance.
+	 */
     @XmlElement(name = RESPONDER_PORT_ID_KEY, required = true)
 	private String responderPortIdentifier;
+	/**
+	 * Maximum return timeout in seconds for confirmed operations.
+	 */
     @XmlElement(name = RETURN_TIMEOUT_PERIOD_KEY, required = true)
     private int returnTimeoutPeriod;
+	/**
+	 * Reporting cycle for schedule status report.
+	 *
+	 * This parameter is a hint.
+	 */
 	@XmlElement(name = REPORTING_CYCLE_KEY)
 	private int reportingCycle;
 

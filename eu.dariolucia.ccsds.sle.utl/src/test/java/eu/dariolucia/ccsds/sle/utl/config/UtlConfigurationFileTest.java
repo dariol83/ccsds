@@ -16,12 +16,16 @@
 
 package eu.dariolucia.ccsds.sle.utl.config;
 
+import eu.dariolucia.ccsds.sle.utl.config.cltu.CltuServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.network.PortMapping;
 import eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.config.rocf.RocfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafRequestedFrameQualityEnum;
+import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfControlWordTypeEnum;
+import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfUpdateModeEnum;
 import org.junit.jupiter.api.Test;
 
 import javax.xml.bind.JAXBContext;
@@ -36,10 +40,17 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UtlConfigurationFileTest {
 
+    /**
+     * Verify the correct generation of the XSD schema.
+     *
+     * @throws IOException
+     * @throws JAXBException
+     */
     @Test
     public void testXsdSchema() throws IOException, JAXBException {
         JAXBContext jaxbContext = JAXBContext.newInstance(UtlConfigurationFile.class);
@@ -59,6 +70,11 @@ class UtlConfigurationFileTest {
         assertTrue(theSchema.length() > 500);
     }
 
+    /**
+     * Verify the correct serialisation and deserialisation of the configuration.
+     *
+     * @throws IOException
+     */
     @Test
     public void testSerializeDeserialize() throws IOException {
         UtlConfigurationFile file = new UtlConfigurationFile();
@@ -111,6 +127,51 @@ class UtlConfigurationFileTest {
         rcfSi.setPermittedGvcid(Arrays.asList(new GVCID(123, 1, null), new GVCID(123, 1, 0)));
         rcfSi.setRequestedGvcid(new GVCID(123, 1, 0));
         file.getServiceInstances().add(rcfSi);
+
+        // ROCF SI
+        RocfServiceInstanceConfiguration rocf = new RocfServiceInstanceConfiguration();
+        rocf.setInitiator(InitiatorRoleEnum.USER);
+        rocf.setInitiatorIdentifier("LOCAL-ID");
+        rocf.setResponderIdentifier("PEER1");
+        rocf.setResponderPortIdentifier("PORT1");
+        rocf.setReturnTimeoutPeriod(60);
+        rocf.setServiceVersionNumber(2);
+        rocf.setDeliveryMode(DeliveryModeEnum.TIMELY_ONLINE);
+        rocf.setLatencyLimit(3);
+        rocf.setTransferBufferSize(10);
+        rocf.setReportingCycle(30);
+        rocf.setMinReportingCycle(20);
+        rocf.setStartTime(null);
+        rocf.setEndTime(null);
+        rocf.setPermittedGvcid(Arrays.asList(new GVCID(123, 1, null), new GVCID(123, 1, 0)));
+        rocf.setPermittedTcVcids(Arrays.asList(0, 1));
+        rocf.setPermittedControlWordTypes(Arrays.asList(RocfControlWordTypeEnum.ALL, RocfControlWordTypeEnum.CLCW, RocfControlWordTypeEnum.NO_CLCW));
+        rocf.setPermittedUpdateModes(Arrays.asList(RocfUpdateModeEnum.CHANGE_BASED, RocfUpdateModeEnum.CONTINUOUS));
+        rocf.setRequestedGvcid(new GVCID(123, 1, 0));
+        rocf.setRequestedTcVcid(1);
+        rocf.setRequestedControlWordType(RocfControlWordTypeEnum.CLCW);
+        rocf.setRequestedUpdateMode(RocfUpdateModeEnum.CONTINUOUS);
+        file.getServiceInstances().add(rocf);
+
+        // RCF SI
+        CltuServiceInstanceConfiguration cltuSi = new CltuServiceInstanceConfiguration();
+        cltuSi.setInitiator(InitiatorRoleEnum.USER);
+        cltuSi.setInitiatorIdentifier("LOCAL-ID");
+        cltuSi.setResponderIdentifier("PEER1");
+        cltuSi.setResponderPortIdentifier("PORT2");
+        cltuSi.setReturnTimeoutPeriod(60);
+        cltuSi.setServiceVersionNumber(2);
+        cltuSi.setBitlockRequired(false);
+        cltuSi.setRfAvailableRequired(true);
+        cltuSi.setProtocolAbortClearEnabled(false);
+        cltuSi.setReportingCycle(30);
+        cltuSi.setMinReportingCycle(20);
+        cltuSi.setStartTime(null);
+        cltuSi.setEndTime(null);
+        cltuSi.setExpectedCltuIdentification(0);
+        cltuSi.setMaxCltuLength(2000);
+        cltuSi.setMinCltuDelay(2000);
+        file.getServiceInstances().add(cltuSi);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         UtlConfigurationFile.save(file, bos);
