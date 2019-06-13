@@ -41,10 +41,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.GregorianCalendar;
-import java.util.Random;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,9 +56,9 @@ public class PduFactoryUtil {
 
     static {
         GregorianCalendar d1958 = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-        d1958.set(1958, 0, 1, 0, 0);
+        d1958.set(1958, Calendar.JANUARY, 1, 0, 0);
         GregorianCalendar d1970 = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
-        d1970.set(1970, 0, 1, 0, 0);
+        d1970.set(1970, Calendar.JANUARY, 1, 0, 0);
 
         Instant i1958 = d1958.toInstant();
         Instant i1970 = d1970.toInstant();
@@ -73,7 +70,7 @@ public class PduFactoryUtil {
      * This method builds the service instance identifier object starting from its string representation.
      *
      * @param serviceInstanceIdentifier the SIID as string
-     * @param type the service type
+     * @param type                      the service type
      * @return the {@link ServiceInstanceIdentifier} object representing the provided string
      */
     public static ServiceInstanceIdentifier buildServiceInstanceIdentifier(final String serviceInstanceIdentifier,
@@ -234,7 +231,7 @@ public class PduFactoryUtil {
      * @return the encoded information using DER
      */
     private static byte[] hashCredentialsData(long timeMillis, long microsec, long randomNumber, String username,
-                                             byte[] password) {
+                                              byte[] password) {
         try {
             HashInput hashInput = new HashInput();
             hashInput.setTime(new BerOctetString(buildCDSTime(timeMillis, microsec)));

@@ -25,10 +25,11 @@ import java.util.List;
 /**
  * This class contains the information related to a permitted, requested or selected Global Virtual Channel Identifier,
  * or GVCID. This information includes:
- * - the spacecraft ID
- * - the transfer frame version number (typically 0, TM frames, or 1, AOS frames)
- * - the virtual channel id (0 to 7 for TM frames, 0 to 63 for AOS frames, or null to indicate the master channel
- *
+ * <ul>
+ * <li>the spacecraft ID</li>
+ * <li>the transfer frame version number (typically 0, TM frames, or 1, AOS frames)</li>
+ * <li>the virtual channel id (0 to 7 for TM frames, 0 to 63 for AOS frames, or null to indicate the master channel</li>
+ *</ul>
  * This class is also used for JAXB serialisation as part of the SLE User Test Library configuration.
  */
 @XmlAccessorType(XmlAccessType.FIELD)

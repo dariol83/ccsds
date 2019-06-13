@@ -18,8 +18,10 @@ package eu.dariolucia.ccsds.sle.utl.si;
 
 /**
  * This enumeration is used to specify which hash function shall be used for credentials. Supported functions are:
- * - SHA-1: deprecated, used until SLE version 3
- * - SHA-256: current, used since SLE version 4
+ * <ul>
+ * <li>SHA-1: deprecated, used until SLE version 3</li>
+ * <li>SHA-256: current, used since SLE version 4</li>
+ * </ul>
  */
 public enum HashFunctionEnum {
     SHA_1("SHA-1"),

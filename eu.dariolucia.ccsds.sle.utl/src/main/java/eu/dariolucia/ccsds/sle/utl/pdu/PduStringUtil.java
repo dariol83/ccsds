@@ -19,9 +19,17 @@ package eu.dariolucia.ccsds.sle.utl.pdu;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleBindInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleBindReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleUnbindInvocation;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleUnbindReturn;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.incoming.pdus.CltuStartInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Time;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafStartInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.incoming.pdus.RcfStartInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.incoming.pdus.RocfStartInvocation;
+import eu.dariolucia.ccsds.sle.utl.si.UnbindReasonEnum;
+import eu.dariolucia.ccsds.sle.utl.si.raf.RafRequestedFrameQualityEnum;
+import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfUpdateModeEnum;
 
 import javax.xml.bind.DatatypeConverter;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -45,12 +53,59 @@ public class PduStringUtil {
 		register(SleBindInvocation.class, this::toStringBindInvoke);
 		register(SleBindReturn.class, this::toStringBindReturn);
 		register(SleUnbindInvocation.class, this::toStringUnbindInvoke);
-		register(SleUnbindReturn.class, this::toStringUnbindReturn);
+
+		register(RafStartInvocation.class, this::toStringRafStartInvoke);
+		register(RcfStartInvocation.class, this::toStringRcfStartInvoke);
+		register(RocfStartInvocation.class, this::toStringRocfStartInvoke);
+		register(CltuStartInvocation.class, this::toStringCltuStartInvoke);
 	}
 
-	@SuppressWarnings("unchecked")
-	private <T> void register(Class<T> clazz, Function<T, String> fun) {
-		this.stringRenderer.put(clazz, (Function<Object, String>) fun);
+	private String toStringRcfStartInvoke(RcfStartInvocation t) {
+		return "Start from "
+				+ (t.getStartTime().getUndefined() != null ? "VOID" : toString(t.getStartTime().getKnown()))
+				+ " to "
+				+ (t.getStopTime().getUndefined() != null ? "VOID" : toString(t.getStopTime().getKnown()))
+				+ " with"
+				+ " GVCID " + t.getRequestedGvcId().getSpacecraftId().intValue() + ", " + t.getRequestedGvcId().getVersionNumber().intValue()
+				+ ", " + (t.getRequestedGvcId().getVcId().getMasterChannel() != null ? "*" : t.getRequestedGvcId().getVcId().getVirtualChannel().intValue());
+	}
+
+	public String toString(Time t) {
+		if(t.getCcsdsFormat() != null) {
+			long[] tAsLong = PduFactoryUtil.buildTimeMillis(t.getCcsdsFormat().value);
+			return new Date(tAsLong[0]).toString();
+		} else if(t.getCcsdsPicoFormat() != null) {
+			long[] tAsLong = PduFactoryUtil.buildTimeMillisPico(t.getCcsdsFormat().value);
+			return new Date(tAsLong[0]).toString() + " (pico)";
+		} else {
+			return "<time format unknown>";
+		}
+	}
+
+	private String toStringRafStartInvoke(RafStartInvocation t) {
+		return "Start from "
+				+ (t.getStartTime().getUndefined() != null ? "VOID" : toString(t.getStartTime().getKnown()))
+				+ " to "
+				+ (t.getStopTime().getUndefined() != null ? "VOID" : toString(t.getStopTime().getKnown()))
+				+ " with"
+				+ " quality " + RafRequestedFrameQualityEnum.fromCode(t.getRequestedFrameQuality().intValue());
+	}
+
+	private String toStringRocfStartInvoke(RocfStartInvocation t) {
+		return "Start from "
+				+ (t.getStartTime().getUndefined() != null ? "VOID" : toString(t.getStartTime().getKnown()))
+				+ " to "
+				+ (t.getStopTime().getUndefined() != null ? "VOID" : toString(t.getStopTime().getKnown()))
+				+ " with"
+				+ " GVCID " + t.getRequestedGvcId().getSpacecraftId().intValue() + ", " + t.getRequestedGvcId().getVersionNumber().intValue()
+				+ ", " + (t.getRequestedGvcId().getVcId().getMasterChannel() != null ? "*" : t.getRequestedGvcId().getVcId().getVirtualChannel().intValue())
+				+ " with update mode "
+				+ RocfUpdateModeEnum.values()[t.getUpdateMode().intValue()];
+	}
+
+	private String toStringCltuStartInvoke(CltuStartInvocation t) {
+		return "Start with first CLTU identification "
+				+ (t.getFirstCltuIdentification().intValue());
 	}
 
 	private String toStringBindInvoke(SleBindInvocation pdu) {
@@ -62,20 +117,21 @@ public class PduStringUtil {
 		return "Bind return from " + pdu.getResponderIdentifier().toString() + " with result "
 				+ (pdu.getResult().getPositive() != null
 						? "<positive>: version number is " + pdu.getResult().getPositive().intValue()
-						: "<negative> " + pdu.getResult().getNegative().intValue());
+						: "<negative>: diagnostics code " + pdu.getResult().getNegative().intValue());
 	}
 	
 	private String toStringUnbindInvoke(SleUnbindInvocation pdu) {
 		return "Unbind invocation with reason "
-				+ pdu.getUnbindReason().intValue();
-	}
-
-	private String toStringUnbindReturn(SleUnbindReturn pdu) {
-		return "Unbind return";
+				+ UnbindReasonEnum.fromCode((byte) pdu.getUnbindReason().intValue());
 	}
 
 	public String getPduDetails(Object pdu) {
-		return this.stringRenderer.getOrDefault(pdu.getClass(), (o) -> "No additional information").apply(pdu);
+		return this.stringRenderer.getOrDefault(pdu.getClass(), o -> "No additional information").apply(pdu);
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T> void register(Class<T> clazz, Function<T, String> fun) {
+		this.stringRenderer.put(clazz, (Function<Object, String>) fun);
 	}
 
 	public String toHexDump(byte[] encodedPdu) {
