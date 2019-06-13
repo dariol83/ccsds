@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -32,9 +33,9 @@ import java.util.function.Supplier;
  * Library to inform the decoder of the selected SLE version to be used. Hence specialisations of this class can
  * set the decoding function to use the correct PDU CHOICE class.
  *
- * Wrapping and unwrapping of PDUs is done by the related specialisations, since the wrapping and unwrapping are
- * type-specific (different classes). The coding is hardcoded and does not use reflection for performance
- * reasons. Unfortunately JASN.1 does not generate a method that allows to directly get the selected CHOICE object.
+ * Wrapping and unwrapping of PDUs to/from the transfer PDU is done by the related specialisation classes, since the
+ * wrapping and unwrapping are type-specific (different classes). The coding is hardcoded and does not use reflection
+ * for performance reasons. Check the classes inside package eu.dariolucia.ccsds.sle.utl.encdec for details.
  */
 public abstract class CommonEncDec {
 
@@ -123,9 +124,47 @@ public abstract class CommonEncDec {
 		}
 	}
 
+	/**
+	 * This method is implemented by subclasses. It must return a {@link Supplier} object that can construct the correct
+	 * wrapper class. This method is called in the class construction to setup the default decoding class.
+	 *
+	 * @return the factory function as {@link Supplier}, which instantiates the default decoding wrapper class.
+	 */
 	protected abstract Supplier<? extends BerType> getDefaultDecodingProvider();
 
+	/**
+	 * This method wraps the provided SLE PDU into the appropriate (according by the selected SLE version) transfer
+	 * object.
+	 *
+	 * @param toEncode the SLE operation to wrap in the transfer object
+	 * @return the transfer object
+	 * @throws IOException if problems are encountered during the wrapping process
+	 */
 	protected abstract BerType wrapPdu(BerType toEncode) throws IOException;
 
+	/**
+	 * This method extracts the actual SLE operation from the wrapper transfer PDU.
+	 *
+	 * @param toDecode the wrapper transfer PDU, as deserialised from the reading stream
+	 * @return the inner SLE PDU
+	 * @throws DecodingException if problems are encountered during the unwrapping process
+	 */
 	protected abstract BerType unwrapPdu(BerType toDecode) throws DecodingException;
+
+	/**
+	 * Utility method that either returns the content of the {@link Optional}, if present, or it throws a
+	 * {@link DecodingException}.
+	 *
+	 * @param t the optional extracted inner SLE PDU
+	 * @param toDecode the wrapper SLE PDU
+	 * @return the extracted inner SLE PDU
+	 * @throws DecodingException if no inner SLE PDU was found
+	 */
+	protected final BerType returnOrThrow(Optional<BerType> t, Object toDecode) throws DecodingException {
+		if(t.isPresent()) {
+			return t.get();
+		} else {
+			throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
+		}
+	}
 }

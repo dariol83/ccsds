@@ -26,9 +26,17 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.outgoin
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleStopInvocation;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class CltuEncDec extends CommonEncDec {
+
+	private final List<Function<CltuProviderToUserPduV1toV3, BerType>> unwrapFunctionV1V3List;
+	private final List<Function<CltuProviderToUserPduV4, BerType>> unwrapFunctionV4List;
+	private final List<Function<CltuProviderToUserPdu, BerType>> unwrapFunctionV5List;
 
 	public CltuEncDec() {
 		register(1, CltuProviderToUserPduV1toV3::new);
@@ -36,6 +44,45 @@ public class CltuEncDec extends CommonEncDec {
 		register(3, CltuProviderToUserPduV1toV3::new);
 		register(4, CltuProviderToUserPduV4::new);
 		register(5, CltuProviderToUserPdu::new);
+
+		// V1 V2 unwrappers
+		unwrapFunctionV1V3List = new ArrayList<>();
+		unwrapFunctionV1V3List.add(CltuProviderToUserPduV1toV3::getCltuTransferDataReturn);
+		unwrapFunctionV1V3List.add(CltuProviderToUserPduV1toV3::getCltuAsyncNotifyInvocation);
+		unwrapFunctionV1V3List.add(CltuProviderToUserPduV1toV3::getCltuStatusReportInvocation);
+		unwrapFunctionV1V3List.add(CltuProviderToUserPduV1toV3::getCltuGetParameterReturn);
+		unwrapFunctionV1V3List.add(CltuProviderToUserPduV1toV3::getCltuScheduleStatusReportReturn);
+		unwrapFunctionV1V3List.add(CltuProviderToUserPduV1toV3::getCltuThrowEventReturn);
+		unwrapFunctionV1V3List.add(CltuProviderToUserPduV1toV3::getCltuBindReturn);
+		unwrapFunctionV1V3List.add(CltuProviderToUserPduV1toV3::getCltuUnbindReturn);
+		unwrapFunctionV1V3List.add(CltuProviderToUserPduV1toV3::getCltuStartReturn);
+		unwrapFunctionV1V3List.add(CltuProviderToUserPduV1toV3::getCltuStopReturn);
+
+		// V3 V4 unwrappers
+		unwrapFunctionV4List = new ArrayList<>();
+		unwrapFunctionV4List.add(CltuProviderToUserPduV4::getCltuTransferDataReturn);
+		unwrapFunctionV4List.add(CltuProviderToUserPduV4::getCltuAsyncNotifyInvocation);
+		unwrapFunctionV4List.add(CltuProviderToUserPduV4::getCltuStatusReportInvocation);
+		unwrapFunctionV4List.add(CltuProviderToUserPduV4::getCltuGetParameterReturn);
+		unwrapFunctionV4List.add(CltuProviderToUserPduV4::getCltuScheduleStatusReportReturn);
+		unwrapFunctionV4List.add(CltuProviderToUserPduV4::getCltuThrowEventReturn);
+		unwrapFunctionV4List.add(CltuProviderToUserPduV4::getCltuBindReturn);
+		unwrapFunctionV4List.add(CltuProviderToUserPduV4::getCltuUnbindReturn);
+		unwrapFunctionV4List.add(CltuProviderToUserPduV4::getCltuStartReturn);
+		unwrapFunctionV4List.add(CltuProviderToUserPduV4::getCltuStopReturn);
+
+		// V5 unwrappers
+		unwrapFunctionV5List = new ArrayList<>();
+		unwrapFunctionV5List.add(CltuProviderToUserPdu::getCltuTransferDataReturn);
+		unwrapFunctionV5List.add(CltuProviderToUserPdu::getCltuAsyncNotifyInvocation);
+		unwrapFunctionV5List.add(CltuProviderToUserPdu::getCltuStatusReportInvocation);
+		unwrapFunctionV5List.add(CltuProviderToUserPdu::getCltuGetParameterReturn);
+		unwrapFunctionV5List.add(CltuProviderToUserPdu::getCltuScheduleStatusReportReturn);
+		unwrapFunctionV5List.add(CltuProviderToUserPdu::getCltuThrowEventReturn);
+		unwrapFunctionV5List.add(CltuProviderToUserPdu::getCltuBindReturn);
+		unwrapFunctionV5List.add(CltuProviderToUserPdu::getCltuUnbindReturn);
+		unwrapFunctionV5List.add(CltuProviderToUserPdu::getCltuStartReturn);
+		unwrapFunctionV5List.add(CltuProviderToUserPdu::getCltuStopReturn);
 	}
 
 	@Override
@@ -74,113 +121,11 @@ public class CltuEncDec extends CommonEncDec {
 			case 1:
 			case 2:
 			case 3:
-				return unwrap((CltuProviderToUserPduV1toV3) toDecode);
+				return returnOrThrow(this.unwrapFunctionV1V3List.parallelStream().map(o -> o.apply((CltuProviderToUserPduV1toV3) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
 			case 4:
-				return unwrap((CltuProviderToUserPduV4) toDecode);
+				return returnOrThrow(this.unwrapFunctionV4List.parallelStream().map(o -> o.apply((CltuProviderToUserPduV4) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
 			default:
-				return unwrap((CltuProviderToUserPdu) toDecode);
+				return returnOrThrow(this.unwrapFunctionV5List.parallelStream().map(o -> o.apply((CltuProviderToUserPdu) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
 		}
-	}
-
-	private BerType unwrap(CltuProviderToUserPdu toDecode) throws DecodingException {
-		if(toDecode.getCltuAsyncNotifyInvocation() != null) {
-			return toDecode.getCltuAsyncNotifyInvocation();
-		}
-		if(toDecode.getCltuBindReturn() != null) {
-			return toDecode.getCltuBindReturn();
-		}
-		if(toDecode.getCltuGetParameterReturn() != null) {
-			return toDecode.getCltuGetParameterReturn();
-		}
-		if(toDecode.getCltuScheduleStatusReportReturn() != null) {
-			return toDecode.getCltuScheduleStatusReportReturn();
-		}
-		if(toDecode.getCltuStartReturn() != null) {
-			return toDecode.getCltuStartReturn();
-		}
-		if(toDecode.getCltuStatusReportInvocation() != null) {
-			return toDecode.getCltuStatusReportInvocation();
-		}
-		if(toDecode.getCltuStopReturn() != null) {
-			return toDecode.getCltuStopReturn();
-		}
-		if(toDecode.getCltuThrowEventReturn() != null) {
-			return toDecode.getCltuThrowEventReturn();
-		}
-		if(toDecode.getCltuTransferDataReturn() != null) {
-			return toDecode.getCltuTransferDataReturn();
-		}
-		if(toDecode.getCltuUnbindReturn() != null) {
-			return toDecode.getCltuUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
-	}
-
-	private BerType unwrap(CltuProviderToUserPduV4 toDecode) throws DecodingException {
-		if(toDecode.getCltuAsyncNotifyInvocation() != null) {
-			return toDecode.getCltuAsyncNotifyInvocation();
-		}
-		if(toDecode.getCltuBindReturn() != null) {
-			return toDecode.getCltuBindReturn();
-		}
-		if(toDecode.getCltuGetParameterReturn() != null) {
-			return toDecode.getCltuGetParameterReturn();
-		}
-		if(toDecode.getCltuScheduleStatusReportReturn() != null) {
-			return toDecode.getCltuScheduleStatusReportReturn();
-		}
-		if(toDecode.getCltuStartReturn() != null) {
-			return toDecode.getCltuStartReturn();
-		}
-		if(toDecode.getCltuStatusReportInvocation() != null) {
-			return toDecode.getCltuStatusReportInvocation();
-		}
-		if(toDecode.getCltuStopReturn() != null) {
-			return toDecode.getCltuStopReturn();
-		}
-		if(toDecode.getCltuThrowEventReturn() != null) {
-			return toDecode.getCltuThrowEventReturn();
-		}
-		if(toDecode.getCltuTransferDataReturn() != null) {
-			return toDecode.getCltuTransferDataReturn();
-		}
-		if(toDecode.getCltuUnbindReturn() != null) {
-			return toDecode.getCltuUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
-	}
-
-	private BerType unwrap(CltuProviderToUserPduV1toV3 toDecode) throws DecodingException {
-		if(toDecode.getCltuAsyncNotifyInvocation() != null) {
-			return toDecode.getCltuAsyncNotifyInvocation();
-		}
-		if(toDecode.getCltuBindReturn() != null) {
-			return toDecode.getCltuBindReturn();
-		}
-		if(toDecode.getCltuGetParameterReturn() != null) {
-			return toDecode.getCltuGetParameterReturn();
-		}
-		if(toDecode.getCltuScheduleStatusReportReturn() != null) {
-			return toDecode.getCltuScheduleStatusReportReturn();
-		}
-		if(toDecode.getCltuStartReturn() != null) {
-			return toDecode.getCltuStartReturn();
-		}
-		if(toDecode.getCltuStatusReportInvocation() != null) {
-			return toDecode.getCltuStatusReportInvocation();
-		}
-		if(toDecode.getCltuStopReturn() != null) {
-			return toDecode.getCltuStopReturn();
-		}
-		if(toDecode.getCltuThrowEventReturn() != null) {
-			return toDecode.getCltuThrowEventReturn();
-		}
-		if(toDecode.getCltuTransferDataReturn() != null) {
-			return toDecode.getCltuTransferDataReturn();
-		}
-		if(toDecode.getCltuUnbindReturn() != null) {
-			return toDecode.getCltuUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
 	}
 }

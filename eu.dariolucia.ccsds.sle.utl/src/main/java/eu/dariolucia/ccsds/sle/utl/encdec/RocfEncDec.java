@@ -29,9 +29,17 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.incomin
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.outgoing.pdus.RocfProviderToUserPdu;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.outgoing.pdus.RocfProviderToUserPduV1toV4;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class RocfEncDec extends CommonEncDec {
+
+
+	private final List<Function<RocfProviderToUserPduV1toV4, BerType>> unwrapFunctionV1V4List;
+	private final List<Function<RocfProviderToUserPdu, BerType>> unwrapFunctionV5List;
 
 	public RocfEncDec() {
 		register(1, RocfProviderToUserPduV1toV4::new);
@@ -39,6 +47,32 @@ public class RocfEncDec extends CommonEncDec {
 		register(3, RocfProviderToUserPduV1toV4::new);
 		register(4, RocfProviderToUserPduV1toV4::new);
 		register(5, RocfProviderToUserPdu::new);
+
+		// V1 V4 unwrappers
+		unwrapFunctionV1V4List = new ArrayList<>();
+		unwrapFunctionV1V4List.add(RocfProviderToUserPduV1toV4::getRocfTransferBuffer);
+		unwrapFunctionV1V4List.add(RocfProviderToUserPduV1toV4::getRocfStatusReportInvocation);
+		unwrapFunctionV1V4List.add(RocfProviderToUserPduV1toV4::getRocfGetParameterReturn);
+		unwrapFunctionV1V4List.add(RocfProviderToUserPduV1toV4::getRocfScheduleStatusReportReturn);
+		unwrapFunctionV1V4List.add(RocfProviderToUserPduV1toV4::getRocfBindInvocation);
+		unwrapFunctionV1V4List.add(RocfProviderToUserPduV1toV4::getRocfBindReturn);
+		unwrapFunctionV1V4List.add(RocfProviderToUserPduV1toV4::getRocfUnbindInvocation);
+		unwrapFunctionV1V4List.add(RocfProviderToUserPduV1toV4::getRocfUnbindReturn);
+		unwrapFunctionV1V4List.add(RocfProviderToUserPduV1toV4::getRocfStartReturn);
+		unwrapFunctionV1V4List.add(RocfProviderToUserPduV1toV4::getRocfStopReturn);
+
+		// V5 unwrappers
+		unwrapFunctionV5List = new ArrayList<>();
+		unwrapFunctionV5List.add(RocfProviderToUserPdu::getRocfTransferBuffer);
+		unwrapFunctionV5List.add(RocfProviderToUserPdu::getRocfStatusReportInvocation);
+		unwrapFunctionV5List.add(RocfProviderToUserPdu::getRocfGetParameterReturn);
+		unwrapFunctionV5List.add(RocfProviderToUserPdu::getRocfScheduleStatusReportReturn);
+		unwrapFunctionV5List.add(RocfProviderToUserPdu::getRocfBindInvocation);
+		unwrapFunctionV5List.add(RocfProviderToUserPdu::getRocfBindReturn);
+		unwrapFunctionV5List.add(RocfProviderToUserPdu::getRocfUnbindInvocation);
+		unwrapFunctionV5List.add(RocfProviderToUserPdu::getRocfUnbindReturn);
+		unwrapFunctionV5List.add(RocfProviderToUserPdu::getRocfStartReturn);
+		unwrapFunctionV5List.add(RocfProviderToUserPdu::getRocfStopReturn);
 	}
 
 	@Override
@@ -78,77 +112,9 @@ public class RocfEncDec extends CommonEncDec {
 			case 2:
 			case 3:
 			case 4:
-				return unwrap((RocfProviderToUserPduV1toV4) toDecode);
+				return returnOrThrow(this.unwrapFunctionV1V4List.parallelStream().map(o -> o.apply((RocfProviderToUserPduV1toV4) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
 			default:
-				return unwrap((RocfProviderToUserPdu) toDecode);
+				return returnOrThrow(this.unwrapFunctionV5List.parallelStream().map(o -> o.apply((RocfProviderToUserPdu) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
 		}
-	}
-
-	private BerType unwrap(RocfProviderToUserPdu toDecode) throws DecodingException {
-		if(toDecode.getRocfTransferBuffer() != null) {
-			return toDecode.getRocfTransferBuffer();
-		}
-		if(toDecode.getRocfStatusReportInvocation() != null) {
-			return toDecode.getRocfStatusReportInvocation();
-		}
-		if(toDecode.getRocfBindReturn() != null) {
-			return toDecode.getRocfBindReturn();
-		}
-		if(toDecode.getRocfBindInvocation() != null) {
-			return toDecode.getRocfBindInvocation();
-		}
-		if(toDecode.getRocfGetParameterReturn() != null) {
-			return toDecode.getRocfGetParameterReturn();
-		}
-		if(toDecode.getRocfScheduleStatusReportReturn() != null) {
-			return toDecode.getRocfScheduleStatusReportReturn();
-		}
-		if(toDecode.getRocfStartReturn() != null) {
-			return toDecode.getRocfStartReturn();
-		}
-		if(toDecode.getRocfStopReturn() != null) {
-			return toDecode.getRocfStopReturn();
-		}
-		if(toDecode.getRocfUnbindInvocation() != null) {
-			return toDecode.getRocfUnbindInvocation();
-		}
-		if(toDecode.getRocfUnbindReturn() != null) {
-			return toDecode.getRocfUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
-	}
-
-	private BerType unwrap(RocfProviderToUserPduV1toV4 toDecode) throws DecodingException {
-		if(toDecode.getRocfTransferBuffer() != null) {
-			return toDecode.getRocfTransferBuffer();
-		}
-		if(toDecode.getRocfStatusReportInvocation() != null) {
-			return toDecode.getRocfStatusReportInvocation();
-		}
-		if(toDecode.getRocfBindReturn() != null) {
-			return toDecode.getRocfBindReturn();
-		}
-		if(toDecode.getRocfBindInvocation() != null) {
-			return toDecode.getRocfBindInvocation();
-		}
-		if(toDecode.getRocfGetParameterReturn() != null) {
-			return toDecode.getRocfGetParameterReturn();
-		}
-		if(toDecode.getRocfScheduleStatusReportReturn() != null) {
-			return toDecode.getRocfScheduleStatusReportReturn();
-		}
-		if(toDecode.getRocfStartReturn() != null) {
-			return toDecode.getRocfStartReturn();
-		}
-		if(toDecode.getRocfStopReturn() != null) {
-			return toDecode.getRocfStopReturn();
-		}
-		if(toDecode.getRocfUnbindInvocation() != null) {
-			return toDecode.getRocfUnbindInvocation();
-		}
-		if(toDecode.getRocfUnbindReturn() != null) {
-			return toDecode.getRocfUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
 	}
 }

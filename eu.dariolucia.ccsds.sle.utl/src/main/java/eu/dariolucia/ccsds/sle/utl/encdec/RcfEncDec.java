@@ -30,162 +30,109 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing.pdus.RcfProviderToUserPduV1;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing.pdus.RcfProviderToUserPduV2toV4;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * RCF encoding/decoding extension class.
+ */
 public class RcfEncDec extends CommonEncDec {
 
-	public RcfEncDec() {
-		register(1, RcfProviderToUserPduV1::new);
-		register(2, RcfProviderToUserPduV2toV4::new);
-		register(3, RcfProviderToUserPduV2toV4::new);
-		register(4, RcfProviderToUserPduV2toV4::new);
-		register(5, RcfProviderToUserPdu::new);
-	}
+    private final List<Function<RcfProviderToUserPduV1, BerType>> unwrapFunctionV1List;
+    private final List<Function<RcfProviderToUserPduV2toV4, BerType>> unwrapFunctionV2V4List;
+    private final List<Function<RcfProviderToUserPdu, BerType>> unwrapFunctionV5List;
 
-	@Override
-	protected Supplier<? extends BerType> getDefaultDecodingProvider() {
-		return RcfProviderToUserPdu::new;
-	}
+    public RcfEncDec() {
+        register(1, RcfProviderToUserPduV1::new);
+        register(2, RcfProviderToUserPduV2toV4::new);
+        register(3, RcfProviderToUserPduV2toV4::new);
+        register(4, RcfProviderToUserPduV2toV4::new);
+        register(5, RcfProviderToUserPdu::new);
 
-	@Override
-	protected BerType wrapPdu(BerType toEncode) throws EncodingException {
-		RcfUserToProviderPdu wrapper = new RcfUserToProviderPdu();
-		if(toEncode instanceof SleBindInvocation) {
-			wrapper.setRcfBindInvocation((SleBindInvocation) toEncode);
-		} else if(toEncode instanceof SleUnbindInvocation) {
-			wrapper.setRcfUnbindInvocation((SleUnbindInvocation) toEncode);
-		} else if(toEncode instanceof SleUnbindReturn) {
-			wrapper.setRcfUnbindReturn((SleUnbindReturn) toEncode);
-		} else if(toEncode instanceof SleBindReturn) {
-			wrapper.setRcfBindReturn((SleBindReturn) toEncode);
-		} else if(toEncode instanceof SleScheduleStatusReportInvocation) {
-			wrapper.setRcfScheduleStatusReportInvocation((SleScheduleStatusReportInvocation) toEncode);
-		} else if(toEncode instanceof RcfStartInvocation) {
-			wrapper.setRcfStartInvocation((RcfStartInvocation) toEncode);
-		} else if(toEncode instanceof SleStopInvocation) {
-			wrapper.setRcfStopInvocation((SleStopInvocation) toEncode);
-		} else if(toEncode instanceof RcfGetParameterInvocation) {
-			wrapper.setRcfGetParameterInvocation((RcfGetParameterInvocation) toEncode);
-		} else {
-			throw new EncodingException("Type " + toEncode + " not supported by encoder " +getClass().getSimpleName());
-		}
-		return wrapper;
-	}
+        // V1 unwrappers
+        unwrapFunctionV1List = new ArrayList<>();
+        unwrapFunctionV1List.add(RcfProviderToUserPduV1::getRcfTransferBuffer);
+        unwrapFunctionV1List.add(RcfProviderToUserPduV1::getRcfStatusReportInvocation);
+        unwrapFunctionV1List.add(RcfProviderToUserPduV1::getRcfGetParameterReturn);
+        unwrapFunctionV1List.add(RcfProviderToUserPduV1::getRcfScheduleStatusReportReturn);
+        unwrapFunctionV1List.add(RcfProviderToUserPduV1::getRcfBindInvocation);
+        unwrapFunctionV1List.add(RcfProviderToUserPduV1::getRcfBindReturn);
+        unwrapFunctionV1List.add(RcfProviderToUserPduV1::getRcfUnbindInvocation);
+        unwrapFunctionV1List.add(RcfProviderToUserPduV1::getRcfUnbindReturn);
+        unwrapFunctionV1List.add(RcfProviderToUserPduV1::getRcfStartReturn);
+        unwrapFunctionV1List.add(RcfProviderToUserPduV1::getRcfStopReturn);
 
-	@Override
-	protected BerType unwrapPdu(BerType toDecode) throws DecodingException {
-		switch(getVersion()) {
-			case 1:
-				return unwrap((RcfProviderToUserPduV1) toDecode);
-			case 2:
-			case 3:
-			case 4:
-				return unwrap((RcfProviderToUserPduV2toV4) toDecode);
-			default:
-				return unwrap((RcfProviderToUserPdu) toDecode);
-		}
-	}
+        // V2 V4 unwrappers
+        unwrapFunctionV2V4List = new ArrayList<>();
+        unwrapFunctionV2V4List.add(RcfProviderToUserPduV2toV4::getRcfTransferBuffer);
+        unwrapFunctionV2V4List.add(RcfProviderToUserPduV2toV4::getRcfStatusReportInvocation);
+        unwrapFunctionV2V4List.add(RcfProviderToUserPduV2toV4::getRcfGetParameterReturn);
+        unwrapFunctionV2V4List.add(RcfProviderToUserPduV2toV4::getRcfScheduleStatusReportReturn);
+        unwrapFunctionV2V4List.add(RcfProviderToUserPduV2toV4::getRcfBindInvocation);
+        unwrapFunctionV2V4List.add(RcfProviderToUserPduV2toV4::getRcfBindReturn);
+        unwrapFunctionV2V4List.add(RcfProviderToUserPduV2toV4::getRcfUnbindInvocation);
+        unwrapFunctionV2V4List.add(RcfProviderToUserPduV2toV4::getRcfUnbindReturn);
+        unwrapFunctionV2V4List.add(RcfProviderToUserPduV2toV4::getRcfStartReturn);
+        unwrapFunctionV2V4List.add(RcfProviderToUserPduV2toV4::getRcfStopReturn);
 
-	private BerType unwrap(RcfProviderToUserPdu toDecode) throws DecodingException {
-		if(toDecode.getRcfTransferBuffer() != null) {
-			return toDecode.getRcfTransferBuffer();
-		}
-		if(toDecode.getRcfStatusReportInvocation() != null) {
-			return toDecode.getRcfStatusReportInvocation();
-		}
-		if(toDecode.getRcfBindReturn() != null) {
-			return toDecode.getRcfBindReturn();
-		}
-		if(toDecode.getRcfBindInvocation() != null) {
-			return toDecode.getRcfBindInvocation();
-		}
-		if(toDecode.getRcfGetParameterReturn() != null) {
-			return toDecode.getRcfGetParameterReturn();
-		}
-		if(toDecode.getRcfScheduleStatusReportReturn() != null) {
-			return toDecode.getRcfScheduleStatusReportReturn();
-		}
-		if(toDecode.getRcfStartReturn() != null) {
-			return toDecode.getRcfStartReturn();
-		}
-		if(toDecode.getRcfStopReturn() != null) {
-			return toDecode.getRcfStopReturn();
-		}
-		if(toDecode.getRcfUnbindInvocation() != null) {
-			return toDecode.getRcfUnbindInvocation();
-		}
-		if(toDecode.getRcfUnbindReturn() != null) {
-			return toDecode.getRcfUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
-	}
+        // V5 unwrappers
+        unwrapFunctionV5List = new ArrayList<>();
+        unwrapFunctionV5List.add(RcfProviderToUserPdu::getRcfTransferBuffer);
+        unwrapFunctionV5List.add(RcfProviderToUserPdu::getRcfStatusReportInvocation);
+        unwrapFunctionV5List.add(RcfProviderToUserPdu::getRcfGetParameterReturn);
+        unwrapFunctionV5List.add(RcfProviderToUserPdu::getRcfScheduleStatusReportReturn);
+        unwrapFunctionV5List.add(RcfProviderToUserPdu::getRcfBindInvocation);
+        unwrapFunctionV5List.add(RcfProviderToUserPdu::getRcfBindReturn);
+        unwrapFunctionV5List.add(RcfProviderToUserPdu::getRcfUnbindInvocation);
+        unwrapFunctionV5List.add(RcfProviderToUserPdu::getRcfUnbindReturn);
+        unwrapFunctionV5List.add(RcfProviderToUserPdu::getRcfStartReturn);
+        unwrapFunctionV5List.add(RcfProviderToUserPdu::getRcfStopReturn);
+    }
 
-	private BerType unwrap(RcfProviderToUserPduV1 toDecode) throws DecodingException {
-		if(toDecode.getRcfTransferBuffer() != null) {
-			return toDecode.getRcfTransferBuffer();
-		}
-		if(toDecode.getRcfStatusReportInvocation() != null) {
-			return toDecode.getRcfStatusReportInvocation();
-		}
-		if(toDecode.getRcfBindReturn() != null) {
-			return toDecode.getRcfBindReturn();
-		}
-		if(toDecode.getRcfBindInvocation() != null) {
-			return toDecode.getRcfBindInvocation();
-		}
-		if(toDecode.getRcfGetParameterReturn() != null) {
-			return toDecode.getRcfGetParameterReturn();
-		}
-		if(toDecode.getRcfScheduleStatusReportReturn() != null) {
-			return toDecode.getRcfScheduleStatusReportReturn();
-		}
-		if(toDecode.getRcfStartReturn() != null) {
-			return toDecode.getRcfStartReturn();
-		}
-		if(toDecode.getRcfStopReturn() != null) {
-			return toDecode.getRcfStopReturn();
-		}
-		if(toDecode.getRcfUnbindInvocation() != null) {
-			return toDecode.getRcfUnbindInvocation();
-		}
-		if(toDecode.getRcfUnbindReturn() != null) {
-			return toDecode.getRcfUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
-	}
+    @Override
+    protected Supplier<? extends BerType> getDefaultDecodingProvider() {
+        return RcfProviderToUserPdu::new;
+    }
 
-	private BerType unwrap(RcfProviderToUserPduV2toV4 toDecode) throws DecodingException {
-		if(toDecode.getRcfTransferBuffer() != null) {
-			return toDecode.getRcfTransferBuffer();
-		}
-		if(toDecode.getRcfStatusReportInvocation() != null) {
-			return toDecode.getRcfStatusReportInvocation();
-		}
-		if(toDecode.getRcfBindReturn() != null) {
-			return toDecode.getRcfBindReturn();
-		}
-		if(toDecode.getRcfBindInvocation() != null) {
-			return toDecode.getRcfBindInvocation();
-		}
-		if(toDecode.getRcfGetParameterReturn() != null) {
-			return toDecode.getRcfGetParameterReturn();
-		}
-		if(toDecode.getRcfScheduleStatusReportReturn() != null) {
-			return toDecode.getRcfScheduleStatusReportReturn();
-		}
-		if(toDecode.getRcfStartReturn() != null) {
-			return toDecode.getRcfStartReturn();
-		}
-		if(toDecode.getRcfStopReturn() != null) {
-			return toDecode.getRcfStopReturn();
-		}
-		if(toDecode.getRcfUnbindInvocation() != null) {
-			return toDecode.getRcfUnbindInvocation();
-		}
-		if(toDecode.getRcfUnbindReturn() != null) {
-			return toDecode.getRcfUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
-	}
+    @Override
+    protected BerType wrapPdu(BerType toEncode) throws EncodingException {
+        RcfUserToProviderPdu wrapper = new RcfUserToProviderPdu();
+        if (toEncode instanceof SleBindInvocation) {
+            wrapper.setRcfBindInvocation((SleBindInvocation) toEncode);
+        } else if (toEncode instanceof SleUnbindInvocation) {
+            wrapper.setRcfUnbindInvocation((SleUnbindInvocation) toEncode);
+        } else if (toEncode instanceof SleUnbindReturn) {
+            wrapper.setRcfUnbindReturn((SleUnbindReturn) toEncode);
+        } else if (toEncode instanceof SleBindReturn) {
+            wrapper.setRcfBindReturn((SleBindReturn) toEncode);
+        } else if (toEncode instanceof SleScheduleStatusReportInvocation) {
+            wrapper.setRcfScheduleStatusReportInvocation((SleScheduleStatusReportInvocation) toEncode);
+        } else if (toEncode instanceof RcfStartInvocation) {
+            wrapper.setRcfStartInvocation((RcfStartInvocation) toEncode);
+        } else if (toEncode instanceof SleStopInvocation) {
+            wrapper.setRcfStopInvocation((SleStopInvocation) toEncode);
+        } else if (toEncode instanceof RcfGetParameterInvocation) {
+            wrapper.setRcfGetParameterInvocation((RcfGetParameterInvocation) toEncode);
+        } else {
+            throw new EncodingException("Type " + toEncode + " not supported by encoder " + getClass().getSimpleName());
+        }
+        return wrapper;
+    }
 
+    @Override
+    protected BerType unwrapPdu(BerType toDecode) throws DecodingException {
+        switch (getVersion()) {
+            case 1:
+                return returnOrThrow(this.unwrapFunctionV1List.parallelStream().map(o -> o.apply((RcfProviderToUserPduV1) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
+            case 2:
+            case 3:
+            case 4:
+                return returnOrThrow(this.unwrapFunctionV2V4List.parallelStream().map(o -> o.apply((RcfProviderToUserPduV2toV4) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
+            default:
+                return returnOrThrow(this.unwrapFunctionV5List.parallelStream().map(o -> o.apply((RcfProviderToUserPdu) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
+        }
+    }
 }

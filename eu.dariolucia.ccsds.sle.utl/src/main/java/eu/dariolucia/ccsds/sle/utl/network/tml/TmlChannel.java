@@ -290,7 +290,7 @@ public class TmlChannel {
 	}
 	
 	private void connectEndpoint() throws IOException {
-		this.sock = new Socket();
+		this.sock = new Socket(this.host, this.port);
 		if(this.rxBuffer > 0) {
 			this.sock.setReceiveBufferSize(this.rxBuffer);
 		}

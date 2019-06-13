@@ -21,16 +21,29 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.S
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleBindReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleUnbindInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleUnbindReturn;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.*;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleStopInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafGetParameterInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafStartInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafUserToProviderPdu;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafProviderToUserPdu;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafProviderToUserPduV1toV2;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafProviderToUserPduV3toV4;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportInvocation;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleStopInvocation;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * RAF encoding/decoding extension class.
+ */
 public class RafEncDec extends CommonEncDec {
+
+	private final List<Function<RafProviderToUserPduV1toV2, BerType>> unwrapFunctionV1V2List;
+	private final List<Function<RafProviderToUserPduV3toV4, BerType>> unwrapFunctionV3V4List;
+	private final List<Function<RafProviderToUserPdu, BerType>> unwrapFunctionV5List;
 
 	public RafEncDec() {
 		register(1, RafProviderToUserPduV1toV2::new);
@@ -38,6 +51,45 @@ public class RafEncDec extends CommonEncDec {
 		register(3, RafProviderToUserPduV3toV4::new);
 		register(4, RafProviderToUserPduV3toV4::new);
 		register(5, RafProviderToUserPdu::new);
+
+		// V1 V2 unwrappers
+		unwrapFunctionV1V2List = new ArrayList<>();
+		unwrapFunctionV1V2List.add(RafProviderToUserPduV1toV2::getRafTransferBuffer);
+		unwrapFunctionV1V2List.add(RafProviderToUserPduV1toV2::getRafStatusReportInvocation);
+		unwrapFunctionV1V2List.add(RafProviderToUserPduV1toV2::getRafGetParameterReturn);
+		unwrapFunctionV1V2List.add(RafProviderToUserPduV1toV2::getRafScheduleStatusReportReturn);
+		unwrapFunctionV1V2List.add(RafProviderToUserPduV1toV2::getRafBindInvocation);
+		unwrapFunctionV1V2List.add(RafProviderToUserPduV1toV2::getRafBindReturn);
+		unwrapFunctionV1V2List.add(RafProviderToUserPduV1toV2::getRafUnbindInvocation);
+		unwrapFunctionV1V2List.add(RafProviderToUserPduV1toV2::getRafUnbindReturn);
+		unwrapFunctionV1V2List.add(RafProviderToUserPduV1toV2::getRafStartReturn);
+		unwrapFunctionV1V2List.add(RafProviderToUserPduV1toV2::getRafStopReturn);
+
+		// V3 V4 unwrappers
+		unwrapFunctionV3V4List = new ArrayList<>();
+		unwrapFunctionV3V4List.add(RafProviderToUserPduV3toV4::getRafTransferBuffer);
+		unwrapFunctionV3V4List.add(RafProviderToUserPduV3toV4::getRafStatusReportInvocation);
+		unwrapFunctionV3V4List.add(RafProviderToUserPduV3toV4::getRafGetParameterReturn);
+		unwrapFunctionV3V4List.add(RafProviderToUserPduV3toV4::getRafScheduleStatusReportReturn);
+		unwrapFunctionV3V4List.add(RafProviderToUserPduV3toV4::getRafBindInvocation);
+		unwrapFunctionV3V4List.add(RafProviderToUserPduV3toV4::getRafBindReturn);
+		unwrapFunctionV3V4List.add(RafProviderToUserPduV3toV4::getRafUnbindInvocation);
+		unwrapFunctionV3V4List.add(RafProviderToUserPduV3toV4::getRafUnbindReturn);
+		unwrapFunctionV3V4List.add(RafProviderToUserPduV3toV4::getRafStartReturn);
+		unwrapFunctionV3V4List.add(RafProviderToUserPduV3toV4::getRafStopReturn);
+
+		// V5 unwrappers
+		unwrapFunctionV5List = new ArrayList<>();
+		unwrapFunctionV5List.add(RafProviderToUserPdu::getRafTransferBuffer);
+		unwrapFunctionV5List.add(RafProviderToUserPdu::getRafStatusReportInvocation);
+		unwrapFunctionV5List.add(RafProviderToUserPdu::getRafGetParameterReturn);
+		unwrapFunctionV5List.add(RafProviderToUserPdu::getRafScheduleStatusReportReturn);
+		unwrapFunctionV5List.add(RafProviderToUserPdu::getRafBindInvocation);
+		unwrapFunctionV5List.add(RafProviderToUserPdu::getRafBindReturn);
+		unwrapFunctionV5List.add(RafProviderToUserPdu::getRafUnbindInvocation);
+		unwrapFunctionV5List.add(RafProviderToUserPdu::getRafUnbindReturn);
+		unwrapFunctionV5List.add(RafProviderToUserPdu::getRafStartReturn);
+		unwrapFunctionV5List.add(RafProviderToUserPdu::getRafStopReturn);
 	}
 
 	@Override
@@ -75,115 +127,12 @@ public class RafEncDec extends CommonEncDec {
 		switch(getVersion()) {
 			case 1:
 			case 2:
-				return unwrap((RafProviderToUserPduV1toV2) toDecode);
+				return returnOrThrow(this.unwrapFunctionV1V2List.parallelStream().map(o -> o.apply((RafProviderToUserPduV1toV2) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
 			case 3:
 			case 4:
-				return unwrap((RafProviderToUserPduV3toV4) toDecode);
+				return returnOrThrow(this.unwrapFunctionV3V4List.parallelStream().map(o -> o.apply((RafProviderToUserPduV3toV4) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
 			default:
-				return unwrap((RafProviderToUserPdu) toDecode);
+				return returnOrThrow(this.unwrapFunctionV5List.parallelStream().map(o -> o.apply((RafProviderToUserPdu) toDecode)).filter(Objects::nonNull).findFirst(), toDecode);
 		}
 	}
-
-	private BerType unwrap(RafProviderToUserPdu toDecode) throws DecodingException {
-		if(toDecode.getRafTransferBuffer() != null) {
-			return toDecode.getRafTransferBuffer();
-		}
-		if(toDecode.getRafStatusReportInvocation() != null) {
-			return toDecode.getRafStatusReportInvocation();
-		}
-		if(toDecode.getRafBindReturn() != null) {
-			return toDecode.getRafBindReturn();
-		}
-		if(toDecode.getRafBindInvocation() != null) {
-			return toDecode.getRafBindInvocation();
-		}
-		if(toDecode.getRafGetParameterReturn() != null) {
-			return toDecode.getRafGetParameterReturn();
-		}
-		if(toDecode.getRafScheduleStatusReportReturn() != null) {
-			return toDecode.getRafScheduleStatusReportReturn();
-		}
-		if(toDecode.getRafStartReturn() != null) {
-			return toDecode.getRafStartReturn();
-		}
-		if(toDecode.getRafStopReturn() != null) {
-			return toDecode.getRafStopReturn();
-		}
-		if(toDecode.getRafUnbindInvocation() != null) {
-			return toDecode.getRafUnbindInvocation();
-		}
-		if(toDecode.getRafUnbindReturn() != null) {
-			return toDecode.getRafUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
-	}
-
-	private BerType unwrap(RafProviderToUserPduV1toV2 toDecode) throws DecodingException {
-		if(toDecode.getRafTransferBuffer() != null) {
-			return toDecode.getRafTransferBuffer();
-		}
-		if(toDecode.getRafStatusReportInvocation() != null) {
-			return toDecode.getRafStatusReportInvocation();
-		}
-		if(toDecode.getRafBindReturn() != null) {
-			return toDecode.getRafBindReturn();
-		}
-		if(toDecode.getRafBindInvocation() != null) {
-			return toDecode.getRafBindInvocation();
-		}
-		if(toDecode.getRafGetParameterReturn() != null) {
-			return toDecode.getRafGetParameterReturn();
-		}
-		if(toDecode.getRafScheduleStatusReportReturn() != null) {
-			return toDecode.getRafScheduleStatusReportReturn();
-		}
-		if(toDecode.getRafStartReturn() != null) {
-			return toDecode.getRafStartReturn();
-		}
-		if(toDecode.getRafStopReturn() != null) {
-			return toDecode.getRafStopReturn();
-		}
-		if(toDecode.getRafUnbindInvocation() != null) {
-			return toDecode.getRafUnbindInvocation();
-		}
-		if(toDecode.getRafUnbindReturn() != null) {
-			return toDecode.getRafUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
-	}
-
-	private BerType unwrap(RafProviderToUserPduV3toV4 toDecode) throws DecodingException {
-		if(toDecode.getRafTransferBuffer() != null) {
-			return toDecode.getRafTransferBuffer();
-		}
-		if(toDecode.getRafStatusReportInvocation() != null) {
-			return toDecode.getRafStatusReportInvocation();
-		}
-		if(toDecode.getRafBindReturn() != null) {
-			return toDecode.getRafBindReturn();
-		}
-		if(toDecode.getRafBindInvocation() != null) {
-			return toDecode.getRafBindInvocation();
-		}
-		if(toDecode.getRafGetParameterReturn() != null) {
-			return toDecode.getRafGetParameterReturn();
-		}
-		if(toDecode.getRafScheduleStatusReportReturn() != null) {
-			return toDecode.getRafScheduleStatusReportReturn();
-		}
-		if(toDecode.getRafStartReturn() != null) {
-			return toDecode.getRafStartReturn();
-		}
-		if(toDecode.getRafStopReturn() != null) {
-			return toDecode.getRafStopReturn();
-		}
-		if(toDecode.getRafUnbindInvocation() != null) {
-			return toDecode.getRafUnbindInvocation();
-		}
-		if(toDecode.getRafUnbindReturn() != null) {
-			return toDecode.getRafUnbindReturn();
-		}
-		throw new DecodingException("Cannot unwrap data from " + toDecode + ": no field set");
-	}
-	
 }
