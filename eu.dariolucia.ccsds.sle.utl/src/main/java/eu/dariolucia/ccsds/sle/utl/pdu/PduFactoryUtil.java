@@ -52,6 +52,9 @@ public class PduFactoryUtil {
 
     private static final Logger LOG = Logger.getLogger(PduFactoryUtil.class.getName());
 
+    /**
+     * Number of days from 1st Jan 1958 to 1st Jan 1970
+     */
     private static final int DAYS_FROM_1958_to_1970;
 
     static {
@@ -249,14 +252,14 @@ public class PduFactoryUtil {
 
     /**
      * This method builds the CDS time representation according to the SLE standard:
-     * <p>
-     * - P-field is implicit
-     * - T-field:
-     * - 2 octets: number of days since 1958/01/01 00:00:00
-     * - 4 octets: number of milliseconds of the day
-     * - 2 octets: number of microseconds of the millisecond (set to 0 if not used)
-     * - This definition reflects exactly the format of the CCSDS defined time tag as used in spacelink data units.
-     * <p>
+     * <ul>
+     * <li>P-field is implicit</li>
+     * <li>T-field:</li>
+     * <li>2 octets: number of days since 1958/01/01 00:00:00</li>
+     * <li>4 octets: number of milliseconds of the day</li>
+     * <li>2 octets: number of microseconds of the millisecond (set to 0 if not used)</li>
+     * <li>This definition reflects exactly the format of the CCSDS defined time tag as used in spacelink data units.</li>
+     * </ul>
      * Reference for implementation: CCSDS 301.0-B-4, section 3.3.
      *
      * @param timeMillisSinceEpoch time in millisecs since Java epoch

@@ -38,6 +38,7 @@ import eu.dariolucia.ccsds.sle.utl.network.tml.TmlChannel;
 import eu.dariolucia.ccsds.sle.utl.network.tml.TmlChannelException;
 import eu.dariolucia.ccsds.sle.utl.network.tml.TmlDisconnectionReasonEnum;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
+import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
@@ -75,7 +76,7 @@ public class RcfChannelObserver implements ITmlChannelObserver {
 	}
 
 	@Override
-	public void onChannelDisconnected(TmlChannel channel, TmlDisconnectionReasonEnum reason) {
+	public void onChannelDisconnected(TmlChannel channel, TmlDisconnectionReasonEnum reason, PeerAbortReasonEnum peerAbortReason) {
 		//
 	}
 

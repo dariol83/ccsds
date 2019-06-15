@@ -60,29 +60,25 @@ public class TmlChannel {
 	 * @param heartbeatTimer the heartbeat interval to propose in the TML context message and use later on
 	 * @param deadFactor the deadfactor to propose in the TML context message and use later on
 	 * @param observer the callback interface
+	 * @param txBuffer the number of bytes to be set for the TCP transmission buffer
+	 * @param rxBuffer the number of bytes to be set for the TCP reception buffer
 	 * @return the TML channel, ready to be connected
 	 */
-	public static TmlChannel createClientTmlChannel(String host, int port, int heartbeatTimer, int deadFactor, ITmlChannelObserver observer) {
-		return new TmlChannel(host, port, heartbeatTimer, deadFactor, observer);
-	}
-
 	public static TmlChannel createClientTmlChannel(String host, int port, int heartbeatTimer, int deadFactor, ITmlChannelObserver observer, int txBuffer, int rxBuffer) {
 		return new TmlChannel(host, port, heartbeatTimer, deadFactor, observer, txBuffer, rxBuffer);
 	}
 
 	/**
 	 * Static creation function to instantiate a server TML channel, i.e. a channel that can be used by the SLE User
-     * Test Library to wait for connections from a remote SLE service instance.
-     *
+	 * Test Library to wait for connections from a remote SLE service instance.
+	 *
 	 * @param port the TCP port to open, to wait for incoming connections
 	 * @param observer the callback interface
+	 * @param txBuffer the number of bytes to be set for the TCP transmission buffer
+	 * @param rxBuffer the number of bytes to be set for the TCP reception buffer
 	 * @return the TML channel, ready to be put in listen mode
 	 * @throws TmlChannelException in case of issues with the construction of the channel
 	 */
-	public static TmlChannel createServerTmlChannel(int port, ITmlChannelObserver observer) throws TmlChannelException {
-		return new TmlChannel(port, observer);
-	}
-
 	public static TmlChannel createServerTmlChannel(int port, ITmlChannelObserver observer, int txBuffer, int rxBuffer) throws TmlChannelException {
 		return new TmlChannel(port, observer, txBuffer, rxBuffer);
 	}
@@ -153,19 +149,6 @@ public class TmlChannel {
 	}
 
 	/**
-	 * Create a client TML channel, which will connect to the TML server upon invoking connect().
-	 *
-	 * @param host the remote host to connect to
-	 * @param port the remote TCP port to connect to
-	 * @param heartbeatTimer the heartbeat interval to use (set in the TML context message)
-	 * @param deadFactor the dead factor to use (set in the TML context message)
-	 * @param observer the callback interface
-	 */
-	private TmlChannel(String host, int port, int heartbeatTimer, int deadFactor, ITmlChannelObserver observer) {
-		this(host, port, heartbeatTimer, deadFactor, observer, 0, 0);
-	}
-
-	/**
 	 * Create a server TML channel, which will wait for the connection by a TML client, upon invoking connect().
 	 *
 	 * @param port the port used to bind the server socket
@@ -198,17 +181,6 @@ public class TmlChannel {
 				throw new TmlChannelException("Cannot set RX buffer size " + this.rxBuffer + " on server socket on port " + port, e);
 			}
 		}
-	}
-
-	/**
-	 * Create a server TML channel, which will wait for the connection by a TML client, upon invoking connect().
-	 * 
-	 * @param port the port used to bind the server socket
-	 * @param observer the callback interface
-	 * @throws TmlChannelException if the server socket cannot be bound to the specified port
-	 */
-	private TmlChannel(int port, ITmlChannelObserver observer) throws TmlChannelException {
-		this(port, observer, 0, 0);
 	}
 
 	/**
@@ -472,7 +444,7 @@ public class TmlChannel {
 			// stop HBT timers, if needed
 			stopHbtTimers();
 			// disconnect from endpoint
-			disconnectEndpoint(reason);
+			disconnectEndpoint(reason, null);
 			// cleanup
 			cleanup();
 			// return
@@ -516,7 +488,7 @@ public class TmlChannel {
 			// stop HBT timers, if needed
 			stopHbtTimers();
 			// disconnect from endpoint
-			disconnectEndpoint(TmlDisconnectionReasonEnum.RX_HBT_EXPIRED);
+			disconnectEndpoint(TmlDisconnectionReasonEnum.RX_HBT_EXPIRED, null);
 			// cleanup
 			cleanup();
 			// return
@@ -558,7 +530,7 @@ public class TmlChannel {
 			// stop HBT timers, if needed
 			stopHbtTimers();
 			// disconnect from endpoint
-			disconnectEndpoint(TmlDisconnectionReasonEnum.REMOTE_PEER_ABORT);
+			disconnectEndpoint(TmlDisconnectionReasonEnum.REMOTE_PEER_ABORT, PeerAbortReasonEnum.fromCode(code));
 			// cleanup
 			cleanup();
 			// return
@@ -575,7 +547,7 @@ public class TmlChannel {
 			// stop HBT timers, if needed
 			stopHbtTimers();
 			// disconnect from endpoint
-			disconnectEndpoint(TmlDisconnectionReasonEnum.REMOTE_DISCONNECT);
+			disconnectEndpoint(TmlDisconnectionReasonEnum.REMOTE_DISCONNECT, null);
 			// cleanup
 			cleanup();
 			// return
@@ -631,7 +603,7 @@ public class TmlChannel {
 				// stop HBT timers, if needed
 				stopHbtTimers();
 				// disconnect from endpoint
-				disconnectEndpoint(TmlDisconnectionReasonEnum.HBT_TX_SEND_ERROR);
+				disconnectEndpoint(TmlDisconnectionReasonEnum.HBT_TX_SEND_ERROR, null);
 				// cleanup
 				cleanup();
 				// return
@@ -663,17 +635,17 @@ public class TmlChannel {
 				if (this.sock != null) {
 					this.sock.sendUrgentData(reason);
 				} else {
-					LOG.info("Aborting channel " + toString() + " but no connection is established, urgent data " + reason + " not sent");
+					LOG.info("Aborting channel " + toString() + " but no connection is established, urgent data " + PeerAbortReasonEnum.fromCode(reason) + " not sent");
 				}
 			} catch (IOException e) {
-				LOG.log(Level.WARNING, "Exception while aborting channel " + toString() + " with reason " + reason, e);
+				LOG.log(Level.WARNING, "Exception while aborting channel " + toString() + " with reason " + PeerAbortReasonEnum.fromCode(reason), e);
 			}
 			// stop read thread
 			stopReadingThread();
 			// stop HBT timers, if needed
 			stopHbtTimers();
 			// disconnect from endpoint
-			disconnectEndpoint(TmlDisconnectionReasonEnum.PEER_ABORT);
+			disconnectEndpoint(TmlDisconnectionReasonEnum.PEER_ABORT, PeerAbortReasonEnum.fromCode(reason));
 			// cleanup
 			cleanup();
 			// return
@@ -698,7 +670,7 @@ public class TmlChannel {
 			// stop HBT timers, if needed
 			stopHbtTimers();
 			// disconnect from endpoint
-			disconnectEndpoint(TmlDisconnectionReasonEnum.LOCAL_DISCONNECT);
+			disconnectEndpoint(TmlDisconnectionReasonEnum.LOCAL_DISCONNECT, null);
 			// cleanup
 			cleanup();
 			// return
@@ -708,7 +680,7 @@ public class TmlChannel {
 		}
 	}
 
-	private void disconnectEndpoint(TmlDisconnectionReasonEnum reason) {
+	private void disconnectEndpoint(TmlDisconnectionReasonEnum reason, PeerAbortReasonEnum peerAbortReason) {
 		try {
 			this.aboutToDisconnect = true;
 			if(this.sock != null) {
@@ -727,7 +699,7 @@ public class TmlChannel {
 			LOG.log(Level.FINE, "Socket/stream on channel " + toString() + " threw exception on close()", e);
 		}
 		try {
-			this.observer.onChannelDisconnected(this, reason);
+			this.observer.onChannelDisconnected(this, reason, peerAbortReason);
 		} catch (Exception e) {
 			LOG.log(Level.WARNING, "Notification of disconnection on channel " + toString() + " threw exception on observer", e);
 		}

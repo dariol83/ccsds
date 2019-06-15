@@ -33,7 +33,7 @@ public class RcfTestServer {
 		
 		int port = Integer.parseInt(args[0]);
 		while(true) {
-			TmlChannel tsc = TmlChannel.createServerTmlChannel(port, new RcfChannelObserver());
+			TmlChannel tsc = TmlChannel.createServerTmlChannel(port, new RcfChannelObserver(), 0,0 );
 			LOG.info("Preparing to start connection... ");
 			tsc.connect();
 			LOG.info("Waiting for connection...");

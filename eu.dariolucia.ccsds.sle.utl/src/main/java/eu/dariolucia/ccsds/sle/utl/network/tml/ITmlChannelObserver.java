@@ -16,11 +16,40 @@
 
 package eu.dariolucia.ccsds.sle.utl.network.tml;
 
+import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
+
+/**
+ * TML channel callback interface: it is used to notify an observer about the status of the channel and to provide
+ * received SLE operations.
+ */
 public interface ITmlChannelObserver {
-	
-	public void onChannelConnected(TmlChannel channel) throws Exception;
-	
-	public void onChannelDisconnected(TmlChannel channel, TmlDisconnectionReasonEnum reason) throws Exception;
-	
-	public void onPduReceived(TmlChannel channel, byte[] pdu) throws Exception;
+
+	/**
+	 * This method is called by the TML channel provided as method argument and indicates that the TML channel is
+	 * 'successfully' connected: if the TML channel is in client mode, this method is called only after the sending
+	 * of the TML context message and the start of the receiving thread. If the TML channel is in server mode, this
+	 * method is called only when a correct TML context message is received and accepted.
+	 *
+	 * @param channel the TML channel announcing the connection state
+	 */
+	void onChannelConnected(TmlChannel channel);
+
+	/**
+	 * This method is called by the TML channel provided as method argument and indicates that the TML channel is
+	 * now disconnected.
+	 *
+	 * @param channel the TML channel announcing the disconnection
+	 * @param reason the reason for the disconnection
+	 * @param peerAbortReason if reason is PEER_ABORT or REMOTE_PEER_ABORT, the peer abort reason is provided; otherwise null
+	 */
+	void onChannelDisconnected(TmlChannel channel, TmlDisconnectionReasonEnum reason, PeerAbortReasonEnum peerAbortReason);
+
+	/**
+	 * This method is called by the TML channel provided as method argument and it is used to deliver a TML PDU (i.e.
+	 * a BER-encoded SLE operation).
+	 *
+	 * @param channel the TML channel announcing the reception of an SLE operation
+	 * @param pdu the BER-encoded SLE operation
+	 */
+	void onPduReceived(TmlChannel channel, byte[] pdu);
 }

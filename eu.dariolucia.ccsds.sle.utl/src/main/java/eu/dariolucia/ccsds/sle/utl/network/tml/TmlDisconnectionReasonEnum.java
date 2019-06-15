@@ -18,8 +18,8 @@ package eu.dariolucia.ccsds.sle.utl.network.tml;
 
 /**
  * This enumeration represents the possible reasons for the disconnection of the TML channel. The SLE User Test Library
- * does not signal only PEER- and PROTOCOL-ABORTs and uses custom error codes, not following CCSDS 913.1-B-2.
- * // TODO: to be revised wrt the standard
+ * does not signal only PEER- and PROTOCOL-ABORTs and uses custom error codes, not strictly following the list of error
+ * codes as defined by CCSDS 913.1-B-2.
  */
 public enum TmlDisconnectionReasonEnum {
 	/**

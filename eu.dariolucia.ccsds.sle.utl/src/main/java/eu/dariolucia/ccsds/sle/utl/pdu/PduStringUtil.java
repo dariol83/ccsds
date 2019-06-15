@@ -20,10 +20,14 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.S
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleBindReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleUnbindInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.incoming.pdus.CltuStartInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.outgoing.pdus.CltuStartReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Time;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafStartInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafStartReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.incoming.pdus.RcfStartInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing.pdus.RcfStartReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.incoming.pdus.RocfStartInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.outgoing.pdus.RocfStartReturn;
 import eu.dariolucia.ccsds.sle.utl.si.UnbindReasonEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafRequestedFrameQualityEnum;
 import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfUpdateModeEnum;
@@ -58,6 +62,44 @@ public class PduStringUtil {
 		register(RcfStartInvocation.class, this::toStringRcfStartInvoke);
 		register(RocfStartInvocation.class, this::toStringRocfStartInvoke);
 		register(CltuStartInvocation.class, this::toStringCltuStartInvoke);
+
+		register(RafStartReturn.class, this::toStringRafStartReturn);
+		register(RcfStartReturn.class, this::toStringRcfStartReturn);
+		register(RocfStartReturn.class, this::toStringRocfStartReturn);
+		register(CltuStartReturn.class, this::toStringCltuStartReturn);
+
+	}
+
+	private String toStringRcfStartReturn(RcfStartReturn t) {
+		return "Start return "
+				+ (t.getResult().getPositiveResult() != null
+				? "<positive>" : "<negative>: diagnostics code: common "
+				+ t.getResult().getNegativeResult().getCommon().intValue()
+				+ ", specific: " + t.getResult().getNegativeResult().getSpecific().intValue());
+	}
+
+	private String toStringRocfStartReturn(RocfStartReturn t) {
+		return "Start return "
+				+ (t.getResult().getPositiveResult() != null
+				? "<positive>" : "<negative>: diagnostics code: common "
+				+ t.getResult().getNegativeResult().getCommon().intValue()
+				+ ", specific: " + t.getResult().getNegativeResult().getSpecific().intValue());
+	}
+
+	private String toStringRafStartReturn(RafStartReturn t) {
+		return "Start return "
+				+ (t.getResult().getPositiveResult() != null
+				? "<positive>" : "<negative>: diagnostics code: common "
+				+ t.getResult().getNegativeResult().getCommon().intValue()
+				+ ", specific: " + t.getResult().getNegativeResult().getSpecific().intValue());
+	}
+
+	private String toStringCltuStartReturn(CltuStartReturn t) {
+		return "Start return "
+				+ (t.getResult().getPositiveResult() != null
+				? "<positive>" : "<negative>: diagnostics code: common "
+				+ t.getResult().getNegativeResult().getCommon().intValue()
+				+ ", specific: " + t.getResult().getNegativeResult().getSpecific().intValue());
 	}
 
 	private String toStringRcfStartInvoke(RcfStartInvocation t) {
@@ -68,18 +110,6 @@ public class PduStringUtil {
 				+ " with"
 				+ " GVCID " + t.getRequestedGvcId().getSpacecraftId().intValue() + ", " + t.getRequestedGvcId().getVersionNumber().intValue()
 				+ ", " + (t.getRequestedGvcId().getVcId().getMasterChannel() != null ? "*" : t.getRequestedGvcId().getVcId().getVirtualChannel().intValue());
-	}
-
-	public String toString(Time t) {
-		if(t.getCcsdsFormat() != null) {
-			long[] tAsLong = PduFactoryUtil.buildTimeMillis(t.getCcsdsFormat().value);
-			return new Date(tAsLong[0]).toString();
-		} else if(t.getCcsdsPicoFormat() != null) {
-			long[] tAsLong = PduFactoryUtil.buildTimeMillisPico(t.getCcsdsFormat().value);
-			return new Date(tAsLong[0]).toString() + " (pico)";
-		} else {
-			return "<time format unknown>";
-		}
 	}
 
 	private String toStringRafStartInvoke(RafStartInvocation t) {
@@ -123,6 +153,18 @@ public class PduStringUtil {
 	private String toStringUnbindInvoke(SleUnbindInvocation pdu) {
 		return "Unbind invocation with reason "
 				+ UnbindReasonEnum.fromCode((byte) pdu.getUnbindReason().intValue());
+	}
+
+	public String toString(Time t) {
+		if(t.getCcsdsFormat() != null) {
+			long[] tAsLong = PduFactoryUtil.buildTimeMillis(t.getCcsdsFormat().value);
+			return new Date(tAsLong[0]).toString();
+		} else if(t.getCcsdsPicoFormat() != null) {
+			long[] tAsLong = PduFactoryUtil.buildTimeMillisPico(t.getCcsdsFormat().value);
+			return new Date(tAsLong[0]).toString() + " (pico)";
+		} else {
+			return "<time format unknown>";
+		}
 	}
 
 	public String getPduDetails(Object pdu) {

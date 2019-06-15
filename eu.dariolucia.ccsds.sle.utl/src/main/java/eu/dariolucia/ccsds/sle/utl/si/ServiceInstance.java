@@ -1010,7 +1010,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	}
 
 	@Override
-	public void onChannelDisconnected(TmlChannel channel, TmlDisconnectionReasonEnum reason) {
+	public void onChannelDisconnected(TmlChannel channel, TmlDisconnectionReasonEnum reason, PeerAbortReasonEnum peerAbortReason) {
 		dispatchFromUser(() -> {
 			clearError();
 
@@ -1019,7 +1019,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 				disconnect(null);
 			} else {
 				// Otherwise, set the error
-				disconnect("Unexpected disconnection detected: " + reason.name());
+				disconnect("Unexpected disconnection detected: " + reason.name() + (Objects.isNull(peerAbortReason) ? "" : ", reason " + peerAbortReason));
 			}
 			// Generate state and notify update
 			notifyStateUpdate();
@@ -1056,8 +1056,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 				return;
 			}
 			// Use a map <class 2 runnable> to process the PDU accordingly to its type. This
-			// must be in this class, and
-			// handlers must be registered by children classes in the setup.
+			// must be in this class, and handlers must be registered by children classes in the setup.
 			@SuppressWarnings("unchecked")
 			Consumer<Object> c = (Consumer<Object>) getHandler(op.getClass());
 			if (c != null) {
