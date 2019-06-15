@@ -42,7 +42,21 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-// TODO move here stop invocation, stop return handling, schedule status report, schedule status report return handling
+/**
+ * This class is the core class of the SLE User Test Library. In an SLE association it represents the user peer: it
+ * can act as initiator (User Initiated Bind) or responder (Provider Initiated Bind). It is the entry point to send
+ * and receive SLE operations from the SLE provider, further specialised by service-type specific classes.
+ *
+ * This class is thread-safe and uses two threads for its operations:
+ * <ul>
+ *     <li>A dispatcher thread, which implements a thread confinement managing the internals of the object state</li>
+ *     <li>A notifier thread, which is responsible to notify state changes and SLE operations to the subscribers</li>
+ * </ul>
+ * Operations requested on this object by the user code or by the TML channel threads are queued in a queue and processed
+ * by a single thread (the dispatcher thread). When a change in state must be notified to subscribers, the state object
+ * is created and the notification is delegated to a separate thread. Therefore operations performed by instances of
+ * this class are fully asynchronous and lock-free.
+ */
 public abstract class ServiceInstance implements ITmlChannelObserver {
 
 	private static final int BIND_INTERNAL_INVOKE_ID = -1;
@@ -132,6 +146,12 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		this.handlers.put(clazz, handler);
 	}
 
+	/**
+	 * This method returns the configuration of the service instance. This is a pointer to the internal configuration
+	 * (not a copy) and shall not be changed by the calling object. The service-type specific subclass is returned.
+	 *
+	 * @return the service instance configuration
+	 */
 	public ServiceInstanceConfiguration getServiceInstanceConfiguration() {
 		return serviceInstanceConfiguration;
 	}
@@ -275,6 +295,11 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		});
 	}
 
+	/**
+	 * This method registers a listener to this service instance.
+	 *
+	 * @param l the listener to be registered
+	 */
 	public final void register(final IServiceInstanceListener l) {
 		try {
 			dispatchFromUser(() -> doRegister(l));
@@ -289,6 +314,11 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		notify(() -> l.onStateUpdated(this, state));
 	}
 
+	/**
+	 * This method deregisters a listener from this service instance.
+	 *
+	 * @param l the listener to be deregistered
+	 */
 	public final void deregister(final IServiceInstanceListener l) {
 		try {
 			dispatchFromUser(() -> doDeregister(l));
@@ -301,6 +331,14 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		this.listeners.remove(l);
 	}
 
+	/**
+	 * This method sets the BIND response behaviour of the service instance if configured for Provider Initiated Bind.
+	 * This method can be called at any time and the change in configuration will be applied immediately, i.e. they will
+	 * overwrite the configuration applied when calling a prior waitForBind(...).
+	 *
+	 * @param sendPositiveBindReturn if true (default), the user will respond with a positive BIND return, otherwise it will send back a negative response
+	 * @param negativeBindReturnDiagnostics if sendPositiveBindReturn is false, the negative response will deliver this diagnostics
+	 */
 	public final void setBindReturnBehaviour(boolean sendPositiveBindReturn,
 			BindDiagnosticsEnum negativeBindReturnDiagnostics) {
 		dispatchFromUser(() -> {
@@ -312,6 +350,12 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		});
 	}
 
+	/**
+	 * This method sets the UNBIND response behaviour of the service instance if configured for the Provided Initiated Bind.
+	 * This method can be called at any time and the change in configuration will be applied immediately.
+	 *
+	 * @param sendPositiveUnbindReturn if true (default), the user will responde with a positive BIND return, otherwise it will send back a negative response
+	 */
 	public final void setUnbindReturnBehaviour(boolean sendPositiveUnbindReturn) {
 		dispatchFromUser(() -> {
 			this.sendPositiveUnbindReturn = sendPositiveUnbindReturn;
@@ -321,6 +365,14 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		});
 	}
 
+	/**
+	 * This method requests the service instance to start waiting for a connection plus BIND coming from the provider.
+	 * This method does not block and returns immediately. The provided arguments will be applied immediately, i.e. they will
+	 * overwrite the configuration applied when calling a prior setBindReturnBehaviour(...).
+	 *
+	 * @param sendPositiveBindReturn if true, the user will respond with a positive BIND return, otherwise it will send back a negative response
+	 * @param negativeBindReturnDiagnostics if sendPositiveBindReturn is false, the negative response will deliver this diagnostics
+	 */
 	public final void waitForBind(boolean sendPositiveBindReturn, BindDiagnosticsEnum negativeBindReturnDiagnostics) {
 		dispatchFromUser(() -> doWaitForBind(sendPositiveBindReturn, negativeBindReturnDiagnostics));
 	}
@@ -396,6 +448,12 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		notifyStateUpdate();
 	}
 
+	/**
+	 * This method requests the user to initiate the TML connection and send a BIND operation to the provider, with the
+	 * specification of the provided SLE version. This method does not block and returns immediately.
+	 *
+	 * @param version the SLE version to be used
+	 */
 	public final void bind(int version) {
 		dispatchFromUser(() -> doBind(version));
 	}
@@ -607,6 +665,11 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		}
 	}
 
+	/**
+	 * This method requests to send an UNBIND operation with the provided reason. This method does not block and returns immediately.
+	 *
+	 * @param reason the unbind reason
+	 */
 	public final void unbind(UnbindReasonEnum reason) {
 		dispatchFromUser(() -> doUnbind(reason));
 	}
@@ -660,6 +723,11 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		}
 	}
 
+	/**
+	 * This method requests a local PEER-ABORT to be propagated to the remote peer. This method does not block and returns immediately.
+	 *
+	 * @param reason the reason of the peer abort
+	 */
 	public final void peerAbort(PeerAbortReasonEnum reason) {
 		dispatchFromUser(() -> doPeerAbort(reason));
 	}
@@ -1074,22 +1142,47 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		});
 	}
 
+	/**
+	 * This method returns the service instance identifier.
+	 *
+	 * @return the service instance identifier
+	 */
 	public final String getServiceInstanceIdentifier() {
 		return this.serviceInstanceConfiguration.getServiceInstanceIdentifier();
 	}
 
+	/**
+	 * This method returns the responder port identifier.
+	 *
+	 * @return the responder port identifier
+	 */
 	public final String getResponderPortIdentifier() {
 		return this.serviceInstanceConfiguration.getResponderPortIdentifier();
 	}
 
+	/**
+	 * This method returns the initiator identifier.
+	 *
+	 * @return the initiator identifier
+	 */
 	public final String getInitiatorIdentifier() {
 		return this.serviceInstanceConfiguration.getInitiatorIdentifier();
 	}
 
+	/**
+	 * This method returns the responder identifier.
+	 *
+	 * @return the responder identifier
+	 */
 	public final String getResponderIdentifier() {
 		return this.serviceInstanceConfiguration.getResponderIdentifier();
 	}
 
+	/**
+	 * This method returns the return timeout period.
+	 *
+	 * @return the return timeout period
+	 */
 	public final int getReturnTimeoutPeriod() {
 		return this.serviceInstanceConfiguration.getReturnTimeoutPeriod();
 	}
@@ -1107,6 +1200,13 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		state.setLastException(lastErrorException);
 	}
 
+	/**
+	 * This method is used to compute the current rate of the service instance. It is important to understand that
+	 * invocations of this method drive the sample rate. If this method is invoked very fast (i.e. two immediate sub
+	 * sequent calls), the second call might receive a misleading result (possibly 0 units/set).
+	 *
+	 * @return the rate sample (related to SLE PDUs and bytes)
+	 */
 	public RateSample getCurrentRate() {
 		Instant instant = Instant.now();
 		DataRateSample pdus = this.statsCounter.sample();
@@ -1119,6 +1219,11 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		return new RateSample(instant, pdus, datas);
 	}
 
+	/**
+	 * This method returns the current service instance state.
+	 *
+	 * @return the service instance state
+	 */
 	public ServiceInstanceBindingStateEnum getCurrentBindingState() {
 		return this.currentState;
 	}
@@ -1135,8 +1240,27 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
 	protected abstract void resetState();
 
+	/**
+	 * This method returns the service type.
+	 *
+	 * @return the service type
+	 */
 	public abstract ApplicationIdentifierEnum getApplicationIdentifier();
 
+	/**
+	 * This internal task (a {@link FutureTask} extension that returns Void) is used to schedule an operation to be
+	 * executed by the dispatcher thread. The dispatcher uses a priority blocking queue, and the priority is provided
+	 * by the following hierarchy:
+	 * <ul>
+	 *    <li>the request type: a user request always has precedence compared to a remote peer request (PDU reception).
+	 *    This design decision allows to remove backlog processing on the dispatcher queue (e.g. due to high data rate)
+	 *    and to process immediately a user request (e.g. a STOP request)</li>
+	 *    <li>the creation time: if two requests have the same type, then the one scheduled before will be executed
+	 *    before</li>
+	 *    <li>the task hashcode: to prevent that two requests with the same type and the same creation time can be
+	 *    considered equal from the point of view of the priority blocking queue comparator</li>
+	 * </ul>
+	 */
 	private class SleTask extends FutureTask<Void> implements Comparable<SleTask> {
 
 		private static final byte FROM_USER_TYPE = 0x00;
