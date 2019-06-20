@@ -124,7 +124,7 @@ public class TmTransferFrame extends AbstractTransferFrame {
     }
 
     private boolean checkValidity() {
-        // As this method is called by the decode() method, the fecfPresent check is already done
+        // As this method is called by the check() method, the fecfPresent check is already done
         short crc16 = Crc16Algorithm.getCrc16(this.frame, 0,  this.frame.length - 2);
         short crcFromFrame = getFecf();
         return crc16 == crcFromFrame;

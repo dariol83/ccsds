@@ -17,20 +17,27 @@
 package eu.dariolucia.ccsds.tmtc.coding.decoder;
 
 import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
-import eu.dariolucia.ccsds.tmtc.coding.IEncodingFunction;
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
 import java.util.function.Function;
 
 public class ReedSolomonDecoder implements Function<byte[], byte[]> {
 
     private final ReedSolomonAlgorithm algorithm;
+    private final int interleavingDepth;
+    private final boolean errorChecking;
 
-    public ReedSolomonDecoder(ReedSolomonAlgorithm rs) {
+
+    public ReedSolomonDecoder(ReedSolomonAlgorithm rs, int interleavingDepth, boolean errorChecking) {
         if(rs == null) {
             throw new NullPointerException("Reed-Solomon algorithm cannot be null");
         }
         this.algorithm = rs;
+        this.errorChecking = errorChecking;
+        this.interleavingDepth = interleavingDepth;
+    }
+
+    public ReedSolomonDecoder(ReedSolomonAlgorithm rs) {
+        this(rs, 0, false);
     }
 
     @Override
@@ -38,6 +45,6 @@ public class ReedSolomonDecoder implements Function<byte[], byte[]> {
         if(input == null) {
             throw new NullPointerException("Input cannot be null");
         }
-        return this.algorithm.decodeFrame(input);
+        return this.algorithm.decodeFrame(input, interleavingDepth, false);
     }
 }

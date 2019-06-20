@@ -42,7 +42,7 @@ class TmChannelEncoderTest {
 		// Use stream approach: no need for structure
 		List<byte[]> frames = StreamUtil.from(() -> counter.getAndDecrement() == 0 ? null : generateFrame()) // Publish the frames
 				.map(TmTransferFrame::getFrame)
-				.map(new ReedSolomonEncoder<TmTransferFrame>(ReedSolomonAlgorithm.TM_255_223).asFunction())
+				.map(new ReedSolomonEncoder<TmTransferFrame>(ReedSolomonAlgorithm.TM_255_223, 5).asFunction())
 				.map(new TmAsmEncoder<TmTransferFrame>().asFunction())
 				.collect(Collectors.toList());
 
@@ -66,7 +66,7 @@ class TmChannelEncoderTest {
 
 		// Build the structure: TM Frame encoding function, no FECF, ASM, R-S
 		ChannelEncoder<TmTransferFrame> encoder = ChannelEncoder.<TmTransferFrame>create()
-				.addEncodingFunction(new ReedSolomonEncoder<TmTransferFrame>(ReedSolomonAlgorithm.TM_255_223)) // Add R-S symbol block 255/223
+				.addEncodingFunction(new ReedSolomonEncoder<TmTransferFrame>(ReedSolomonAlgorithm.TM_255_223, 5)) // Add R-S symbol block 255/223
 				.addEncodingFunction(new TmAsmEncoder<TmTransferFrame>()) // Add ASM encoding with default ASM
 				.configure();
 		// Use stream approach with decoder

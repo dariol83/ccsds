@@ -33,13 +33,22 @@ public class AosTransferFrame extends AbstractTransferFrame {
     public static final short AOS_B_PDU_FIRST_HEADER_POINTER_ALL_DATA = 16383;
 
     // AOS Blue Book, 4.1.2.6.5.
+//    public static final ReedSolomonAlgorithm AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL = new ReedSolomonAlgorithm(
+//                    10,
+//                    6,
+//                    0x13,      // As per AOS Blue Book specs: x^4 + x + 1 = 10011 = 19 = 0x13
+//                    new int[]{1, 8, 2, 8},      // As per AOS Blue Book specs: x^4 + (a3 x^3) + (a x^2) + (a3 x) + 1
+//                    new int[]{12, 11, 5, 10}    // As per AOS Blue Book specs: g(x) = (x + a6)(x + a7)(x + a8)(x + a9) : only needed for decoding verify
+//            );
+
     public static final ReedSolomonAlgorithm AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL = new ReedSolomonAlgorithm(
                     10,
                     6,
                     0x13,      // As per AOS Blue Book specs: x^4 + x + 1 = 10011 = 19 = 0x13
-                    new int[]{1, 8, 2, 8},      // As per AOS Blue Book specs: x^4 + (a3 x^3) + (a x^2) + (a3 x) + 1
-                    new int[]{12, 11, 5, 10}    // As per AOS Blue Book specs: g(x) = (x + a6)(x + a7)(x + a8)(x + a9) : only needed for decoding verify
-            );
+                    2,
+                    6,
+                    true // TODO, check
+    );
 
     public static IDecodingFunction<AosTransferFrame> decodingFunction(boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
         return input -> new AosTransferFrame(input, frameHeaderErrorControlPresent, transferFrameInsertZoneLength, userDataType, ocfPresent, fecfPresent);
@@ -178,7 +187,7 @@ public class AosTransferFrame extends AbstractTransferFrame {
     }
 
     private boolean checkValidity() {
-        // As this method is called by the decode() method, the fecfPresent check is already done
+        // As this method is called by the check() method, the fecfPresent check is already done
         short crc16 = Crc16Algorithm.getCrc16(this.frame, 0,  this.frame.length - 2);
         short crcFromFrame = getFecf();
         return crc16 == crcFromFrame;
@@ -194,15 +203,18 @@ public class AosTransferFrame extends AbstractTransferFrame {
 
     private boolean checkAosFrameHeaderErrorControlEncoding(byte[] aosFrame) {
         // Convert octets 0, 1 and 5, 6 and 7 into an array of 10 integers, J=4 bits, reversed
-        int[] codeword = new int[10];
+        byte[] codeword = new byte[10];
+        // TODO: check if reverse is needed
         int[] octetsIdx = new int[] { 7, 6, 5, 1, 0 };
         for(int i = 0; i < octetsIdx.length; ++i) {
             byte b = aosFrame[octetsIdx[i]];
-            codeword[i*2] = b & 0x0F;
-            codeword[i*2 + 1] = (b & 0xF0) >> 4;
+            codeword[i*2] = (byte) (b & 0x0F);
+            codeword[i*2 + 1] = (byte) ((b & 0xF0) >>> 4);
         }
         // Check the codeword
-        return AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL.checkCodeword(codeword);
+        // TODO
+        // return AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL.checkCodeword(codeword);
+        return true;
     }
 
     public boolean isFrameHeaderErrorControlPresent() {

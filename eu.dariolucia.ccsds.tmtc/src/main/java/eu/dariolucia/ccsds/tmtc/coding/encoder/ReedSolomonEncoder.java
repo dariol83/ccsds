@@ -20,17 +20,18 @@ import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
 import eu.dariolucia.ccsds.tmtc.coding.IEncodingFunction;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
-import java.util.function.BiFunction;
-
 public class ReedSolomonEncoder<T extends AbstractTransferFrame> implements IEncodingFunction<T> {
 
     private final ReedSolomonAlgorithm algorithm;
 
-    public ReedSolomonEncoder(ReedSolomonAlgorithm rs) {
+    private final int interleavingDepth;
+
+    public ReedSolomonEncoder(ReedSolomonAlgorithm rs, int interleavingDepth) {
         if(rs == null) {
             throw new NullPointerException("Reed-Solomon algorithm cannot be null");
         }
         this.algorithm = rs;
+        this.interleavingDepth = interleavingDepth;
     }
 
     @Override
@@ -38,6 +39,6 @@ public class ReedSolomonEncoder<T extends AbstractTransferFrame> implements IEnc
         if(input == null) {
             throw new NullPointerException("Input cannot be null");
         }
-        return this.algorithm.encodeFrame(input);
+        return this.algorithm.encodeFrame(input, interleavingDepth);
     }
 }

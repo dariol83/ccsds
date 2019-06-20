@@ -42,7 +42,7 @@ class ChannelEncoderProcessorTest {
 
 		// Build the structure: TM frame to RS, ASM
 		ChannelEncoder<TmTransferFrame> cd = ChannelEncoder.<TmTransferFrame>create()
-				.addEncodingFunction(new ReedSolomonEncoder(ReedSolomonAlgorithm.TM_255_223)) // Add R-S symbol block 255/223
+				.addEncodingFunction(new ReedSolomonEncoder(ReedSolomonAlgorithm.TM_255_223, 5)) // Add R-S symbol block 255/223
 				.addEncodingFunction(new TmAsmEncoder()) // Add ASM
 				.configure();
 		// Create a ChannelDecoderProcessor, no asynchronous processing, complete

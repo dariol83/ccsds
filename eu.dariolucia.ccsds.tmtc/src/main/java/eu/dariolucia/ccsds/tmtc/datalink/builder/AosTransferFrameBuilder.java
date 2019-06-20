@@ -295,21 +295,24 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
     /**
      * This method encodes the frame header error control field in-place inside the provided AOS frame (octets 6-7).
      *
+     * // TODO: test required
+     *
      * @param aosFrame the frame
      */
     private void encodeAosFrameHeaderErrorControl(byte[] aosFrame) {
         // Convert octets 0, 1 and 5 into an array of 6 integers, J=4 bits, reversed
-        int[] message = new int[6];
+        // TODO check if reverse is needed
+        byte[] message = new byte[6];
         int[] octetsIdx = new int[] { 5, 1, 0 };
         for(int i = 0; i < octetsIdx.length; ++i) {
             byte b = aosFrame[octetsIdx[i]];
-            message[i*2] = b & 0x0F;
-            message[i*2 + 1] = (b & 0xF0) >> 4;
+            message[i*2] = (byte) (b & 0x0F);
+            message[i*2 + 1] = (byte) ((b & 0xF0) >>> 4);
         }
         // Encode the message
-        int[] encoded = AosTransferFrame.AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL.encodeCodeword(message);
+        byte[] encoded = AosTransferFrame.AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL.encodeCodeword(message);
 
-        // Put the values in place
+        // Put the values in place // TODO check if it is instead indices 6-7-8-9
         byte oct7 = 0;
         oct7 |= encoded[0];
         oct7 |= (byte) (encoded[1] << 4);

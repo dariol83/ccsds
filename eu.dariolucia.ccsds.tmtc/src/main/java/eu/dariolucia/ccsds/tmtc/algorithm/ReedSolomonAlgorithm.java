@@ -16,130 +16,204 @@
 
 package eu.dariolucia.ccsds.tmtc.algorithm;
 
+import eu.dariolucia.ccsds.tmtc.algorithm.rs.ReedSolomon;
+import eu.dariolucia.ccsds.tmtc.algorithm.rs.RsDecoder;
+import eu.dariolucia.ccsds.tmtc.algorithm.rs.RsEncoder;
+
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
  * Class implementing the Reed-Solomon encoding/checking utility functions, as specified in CCSDS 131.0-B-3, 4.3.
  */
-// TODO verify
 public class ReedSolomonAlgorithm {
 
     public static final eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm TM_255_223 = new eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm(
-            255,
             223,
+            255,
             0x187,     // As per Blue Book specs: F(x) = x^8 + x^7 + x^2 + x + 1 = 110000111 = 391 = 0x187
-            makeGeneratorPolynomial(0x187, 11, 112, 32),
-            generatePolynomialRoots(0x187, 11, 112, 143)
+            173,        // alpha ^ 11
+            112,        //
+            true
     );
 
     public static final eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm TM_255_239 = new eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm(
-            255,
             239,
+            255,
             0x187,     // As per Blue Book specs: F(x) = x^8 + x^7 + x^2 + x + 1 = 110000111 = 391 = 0x187
-            makeGeneratorPolynomial(0x187, 11, 120, 16),
-            generatePolynomialRoots(0x187, 11, 120, 135)
+            173,
+            120,
+            true
     );
 
-    public static int[] makeGeneratorPolynomial(int gfMod, int basis, int startingPower, int eccLen) {
-        return new int[0];
-    }
-
-    public static int[] generatePolynomialRoots(int gfMod, int basis, int from, int to) {
-        return new int[0];
-    }
-
-    private final RsDescriptor descriptor;
+    private final int messageLength;
+    private final int codewordLength;
+    private final int galoisFieldModulus;
+    private final int generator;
+    private final int initialRoot;
+    private final boolean dualbasis;
+    private final int eccLength;
 
     /**
      * Create a Reed-Solomon algorithm executor based on the provided characteristics.
      *
-     * @param codewordLength length of the codeword in bytes (the amount of data present in the final codeblock)
      * @param messageLength length of the encoded message in bytes
+     * @param codewordLength length of the codeword in bytes (the amount of data present in the final codeblock)
      * @param galoisFieldModulus the modulous of the Galois field
-     * @param generatorPolynom the coefficients of the generator polynom
-     * @param generatorPolynomRoots the roots of the generator polynom
+     * @param generator the coefficients of the generator polynom
+     * @param initialRoot the roots of the generator polynom
      */
-    public ReedSolomonAlgorithm(int codewordLength, int messageLength, int galoisFieldModulus, int[] generatorPolynom, int[] generatorPolynomRoots) {
-        this(new RsDescriptor(codewordLength, messageLength, galoisFieldModulus, generatorPolynom, generatorPolynomRoots));
-    }
-
-    private ReedSolomonAlgorithm(RsDescriptor descriptor) {
-        this.descriptor = descriptor;
+    public ReedSolomonAlgorithm(int messageLength, int codewordLength, int galoisFieldModulus, int generator, int initialRoot, boolean dualbasis) {
+        this.messageLength = messageLength;
+        this.codewordLength = codewordLength;
+        this.galoisFieldModulus = galoisFieldModulus;
+        this.generator = generator;
+        this.initialRoot = initialRoot;
+        this.eccLength = this.codewordLength - this.messageLength;
+        this.dualbasis = dualbasis;
     }
 
     /**
-     * This method encodes the provided frame using the provided RS structure. It is required that the frame length (frame.length)
-     * to be a multiple of the message length defined by the structure, otherwise an {@link IllegalArgumentException} exception will be thrown.
+     * This method encodes the provided frame using the RS properties specified at construction time. It is required that the frame length (frame.length)
+     * is a multiple of the message length defined by the structure, otherwise an {@link IllegalArgumentException} exception will be thrown. Possible
+     * padding (virtual fill) to the frame shall be added by the caller.
+     *
+     * The interleaving depth specifies how to construct the codewords from the frame, according to CCSDS 131.0-B-3, 4.3.5.
      *
      * @param frame the frame to be encoded
+     * @param interleavingDepth the interleaving depth, allowable values are I=1, 2, 3, 4, 5, and 8
      * @return the frame followed by the Reed Solomon blocks
-     * @throws IllegalArgumentException if frame has an unexpected length
+     * @throws IllegalArgumentException if frame has an unexpected length, or if the interleaving is not supported
      */
-    public byte[] encodeFrame(byte[] frame) {
-        // TODO
+    public byte[] encodeFrame(byte[] frame, int interleavingDepth) {
+        if(frame.length % messageLength != 0) {
+            throw new IllegalArgumentException("Frame length (" + frame.length + " bytes) is not a multiple of " + messageLength);
+        }
+        if(interleavingDepth != 1 && interleavingDepth != 2 && interleavingDepth != 3 && interleavingDepth != 4 && interleavingDepth != 5 && interleavingDepth != 8) {
+            throw new IllegalArgumentException("Unsupported interleaving depth");
+        }
 
-        // Current implementation: copy the frame and add, at the end, add a number of bytes equals to the number of
-        // blocks * (messageLength - codewordLength)
-        byte[] toReturn = new byte[frame.length + (frame.length / this.descriptor.messageLength) * (this.descriptor.codewordLength - this.descriptor.messageLength)];
-        System.arraycopy(frame, 0, toReturn, 0, frame.length);
-        return toReturn;
+        // Instantiate the sink
+        ByteBuffer sink = ByteBuffer.allocate(computeFinalMessageLength(frame.length));
+        // Instantiate interleavingDepth encoders
+        RsEncoder[] encs = new RsEncoder[interleavingDepth];
+        for(int i = 0; i < encs.length; ++i) {
+            encs[i] = new RsEncoder(new ReedSolomon(galoisFieldModulus, generator, messageLength, eccLength, initialRoot), dualbasis, sink);
+        }
+        // Encode
+        for(int i = 0; i < frame.length; ++i) {
+            encs[i % interleavingDepth].pushMessage(frame[i]);
+        }
+        // Verify completion
+        for(RsEncoder e : encs) {
+            if(!e.ready()) {
+                throw new IllegalStateException("One encoder is not ready to output the RS block");
+            }
+        }
+        // Output RS block
+        int blockSize = encs[0].blockSize();
+        for(int i = 0; i < blockSize; ++i) {
+            for(int j = 0;j < encs.length; ++j) {
+                encs[j].pull();
+            }
+        }
+        // Return
+        return sink.array();
+    }
+
+    private int computeFinalMessageLength(int length) {
+        return length + (length / messageLength) * eccLength;
     }
 
     /**
-     * This method simply removes the codeblocks and returns a copy of the frame contents. It does not attempt to perform
-     * any error correction (...yet).
+     * This method simply removes the Reed Solomon symbols and returns a copy of the frame contents.
+     * Optionally, it can perform an error detection on the frame. If the frame has errors, then it returns null.
+     * It does not attempt to perform any error correction.
      *
-     * @param rsCodeblock the RS encoded frame
-     * @return the frame
+     * @param encodedFrame the RS encoded frame, with the RS block at the end
+     * @param interleavingDepth interleaving depth, only required if error checking is enabled, otherwise ignored
+     * @param errorChecking if true, error detection is enabled
+     * @return the frame or null if error detection is requested and errors are found
      */
-    public byte[] decodeFrame(byte[] rsCodeblock) {
-        // TODO
-
+    public byte[] decodeFrame(byte[] encodedFrame, int interleavingDepth, boolean errorChecking) {
         // Sanity check
-        if(rsCodeblock.length % this.descriptor.codewordLength != 0) {
-            throw new IllegalStateException("Expected frame length to be a multiple of " + descriptor.codewordLength + ", got " + rsCodeblock.length);
+        if(encodedFrame.length % codewordLength != 0) {
+            throw new IllegalArgumentException("Expected frame length to be a multiple of " + codewordLength + ", got " + encodedFrame.length);
         }
-        // Depending on the descriptor, compute the number of bytes to discard from the end of the provided codeblock
-        int numRsBlocks = rsCodeblock.length / this.descriptor.codewordLength;
-        int numBytesToDiscard = numRsBlocks * this.descriptor.rsBlockLength;
+        // Depending on the algorithm configuration, compute the number of bytes to discard from the end of the provided codeblock
+        int numRsBlocks = encodedFrame.length / codewordLength;
+        int numBytesToDiscard = numRsBlocks * eccLength;
+        byte[] decoded = Arrays.copyOfRange(encodedFrame, 0, encodedFrame.length - numBytesToDiscard);
+        // If error detection is requested, we need to take into account the interleaving depth
+        if(errorChecking) {
+            if(encodedFrame.length / codewordLength != interleavingDepth) {
+                throw new IllegalArgumentException("The provided frame length does not correspond with the provided interleaving depth");
+            }
+            // Instantiate interleavingDepth buffers
+            ByteBuffer[] decs = new ByteBuffer[interleavingDepth];
+            for(int i = 0; i < decs.length; ++i) {
+                decs[i] = ByteBuffer.allocate(codewordLength);
+            }
+            // Fill the buffers
+            for(int i = 0; i < encodedFrame.length; ++i) {
+                decs[i % interleavingDepth].put(encodedFrame[i]);
+            }
+            // Instantiate the decoder
+            RsDecoder decoder = new RsDecoder(new ReedSolomon(galoisFieldModulus, generator, messageLength, eccLength, initialRoot), dualbasis);
 
-        return Arrays.copyOfRange(rsCodeblock, 0, rsCodeblock.length - numBytesToDiscard);
-    }
-
-    public boolean checkCodeword(int[] codeword) {
-        // TODO
-        return true;
-    }
-
-    public int[] encodeCodeword(int[] message) {
-        // TODO
-        return new int[this.descriptor.codewordLength];
+            for(ByteBuffer bb : decs) {
+                bb.flip();
+                byte[] result = decoder.decode(bb.array(), true);
+                if(result == null) {
+                    return null;
+                }
+            }
+        }
+        return decoded;
     }
 
     /**
-     * Utility class to collect all the parameters of a given {@link ReedSolomonAlgorithm} instance.
+     * This method encodes the provided message according to the provided configuration of the Reed Solomon algorithm.
+     * The input must be the message to encode, whose size must be equal to messageLength, otherwise an exception is
+     * thrown. In fact, this method does not perform padding or virtual fill. The output is the message plus the RS block at the end.
+     *
+     * @param message the message to encode
+     * @return the encoded codeword (input + RS block)
      */
-    private static class RsDescriptor {
-
-        public int messageLength;
-
-        public int rsBlockLength;
-
-        public int codewordLength;
-
-        public int galoisFieldModulus;
-
-        public int[] generatorPolynom;
-
-        public int[] generatorPolynomRoots;
-
-        public RsDescriptor(int codewordLength, int messageLength, int galoisFieldModulus, int[] generatorPolynom, int[] generatorPolynomRoots) {
-            this.messageLength = messageLength;
-            this.codewordLength = codewordLength;
-            this.rsBlockLength = codewordLength - messageLength;
-            this.galoisFieldModulus = galoisFieldModulus;
-            this.generatorPolynom = generatorPolynom;
-            this.generatorPolynomRoots = generatorPolynomRoots;
+    public byte[] encodeCodeword(byte[] message) {
+        if(message.length != messageLength) {
+            throw new IllegalArgumentException("Message length " + message.length + " does not match the configured message length for this encoder: " + messageLength);
         }
+        // Instantiate the sink
+        ByteBuffer sink = ByteBuffer.allocate(codewordLength);
+        // Instantiate the encoder
+        RsEncoder encs = new RsEncoder(new ReedSolomon(galoisFieldModulus, generator, messageLength, eccLength, initialRoot), dualbasis, sink);
+        // Encode
+        encs.pushMessage(message);
+        // Verify completion
+        if(!encs.ready()) {
+            throw new IllegalStateException("One encoder is not ready to output the RS block");
+        }
+        // Output RS block
+        encs.pullAll();
+        // Return
+        return sink.array();
+    }
+
+    /**
+     * The input must be the message plus the RS block at the end.
+     *
+     * @param codeword the encoded codeword (input + RS block)
+     * @param errorChecking if error checking must be performed
+     * @return the decoded message (no error correction) or null if errors are present
+     */
+    public byte[] decodeCodeword(byte[] codeword, boolean errorChecking) {
+        if(codeword.length != codewordLength) {
+            throw new IllegalArgumentException("Codeword length " + codeword.length + " does not match the configured codeword length for this encoder: " + codewordLength);
+        }
+        // Instantiate the decoder
+        RsDecoder decs = new RsDecoder(new ReedSolomon(galoisFieldModulus, generator, messageLength, eccLength, initialRoot), dualbasis);
+        // Decode
+        return decs.decode(codeword, errorChecking);
     }
 }

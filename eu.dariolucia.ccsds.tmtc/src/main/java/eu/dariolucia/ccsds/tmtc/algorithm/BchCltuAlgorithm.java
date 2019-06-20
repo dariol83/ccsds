@@ -20,7 +20,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * This class contains the algorithm to encode and decode CLTUs using BCH CCSDS algorithm for TC frames, according
+ * This class contains the algorithm to encode and check CLTUs using BCH CCSDS algorithm for TC frames, according
  * to the specification defined in CCSDS 231.0-B-3. The code is not optimized and it is fairly naive, but follows
  * strictly the standard specification, so that is can be exactly correlated to the block diagram provided in
  * CCSDS 231.0-B-3, Figure 3-2.
@@ -60,7 +60,7 @@ public class BchCltuAlgorithm {
      * This method decodes a CLTU into a TC frame (randomized or not) using the default BCH algorithm (as per CCSDS
      * standard).
      *
-     * @param cltu the CLTU to decode
+     * @param cltu the CLTU to check
      * @return the decoded TC frame, could be randomized depending on the channel configuration
      */
     public static byte[] decode(byte[] cltu) {
