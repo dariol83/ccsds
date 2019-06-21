@@ -95,11 +95,11 @@ public final class ReedSolomon {
 		byte[] eccPoly = new byte[eccLen];
 		Arrays.fill(eccPoly, (byte) f.zero());
 		for (int i = messageLen - 1; i >= 0; i--) {
-			int factor = f.add(Byte.toUnsignedInt(message[i]), Byte.toUnsignedInt(eccPoly[eccLen - 1]));
+			int factor = f.fadd(Byte.toUnsignedInt(message[i]), Byte.toUnsignedInt(eccPoly[eccLen - 1]));
 			System.arraycopy(eccPoly, 0, eccPoly, 1, eccLen - 1);
 			eccPoly[0] = (byte) f.zero();
 			for (int j = 0; j < eccLen; j++)
-				eccPoly[j] = (byte) f.subtract(Byte.toUnsignedInt(eccPoly[j]), f.multiply(genPoly[j], factor));
+				eccPoly[j] = (byte) f.fadd(Byte.toUnsignedInt(eccPoly[j]), f.fmultiply(genPoly[j], factor)); // outer fsubtract replaced with fadd
 		}
 		
 		// Negate the remainder
@@ -196,8 +196,8 @@ public final class ReedSolomon {
 		// Horner's method
 		int result = f.zero();
 		for (int i = polynomial.length - 1; i >= 0; i--) {
-			result = f.multiply(point, result);
-			result = f.add(Byte.toUnsignedInt(polynomial[i]), result);
+			result = f.fmultiply(point, result);
+			result = f.fadd(Byte.toUnsignedInt(polynomial[i]), result);
 		}
 		return result;
 	}
@@ -246,6 +246,10 @@ public final class ReedSolomon {
 		 */
 		final int size;
 
+		final int[][] precomputedAddTable;
+
+		final int[][] precomputedMulTable;
+
 		/*---- Constructor ----*/
 
 		/**
@@ -268,6 +272,16 @@ public final class ReedSolomon {
 			int degree = 31 - Integer.numberOfLeadingZeros(mod);
 			modulus = mod;
 			size = 1 << degree;
+
+			// Compute operation tables
+			precomputedAddTable = new int[size][size];
+			precomputedMulTable = new int[size][size];
+			for(int i = 0; i < size; ++i) {
+				for(int j = 0; j < size; ++j) {
+					precomputedAddTable[i][j] = add(i,j);
+					precomputedMulTable[i][j] = multiply(i,j);
+				}
+			}
 		}
 
 		/*---- Methods ----*/
@@ -303,15 +317,25 @@ public final class ReedSolomon {
 		}
 
 
+		public int fadd(int x, int y) {
+			return precomputedAddTable[x][y];
+		}
+
 		public int add(int x, int y) {
 			return check(x) ^ check(y);
 		}
 
+		public int fsubtract(int x, int y) {
+			return fadd(x, y);
+		}
 
 		public int subtract(int x, int y) {
 			return add(x, y);
 		}
 
+		public int fmultiply(int x, int y) {
+			return precomputedMulTable[x][y];
+		}
 
 		public int multiply(int x, int y) {
 			return multiplyImpl(check(x), check(y));
@@ -329,46 +353,6 @@ public final class ReedSolomon {
 				}
 			}
 			return result;
-		}
-
-		public int reciprocal(int w) {
-			// Extended Euclidean GCD algorithm
-			int x = modulus;
-			int y = check(w);
-			if (y == 0)
-				throw new ArithmeticException("Division by zero");
-			int a = 0;
-			int b = 1;
-			while (y != 0) {
-				int[] quotrem = divideAndRemainder(x, y);
-				int z = quotrem[1];
-				int c = a ^ multiply(quotrem[0], b);
-				x = y;
-				y = z;
-				a = b;
-				b = c;
-			}
-			if (x == 1)
-				return a;
-			else  // All non-zero values must have a reciprocal
-				throw new AssertionError("Modulus is not irreducible");
-		}
-
-
-		// Returns a new array containing the pair of values (x div y, x mod y).
-		private static int[] divideAndRemainder(int x, int y) {
-			int quotient = 0;
-			for (int i = Integer.numberOfLeadingZeros(y) - Integer.numberOfLeadingZeros(x); i >= 0; i--) {
-				if (Integer.highestOneBit(x) == Integer.highestOneBit(y << i)) {
-					x ^= y << i;
-					quotient |= 1 << i;
-				}
-			}
-			return new int[]{quotient, x};
-		}
-
-		public int divide(int x, int y) {
-			return multiply(x, reciprocal(y));
 		}
 	}
 }

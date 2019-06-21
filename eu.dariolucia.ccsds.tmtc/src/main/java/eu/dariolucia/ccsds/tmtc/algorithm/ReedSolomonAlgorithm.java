@@ -53,6 +53,7 @@ public class ReedSolomonAlgorithm {
     private final int initialRoot;
     private final boolean dualbasis;
     private final int eccLength;
+    private final ReedSolomon reedSolomon;
 
     /**
      * Create a Reed-Solomon algorithm executor based on the provided characteristics.
@@ -71,6 +72,7 @@ public class ReedSolomonAlgorithm {
         this.initialRoot = initialRoot;
         this.eccLength = this.codewordLength - this.messageLength;
         this.dualbasis = dualbasis;
+        this.reedSolomon = new ReedSolomon(galoisFieldModulus, generator, messageLength, eccLength, initialRoot);
     }
 
     /**
@@ -81,7 +83,7 @@ public class ReedSolomonAlgorithm {
      * The interleaving depth specifies how to construct the codewords from the frame, according to CCSDS 131.0-B-3, 4.3.5.
      *
      * @param frame the frame to be encoded
-     * @param interleavingDepth the interleaving depth, allowable values are I=1, 2, 3, 4, 5, and 8
+     * @param interleavingDepth the interleaving depth, allowed values are I=1, 2, 3, 4, 5, and 8
      * @return the frame followed by the Reed Solomon blocks
      * @throws IllegalArgumentException if frame has an unexpected length, or if the interleaving is not supported
      */
@@ -98,7 +100,7 @@ public class ReedSolomonAlgorithm {
         // Instantiate interleavingDepth encoders
         RsEncoder[] encs = new RsEncoder[interleavingDepth];
         for(int i = 0; i < encs.length; ++i) {
-            encs[i] = new RsEncoder(new ReedSolomon(galoisFieldModulus, generator, messageLength, eccLength, initialRoot), dualbasis, sink);
+            encs[i] = new RsEncoder(reedSolomon, dualbasis, sink);
         }
         // Encode
         for(int i = 0; i < frame.length; ++i) {
@@ -159,7 +161,7 @@ public class ReedSolomonAlgorithm {
                 decs[i % interleavingDepth].put(encodedFrame[i]);
             }
             // Instantiate the decoder
-            RsDecoder decoder = new RsDecoder(new ReedSolomon(galoisFieldModulus, generator, messageLength, eccLength, initialRoot), dualbasis);
+            RsDecoder decoder = new RsDecoder(reedSolomon, dualbasis);
 
             for(ByteBuffer bb : decs) {
                 bb.flip();
@@ -187,7 +189,7 @@ public class ReedSolomonAlgorithm {
         // Instantiate the sink
         ByteBuffer sink = ByteBuffer.allocate(codewordLength);
         // Instantiate the encoder
-        RsEncoder encs = new RsEncoder(new ReedSolomon(galoisFieldModulus, generator, messageLength, eccLength, initialRoot), dualbasis, sink);
+        RsEncoder encs = new RsEncoder(reedSolomon, dualbasis, sink);
         // Encode
         encs.pushMessage(message);
         // Verify completion
@@ -212,7 +214,7 @@ public class ReedSolomonAlgorithm {
             throw new IllegalArgumentException("Codeword length " + codeword.length + " does not match the configured codeword length for this encoder: " + codewordLength);
         }
         // Instantiate the decoder
-        RsDecoder decs = new RsDecoder(new ReedSolomon(galoisFieldModulus, generator, messageLength, eccLength, initialRoot), dualbasis);
+        RsDecoder decs = new RsDecoder(reedSolomon, dualbasis);
         // Decode
         return decs.decode(codeword, errorChecking);
     }

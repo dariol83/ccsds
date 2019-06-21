@@ -113,15 +113,15 @@ public class RsEncoder {
         // Nayuki's encoder outputs the bytes at the beginning of the codeword
 
         // If we are in Berlekamp representation, then we need to apply another transformation
+        rsBlock = ByteBuffer.allocate(conventionalEncoder.eccLen);
         if(dualBasis) {
-            rsBlock = ByteBuffer.allocate(conventionalEncoder.eccLen);
             for (int i = 0; i < conventionalEncoder.eccLen; i++) {
                 rsBlock.put((byte) RsCcsdsUtil.multiplyStraight(Byte.toUnsignedInt(codeword[i])));
             }
-            rsBlock.flip();
         } else {
-            rsBlock = ByteBuffer.wrap(codeword, 0, conventionalEncoder.eccLen);
+            rsBlock.put(codeword, 0, conventionalEncoder.eccLen);
         }
+        rsBlock.flip();
         // Ready to output
     }
 }

@@ -294,33 +294,33 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
 
     /**
      * This method encodes the frame header error control field in-place inside the provided AOS frame (octets 6-7).
-     *
-     * // TODO: test required
-     *
      * @param aosFrame the frame
      */
     private void encodeAosFrameHeaderErrorControl(byte[] aosFrame) {
-        // Convert octets 0, 1 and 5 into an array of 6 integers, J=4 bits, reversed
-        // TODO check if reverse is needed
+        // Convert octets 0, 1 and 5 into an array of 6 integers, J=4 bits
         byte[] message = new byte[6];
-        int[] octetsIdx = new int[] { 5, 1, 0 };
+        int[] octetsIdx = new int[] { 0, 1, 5 };
         for(int i = 0; i < octetsIdx.length; ++i) {
             byte b = aosFrame[octetsIdx[i]];
-            message[i*2] = (byte) (b & 0x0F);
-            message[i*2 + 1] = (byte) ((b & 0xF0) >>> 4);
+            message[i*2] = (byte) ((b & 0xF0) >>> 4);
+            message[i*2 + 1] = (byte) (b & 0x0F);
         }
         // Encode the message
         byte[] encoded = AosTransferFrame.AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL.encodeCodeword(message);
 
-        // Put the values in place // TODO check if it is instead indices 6-7-8-9
-        byte oct7 = 0;
-        oct7 |= encoded[0];
-        oct7 |= (byte) (encoded[1] << 4);
-        aosFrame[7] = oct7;
+        // The encoder always returns the RS symbols at the end
+        // Put the values in place
         byte oct6 = 0;
-        oct6 |= encoded[2];
-        oct6 |= (byte) (encoded[3] << 4);
+        oct6 |= encoded[6];
+        oct6 <<= 4;
+        oct6 |= encoded[7];
         aosFrame[6] = oct6;
+
+        byte oct7 = 0;
+        oct7 |= encoded[8];
+        oct7 <<= 4;
+        oct7 |= encoded[9];
+        aosFrame[7] = oct7;
     }
 
     private short computeMPDUFirstHeaderPointer() {

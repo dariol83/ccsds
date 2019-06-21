@@ -41,13 +41,14 @@ public class AosTransferFrame extends AbstractTransferFrame {
 //                    new int[]{12, 11, 5, 10}    // As per AOS Blue Book specs: g(x) = (x + a6)(x + a7)(x + a8)(x + a9) : only needed for decoding verify
 //            );
 
+    // AOS Blue Book, 4.1.2.6.5.
     public static final ReedSolomonAlgorithm AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL = new ReedSolomonAlgorithm(
-                    10,
                     6,
+                    10,
                     0x13,      // As per AOS Blue Book specs: x^4 + x + 1 = 10011 = 19 = 0x13
                     2,
                     6,
-                    true // TODO, check
+                    false
     );
 
     public static IDecodingFunction<AosTransferFrame> decodingFunction(boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
@@ -204,17 +205,14 @@ public class AosTransferFrame extends AbstractTransferFrame {
     private boolean checkAosFrameHeaderErrorControlEncoding(byte[] aosFrame) {
         // Convert octets 0, 1 and 5, 6 and 7 into an array of 10 integers, J=4 bits, reversed
         byte[] codeword = new byte[10];
-        // TODO: check if reverse is needed
-        int[] octetsIdx = new int[] { 7, 6, 5, 1, 0 };
+        int[] octetsIdx = new int[] { 0, 1, 5, 6, 7 };
         for(int i = 0; i < octetsIdx.length; ++i) {
             byte b = aosFrame[octetsIdx[i]];
-            codeword[i*2] = (byte) (b & 0x0F);
-            codeword[i*2 + 1] = (byte) ((b & 0xF0) >>> 4);
+            codeword[i*2] = (byte) ((b & 0xF0) >>> 4);
+            codeword[i*2 + 1] = (byte) (b & 0x0F);
         }
         // Check the codeword
-        // TODO
-        // return AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL.checkCodeword(codeword);
-        return true;
+        return AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL.decodeCodeword(codeword, true) != null;
     }
 
     public boolean isFrameHeaderErrorControlPresent() {
