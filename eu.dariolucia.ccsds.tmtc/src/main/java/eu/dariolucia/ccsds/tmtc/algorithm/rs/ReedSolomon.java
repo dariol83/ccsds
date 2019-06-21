@@ -4,15 +4,6 @@
  * Copyright (c) 2017 Project Nayuki
  * https://www.nayuki.io/page/reed-solomon-error-correcting-code-decoder
  *
- * The rights to use Nayuki's code for the CCSDS TM/TC project released under the Apache License 2.0 have been granted.
- *
- * Original Nayuki's code has been modified in the following way:
- * - removed the error correction capabilities (and related code)
- * - added the support for the specification of the initial root when computing the generator polynomial
- * - moved the specification of the binary field as inner class
- * - replaced the type Integer with byte on public operations, in order to simplify the handling of byte arrays from
- *   external callers
- * - moved the computation of the generator polynomial inside the constructor
  */
 
 package eu.dariolucia.ccsds.tmtc.algorithm.rs;
@@ -23,8 +14,8 @@ import java.util.Objects;
 /**
  * Performs Reed-Solomon encoding and error-detection. This object can encode a message into a codeword.
  * The codeword can have some values modified by external code. Then this object can try
- * to check the codeword and identify whether errors were introduced. Original Nayuki's code can also attempt
- * error correction.
+ * to check the codeword and identify whether errors were introduced.
+ * Original Nayuki's code can also attempt error correction.
  * <p>This class is immutable and thread-safe, but the argument arrays passed into methods are not thread-safe.</p>
  */
 public final class ReedSolomon {

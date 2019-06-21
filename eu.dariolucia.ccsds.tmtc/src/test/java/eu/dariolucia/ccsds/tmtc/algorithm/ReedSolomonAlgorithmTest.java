@@ -53,4 +53,22 @@ class ReedSolomonAlgorithmTest {
         }
     }
 
+    @Test
+    public void testEncodingSpeed() {
+        {
+            byte[] frame = StringUtil.toByteArray(testFrame);
+            long time = System.currentTimeMillis();
+            int encodedTimes = 0;
+            for(int i = 0; i < 10000; ++i) {
+                byte[] encoded = ReedSolomonAlgorithm.TM_255_223.encodeFrame(frame, 5);
+                // Artificial counting...
+                if(encoded != null) {
+                    ++encodedTimes;
+                }
+            }
+            long timeEnd = System.currentTimeMillis();
+            System.out.println("RS encoded frames: " + encodedTimes + ", encoding time: " + (timeEnd - time) + " ms, encoding speed: " + ((double)encodedTimes/(double)(timeEnd - time))*1000 + " frames/sec");
+        }
+    }
+
 }

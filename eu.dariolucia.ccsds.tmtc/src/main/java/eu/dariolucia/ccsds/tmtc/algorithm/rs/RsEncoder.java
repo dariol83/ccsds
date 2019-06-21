@@ -104,7 +104,7 @@ public class RsEncoder {
         if(dualBasis) {
             for (int i = 0; i < message.length; i++) {
                 int valueI = Byte.toUnsignedInt(message[i]);
-                byte valueIfirst = (byte) RsCcsdsUtil.multiply(valueI, RsCcsdsUtil.getInvertedT());
+                byte valueIfirst = (byte) RsCcsdsUtil.multiplyInverted(valueI);
                 message[i] = valueIfirst;
             }
         }
@@ -116,7 +116,7 @@ public class RsEncoder {
         if(dualBasis) {
             rsBlock = ByteBuffer.allocate(conventionalEncoder.eccLen);
             for (int i = 0; i < conventionalEncoder.eccLen; i++) {
-                rsBlock.put((byte) RsCcsdsUtil.multiply(Byte.toUnsignedInt(codeword[i]), RsCcsdsUtil.getStraightT()));
+                rsBlock.put((byte) RsCcsdsUtil.multiplyStraight(Byte.toUnsignedInt(codeword[i])));
             }
             rsBlock.flip();
         } else {

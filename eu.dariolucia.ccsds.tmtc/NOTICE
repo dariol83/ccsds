@@ -1,5 +1,25 @@
 CREDITS
 ------------------------------------------------------------------------------
+eu.dariolucia.ccsds.tmtc contains a modified version of the Reed Solomon code
+from Project Nayuki (https://www.nayuki.io).
+
+Copyright (c) 2017 Project Nayuki
+https://www.nayuki.io/page/reed-solomon-error-correcting-code-decoder
+
+The rights to use Nayuki's code for the CCSDS TM/TC project released under the
+Apache License 2.0 have been granted.
+
+Original Nayuki's code has been modified in the following way:
+- removed the error correction capabilities (and related code)
+- added the support for the specification of the initial root when computing
+  the generator polynomial
+- moved the specification of the binary field as inner class
+- replaced the type Integer with byte on public operations, in order to
+  simplify the handling of byte arrays from external callers
+- moved the computation of the generator polynomial inside the constructor
+
+The modified code is located inside class eu.dariolucia.ccsds.tmtc.algorithm.rs.ReedSolomon.
+------------------------------------------------------------------------------
 eu.dariolucia.ccsds.tmtc
 
 Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)

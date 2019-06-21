@@ -42,9 +42,19 @@ public class RsCcsdsUtil {
             0b10010100
     };
 
-    // TODO: the multiplications could be precomputed and the results preloaded into an array
-    // in order to speed up the computation.
-    public static int multiply(int integer, int[] matrix) {
+    private static final int[] straightMatrix = precomputeStraight();
+
+    private static final int[] invertedMatrix = precomputeInverted();
+
+    public static int multiplyInverted(int i) {
+        return invertedMatrix[i];
+    }
+
+    public static int multiplyStraight(int i) {
+        return straightMatrix[i];
+    }
+
+    private static int multiply(int integer, int[] matrix) {
         // Even if an integer, we use only 8 bits (the least significant ones)
         // bit 0 corresponds to the bit whose value is 128
         // bit 7 corresponds to the least significant bit
@@ -65,13 +75,19 @@ public class RsCcsdsUtil {
         return result & 0xFF;
     }
 
-    // Stored per column, see CCSDS 131.0-B-3, Annex F2
-    public static int[] getStraightT() {
-        return STRAIGHT_T;
+    private static int[] precomputeMatrixMultiplication(int[] matrix) {
+        int[] lookupTable = new int[256];
+        for(int i = 0; i < 256; ++i) {
+            lookupTable[i] = multiply(i, matrix);
+        }
+        return lookupTable;
     }
 
-    // Stored per column, see CCSDS 131.0-B-3, Annex F2
-    public static int[] getInvertedT() {
-        return INVERTED_T;
+    private static int[] precomputeStraight() {
+        return precomputeMatrixMultiplication(STRAIGHT_T);
+    }
+
+    private static int[] precomputeInverted() {
+        return precomputeMatrixMultiplication(INVERTED_T);
     }
 }
