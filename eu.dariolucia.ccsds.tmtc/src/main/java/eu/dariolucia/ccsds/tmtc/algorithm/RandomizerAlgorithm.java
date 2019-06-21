@@ -30,7 +30,7 @@ public class RandomizerAlgorithm {
      * Definition of the TM pseudo random pattern, up to 65536 bytes, which is good enough for TM frames (max 1024),
      * Proximity-1 (max 2048), USLP (max 65536) and for AOS frames with reasonable size.
      */
-    public static final byte[] TM_PSEUDO_RANDOM_PATTERN = generateTmPseudoRandomPattern(65536);
+    private static final byte[] TM_PSEUDO_RANDOM_PATTERN = generateTmPseudoRandomPattern(65536);
 
     /**
      * This method generates the CLTU pseudo random pattern of the given length. The generator polynomial is the one
@@ -41,7 +41,7 @@ public class RandomizerAlgorithm {
      * @param length the length of the CLTU pseudo random pattern to generate
      * @return the CLTU pseudo random pattern
      */
-    public static byte[] generateCltuPseudoRandomPattern(int length) {
+    private static byte[] generateCltuPseudoRandomPattern(int length) {
         byte[] pattern = new byte[length];
         int patternIdx = 0;
         byte patternMask = (byte) 0b1000_0000;

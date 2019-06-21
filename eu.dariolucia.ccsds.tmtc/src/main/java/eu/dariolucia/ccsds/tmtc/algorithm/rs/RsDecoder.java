@@ -18,6 +18,11 @@ package eu.dariolucia.ccsds.tmtc.algorithm.rs;
 
 import java.util.Arrays;
 
+/**
+ * A Reed-Solomon decoder that is used to check codewords and supports dual basis transformation as indicated in
+ * CCSDS 131.0-B-3, Annex F. Internally it uses a conventional Reed-Solomon decoder: if needed, this decoder converts
+ * the input symbols in dual basis representation and finalises the conversion at the output of the conventional decoder.
+ */
 public class RsDecoder {
 
     private final ReedSolomon conventionalDecoder;
@@ -39,7 +44,7 @@ public class RsDecoder {
     public byte[] decode(byte[] codeword, boolean errorChecking) {
         // Nayuki's decoder wants to have the RS symbols before the actual message
 
-        if(!errorChecking) {
+        if (!errorChecking) {
             // If no error checking, let's optimize
             return Arrays.copyOfRange(codeword, 0, codeword.length - conventionalDecoder.eccLen);
         } else {
@@ -56,8 +61,8 @@ public class RsDecoder {
                 }
             }
             byte[] decoded = conventionalDecoder.check(copied, true);
-            if(decoded != null) {
-                if(dualBasis) {
+            if (decoded != null) {
+                if (dualBasis) {
                     // Apply straightT to the decoded message
                     for (int i = 0; i < decoded.length; ++i) {
                         decoded[i] = (byte) RsCcsdsUtil.multiplyStraight(Byte.toUnsignedInt(decoded[i]));

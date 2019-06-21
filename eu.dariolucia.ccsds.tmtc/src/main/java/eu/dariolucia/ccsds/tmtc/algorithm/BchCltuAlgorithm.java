@@ -117,17 +117,18 @@ public class BchCltuAlgorithm {
      * shift register and the ingested value, the short data type is used to avoid playing with negative byte values.
      *
      * The approach is very simple and follows the block diagram defined in CCSDS 231.0-B-3, 3.3:
-     * - the shift register has 7 bits, whose current state is provided by the currentShiftRegisterState parameter;
-     * - the 8 bits of the value are processed starting from the most significant one: a mask is used to extract the
-     *   value;
-     * - the shift register is pushed by one block at every bit ingestion;
-     * - we check the bit value that we have to push in the shift register: if it is 1, then we add it to positions 0,
-     *   2, 6 as per block diagram; if it is 0, we don't do anything;
-     * - we check the output of the shift register: if it is 1, then we add it to positions 0, 2, 6, as per block
-     *   diagram; if it is 0, we don't do anything;
-     * - we update the mask to extract the next bit from the value and we keep going until we process all the 8 bits of
-     *   the value.
-     *
+     * <ul>
+     * <li>the shift register has 7 bits, whose current state is provided by the currentShiftRegisterState parameter;</li>
+     * <li>the 8 bits of the value are processed starting from the most significant one: a mask is used to extract the
+     *   value;</li>
+     * <li>the shift register is pushed by one block at every bit ingestion;</li>
+     * <li>the bit value that is pushed to the shift register is checked: if it is 1, then it is added to positions 0,
+     *   2, 6 as per block diagram; if it is 0, then no action must be done;</li>
+     * <li>the output of the shift register is checked: if it is 1, then it is added to positions 0, 2, 6, as per block
+     *   diagram; if it is 0, then no action must be done;</li>
+     * <li>the mask to extract the next bit from the value is updated and the process keeps going until all the 8 bits of
+     *   the value are processed.</li>
+     *</ul>
      * @param currentShiftRegisterState the current state of the shift register: the first 7 LSB are significant
      * @param value                     the value to be ingested
      * @return the state of the shift register at the end of the ingestion of the provided value

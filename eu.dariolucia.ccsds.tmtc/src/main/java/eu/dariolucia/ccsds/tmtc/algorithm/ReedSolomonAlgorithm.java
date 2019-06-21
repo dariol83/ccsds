@@ -28,6 +28,16 @@ import java.util.Arrays;
  */
 public class ReedSolomonAlgorithm {
 
+    /**
+     * Instantiation of the Reed Solomon algorithm according to the specifications of CCSDS 131.0-B-3, 4.3, defining
+     * a 255,223 encoding:
+     * <ul>
+     *     <li>field generator: F(x) = x^8 + x^7 + x^2 + x + 1 = 110000111 = 391 = 0x187</li>
+     *     <li>primitive element: alpha^11 = 173 in GF(2^8)</li>
+     *     <li>initial root: 112</li>
+     *     <li>dual basis representation</li>
+     * </ul>
+     */
     public static final eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm TM_255_223 = new eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm(
             223,
             255,
@@ -37,6 +47,16 @@ public class ReedSolomonAlgorithm {
             true
     );
 
+    /**
+     * Instantiation of the Reed Solomon algorithm according to the specifications of CCSDS 131.0-B-3, 4.3, defining
+     * a 255,239 encoding:
+     * <ul>
+     *      <li>field generator: F(x) = x^8 + x^7 + x^2 + x + 1 = 110000111 = 391 = 0x187</li>
+     *      <li>primitive element: alpha^11 = 173 in GF(2^8)</li>
+     *      <li>initial root: 120</li>
+     *      <li>dual basis representation</li>
+     * </ul>
+     */
     public static final eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm TM_255_239 = new eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm(
             239,
             255,
@@ -81,6 +101,7 @@ public class ReedSolomonAlgorithm {
      * padding (virtual fill) to the frame shall be added by the caller.
      *
      * The interleaving depth specifies how to construct the codewords from the frame, according to CCSDS 131.0-B-3, 4.3.5.
+     * The approach implemented here is exactly the one described in CCSDS 131.0-B-3, 4.4.1.
      *
      * @param frame the frame to be encoded
      * @param interleavingDepth the interleaving depth, allowed values are I=1, 2, 3, 4, 5, and 8

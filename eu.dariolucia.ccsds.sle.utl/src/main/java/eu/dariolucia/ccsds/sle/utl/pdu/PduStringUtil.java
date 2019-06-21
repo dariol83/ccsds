@@ -180,4 +180,8 @@ public class PduStringUtil {
 		return DatatypeConverter.printHexBinary(encodedPdu);
 	}
 
+	public byte[] fromHexDump(String dump) {
+		return DatatypeConverter.parseHexBinary(dump);
+	}
+
 }

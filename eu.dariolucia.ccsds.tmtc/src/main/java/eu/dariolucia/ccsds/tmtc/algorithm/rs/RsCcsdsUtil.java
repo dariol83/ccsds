@@ -16,6 +16,10 @@
 
 package eu.dariolucia.ccsds.tmtc.algorithm.rs;
 
+/**
+ * Utility class that implements the support for the dual basis transformation. Multiplications are pre-computed in order
+ * to speed up the transformation at the expenses of additional memory space.
+ */
 public class RsCcsdsUtil {
 
     // Stored per column, see CCSDS 131.0-B-3, Annex F2
@@ -46,10 +50,22 @@ public class RsCcsdsUtil {
 
     private static final int[] invertedMatrix = precomputeInverted();
 
+    /**
+     * This method multiplies an integer by the inverted matrix.
+     *
+     * @param i the value to convert
+     * @return the converted value
+     */
     public static int multiplyInverted(int i) {
         return invertedMatrix[i];
     }
 
+    /**
+     * This method multiplies an integer by the straight/direct matrix.
+     *
+     * @param i the value to convert
+     * @return the converted value
+     */
     public static int multiplyStraight(int i) {
         return straightMatrix[i];
     }
