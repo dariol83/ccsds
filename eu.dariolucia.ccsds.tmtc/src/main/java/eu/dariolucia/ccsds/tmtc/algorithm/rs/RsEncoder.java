@@ -145,18 +145,6 @@ public class RsEncoder {
         sink.put(rsBlock.array());
     }
 
-    /**
-     * This method returns the RS symbol block as byte array.
-     *
-     * @return the RS symbol block
-     */
-    public byte[] get() {
-        if(rsBlock == null) {
-            throw new IllegalStateException("RS block buffer not computed");
-        }
-        return rsBlock.array();
-    }
-
     // Compute the RS symbol block
     private void computeRsBlock() {
         byte[] message = accumulator.array();
