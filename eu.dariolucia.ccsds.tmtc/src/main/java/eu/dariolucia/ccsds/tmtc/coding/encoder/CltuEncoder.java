@@ -21,6 +21,8 @@ import eu.dariolucia.ccsds.tmtc.algorithm.RandomizerAlgorithm;
 import eu.dariolucia.ccsds.tmtc.coding.IEncodingFunction;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
+import java.util.function.Function;
+
 public class CltuEncoder<T extends AbstractTransferFrame> implements IEncodingFunction<T> {
 
     @Override
@@ -30,4 +32,5 @@ public class CltuEncoder<T extends AbstractTransferFrame> implements IEncodingFu
         }
         return new BchCltuAlgorithm().encodeCltu(input);
     }
+
 }

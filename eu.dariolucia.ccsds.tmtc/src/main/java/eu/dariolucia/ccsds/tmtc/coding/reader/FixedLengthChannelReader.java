@@ -48,9 +48,6 @@ public class FixedLengthChannelReader extends AbstractChannelReader {
                 return -1;
             }
             read += justRead;
-            if(justRead == 0) {
-                throw new IOException("Wrong read: stream read() returned 0 bytes read");
-            }
         }
         return read;
     }

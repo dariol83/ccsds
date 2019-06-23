@@ -16,11 +16,8 @@
 
 package eu.dariolucia.ccsds.tmtc.coding.decoder;
 
-import eu.dariolucia.ccsds.tmtc.coding.IEncodingFunction;
 import eu.dariolucia.ccsds.tmtc.coding.encoder.TmAsmEncoder;
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.function.Function;
 

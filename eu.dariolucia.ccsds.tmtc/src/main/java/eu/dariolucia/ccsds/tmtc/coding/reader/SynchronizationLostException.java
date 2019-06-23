@@ -24,7 +24,4 @@ public class SynchronizationLostException extends IOException {
         super(message);
     }
 
-    public SynchronizationLostException(String message, Throwable cause) {
-        super(message, cause);
-    }
 }

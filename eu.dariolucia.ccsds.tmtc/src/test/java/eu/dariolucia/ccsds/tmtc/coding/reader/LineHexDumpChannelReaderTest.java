@@ -16,17 +16,17 @@
 
 package eu.dariolucia.ccsds.tmtc.coding.reader;
 
-import eu.dariolucia.ccsds.tmtc.coding.reader.LineHexDumpChannelReader;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class LineHexDumpChannelReaderTest {
 
     private static final String FILE_TM1 = "dumpFile_tm_1.hex";
+    private static final String FILE_TM1_WITH_EMPTY_LINES = "dumpFile_tm_1_empty_lines.hex";
 
     @Test
     void testReadNext() throws IOException {
@@ -35,6 +35,62 @@ class LineHexDumpChannelReaderTest {
         int counter = 0;
 
         while ((frame = reader.readNext()) != null) {
+            assertNotNull(frame);
+            ++counter;
+        }
+        reader.close();
+
+        assertEquals(152, counter);
+    }
+
+    @Test
+    void testGet() throws IOException {
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1));
+        byte[] frame = null;
+        int counter = 0;
+
+        while ((frame = reader.get()) != null) {
+            assertNotNull(frame);
+            ++counter;
+        }
+        reader.close();
+
+        assertEquals(152, counter);
+    }
+
+    @Test
+    void testReadNextWithBuffer() throws IOException {
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1));
+        byte[] frame = new byte[4098];
+        int counter = 0;
+        int read;
+        while ((read = reader.readNext(frame, 0, frame.length)) != -1) {
+            assertEquals(1115 + 4 + 160, read);
+            ++counter;
+        }
+        reader.close();
+
+        assertEquals(152, counter);
+    }
+
+    @Test
+    void testBufferTooSmall() {
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1));
+        try {
+            reader.readNext(new byte[1000], 0, 1000);
+            fail("IOException expected");
+        } catch (IOException e) {
+            // Good
+        }
+    }
+
+    @Test
+    void testFileWithEmptyLines() throws IOException {
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1_WITH_EMPTY_LINES));
+        byte[] frame = null;
+        int counter = 0;
+
+        while ((frame = reader.get()) != null) {
             assertNotNull(frame);
             ++counter;
         }

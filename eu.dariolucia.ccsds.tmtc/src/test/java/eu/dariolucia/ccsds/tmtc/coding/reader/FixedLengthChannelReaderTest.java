@@ -16,13 +16,12 @@
 
 package eu.dariolucia.ccsds.tmtc.coding.reader;
 
-import eu.dariolucia.ccsds.tmtc.coding.reader.FixedLengthChannelReader;
 import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class FixedLengthChannelReaderTest {
 
@@ -30,11 +29,11 @@ class FixedLengthChannelReaderTest {
 	private static final String FILE_TM1 = "dumpFile_tm_1.hex";
 
 	@Test
-	public void testReadNext() throws IOException {
+	void testReadNext() throws IOException {
 		// Prepare the input
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		BufferedReader br = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1)));
-		String read = null;
+		String read;
 		while ((read = br.readLine()) != null) {
 			if (read.trim().isEmpty()) {
 				continue;
@@ -55,5 +54,51 @@ class FixedLengthChannelReaderTest {
 		smReader.close();
 
 		assertEquals(152, counter);
+	}
+
+	@Test
+	void testWrongBufferLength() {
+		ByteArrayInputStream bis = new ByteArrayInputStream(new byte[20]);
+
+		FixedLengthChannelReader smReader = new FixedLengthChannelReader(bis, 1279);
+		try {
+			smReader.readNext(new byte[1000], 0, 1000);
+			fail("IOException expected");
+		} catch (IOException e) {
+			// Good
+		}
+	}
+
+	@Test
+	void testShortData() {
+		ByteArrayInputStream bis = new ByteArrayInputStream(new byte[20]);
+
+		FixedLengthChannelReader smReader = new FixedLengthChannelReader(bis, 1279);
+		try {
+			smReader.readNext(new byte[4096], 0, 4096);
+			fail("IOException expected");
+		} catch (IOException e) {
+			// Good
+		}
+	}
+
+	@Test
+	void testShortDataGet() {
+		ByteArrayInputStream bis = new ByteArrayInputStream(new byte[20]);
+
+		FixedLengthChannelReader smReader = new FixedLengthChannelReader(bis, 1279);
+
+		byte[] data = smReader.get();
+		assertNull(data);
+	}
+
+	@Test
+	void testNullStream() {
+		try {
+			FixedLengthChannelReader smReader = new FixedLengthChannelReader(null, 1279);
+			fail("NullPointerException expected");
+		} catch (NullPointerException e) {
+			// Good
+		}
 	}
 }

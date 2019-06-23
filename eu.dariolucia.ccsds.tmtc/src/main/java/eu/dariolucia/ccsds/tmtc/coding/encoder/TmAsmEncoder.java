@@ -40,7 +40,7 @@ public class TmAsmEncoder<T extends AbstractTransferFrame> implements IEncodingF
         if(input == null) {
             throw new NullPointerException("Input cannot be null");
         }
-        ByteBuffer bb = ByteBuffer.allocate(input.length + 4);
+        ByteBuffer bb = ByteBuffer.allocate(input.length + synchMarker.length);
 
         return bb.put(synchMarker).put(input).array();
     }

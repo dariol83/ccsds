@@ -32,6 +32,6 @@ public interface IEncodingFunction<T extends AbstractTransferFrame> extends BiFu
     }
 
     default Function<byte[], byte[]> asFunction() {
-        return (byte[] input) -> encode(null, input);
+        return (byte[] input) -> apply(null, input);
     }
 }
