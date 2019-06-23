@@ -18,7 +18,7 @@ A simple but effective graphical interface is provided as separate module (eu.da
 
 ## TM/TC
 The TM/TC Library (eu.dariolucia.ccsds.tmtc) is a library that provide support to parse and build TM frames, TC frames, AOS frames, Space Packets. It allows encoding/decoding of space packets into TM frames, TC frames or AOS frames. It also provides some basic encodings (e.g. CLTU encoding/decoding, randomization, FECF encoding/checking, Reed-Solomon encoding/checking) but no error correction capabilities. 
-A simple graphical interface to inspect TM/TC/AOS/Space Packet data is provided as separate module (eu.dariolucia.ccsds.inspector). It is possible to implement custom connectors to allow inspection of data delivered from a custom source/protocol/format by implement a new 
+A simple graphical interface to inspect TM/TC/AOS/Space Packet data is provided as separate module (eu.dariolucia.ccsds.inspector). It is possible to implement custom connectors to allow inspection of data delivered from a custom source/protocol/format by providing a new 
 service (in Java 11 terms) implementing the interface eu.dariolucia.ccsds.inspector.api.IConnectorFactory.
 
 ## ENC/DEC
