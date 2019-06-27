@@ -22,6 +22,12 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
 import java.util.function.Function;
 
+/**
+ * This functional class allows the usage of the {@link RandomizerAlgorithm}.randomizeFrameTm in expression using {@link java.util.stream.Stream}
+ * objects or in {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder} instances.
+ *
+ * XXX: It could be considered redundant, since the randomizeFrameTm method can be addressed by using method references.
+ */
 public class TmRandomizerDecoder implements Function<byte[], byte[]> {
 
     @Override

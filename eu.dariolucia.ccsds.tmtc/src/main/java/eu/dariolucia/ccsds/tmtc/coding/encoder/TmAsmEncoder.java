@@ -21,6 +21,10 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
 import java.nio.ByteBuffer;
 
+/**
+ * This functional class transforms the provided byte array by returning a copy having the specified sync marker added at the beginning.
+ * If no sync marker is specified, the 4 bytes sync marker specified by CCSDS for RS encoded frames are used (0x1ACFFC1D).
+ */
 public class TmAsmEncoder<T extends AbstractTransferFrame> implements IEncodingFunction<T> {
 
     public static final byte[] DEFAULT_ATTACHED_SYNC_MARKER = new byte[] { 0x1A, (byte) 0xCF, (byte) 0xFC, 0x1D };
@@ -36,7 +40,7 @@ public class TmAsmEncoder<T extends AbstractTransferFrame> implements IEncodingF
     }
 
     @Override
-    public byte[] encode(T original, byte[] input) {
+    public byte[] apply(T original, byte[] input) {
         if(input == null) {
             throw new NullPointerException("Input cannot be null");
         }

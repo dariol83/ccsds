@@ -95,7 +95,7 @@ public class TmEncoderTest {
 
         try {
             ReedSolomonEncoder<TmTransferFrame> enc = new ReedSolomonEncoder<>(ReedSolomonAlgorithm.TM_255_223, 4);
-            enc.encode(null, null);
+            enc.apply(null, null);
             fail("NullPointerException expected");
         } catch(NullPointerException e) {
             // Good
@@ -103,7 +103,7 @@ public class TmEncoderTest {
 
         try {
             TmRandomizerEncoder<TmTransferFrame> enc = new TmRandomizerEncoder<>();
-            enc.encode(null, null);
+            enc.apply(null, null);
             fail("NullPointerException expected");
         } catch(NullPointerException e) {
             // Good
@@ -111,7 +111,7 @@ public class TmEncoderTest {
 
         try {
             TmAsmEncoder<TmTransferFrame> enc = new TmAsmEncoder<>();
-            enc.encode(null, null);
+            enc.apply(null, null);
             fail("NullPointerException expected");
         } catch(NullPointerException e) {
             // Good

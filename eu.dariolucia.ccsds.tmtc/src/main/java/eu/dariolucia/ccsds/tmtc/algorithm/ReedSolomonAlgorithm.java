@@ -83,6 +83,7 @@ public class ReedSolomonAlgorithm {
      * @param galoisFieldModulus the modulous of the Galois field
      * @param generator the coefficients of the generator polynom
      * @param initialRoot the roots of the generator polynom
+     * @param dualbasis true if dual basis representation is used, false otherwise
      */
     public ReedSolomonAlgorithm(int messageLength, int codewordLength, int galoisFieldModulus, int generator, int initialRoot, boolean dualbasis) {
         this.messageLength = messageLength;

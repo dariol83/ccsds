@@ -32,7 +32,8 @@ public class ClcwBuilder {
 
     /**
      * This method creates a new builder instance.
-     * @return
+     *
+     * @return the CLCW builder instance
      */
     public static ClcwBuilder create() {
         return new ClcwBuilder();

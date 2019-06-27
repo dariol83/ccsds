@@ -20,13 +20,25 @@ import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
 
 import java.util.function.Function;
 
+/**
+ * This functional class wraps a {@link ReedSolomonAlgorithm}, including the specification of the interleaving depth and
+ * the error checking (set to 0 and false by default), to allow its usage in expression using {@link java.util.stream.Stream}
+ * objects or in {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder} instances.
+ */
 public class ReedSolomonDecoder implements Function<byte[], byte[]> {
 
     private final ReedSolomonAlgorithm algorithm;
     private final int interleavingDepth;
     private final boolean errorChecking;
 
-
+    /**
+     * Construct a function that decodes a Reed-Solomon encoded frame, with the provided interleaving depth and error
+     * detection capability.
+     *
+     * @param rs the Reed-Solomon algorithm to use for decoding
+     * @param interleavingDepth the interleaving depth (meaningful only if errorChecking is true)
+     * @param errorChecking true if error detection shall be enabled (in that case apply returns null if the frame has errors), false otherwise
+     */
     public ReedSolomonDecoder(ReedSolomonAlgorithm rs, int interleavingDepth, boolean errorChecking) {
         if(rs == null) {
             throw new NullPointerException("Reed-Solomon algorithm cannot be null");
@@ -36,6 +48,11 @@ public class ReedSolomonDecoder implements Function<byte[], byte[]> {
         this.interleavingDepth = interleavingDepth;
     }
 
+    /**
+     * Construct a function that decodes a Reed-Solomon encoded frame without error detection (quick-look).
+     *
+     * @param rs the Reed-Solomon algorithm
+     */
     public ReedSolomonDecoder(ReedSolomonAlgorithm rs) {
         this(rs, 0, false);
     }

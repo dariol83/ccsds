@@ -20,11 +20,14 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
 import java.util.function.Function;
 
+/**
+ * This interface embodies the concept of a decoding function, i.e. a byte[]-to-{@link AbstractTransferFrame} transformation function. It is
+ * defined as a subtype of the {@link Function} functional interface, restricting the input type parameter
+ * to byte[] and the output type parameter to {@link AbstractTransferFrame}.
+ *
+ * @param <T> a subtype of {@link AbstractTransferFrame}
+ */
 @FunctionalInterface
 public interface IDecodingFunction<T extends AbstractTransferFrame> extends Function<byte[], T> {
-    T decode(byte[] input);
 
-    default T apply(byte[] t) {
-        return decode(t);
-    }
 }

@@ -20,6 +20,12 @@ import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
 import eu.dariolucia.ccsds.tmtc.coding.IEncodingFunction;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
+/**
+ * This functional class wraps a {@link ReedSolomonAlgorithm}, including the specification of the interleaving depth
+ * to allow its usage in expression using {@link java.util.stream.Stream} objects or in {@link eu.dariolucia.ccsds.tmtc.coding.ChannelEncoder} instances.
+ *
+ * @param <T> subtype of {@link AbstractTransferFrame}, typically {@link eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame} or {@link eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame}
+ */
 public class ReedSolomonEncoder<T extends AbstractTransferFrame> implements IEncodingFunction<T> {
 
     private final ReedSolomonAlgorithm algorithm;
@@ -35,7 +41,7 @@ public class ReedSolomonEncoder<T extends AbstractTransferFrame> implements IEnc
     }
 
     @Override
-    public byte[] encode(T original, byte[] input) {
+    public byte[] apply(T original, byte[] input) {
         if(input == null) {
             throw new NullPointerException("Input cannot be null");
         }

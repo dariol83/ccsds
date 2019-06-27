@@ -25,6 +25,23 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Flow;
 import java.util.function.Function;
 
+/**
+ * This class is an implementation of the Flow.Processor interface as specified by the {@link Flow} reactive programming
+ * specifications. It can handle several subscriptions, it supports asynchronous as well as synchronous data processing and dispatch,
+ * and also a timely mode that allows subscriptions to discard old data, if their buffer becomes full.
+ *
+ * The provision of the executor service drives the functionality of the {@link TransformationProcessor}: if the executor
+ * is provided, then the transformation and forwarding of the transformed output is done asynchronously by the executor.
+ * If the executor is not provided, then the transformation and forwarding of the transformed output is performed by the same
+ * thread that injects the data into the processor.
+ *
+ * By default, the {@link TransformationProcessor} does not drop any injected byte[]. If the configuration is changed to work
+ * in timely mode, if the internal subscription buffer (driven by the subscription request, as per reactive programming) becomes
+ * full, then the complete buffer is discarded.
+ *
+ * @param <T> input type
+ * @param <K> output type
+ */
 public abstract class AbstractTransformationProcessor<T,K> implements Flow.Processor<T,K> {
 
     private final List<TransformationSubscription> sink = new CopyOnWriteArrayList<>();

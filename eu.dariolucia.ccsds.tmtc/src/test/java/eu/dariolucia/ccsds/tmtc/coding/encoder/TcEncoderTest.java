@@ -55,7 +55,7 @@ public class TcEncoderTest {
     public void testNullInput() {
         try {
             CltuEncoder<TcTransferFrame> enc = new CltuEncoder<>();
-            enc.encode(null, null);
+            enc.apply(null, null);
             fail("NullPointerException expected");
         } catch(NullPointerException e) {
             // Good
@@ -63,7 +63,7 @@ public class TcEncoderTest {
 
         try {
             CltuRandomizerEncoder<TcTransferFrame> enc = new CltuRandomizerEncoder<>();
-            enc.encode(null, null);
+            enc.apply(null, null);
             fail("NullPointerException expected");
         } catch(NullPointerException e) {
             // Good

@@ -59,7 +59,7 @@ public interface IChannelReader extends Closeable, Supplier<byte[]> {
         try {
             return readNext();
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); // TODO: find a better way to handle exception at this stage
             return null;
         }
     }

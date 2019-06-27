@@ -96,7 +96,7 @@ public class TmDecoderTest {
         assertTrue(decoded.isPresent());
         assertEquals(1115, decoded.get().length);
 
-        TmTransferFrame frame = TmTransferFrame.decodingFunction(false).decode(decoded.get());
+        TmTransferFrame frame = TmTransferFrame.decodingFunction(false).apply(decoded.get());
         assertEquals(tmtf.getSpacecraftId(), frame.getSpacecraftId());
         assertEquals(tmtf.getMasterChannelFrameCount(), frame.getMasterChannelFrameCount());
         assertEquals(tmtf.getVirtualChannelId(), frame.getVirtualChannelId());

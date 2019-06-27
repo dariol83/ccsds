@@ -16,12 +16,16 @@
 
 package eu.dariolucia.ccsds.tmtc.util.internal;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
+/**
+ * A processor that transfor input data of type T into output data of type K.
+ *
+ * @param <T> the input type
+ * @param <K> the output type
+ */
 public class TransformationProcessor<T,K> extends AbstractTransformationProcessor<T, K> {
 
 	public TransformationProcessor(Function<T, K> mapper, ExecutorService executor, boolean timely) {

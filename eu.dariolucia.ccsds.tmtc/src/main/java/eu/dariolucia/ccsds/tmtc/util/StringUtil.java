@@ -16,8 +16,17 @@
 
 package eu.dariolucia.ccsds.tmtc.util;
 
+/**
+ * This class contains a set of utility functions to work with String objects.
+ */
 public class StringUtil {
 
+    /**
+     * Convert an hex dump string into a byte array.
+     *
+     * @param hexDump the hex dump string
+     * @return the byte array
+     */
     public static byte[] toByteArray(String hexDump) {
         int length = hexDump.length();
         byte[] toReturn = new byte[length / 2];
@@ -31,6 +40,12 @@ public class StringUtil {
     // https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
     private final static char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
+    /**
+     * Convert a byte array into an hex dump string.
+     *
+     * @param data the byte array
+     * @return the string (hex dump)
+     */
     public static String toHexDump(byte[] data) {
         // Number of characters is twice the number of bytes, 0xdd
         char[] charOfOutput = new char[data.length * 2];

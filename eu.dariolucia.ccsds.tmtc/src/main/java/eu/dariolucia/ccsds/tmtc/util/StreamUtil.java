@@ -23,13 +23,17 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * This class contains a set of utility functions to work with {@link Stream} objects.
+ */
 public class StreamUtil {
 
     /**
+     * Utility function to convert a {@link Supplier} function into a {@link Stream}.
      * When the supplier returns null, the stream stops.
      *
      * @param s   the supplier that generates objects
-     * @param <T>
+     * @param <T> the object type returned by the stream
      * @return a stream that stops as soon as the supplier returns null
      */
     public static <T> Stream<T> from(Supplier<T> s) {

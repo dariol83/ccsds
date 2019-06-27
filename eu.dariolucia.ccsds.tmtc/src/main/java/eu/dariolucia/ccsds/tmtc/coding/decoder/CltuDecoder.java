@@ -21,7 +21,23 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
 import java.util.function.Function;
 
+/**
+ * This functional class wraps a {@link BchCltuAlgorithm} instance to allow its usage in expression using {@link java.util.stream.Stream}
+ * objects or in {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder} instances.
+ *
+ * XXX: It could be considered redundant, since the decodeCltu method can be addressed by using method references.
+ */
 public class CltuDecoder implements Function<byte[], byte[]> {
+
+    private final BchCltuAlgorithm cltuDecoder;
+
+    public CltuDecoder(BchCltuAlgorithm cltuDecoder) {
+        this.cltuDecoder = cltuDecoder;
+    }
+
+    public CltuDecoder() {
+        this(new BchCltuAlgorithm());
+    }
 
     @Override
     public byte[] apply(byte[] input) {

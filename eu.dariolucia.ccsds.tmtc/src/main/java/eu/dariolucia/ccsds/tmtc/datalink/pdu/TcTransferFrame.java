@@ -322,7 +322,7 @@ public class TcTransferFrame extends AbstractTransferFrame {
     }
 
     /**
-     * This method returns the type of control command. The return value is valid only if controlCommandFlag == true && bypassFlag == true.
+     * This method returns the type of control command. The return value is valid only if controlCommandFlag == true and bypassFlag == true.
      *
      * @return the type of control command, or null if the TC frame does not contain a control command
      */

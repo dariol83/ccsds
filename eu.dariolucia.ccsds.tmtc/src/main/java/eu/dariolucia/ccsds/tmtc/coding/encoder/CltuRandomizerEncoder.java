@@ -22,10 +22,17 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
 import java.util.function.Function;
 
+/**
+ * This functional class allows the usage of the {@link RandomizerAlgorithm}.randomizeFrameCltu in expression using {@link java.util.stream.Stream}
+ * objects or in {@link eu.dariolucia.ccsds.tmtc.coding.ChannelEncoder} instances. De-randomization is performed in-place.
+ *
+ * XXX: It could be considered redundant, since the randomizeFrameCltu method can be addressed by using method references.
+ * @param <T> subtype of {@link AbstractTransferFrame}, typically {@link eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame}
+ */
 public class CltuRandomizerEncoder<T extends AbstractTransferFrame> implements IEncodingFunction<T> {
 
     @Override
-    public byte[] encode(T original, byte[] input) {
+    public byte[] apply(T original, byte[] input) {
         if(input == null) {
             throw new NullPointerException("Input cannot be null");
         }

@@ -22,14 +22,19 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
 import java.util.concurrent.ExecutorService;
 
+/**
+ * This class is used in reactive programming design, as specified in the {@link java.util.concurrent.Flow} specification,
+ * as processor. It receives byte[] and transform them into subclass instances of {@link AbstractTransferFrame}, according
+ * to the provided {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder}.
+ *
+ * The provision of the decoder is mandatory.
+ *
+ * @param <T> the output type
+ */
 public class ChannelDecoderProcessor<T extends AbstractTransferFrame> extends TransformationProcessor<byte[], T> {
 
     public ChannelDecoderProcessor(ChannelDecoder<T> decoder, ExecutorService executor, boolean timely) {
         super(decoder, executor, timely);
-    }
-
-    public ChannelDecoderProcessor(ChannelDecoder<T> decoder, boolean timely) {
-        super(decoder, timely);
     }
 
     public ChannelDecoderProcessor(ChannelDecoder<T> decoder) {

@@ -23,14 +23,30 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
 import java.util.function.Function;
 
+/**
+ * This class wraps a {@link BchCltuAlgorithm} instance to allow its usage in expression using {@link java.util.stream.Stream}
+ * objects (as per asFunction method, default from {@link IEncodingFunction}) or in {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder} instances.
+ *
+ * @param <T> subtype of {@link AbstractTransferFrame}, typically {@link eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame}
+ */
 public class CltuEncoder<T extends AbstractTransferFrame> implements IEncodingFunction<T> {
 
+    private final BchCltuAlgorithm cltuEncoder;
+
+    public CltuEncoder(BchCltuAlgorithm cltuEncoder) {
+        this.cltuEncoder = cltuEncoder;
+    }
+
+    public CltuEncoder() {
+        this(new BchCltuAlgorithm());
+    }
+
     @Override
-    public byte[] encode(T original, byte[] input) {
+    public byte[] apply(T original, byte[] input) {
         if(input == null) {
             throw new NullPointerException("Input cannot be null");
         }
-        return new BchCltuAlgorithm().encodeCltu(input);
+        return cltuEncoder.encodeCltu(input);
     }
 
 }

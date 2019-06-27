@@ -21,20 +21,42 @@ import eu.dariolucia.ccsds.tmtc.coding.encoder.TmAsmEncoder;
 import java.util.Arrays;
 import java.util.function.Function;
 
+/**
+ * This functional class transforms the provided frame by returning a copy having the specified sync marker removed.
+ * If no sync marker is specified, the 4 bytes sync marker specified by CCSDS for RS encoded frames are used (0x1ACFFC1D).
+ * This class actually checks whether the sync marker is present. If it is not detected, the apply method throws an
+ * {@link IllegalArgumentException}.
+ */
 public class TmAsmDecoder implements Function<byte[], byte[]> {
 
     public static final byte[] DEFAULT_ATTACHED_SYNC_MARKER = TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER;
 
     private final byte[] synchMarker;
 
+    /**
+     * Construct an instance using the provided sync marker.
+     *
+     * @param synchMarker the sync marker to be used
+     */
     public TmAsmDecoder(byte[] synchMarker) {
         this.synchMarker = synchMarker;
     }
 
+    /**
+     * Construct an instance using the default sync marker.
+     */
     public TmAsmDecoder() {
         this.synchMarker = DEFAULT_ATTACHED_SYNC_MARKER;
     }
 
+    /**
+     * This method removes the sync marker from the provided input and returns a copy of the data without the sync marker.
+     *
+     * @param input the data from which the sync marker shall be removed
+     * @return a copy of the data without the sync marker
+     * @throws NullPointerException if input is null
+     * @throws IllegalArgumentException if the sync marker cannot be detected in the provided input
+     */
     @Override
     public byte[] apply(byte[] input) {
         if(input == null) {
