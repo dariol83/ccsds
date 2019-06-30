@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.tmtc.datalink.pdu;
 
 import eu.dariolucia.ccsds.tmtc.algorithm.Crc16Algorithm;
+import eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder;
 import eu.dariolucia.ccsds.tmtc.coding.IDecodingFunction;
 
 import java.nio.ByteBuffer;
@@ -34,7 +35,7 @@ public class TcTransferFrame extends AbstractTransferFrame {
     public static final int MAX_TC_FRAME_LENGTH = 1024;
 
     /**
-     * This method returns a decoding function (to be used in a {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder} chain,
+     * This method returns a decoding function (to be used in a {@link ChannelDecoder} chain,
      * which converts bytes arrays into TC frames. The function can deal with virtual fill bytes as decoded from a
      * CLTU, i.e. virtual fill bytes are removed before calling the {@link TcTransferFrame} constructor.
      *
@@ -149,23 +150,23 @@ public class TcTransferFrame extends AbstractTransferFrame {
         NO_SEGMENT
     }
 
-    private boolean bypassFlag;
-    private boolean controlCommandFlag;
-    private short frameLength;
+    private final boolean bypassFlag;
+    private final boolean controlCommandFlag;
+    private final short frameLength;
 
-    private boolean segmented;
+    private final boolean segmented;
     private byte mapId;
     private SequenceFlagType sequenceFlag;
 
-    // The next attribute is valid only if controlCommandFlag == true && bypassFlag == true
+    // The next attribute is valid only if controlCommandFlag == true and bypassFlag == true
     private ControlCommandType controlCommandType;
     // The next attribute is valid only if frameType == BC and Data Unit is 3 bytes that
     // conform to 4.1.3.3.3
     private short setVrValue;
 
     // Security header/trailer as per CCSDS 355.0-B-1
-    private int securityHeaderLength;
-    private int securityTrailerLength;
+    private final int securityHeaderLength;
+    private final int securityTrailerLength;
 
     /**
      * Constructor of a TC frame. The decoding and initialisation of the different properties of this object happens in
@@ -186,27 +187,11 @@ public class TcTransferFrame extends AbstractTransferFrame {
      */
     public TcTransferFrame(byte[] frame, boolean segmented, boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
         super(frame, fecfPresent);
+
         this.segmented = segmented;
         this.securityHeaderLength = securityHeaderLength;
         this.securityTrailerLength = securityTrailerLength;
-        decode();
-    }
 
-    /**
-     * Constructor of a TC frame, assuming no security fields. Shortcut for
-     * <code>TcTransferFrame(frame, segmented, fecfPresent, 0, 0);</code>
-     *
-     * @param frame the byte array representing a TC frame.
-     * @param segmented true if TC segmentation is used
-     * @param fecfPresent true if FECF is present
-     * @throws IllegalArgumentException if wrong TFVN or length is detected
-     */
-    public TcTransferFrame(byte[] frame, boolean segmented, boolean fecfPresent) {
-        this(frame, segmented, fecfPresent, 0, 0);
-    }
-
-    @Override
-    protected void decode() {
         ByteBuffer in = ByteBuffer.wrap(frame);
         // First 2 octets
         short twoOctets = in.getShort();
@@ -269,6 +254,19 @@ public class TcTransferFrame extends AbstractTransferFrame {
             // With no FECF it is assumed that the frame is valid
             valid = true;
         }
+    }
+
+    /**
+     * Constructor of a TC frame, assuming no security fields. Shortcut for
+     * <code>TcTransferFrame(frame, segmented, fecfPresent, 0, 0);</code>
+     *
+     * @param frame the byte array representing a TC frame.
+     * @param segmented true if TC segmentation is used
+     * @param fecfPresent true if FECF is present
+     * @throws IllegalArgumentException if wrong TFVN or length is detected
+     */
+    public TcTransferFrame(byte[] frame, boolean segmented, boolean fecfPresent) {
+        this(frame, segmented, fecfPresent, 0, 0);
     }
 
     private boolean checkValidity() {

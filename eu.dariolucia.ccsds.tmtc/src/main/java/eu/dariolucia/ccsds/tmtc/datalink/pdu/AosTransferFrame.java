@@ -33,15 +33,6 @@ public class AosTransferFrame extends AbstractTransferFrame {
     public static final short AOS_B_PDU_FIRST_HEADER_POINTER_ALL_DATA = 16383;
 
     // AOS Blue Book, 4.1.2.6.5.
-//    public static final ReedSolomonAlgorithm AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL = new ReedSolomonAlgorithm(
-//                    10,
-//                    6,
-//                    0x13,      // As per AOS Blue Book specs: x^4 + x + 1 = 10011 = 19 = 0x13
-//                    new int[]{1, 8, 2, 8},      // As per AOS Blue Book specs: x^4 + (a3 x^3) + (a x^2) + (a3 x) + 1
-//                    new int[]{12, 11, 5, 10}    // As per AOS Blue Book specs: g(x) = (x + a6)(x + a7)(x + a8)(x + a9) : only needed for decoding verify
-//            );
-
-    // AOS Blue Book, 4.1.2.6.5.
     public static final ReedSolomonAlgorithm AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL = new ReedSolomonAlgorithm(
                     6,
                     10,
@@ -62,15 +53,15 @@ public class AosTransferFrame extends AbstractTransferFrame {
         IDLE
     }
 
-    private UserDataType userDataType;
+    private final UserDataType userDataType;
 
-    private boolean frameHeaderErrorControlPresent; // if present, 2 octets
-    private boolean validHeader;
-    private int transferFrameInsertZoneLength;
+    private final boolean frameHeaderErrorControlPresent; // if present, 2 octets
+    private final boolean validHeader;
+    private final int transferFrameInsertZoneLength;
 
-    private boolean replayFlag;
-    private boolean virtualChannelFrameCountUsageFlag;
-    private byte virtualChannelFrameCountCycle;
+    private final boolean replayFlag;
+    private final boolean virtualChannelFrameCountUsageFlag;
+    private final byte virtualChannelFrameCountCycle;
 
     private boolean idleFrame;
 
@@ -86,16 +77,13 @@ public class AosTransferFrame extends AbstractTransferFrame {
 
     public AosTransferFrame(byte[] frame, boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
         super(frame, fecfPresent);
+
         // Frame header error control field is only assumed as an additional 2 bytes: no R-S decoding on the protected header fields is performed, only error control
         this.ocfPresent = ocfPresent;
         this.frameHeaderErrorControlPresent = frameHeaderErrorControlPresent;
         this.transferFrameInsertZoneLength = transferFrameInsertZoneLength;
         this.userDataType = userDataType;
-        decode();
-    }
 
-    @Override
-    protected void decode() {
         ByteBuffer in = ByteBuffer.wrap(frame);
         short twoOctets = in.getShort();
 

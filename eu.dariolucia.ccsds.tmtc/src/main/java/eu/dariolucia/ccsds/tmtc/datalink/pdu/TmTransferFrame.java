@@ -32,15 +32,15 @@ public class TmTransferFrame extends AbstractTransferFrame {
         return input -> new TmTransferFrame(input, fecfPresent);
     }
 
-    private int masterChannelFrameCount;
+    private final int masterChannelFrameCount;
 
-    private boolean secondaryHeaderPresent;
-    private boolean synchronisationFlag;
-    private boolean packetOrderFlag;
-    private byte segmentLengthIdentifier;
-    private short firstHeaderPointer;
-    private boolean noStartPacket;
-    private boolean idleFrame;
+    private final boolean secondaryHeaderPresent;
+    private final boolean synchronisationFlag;
+    private final boolean packetOrderFlag;
+    private final byte segmentLengthIdentifier;
+    private final short firstHeaderPointer;
+    private final boolean noStartPacket;
+    private final boolean idleFrame;
 
     // Secondary header fields: valid values only if secondaryHeaderPresent == true
     private byte secondaryHeaderVersionNumber;
@@ -48,11 +48,7 @@ public class TmTransferFrame extends AbstractTransferFrame {
 
     public TmTransferFrame(byte[] frame, boolean fecfPresent) {
         super(frame, fecfPresent);
-        decode();
-    }
 
-    @Override
-    protected void decode() {
         ByteBuffer in = ByteBuffer.wrap(frame);
         short twoOctets = in.getShort();
 

@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.function.Supplier;
 
 /**
- * Interface used to read data unit from the transfer layer.
+ * Interface used to read transfer frame data unit from the transfer layer.
  */
 public interface IChannelReader extends Closeable, Supplier<byte[]> {
 
@@ -51,7 +51,9 @@ public interface IChannelReader extends Closeable, Supplier<byte[]> {
     byte[] readNext() throws IOException;
 
     /**
-     * Default implementation of the get() method for suppliers.
+     * Default implementation of the get() method for suppliers. Since Supplier::get() does not foresee exceptions,
+     * potential {@link IOException} are caught and null is returned. If external exception handling is required, then the
+     * readNext() method shall be called directly.
      *
      * @return the next frame or null if no frame is available (expected or due to errors)
      */
@@ -59,7 +61,6 @@ public interface IChannelReader extends Closeable, Supplier<byte[]> {
         try {
             return readNext();
         } catch (IOException e) {
-            e.printStackTrace(); // TODO: find a better way to handle exception at this stage
             return null;
         }
     }
