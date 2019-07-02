@@ -22,6 +22,9 @@ import eu.dariolucia.ccsds.inspector.connectors.testing.TmTestConnectorFactory;
 module eu.dariolucia.ccsds.inspector {
     uses eu.dariolucia.ccsds.inspector.api.IConnectorFactory;
 
+    exports eu.dariolucia.ccsds.inspector.api;
+    exports eu.dariolucia.ccsds.inspector.connectors.file;
+
     exports eu.dariolucia.ccsds.inspector.application to javafx.graphics;
     exports eu.dariolucia.ccsds.inspector.view.controller to javafx.fxml;
     exports eu.dariolucia.ccsds.inspector.view.charts to javafx.fxml;
