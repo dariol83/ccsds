@@ -54,7 +54,7 @@ public class AosReceiverVirtualChannel extends AbstractReceiverVirtualChannel<Ao
 
     @Override
     protected boolean isGapDetectionApplicable(AosTransferFrame frame) {
-        return frame.isVirtualChannelFrameCountUsageFlag();
+        return true;
     }
 
     @Override

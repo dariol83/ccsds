@@ -31,10 +31,10 @@ public class VirtualChannelReceiverSpacePacketProcessor<T extends AbstractTransf
     }
 
     public VirtualChannelReceiverSpacePacketProcessor(Function<T, ? extends Collection<SpacePacket>> mapper, boolean timely) {
-        super(mapper, timely);
+        this(mapper, null, timely);
     }
 
     public VirtualChannelReceiverSpacePacketProcessor(Function<T, ? extends Collection<SpacePacket>> mapper) {
-        super(mapper);
+        this(mapper, false);
     }
 }

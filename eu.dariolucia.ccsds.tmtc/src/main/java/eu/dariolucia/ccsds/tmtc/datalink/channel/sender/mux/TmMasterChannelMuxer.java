@@ -17,7 +17,6 @@
 package eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux;
 
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.AbstractSenderVirtualChannel;
-import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.IVirtualChannelSenderOutput;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 
 import java.util.*;
@@ -42,13 +41,12 @@ import java.util.function.Consumer;
  *
  * This class is thread safe.
  */
-public class TmMasterChannelMuxer implements Consumer<TmTransferFrame>, IVirtualChannelSenderOutput<TmTransferFrame> {
+public class TmMasterChannelMuxer extends SimpleMuxer<TmTransferFrame> {
 
 	private final AtomicInteger masterChannelCounter = new AtomicInteger(0);
 	private final AtomicInteger expectedCounter = new AtomicInteger(0);
 	protected final List<TmTransferFrame> reorderingBuffer = new LinkedList<>();
 	protected final Set<Short> pendingVcs = new TreeSet<>();
-	protected final Consumer<TmTransferFrame> output;
 
 	/**
 	 * Create a new TM Master Channel Muxer, which forwards received frames to the provided sink.
@@ -56,7 +54,7 @@ public class TmMasterChannelMuxer implements Consumer<TmTransferFrame>, IVirtual
 	 * @param output the sink for received TM frames.
 	 */
 	public TmMasterChannelMuxer(Consumer<TmTransferFrame> output) {
-		this.output = output;
+		super(output);
 	}
 
 	/**
@@ -71,7 +69,7 @@ public class TmMasterChannelMuxer implements Consumer<TmTransferFrame>, IVirtual
 
 	/**
 	 * This method sets the counter for the next generated TM frame, requested through the getNextCounter. If greater
-	 * than 256, the method will assign its mod 256 to the internal variable.
+	 * than 256, the method will assign it mod 256 to the internal variable.
 	 *
 	 * @param masterChannelCounter the next returned master channel frame counter
 	 */

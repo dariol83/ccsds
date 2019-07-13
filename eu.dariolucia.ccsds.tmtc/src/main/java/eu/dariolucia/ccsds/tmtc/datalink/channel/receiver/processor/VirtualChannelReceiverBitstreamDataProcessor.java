@@ -33,10 +33,10 @@ public class VirtualChannelReceiverBitstreamDataProcessor extends Transformation
     }
 
     public VirtualChannelReceiverBitstreamDataProcessor(Function<AbstractTransferFrame, BitstreamData> mapper, boolean timely) {
-        super(mapper, timely);
+        this(mapper, null, timely);
     }
 
     public VirtualChannelReceiverBitstreamDataProcessor(Function<AbstractTransferFrame, BitstreamData> mapper) {
-        super(mapper);
+        this(mapper, false);
     }
 }

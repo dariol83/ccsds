@@ -27,6 +27,11 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+/**
+ * This class allows to send AOS frames built from space packets, bit streams or using the VCA mode. It can work in pull and push mode.
+ *
+ * For additional details, refers to the parent {@link AbstractSenderVirtualChannel} documentation.
+ */
 public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTransferFrame> {
 
 	private final Function<Integer, AbstractOcf> ocfSupplier;
@@ -199,7 +204,6 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 			throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested Packet access");
 		}
 		List<SpacePacket> packets = new ArrayList<>(pkts);
-		int maxDataPerFrame = getMaxUserDataLength();
 		// Strategy: fill in a transfer frame as much as you can, till the end. Do segmentation if needed.
 		for (int i = 0; i < packets.size(); ++i) {
 			SpacePacket isp = packets.get(i);

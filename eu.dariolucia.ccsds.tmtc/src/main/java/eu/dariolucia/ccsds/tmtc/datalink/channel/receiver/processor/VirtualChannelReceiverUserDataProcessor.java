@@ -30,10 +30,10 @@ public class VirtualChannelReceiverUserDataProcessor extends TransformationProce
     }
 
     public VirtualChannelReceiverUserDataProcessor(Function<AbstractTransferFrame, byte[]> mapper, boolean timely) {
-        super(mapper, timely);
+        this(mapper, null, timely);
     }
 
     public VirtualChannelReceiverUserDataProcessor(Function<AbstractTransferFrame, byte[]> mapper) {
-        super(mapper);
+        this(mapper, false);
     }
 }

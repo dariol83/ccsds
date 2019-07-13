@@ -27,6 +27,11 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * This class allows to send TM frames built from space packets or using the VCA mode. It can work in pull and push mode.
+ *
+ * For additional details, refers to the parent {@link AbstractSenderVirtualChannel} documentation.
+ */
 public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTransferFrame> {
 
     private final Function<Integer, AbstractOcf> ocfSupplier;
@@ -106,14 +111,6 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
         // Dispatch
         this.currentFrame = null;
         notifyTransferFrameGenerated(toSend, 0);
-    }
-
-    public int dispatch(SpacePacket isp) {
-        return dispatch(Collections.singletonList(isp));
-    }
-
-    public int dispatch(SpacePacket... isp) {
-        return dispatch(Arrays.asList(isp));
     }
 
     @Override
