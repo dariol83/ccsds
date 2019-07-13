@@ -236,4 +236,36 @@ class AosSenderVirtualChannelTest {
         //
         assertEquals(300, list.size());
     }
+
+    @Test
+    public void testPushModeBitstream() {
+        // Create a sink consumer
+        List<AosTransferFrame> list = new LinkedList<>();
+        Consumer<AosTransferFrame> sink = list::add;
+        // Setup the muxer
+        SimpleMuxer<AosTransferFrame> mux = new SimpleMuxer<>(sink);
+
+        // Setup the VCs (0, 1 and 63 for idle frames)
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier);
+        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier);
+        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier);
+        //
+        vc0.register(mux);
+        vc1.register(mux);
+        vc63.register(mux);
+        // Generation logic: round robin.
+        // Generate 30 frames overall
+        for(int i = 0; i < 30; ++i) {
+            switch(i % 3) {
+                case 0: vc0.dispatch(new BitstreamData(new byte[vc0.getMaxUserDataLength()], 8*300 + 3));
+                    break;
+                case 1: vc1.dispatch(new BitstreamData(new byte[vc1.getMaxUserDataLength()], 8*621 - 1));
+                    break;
+                case 2: vc63.dispatchIdle(new byte[] {0x55});
+                    break;
+            }
+        }
+        //
+        assertEquals(30, list.size());
+    }
 }

@@ -23,27 +23,24 @@ import eu.dariolucia.ccsds.tmtc.coding.reader.LineHexDumpChannelReader;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.util.StreamUtil;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class AosReceiverVirtualChannelTest {
 
-    private static String FILE_TM1 = "dumpFile_aos_1.hex";
-    private static String FILE_TM1_GAP = "dumpFile_aos_1_gap.hex";
-
+    private static final String FILE_TM1 = "dumpFile_aos_1.hex";
+    private static final String FILE_TM1_GAP = "dumpFile_aos_1_gap.hex";
+    private static final String FILE_TM1_BITSTREAM = "dumpFile_aos_bitstream.hex";
 
     @Test
-    public void testAosVc0SpacePacket() throws IOException {
+    public void testAosVc0SpacePacket() {
         // Create a virtual channel for VC0
         AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
         // Subscribe a packet collector
@@ -97,7 +94,7 @@ class AosReceiverVirtualChannelTest {
     }
 
     @Test
-    public void testAosVc0Gap() throws IOException {
+    public void testAosVc0Gap() {
         // Create a virtual channel for VC0
         AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
         // Subscribe a packet collector
@@ -150,5 +147,73 @@ class AosReceiverVirtualChannelTest {
         assertEquals(19, goodPackets.size());
         assertEquals(1, badPackets.size());
         assertTrue(gapDetected.get());
+    }
+
+    @Test
+    public void testAosBitstream() {
+        // Create a virtual channel for VC0
+        AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.Bitstream, true);
+        AosReceiverVirtualChannel vc1 = new AosReceiverVirtualChannel(1, VirtualChannelAccessMode.Bitstream, true);
+        AosReceiverVirtualChannel vc63 = new AosReceiverVirtualChannel(63, VirtualChannelAccessMode.Bitstream, true);
+        // Subscribe a collector
+        final AtomicInteger frameCounter = new AtomicInteger(0);
+        IVirtualChannelReceiverOutput output = new IVirtualChannelReceiverOutput() {
+            @Override
+            public void transferFrameReceived(AbstractReceiverVirtualChannel vc, AbstractTransferFrame receivedFrame) {
+                frameCounter.incrementAndGet();
+            }
+
+            @Override
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame lastFrame, byte[] packet, boolean qualityIndicator) {
+                fail("No space packets expected");
+            }
+
+            @Override
+            public void dataExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data) {
+                fail("No VCA user data expected");
+            }
+
+            @Override
+            public void bitstreamExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data, int numBits) {
+                if(vc.getVirtualChannelId() == 0) {
+                    assertEquals(8*300 + 3, numBits);
+                } else if(vc.getVirtualChannelId() == 1) {
+                    assertEquals(8*621 - 1, numBits);
+                }
+            }
+
+            @Override
+            public void gapDetected(AbstractReceiverVirtualChannel vc, int expectedVc, int receivedVc, int missingFrames) {
+                fail("No gaps expected");
+            }
+        };
+        vc0.register(output);
+        vc1.register(output);
+        vc63.register(output);
+        // Build the reader
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1_BITSTREAM));
+        // Use stream approach: no need for decoder
+        StreamUtil.from(reader) // Reads the frames, correctly segmented
+                .map(new TmAsmDecoder()) // Remove ASM
+                .map(new ReedSolomonDecoder(ReedSolomonAlgorithm.TM_255_223, 4, false)) // Remove R-S codeblock
+                .map(AosTransferFrame.decodingFunction(false, 0, AosTransferFrame.UserDataType.B_PDU, true, false)) // Convert to AOS frame
+                .filter(t -> t.getVirtualChannelId() == 0)
+                .forEach(vc0);
+        reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1_BITSTREAM));
+        StreamUtil.from(reader) // Reads the frames, correctly segmented
+                .map(new TmAsmDecoder()) // Remove ASM
+                .map(new ReedSolomonDecoder(ReedSolomonAlgorithm.TM_255_223, 4, false)) // Remove R-S codeblock
+                .map(AosTransferFrame.decodingFunction(false, 0, AosTransferFrame.UserDataType.B_PDU, true, false)) // Convert to AOS frame
+                .filter(t -> t.getVirtualChannelId() == 63)
+                .forEach(vc63);
+        reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1_BITSTREAM));
+        StreamUtil.from(reader) // Reads the frames, correctly segmented
+                .map(new TmAsmDecoder()) // Remove ASM
+                .map(new ReedSolomonDecoder(ReedSolomonAlgorithm.TM_255_223, 4, false)) // Remove R-S codeblock
+                .map(AosTransferFrame.decodingFunction(false, 0, AosTransferFrame.UserDataType.B_PDU, true, false)) // Convert to AOS frame
+                .filter(t -> t.getVirtualChannelId() == 1)
+                .forEach(vc1);
+        // Check the number of frames
+        assertEquals(30, frameCounter.get());
     }
 }

@@ -148,16 +148,16 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
         return this;
     }
 
-    private int addData(byte[] b, int offset, int length, boolean isPacket) {
-        return addData(b, offset, length, isPacket, -1);
+    private int addData(byte[] b, int offset, int length, int type) {
+        return addData(b, offset, length, type, -1);
     }
 
-    private int addData(byte[] b, int offset, int length, boolean isPacket, int validDataBits) {
+    private int addData(byte[] b, int offset, int length, int type, int validDataBits) {
         // Compute if you can add the requested amount
         int dataToBeWritten = freeUserDataLength >= length ? length : freeUserDataLength;
         int notWrittenData = freeUserDataLength < length ? length - freeUserDataLength : 0;
         if(dataToBeWritten > 0) {
-            this.payloadUnits.add(new AosTransferFrameBuilder.PayloadUnit(isPacket, Arrays.copyOfRange(b, offset, offset + dataToBeWritten), validDataBits));
+            this.payloadUnits.add(new AosTransferFrameBuilder.PayloadUnit(type, Arrays.copyOfRange(b, offset, offset + dataToBeWritten), validDataBits));
             freeUserDataLength -= dataToBeWritten;
         }
         return notWrittenData;
@@ -167,22 +167,22 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
         if(userDataType != AosTransferFrame.UserDataType.B_PDU) {
             throw new IllegalArgumentException("Only B_PDU AOS frames can contain bitstream data");
         }
-        return addData(data, 0 , data.length, true, validDataBits);
+        return addData(data, 0 , data.length, PayloadUnit.TYPE_BITSTREAM, validDataBits);
     }
 
     public int addSpacePacket(byte[] packet) {
         if(userDataType != AosTransferFrame.UserDataType.M_PDU) {
             throw new IllegalArgumentException("Only M_PDU AOS frames can contain space packets");
         }
-        return addData(packet, 0, packet.length, true);
+        return addData(packet, 0, packet.length, PayloadUnit.TYPE_PACKET);
     }
 
     public int addData(byte[] data) {
-        return addData(data, 0, data.length, false);
+        return addData(data, 0, data.length, PayloadUnit.TYPE_DATA);
     }
 
     public int addData(byte[] data, int offset, int length) {
-        return addData(data, offset, length, false);
+        return addData(data, offset, length, PayloadUnit.TYPE_DATA);
     }
 
     @Override
@@ -326,12 +326,12 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
     private short computeMPDUFirstHeaderPointer() {
         if(this.idle) {
             return AosTransferFrame.AOS_M_PDU_FIRST_HEADER_POINTER_IDLE;
-        } else if(this.payloadUnits.stream().noneMatch((o) -> o.packet)) {
+        } else if(this.payloadUnits.stream().noneMatch((o) -> o.type == PayloadUnit.TYPE_PACKET)) {
             return AosTransferFrame.AOS_M_PDU_FIRST_HEADER_POINTER_NO_PACKET;
         } else {
             short firstPacket = (short) 0;
             for(AosTransferFrameBuilder.PayloadUnit pu : payloadUnits) {
-                if(pu.packet) {
+                if(pu.type == PayloadUnit.TYPE_PACKET) {
                     return firstPacket;
                 } else {
                     firstPacket += (short) pu.data.length;
@@ -350,7 +350,7 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
         } else {
             short lastValidBit = (short) 0;
             for(AosTransferFrameBuilder.PayloadUnit pu : payloadUnits) {
-                if(pu.packet) {
+                if(pu.type == PayloadUnit.TYPE_BITSTREAM) {
                     lastValidBit += pu.validDataBits;
                     if(pu.hasSpuriousData()) {
                         return lastValidBit;
@@ -365,23 +365,29 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
     }
 
     private class PayloadUnit {
-        public final boolean packet;
+        private static final int TYPE_BITSTREAM = 0;
+        private static final int TYPE_PACKET = 1;
+        private static final int TYPE_DATA = 2;
+
+        public final int type;
         public final byte[] data;
         public final int validDataBits;
 
-        public PayloadUnit(boolean packet, byte[] data, int validDataBits) {
-            this.packet = packet;
+        public PayloadUnit(int type, byte[] data, int validDataBits) {
+            this.type = type;
             this.data = data;
-            if(packet) {
+            if(type == TYPE_PACKET) {
                 this.validDataBits = data.length * 8;
-            } else if(validDataBits == -1) {
+            } else if(type == TYPE_DATA) {
                 this.validDataBits = data.length * 8;
-            } else {
+            } else if(type == TYPE_BITSTREAM) {
                 if(data.length * 8 >= validDataBits) {
                     this.validDataBits = validDataBits;
                 } else {
                     this.validDataBits = data.length * 8;
                 }
+            } else {
+                throw new IllegalArgumentException("Type " + type + " not recognized");
             }
         }
 

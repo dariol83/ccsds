@@ -16,6 +16,10 @@
 
 package eu.dariolucia.ccsds.tmtc.datalink.channel.sender;
 
+import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
+import eu.dariolucia.ccsds.tmtc.coding.ChannelEncoder;
+import eu.dariolucia.ccsds.tmtc.coding.encoder.ReedSolomonEncoder;
+import eu.dariolucia.ccsds.tmtc.coding.encoder.TmAsmEncoder;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux.TmMasterChannelMuxer;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
@@ -24,6 +28,7 @@ import eu.dariolucia.ccsds.tmtc.ocf.pdu.AbstractOcf;
 import eu.dariolucia.ccsds.tmtc.transport.builder.SpacePacketBuilder;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
+import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedList;
@@ -228,5 +233,37 @@ class TmSenderVirtualChannelTest {
         }
         //
         assertEquals(300, list.size());
+    }
+
+    @Test
+    public void testPushModeUserData() {
+        // Create a sink consumer
+        List<TmTransferFrame> list = new LinkedList<>();
+        Consumer<TmTransferFrame> sink = list::add;
+        // Setup the muxer
+        TmMasterChannelMuxer mux = new TmMasterChannelMuxer(sink);
+
+        // Setup the VCs (0, 1 and 7 for idle frames)
+        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Data, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc1 = new TmSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Data, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc7 = new TmSenderVirtualChannel(123, 7, VirtualChannelAccessMode.Data, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        //
+        vc0.register(mux);
+        vc1.register(mux);
+        vc7.register(mux);
+        // Generation logic: round robin VC0, VC1, VC7.
+        // Generate 30 frames overall
+        for(int i = 0; i < 30; ++i) {
+            switch(i % 3) {
+                case 0: vc0.dispatch(new byte[ vc0.getMaxUserDataLength() ]);
+                    break;
+                case 1: vc1.dispatch(new byte[ vc1.getMaxUserDataLength() ]);
+                    break;
+                case 2: vc7.dispatchIdle(new byte[] {0x55});
+                    break;
+            }
+        }
+        //
+        assertEquals(30, list.size());
     }
 }
