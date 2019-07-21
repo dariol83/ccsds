@@ -16,9 +16,14 @@
 
 package eu.dariolucia.ccsds.tmtc.datalink.channel.sender;
 
-import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.AbstractReceiverVirtualChannel;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
+/**
+ * Sink interface that is used by an {@link AbstractSenderVirtualChannel} to notify the generation of a transfer
+ * frame, following a request to dispatch user data (in the form of plain data, packets or bitstreams).
+ *
+ * @param <T> the type of the frame that it is notified
+ */
 @FunctionalInterface
 public interface IVirtualChannelSenderOutput<T extends AbstractTransferFrame> {
 

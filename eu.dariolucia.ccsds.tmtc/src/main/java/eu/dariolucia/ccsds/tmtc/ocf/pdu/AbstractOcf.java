@@ -27,11 +27,11 @@ public abstract class AbstractOcf {
     /**
      * The OCF data
      */
-    protected byte[] ocf;
+    protected final byte[] ocf;
     /**
      * Flag for CLCW identification
      */
-    protected boolean clcw;
+    protected final boolean clcw;
 
     /**
      * The constructor takes a byte array and tries to check if the provided array is a CLCW. If the array is null or

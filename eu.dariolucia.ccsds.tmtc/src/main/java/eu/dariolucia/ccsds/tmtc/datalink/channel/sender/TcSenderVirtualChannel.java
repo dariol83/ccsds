@@ -25,6 +25,11 @@ import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import java.util.*;
 import java.util.function.Supplier;
 
+/**
+ * This class allows to generate TC transfer frames for a specific virtual channel in three different modes (TC packet,
+ * TC segment, VCA), and with or without security information. In case of COP-1 utilisation, it can generate and emit
+ * the Unlock and SetVR BC-frames.
+ */
 public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTransferFrame> {
 
     private final boolean segmented;
@@ -78,30 +83,69 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
         }
     }
 
+    /**
+     * Constructor to create a TC virtual channel without security information.
+     *
+     * @param spacecraftId the spacecraft id
+     * @param virtualChannelId the virtual channel id
+     * @param mode the virtual channel access service mode (only Data or Packet)
+     * @param fecfPresent true FECF is present, otherwise false
+     * @param segmented true if segment headers are generated, false if no segment headers are generated
+     */
     public TcSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, boolean segmented) {
         this(spacecraftId, virtualChannelId, mode, fecfPresent, segmented, 0, 0, null, null);
     }
 
+    /**
+     * This method returns whether security information will be injected in the generated TC frame or not.
+     *
+     * @return true if the virtual channel is secured, false otherwise
+     */
     public boolean isSecured() {
         return secHeaderLength > 0 || secTrailerLength > 0;
-    };
+    }
 
+    /**
+     * This method returns whether the virtual channel generates frames with TC segments rather than plain packets.
+     *
+     * @return if the TC segment header is generated, false otherwise
+     */
     public boolean isSegmented() {
         return segmented;
     }
 
+    /**
+     * This method returns the default MAP ID, generated in case segmentation is active.
+     *
+     * @return the value of the default MAP ID
+     */
     public int getMapId() {
         return mapId;
     }
 
+    /**
+     * This method sets the default MAP IP.
+     *
+     * @param mapId the MAP ID to be used as default
+     */
     public void setMapId(int mapId) {
         this.mapId = mapId;
     }
 
+    /**
+     * This method returns whether frames by default are generated without bypass flag (AD frames) or not (BD frames).
+     *
+     * @return true if bypass-flag is false (i.e. AD-frames), false otherwise (i.e. BD frames)
+     */
     public boolean isAdMode() {
         return adMode;
     }
 
+    /**
+     * This mode sets the default service (true: AD-frames, false: BD-frames)
+     *
+     * @param adMode true if AD-frames, false if BD-frames
+     */
     public void setAdMode(boolean adMode) {
         this.adMode = adMode;
     }
@@ -357,16 +401,33 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
         return 0;
     }
 
+    /**
+     * This method is not supported for this class and throws {@link UnsupportedOperationException} if invoked.
+     *
+     * @param bitstreamData not applicable
+     * @return a runtime exception
+     */
     @Override
     public int dispatch(BitstreamData bitstreamData) {
         throw new UnsupportedOperationException("Virtual channel " + getVirtualChannelId() + " cannot dispatch frames with Bitstream data, data not supported");
     }
 
+    /**
+     * This method is not supported for this class and throws {@link UnsupportedOperationException} if invoked.
+     *
+     * @param idlePattern not applicable
+     */
     @Override
     public void dispatchIdle(byte[] idlePattern) {
         throw new UnsupportedOperationException("Virtual channel " + getVirtualChannelId() + " cannot dispatch idle frames, type of frame not supported");
     }
 
+    /**
+     * This method returns the maximum amount of bytes that this virtual channel can pack into the user data field of a
+     * transfer frame. It depends on the segmentation, presence of the FECF and presence of the security information.
+     *
+     * @return user data field maximum amount (bytes)
+     */
     @Override
     public int getMaxUserDataLength() {
         return TcTransferFrameBuilder.computeMaxUserDataLength(isFecfPresent()) - (segmented ? 1 : 0) - secHeaderLength - secTrailerLength;
