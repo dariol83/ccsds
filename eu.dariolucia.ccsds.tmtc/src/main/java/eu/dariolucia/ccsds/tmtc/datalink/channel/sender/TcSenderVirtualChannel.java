@@ -219,14 +219,14 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
             throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested Packet access");
         }
         List<SpacePacket> packets = new ArrayList<>(pkts);
-        int maxDataPerFrame = TcTransferFrameBuilder.computeMaxUserDataLength(isFecfPresent()) - (segmented ? 1 : 0) - secHeaderLength - secTrailerLength;
+        int maxDataPerFrame = getMaxUserDataLength();
         // Strategy: fill in a transfer frame as much as you can, always using an UNSEGMENTED approach.
         // If the next space is going to spill out, then close the frame and send the closed frame immediately.
         for (int i = 0; i < packets.size(); ++i) {
             SpacePacket isp = packets.get(i);
             if (this.currentFrame == null) {
                 // If the packet fits it, then create the frame and add it to the frame
-                if (maxDataPerFrame > isp.getLength()) {
+                if (maxDataPerFrame >= isp.getLength()) {
                     byte[] secH = secHeaderSupplier != null ? secHeaderSupplier.get() : new byte[0];
                     byte[] secT = secTrailerSupplier != null ? secTrailerSupplier.get() : new byte[0];
 
@@ -340,7 +340,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
         }
         int maxDataPerFrame = getMaxUserDataLength();
         // If the data fits it, then create the frame and add it to the frame
-        if (maxDataPerFrame > userData.length) {
+        if (maxDataPerFrame >= userData.length) {
             byte[] secH = secHeaderSupplier != null ? secHeaderSupplier.get() : new byte[0];
             byte[] secT = secTrailerSupplier != null ? secTrailerSupplier.get() : new byte[0];
 

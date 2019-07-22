@@ -113,6 +113,7 @@ public class TcTransferFrameBuilder implements ITransferFrameBuilder<TcTransferF
     }
 
     public TcTransferFrameBuilder setUnlockControlCommand() {
+        // CCSDS 232.0-B-3, 4.1.3.3.2
         this.addData(new byte[] { 0x00 });
         return this;
     }
@@ -122,6 +123,7 @@ public class TcTransferFrameBuilder implements ITransferFrameBuilder<TcTransferF
             throw new IllegalArgumentException("Set V(R) Sequence Number must be 0 <= V(R) <= 255, actual " + frameSequenceNumber);
         }
 
+        // CCSDS 232.0-B-3, 4.1.3.3.3
         this.addData(new byte[] { (byte) 0x82, 0x00, (byte) frameSequenceNumber });
         return this;
     }
