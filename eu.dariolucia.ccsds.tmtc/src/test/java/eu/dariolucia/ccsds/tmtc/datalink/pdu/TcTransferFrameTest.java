@@ -19,8 +19,7 @@ package eu.dariolucia.ccsds.tmtc.datalink.pdu;
 import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TcTransferFrameTest {
 
@@ -36,5 +35,7 @@ class TcTransferFrameTest {
         assertTrue(tctf.isSegmented());
         assertEquals(TcTransferFrame.SequenceFlagType.NO_SEGMENT, tctf.getSequenceFlag());
         assertTrue(tctf.isValid());
+        // For coverage only
+        assertNotNull(tctf.toString());
     }
 }

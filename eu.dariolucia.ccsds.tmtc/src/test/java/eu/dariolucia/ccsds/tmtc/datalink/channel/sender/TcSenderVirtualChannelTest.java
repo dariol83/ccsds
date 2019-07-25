@@ -25,6 +25,7 @@ import eu.dariolucia.ccsds.tmtc.ocf.pdu.AbstractOcf;
 import eu.dariolucia.ccsds.tmtc.transport.builder.SpacePacketBuilder;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
+import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
 import javax.sound.midi.Sequence;
@@ -78,6 +79,9 @@ class TcSenderVirtualChannelTest {
             assertEquals(300, sp.getApid());
             assertEquals(i, sp.getPacketSequenceCount());
             assertEquals(400 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getLength());
+            assertFalse(list.get(i).isSecurityUsed());
+            assertEquals(0, list.get(i).getSecurityHeaderLength());
+            assertEquals(0, list.get(i).getSecurityTrailerLength());
         }
     }
 
@@ -231,6 +235,7 @@ class TcSenderVirtualChannelTest {
         assertEquals((byte) 0x82, fr.getDataFieldCopy()[0]);
         assertEquals(0x0, fr.getDataFieldCopy()[1]);
         assertEquals(42, fr.getDataFieldCopy()[2]);
+        assertEquals(42, fr.getSetVrValue());
         assertEquals(TcTransferFrame.FrameType.BC, fr.getFrameType());
         assertEquals(TcTransferFrame.ControlCommandType.SET_VR, fr.getControlCommandType());
     }

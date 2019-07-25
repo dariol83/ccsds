@@ -21,18 +21,16 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame;
 
 public class TcReceiverVirtualChannel extends AbstractReceiverVirtualChannel<TcTransferFrame> {
 
-    private final boolean segmented;
     private final int secHeaderLength;
     private final int secTrailerLength;
 
-    public TcReceiverVirtualChannel(int virtualChannelId, VirtualChannelAccessMode mode, boolean throwExceptionOnVcViolation, boolean segmented) {
-        this(virtualChannelId, mode, throwExceptionOnVcViolation, segmented, 0, 0);
+    public TcReceiverVirtualChannel(int virtualChannelId, VirtualChannelAccessMode mode, boolean throwExceptionOnVcViolation) {
+        this(virtualChannelId, mode, throwExceptionOnVcViolation, 0, 0);
     }
 
-    public TcReceiverVirtualChannel(int virtualChannelId, VirtualChannelAccessMode mode, boolean throwExceptionOnVcViolation, boolean segmented,
+    public TcReceiverVirtualChannel(int virtualChannelId, VirtualChannelAccessMode mode, boolean throwExceptionOnVcViolation,
                                     int secHeaderLength, int secTrailerLength) {
         super(virtualChannelId, mode, throwExceptionOnVcViolation);
-        this.segmented = true;
         this.secHeaderLength = secHeaderLength;
         this.secTrailerLength = secTrailerLength;
     }
@@ -49,7 +47,7 @@ public class TcReceiverVirtualChannel extends AbstractReceiverVirtualChannel<TcT
 
     @Override
     protected int retrieveFirstHeaderPointer(TcTransferFrame frame) {
-        return (this.segmented ? 1 : 0) + this.secHeaderLength;
+        return (frame.isSegmented() ? 1 : 0) + this.secHeaderLength;
     }
 
     @Override

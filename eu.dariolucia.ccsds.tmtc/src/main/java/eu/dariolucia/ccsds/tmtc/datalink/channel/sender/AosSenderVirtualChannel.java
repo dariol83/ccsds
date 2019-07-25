@@ -262,7 +262,7 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 		this.currentFrame = null;
 		notifyTransferFrameGenerated(toSend, 0);
 
-		return 0;
+		return getRemainingFreeSpace();
 	}
 
 	@Override

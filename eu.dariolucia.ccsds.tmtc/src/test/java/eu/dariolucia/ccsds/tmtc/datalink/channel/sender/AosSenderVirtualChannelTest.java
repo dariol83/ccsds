@@ -16,21 +16,14 @@
 
 package eu.dariolucia.ccsds.tmtc.datalink.channel.sender;
 
-import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
-import eu.dariolucia.ccsds.tmtc.coding.ChannelEncoder;
-import eu.dariolucia.ccsds.tmtc.coding.encoder.ReedSolomonEncoder;
-import eu.dariolucia.ccsds.tmtc.coding.encoder.TmAsmEncoder;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux.SimpleMuxer;
-import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux.TmMasterChannelMuxer;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.ocf.builder.ClcwBuilder;
 import eu.dariolucia.ccsds.tmtc.ocf.pdu.AbstractOcf;
 import eu.dariolucia.ccsds.tmtc.transport.builder.SpacePacketBuilder;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
-import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedList;
@@ -202,9 +195,9 @@ class AosSenderVirtualChannelTest {
             }
         };
         // Setup the VCs (0, 1 and 63 for idle frames)
-        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 892, this::ocfSupplier, dataProvider);
-        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Packet, false, 892, this::ocfSupplier, dataProvider);
-        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.Packet, false, 892, this::ocfSupplier, null);
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Data, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Data, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.Data, false, 892, this::ocfSupplier, null);
         //
         vc0.register(mux);
         vc1.register(mux);
@@ -267,5 +260,81 @@ class AosSenderVirtualChannelTest {
         }
         //
         assertEquals(30, list.size());
+    }
+
+    @Test
+    public void testPullModeBitstream() {
+        // Create a sink consumer
+        List<AosTransferFrame> list = new LinkedList<>();
+        Consumer<AosTransferFrame> sink = list::add;
+        // Setup the muxer
+        SimpleMuxer<AosTransferFrame> mux = new SimpleMuxer<>(sink);
+        // Data supplier
+        IVirtualChannelDataProvider dataProvider = new IVirtualChannelDataProvider() {
+            int vc0counter = 0;
+            int vc1counter = 0;
+            @Override
+            public List<SpacePacket> generateSpacePackets(int virtualChannelId, int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
+                return null;
+            }
+
+            @Override
+            public BitstreamData generateBitstreamData(int virtualChannelId, int availableSpaceInCurrentFrame) {
+                if(virtualChannelId == 0) {
+                    ++vc0counter;
+                }
+                if(virtualChannelId == 1) {
+                    ++vc1counter;
+                }
+                if(virtualChannelId == 0 && vc0counter % 5 != 0) {
+                    ++vc0counter;
+                    return new BitstreamData(new byte[availableSpaceInCurrentFrame], 321);
+                } else if(virtualChannelId == 1 && vc1counter % 3 != 0) {
+                    ++vc1counter;
+                    return new BitstreamData(new byte[availableSpaceInCurrentFrame], 321);
+                } else {
+                    return null;
+                }
+            }
+
+            @Override
+            public byte[] generateData(int virtualChannelId, int availableSpaceInCurrentFrame) {
+               return null;
+            }
+        };
+        // Setup the VCs (0, 1 and 63 for idle frames)
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier, null);
+        //
+        vc0.register(mux);
+        vc1.register(mux);
+        vc63.register(mux);
+        // Generation logic: generate data from VC0 if it has data. In any case, after 10 VC0 frames, generate a VC1
+        // frame if it has data. If VC1 has no data, generate an idle frame on VC7. If VC0 has no data, check VC1 and
+        // if no data, send idle frame on VC7.
+        int vc0frames = 0;
+        // Generate 300 frames overall
+        for(int i = 0; i < 300; ++i) {
+            if(vc0frames < 10) {
+                boolean vc0generated = vc0.pullNextFrame();
+                if(!vc0generated) {
+                    boolean vc1generated = vc1.pullNextFrame();
+                    if(!vc1generated) {
+                        vc63.dispatchIdle(new byte[] { 0x55 });
+                    }
+                } else {
+                    ++vc0frames;
+                }
+            } else {
+                boolean vc1generated = vc1.pullNextFrame();
+                if(!vc1generated) {
+                    vc63.dispatchIdle(new byte[] { 0x55 });
+                }
+                vc0frames = 0;
+            }
+        }
+        //
+        assertEquals(300, list.size());
     }
 }
