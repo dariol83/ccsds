@@ -21,8 +21,30 @@ import eu.dariolucia.ccsds.encdec.structure.PathLocation;
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
 
+/**
+ * This extension interface allows to decode a parameter value within a packet, when the parameter type does not map to
+ * any of the supported value types of the library.
+ *
+ * Classes implementing this interface must be annotated with the {@link ExtensionId} annotation in order to be looked up
+ * by the library.
+ */
 public interface IDecoderExtension {
 
-    Object decode(PacketDefinition packet, EncodedParameter decodedParameter, PathLocation location, BitEncoderDecoder decoder);
+    /**
+     * This method is invoked when a parameter definition with type equal to {@link eu.dariolucia.ccsds.encdec.definition.ExtensionType}
+     * is encountered when decoding a packet. All the required arguments to extract the value from the packet are provided
+     * to the extension.
+     *
+     * As a condition, the extension implementation must use the decoder object to read the underlying bits or bytes. The decoder
+     * object remembers the movements (forward and backward) when reading. When the method returns, the decoder must point
+     * to the first bit following the end bit of the decoded value.
+     *
+     * @param definition the packet definition containing the parameter to decode
+     * @param parameter the definition of the encoded parameter to be decoded
+     * @param location the location of the parameter inside the packet definition
+     * @param decoder the {@link BitEncoderDecoder} that must be used to decode the parameter
+     * @return the decoded value
+     */
+    Object decode(PacketDefinition definition, EncodedParameter parameter, PathLocation location, BitEncoderDecoder decoder);
 
 }

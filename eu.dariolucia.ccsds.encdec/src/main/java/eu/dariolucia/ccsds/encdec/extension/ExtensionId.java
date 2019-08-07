@@ -19,7 +19,16 @@ package eu.dariolucia.ccsds.encdec.extension;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+/**
+ * This annotation is used to mark extension providers with an ID that can be referenced in the definition. The ID is used
+ * by the {@link eu.dariolucia.ccsds.encdec.extension.internal.ExtensionRegistry} to look up the desired service provider.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ExtensionId {
+    /**
+     * This method returns the ID assigned to the extension class.
+     *
+     * @return the ID of the extension
+     */
     String id();
 }

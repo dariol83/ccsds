@@ -20,8 +20,25 @@ import eu.dariolucia.ccsds.encdec.structure.PathLocation;
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.DataTypeEnum;
 
+/**
+ * An instance of this class is used to compute the length in bits of a parameter, when its defined length is of type
+ * {@link eu.dariolucia.ccsds.encdec.definition.ParameterType} and:
+ * <ul>
+ *     <li>either the value pointed by the parameter reference is not a {@link Number};</li>
+ *     <li>or the value is a {@link Number} but a corresponding {@link eu.dariolucia.ccsds.encdec.definition.ParameterDefinition} with
+ *     external ID equal to the number cannot be found in the definition database.</li>
+ * </ul>
+ */
 public interface ITypeMapper {
 
-    DataTypeEnum mapType(EncodedParameter e, PathLocation location, Object mapValue);
+    /**
+     * This method returns the type of the parameter.
+     *
+     * @param parameter the definition of the parameter
+     * @param location the location of the parameter in the packet definition
+     * @param mapValue the value as extracted by the parameter reference
+     * @return the type of the parameter
+     */
+    DataTypeEnum mapType(EncodedParameter parameter, PathLocation location, Object mapValue);
 
 }

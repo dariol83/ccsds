@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.encdec.extension.internal;
 
 import eu.dariolucia.ccsds.encdec.extension.*;
 
+import java.util.Iterator;
 import java.util.ServiceLoader;
 
 public class ExtensionRegistry {
@@ -26,12 +27,12 @@ public class ExtensionRegistry {
 
     public static ILengthMapper lengthMapper() {
         synchronized (ExtensionRegistry.class) {
-            if(lengthMapper == null) {
+            if (lengthMapper == null) {
                 ServiceLoader<ILengthMapper> sl = ServiceLoader.load(ILengthMapper.class);
                 lengthMapper = sl.findFirst().orElse(null);
             }
         }
-        if(lengthMapper == null) {
+        if (lengthMapper == null) {
             throw new IllegalStateException("Access to extension ILengthMapper required, but extension not found");
         } else {
             return lengthMapper;
@@ -42,12 +43,12 @@ public class ExtensionRegistry {
 
     public static ITypeMapper typeMapper() {
         synchronized (ExtensionRegistry.class) {
-            if(typeMapper == null) {
+            if (typeMapper == null) {
                 ServiceLoader<ITypeMapper> sl = ServiceLoader.load(ITypeMapper.class);
                 typeMapper = sl.findFirst().orElse(null);
             }
         }
-        if(typeMapper == null) {
+        if (typeMapper == null) {
             throw new IllegalStateException("Access to extension ITypeMapper required, but extension not found");
         } else {
             return typeMapper;
@@ -70,11 +71,22 @@ public class ExtensionRegistry {
                 .findFirst() // the first that you get
                 .map(ServiceLoader.Provider::get) // you map it
                 .orElse(null); // if none available, then null
-        if(ext == null) {
-            throw new IllegalStateException("Access to extension " + clazz.getSimpleName() + " with id " + id + "required, but extension not found");
+
+        if (ext == null) {
+            throw new IllegalStateException("Access to extension " + clazz.getSimpleName() + " with id " + id + " required, but extension not found");
         } else {
             return ext;
         }
+        /*
+        for (Iterator<T> it = loader.iterator(); it.hasNext(); ) {
+            T object = it.next();
+            ExtensionId annotatedId = object.getClass().getAnnotation(ExtensionId.class);
+            if (annotatedId != null && annotatedId.id().equals(id)) {
+                return object;
+            }
+        }
+        throw new IllegalStateException("Access to extension " + clazz.getSimpleName() + " with id " + id + " required, but extension not found");
+        */
     }
 
 }

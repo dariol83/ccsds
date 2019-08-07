@@ -651,7 +651,7 @@ public final class BitEncoderDecoder {
      * Be careful with java integer bit sign
      *
      * @param pValue  the value to set
-     * @param pLength the length of the integer
+     * @param pLength the length of the integer in bits
      */
     public void setNextIntegerUnsigned(final int pValue, final int pLength) {
 
@@ -666,7 +666,7 @@ public final class BitEncoderDecoder {
      * Add Integer to the current position with the specified size and sign
      *
      * @param pValue  the value to set
-     * @param pLength the length of the integer
+     * @param pLength the length of the integer in bits
      */
     public void setNextIntegerSigned(final int pValue, final int pLength) {
 
