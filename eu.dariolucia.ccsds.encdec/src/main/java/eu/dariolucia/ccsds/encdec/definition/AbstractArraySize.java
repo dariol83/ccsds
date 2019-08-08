@@ -16,6 +16,11 @@
 
 package eu.dariolucia.ccsds.encdec.definition;
 
+/**
+ * This abstract class defines the size of an array, which can be provided statically in the definition, using the
+ * {@link FixedArraySize} class, or can be set to be read from a specific parameter, using the {@link ReferenceArraySize}
+ * class.
+ */
 public abstract class AbstractArraySize {
 
     public AbstractArraySize() {

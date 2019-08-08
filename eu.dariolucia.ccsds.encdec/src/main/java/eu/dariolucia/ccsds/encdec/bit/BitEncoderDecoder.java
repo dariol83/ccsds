@@ -1,4 +1,8 @@
 /*
+ *   Original Code
+ *   Copyright (c) 2017 Millau Julien (https://github.com/devnied/Bit-lib4j)
+ *
+ *   Modified code
  *   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");

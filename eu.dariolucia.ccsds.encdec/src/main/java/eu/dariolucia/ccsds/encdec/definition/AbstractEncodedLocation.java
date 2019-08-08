@@ -19,6 +19,10 @@ package eu.dariolucia.ccsds.encdec.definition;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+/**
+ * This class allows to specify where the parameter is encoded: at a fixed absolute location (see {@link FixedAbsoluteLocation}) or at a relative location
+ * with respect to the current position (see {@link LastRelativeLocation}).
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class AbstractEncodedLocation {
 

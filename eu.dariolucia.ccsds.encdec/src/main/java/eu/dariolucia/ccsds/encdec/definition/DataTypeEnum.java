@@ -19,6 +19,10 @@ package eu.dariolucia.ccsds.encdec.definition;
 /**
  * Data types having, as code, the PTC code as defined by ECSS-E-70-41A, available at
  * http://everyspec.com/ESA/download.php?spec=ECSS-E-70-41A.047794.pdf
+ *
+ * Even if the Deduced enumeration literal is defined, its use in this library usually generates an
+ * error: for the derivation of the specific type, classes like {@link ParameterType} or {@link ReferenceType}
+ * must be used.
  */
 public enum DataTypeEnum {
     Boolean(1),

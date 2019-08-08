@@ -19,6 +19,15 @@ package eu.dariolucia.ccsds.encdec.definition;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+/**
+ * This abstract class defines the type of the encoded parameter:
+ * <ul>
+ *     <li>When the type is known and it is static, then the {@link FixedType} class is used;</li>
+ *     <li>When the type is dynamic and it depends on the value of a previous field, then the {@link ReferenceType} class is used;</li>
+ *     <li>When the type is dynamic and it depends on the parameter ID provided in a previous field, then the {@link ParameterType} class is used</li>
+ *     <li>When the type is not supported by the library, then an extension must be defined and the {@link ExtensionType} class is used.</li>
+ * </ul>
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class AbstractEncodedType {
 

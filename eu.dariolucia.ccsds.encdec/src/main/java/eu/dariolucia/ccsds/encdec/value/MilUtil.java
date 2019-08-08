@@ -1,4 +1,8 @@
 /*
+ *   Original code:
+ *   Copyright (c) 2017 David Overeem (dovereem@cox.net)
+ *
+ *   Modified code:
  *   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");

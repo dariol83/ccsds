@@ -19,6 +19,15 @@ package eu.dariolucia.ccsds.encdec.definition;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+/**
+ * This abstract class defines the length of an encoded parameter. There are three ways to specify the encoded
+ * length:
+ * <ul>
+ *     <li>Statically, by using the {@link FixedLength} class</li>
+ *     <li>Dynamically, by the encoded value in the packet pointed by the {@link ReferenceLength} class</li>
+ *     <li>Dynamically, by using the length of the parameter specified by reading the value pointed by the {@link ParameterLength} class</li>
+ * </ul>
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class AbstractEncodedLength {
 

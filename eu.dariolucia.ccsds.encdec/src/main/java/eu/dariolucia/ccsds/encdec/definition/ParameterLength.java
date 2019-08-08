@@ -25,7 +25,8 @@ import java.util.Objects;
  * The semantic of objects of this class is the following: the length of the encoded parameter is equal to the length of the
  * parameter (PFC, according to its type) identified by the value contained in the referenced encoded field. If the value
  * is encoded as enum (PTC=2), signed (PTC=3) or unsigned (PTC=4) integer, the library will look for a parameter having external ID
- * equals to the value.
+ * equals to the value and it will use the length specified for such parameter. This approach can be used to encode parameters
+ * whose type and length is deduced by an ID encoded in a previous field (e.g. as ECSS PUS does for deduced values).
  *
  * If the value is not an integer or the external ID is not found, a registered external length mapper will be invoked
  * ({@link eu.dariolucia.ccsds.encdec.extension.ILengthMapper}). If such length mapper does not exist, an exception

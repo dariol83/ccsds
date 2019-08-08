@@ -79,7 +79,7 @@ public class SpacePacketExtractor {
             return new AosReceiverVirtualChannel(ttf.getVirtualChannelId(), VirtualChannelAccessMode.Packet, true);
         } else if (atf instanceof TcTransferFrame) {
             TcTransferFrame ttf = (TcTransferFrame) atf;
-            return new TcReceiverVirtualChannel(ttf.getVirtualChannelId(), VirtualChannelAccessMode.Packet, true, ttf.isSegmented(), ttf.getSecurityHeaderLength(), ttf.getSecurityTrailerLength());
+            return new TcReceiverVirtualChannel(ttf.getVirtualChannelId(), VirtualChannelAccessMode.Packet, true, ttf.getSecurityHeaderLength(), ttf.getSecurityTrailerLength());
         }
         throw new IllegalArgumentException("Frame type " + atf.getClass() + " not supported");
     }
