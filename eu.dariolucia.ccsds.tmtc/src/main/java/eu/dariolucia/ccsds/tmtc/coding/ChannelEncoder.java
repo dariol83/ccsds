@@ -66,11 +66,11 @@ public class ChannelEncoder<T extends AbstractTransferFrame> implements Function
 		this.frameCopy = frameCopy;
 	}
 
-	public ChannelEncoder<T> addEncodingFunction(IEncodingFunction<T>... functions) {
+	public ChannelEncoder<T> addEncodingFunction(IEncodingFunction<T> function) {
 		if (this.configured) {
 			throw new IllegalStateException("Channel structure already configured");
 		}
-		this.sequentialEncoders.addAll(Arrays.asList(functions));
+		this.sequentialEncoders.add(function);
 		return this;
 	}
 

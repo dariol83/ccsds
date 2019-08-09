@@ -64,11 +64,11 @@ public class ChannelDecoder<T extends AbstractTransferFrame> implements Function
         this.frameDecoder = frameDecoder;
     }
 
-    public ChannelDecoder<T> addDecodingFunction(Function<byte[], byte[]>... functions) {
+    public ChannelDecoder<T> addDecodingFunction(Function<byte[], byte[]> function) {
         if(this.configured) {
             throw new IllegalStateException("Channel decoder already configured");
         }
-        this.sequentialDecoders.addAll(Arrays.asList(functions));
+        this.sequentialDecoders.add(function);
         return this;
     }
 

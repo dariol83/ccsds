@@ -65,7 +65,8 @@ class VirtualChannelSenderSpacePacketProcessorTest {
 
 		// Create the encoding process: R-S encoding, ASM
 		ChannelEncoder<TmTransferFrame> encoder = ChannelEncoder.create();
-		encoder.addEncodingFunction(new ReedSolomonEncoder(ReedSolomonAlgorithm.TM_255_223, 5), new TmAsmEncoder());
+		encoder.addEncodingFunction(new ReedSolomonEncoder<>(ReedSolomonAlgorithm.TM_255_223, 5));
+		encoder.addEncodingFunction(new TmAsmEncoder<>());
 		encoder.configure();
 		// Create the encoding processor
 		ChannelEncoderProcessor<TmTransferFrame> encoderProcessor = new ChannelEncoderProcessor<>(encoder);
