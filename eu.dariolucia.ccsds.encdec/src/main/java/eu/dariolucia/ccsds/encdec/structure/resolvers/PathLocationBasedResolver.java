@@ -26,6 +26,13 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * A resolver that looks up the values from a map, provided at construction time.
+ *
+ * This class is not thread-safe and it does not impose any control to prevent race conditions upon accessing the map. If
+ * the map can be written externally from this class by a different thread, it is suggested to use a {@link java.util.concurrent.ConcurrentHashMap}
+ * or {@link java.util.concurrent.ConcurrentSkipListMap}.
+ */
 public class PathLocationBasedResolver implements IEncodeResolver {
 
     private final Map<String, Object> location2value;

@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.encdec.structure;
 
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
+import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
 import eu.dariolucia.ccsds.encdec.value.BitString;
 
 import java.time.Duration;
@@ -49,6 +50,14 @@ public interface IEncodeResolver {
     AbsoluteTimeDescriptor getAbsoluteTimeDescriptor(EncodedParameter parameter, PathLocation location, Instant value);
 
     RelativeTimeDescriptor getRelativeTimeDescriptor(EncodedParameter parameter, PathLocation location, Duration value);
+
+    default void startPacketEncoding(PacketDefinition pd) {
+        // Stub, redefine if packet definition is required for the encoding
+    }
+
+    default void endPacketEncoding() {
+        // Stub, can be redefined
+    }
 
     final class AbsoluteTimeDescriptor {
 
