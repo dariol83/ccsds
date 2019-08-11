@@ -44,14 +44,7 @@ public class TcTransferFrame extends AbstractTransferFrame {
      * @return the decoding function
      */
     public static IDecodingFunction<TcTransferFrame> decodingFunction(boolean segmented, boolean fecfPresent) {
-        return input -> {
-            int length = readTcFrameLength(input);
-            if(length == input.length) {
-                return new TcTransferFrame(input, segmented, fecfPresent);
-            } else {
-                return new TcTransferFrame(Arrays.copyOfRange(input, 0, length), segmented, fecfPresent);
-            }
-        };
+        return decodingFunction(segmented, fecfPresent, 0, 0);
     }
 
     /**

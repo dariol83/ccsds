@@ -43,7 +43,11 @@ public class AosTransferFrame extends AbstractTransferFrame {
     );
 
     public static IDecodingFunction<AosTransferFrame> decodingFunction(boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
-        return input -> new AosTransferFrame(input, frameHeaderErrorControlPresent, transferFrameInsertZoneLength, userDataType, ocfPresent, fecfPresent);
+        return decodingFunction(frameHeaderErrorControlPresent, transferFrameInsertZoneLength, userDataType, ocfPresent, fecfPresent, 0, 0);
+    }
+
+    public static IDecodingFunction<AosTransferFrame> decodingFunction(boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
+        return input -> new AosTransferFrame(input, frameHeaderErrorControlPresent, transferFrameInsertZoneLength, userDataType, ocfPresent, fecfPresent, securityHeaderLength, securityTrailerLength);
     }
 
     public enum UserDataType {
@@ -227,7 +231,7 @@ public class AosTransferFrame extends AbstractTransferFrame {
         return validHeader;
     }
 
-    public int getTransferFrameInsertZoneLength() {
+    public int getInsertZoneLength() {
         return transferFrameInsertZoneLength;
     }
 

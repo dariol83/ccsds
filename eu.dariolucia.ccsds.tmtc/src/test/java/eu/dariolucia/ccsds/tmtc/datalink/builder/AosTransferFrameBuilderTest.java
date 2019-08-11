@@ -46,6 +46,11 @@ class AosTransferFrameBuilderTest {
         assertEquals(0xFED123, ttf.getVirtualChannelFrameCount());
         assertTrue(ttf.isValidHeader());
         assertNotNull(ttf.toString());
+        assertTrue(ttf.isFrameHeaderErrorControlPresent());
+        assertTrue(ttf.isVirtualChannelFrameCountUsageFlag());
+        assertEquals(10, ttf.getVirtualChannelFrameCountCycle());
+        assertFalse(ttf.isReplayFlag());
+        assertEquals(0, ttf.getInsertZoneLength());
     }
 
     @Test
@@ -76,6 +81,9 @@ class AosTransferFrameBuilderTest {
         assertTrue(ttf.isValid());
         assertArrayEquals(secHeader, ttf.getSecurityHeaderCopy());
         assertArrayEquals(secTrailer, ttf.getSecurityTrailerCopy());
+        assertEquals(4, ttf.getSecurityHeaderLength());
+        assertEquals(2, ttf.getSecurityTrailerLength());
+        assertTrue(ttf.isSecurityUsed());
     }
 
     @Test

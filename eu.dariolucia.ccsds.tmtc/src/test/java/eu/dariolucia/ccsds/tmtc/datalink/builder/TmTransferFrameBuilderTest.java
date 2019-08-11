@@ -53,6 +53,13 @@ class TmTransferFrameBuilderTest {
         assertEquals(TmTransferFrame.TM_FIRST_HEADER_POINTER_IDLE, ttf.getFirstHeaderPointer());
         assertTrue(ttf.isIdleFrame());
         assertFalse(ttf.isNoStartPacket());
+
+        try {
+            ttf.getSecondaryHeaderCopy();
+            fail("getSecondaryHeaderCopy exception expected");
+        } catch(Exception e) {
+            // Good
+        }
     }
 
     @Test
@@ -279,6 +286,9 @@ class TmTransferFrameBuilderTest {
         assertArrayEquals(secHeader, ttf.getSecurityHeaderCopy());
         assertArrayEquals(secTrailer, ttf.getSecurityTrailerCopy());
         assertNotNull(ttf.toString());
+        assertEquals(4, ttf.getSecurityHeaderLength());
+        assertEquals(2, ttf.getSecurityTrailerLength());
+        assertTrue(ttf.isSecurityUsed());
     }
 
     @Test
