@@ -75,14 +75,25 @@ public class AosTransferFrame extends AbstractTransferFrame {
     private short bitstreamDataZoneStart;
     private boolean bitstreamAllValid;
 
+    // Security header/trailer as per CCSDS 355.0-B-1
+    private final int securityHeaderLength;
+    private final int securityTrailerLength;
+
     public AosTransferFrame(byte[] frame, boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
+        this(frame, frameHeaderErrorControlPresent, transferFrameInsertZoneLength, userDataType, ocfPresent, fecfPresent, 0, 0);
+    }
+
+    public AosTransferFrame(byte[] frame, boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
         super(frame, fecfPresent);
 
-        // Frame header error control field is only assumed as an additional 2 bytes: no R-S decoding on the protected header fields is performed, only error control
+        // Frame header error control field is only assumed as an additional 2 bytes: no R-S error correction on the protected header fields is performed, only error control
         this.ocfPresent = ocfPresent;
         this.frameHeaderErrorControlPresent = frameHeaderErrorControlPresent;
         this.transferFrameInsertZoneLength = transferFrameInsertZoneLength;
         this.userDataType = userDataType;
+
+        this.securityHeaderLength = securityHeaderLength;
+        this.securityTrailerLength = securityTrailerLength;
 
         ByteBuffer in = ByteBuffer.wrap(frame);
         short twoOctets = in.getShort();
@@ -117,6 +128,11 @@ public class AosTransferFrame extends AbstractTransferFrame {
         }
 
         dataFieldStart = (short) (AOS_PRIMARY_HEADER_LENGTH + (frameHeaderErrorControlPresent ? AOS_PRIMARY_HEADER_FHEC_LENGTH : 0) + transferFrameInsertZoneLength);
+        // Use of security (if present)
+        dataFieldStart += securityHeaderLength;
+
+        // Compute the length of the data field
+        dataFieldLength = frame.length - dataFieldStart - securityTrailerLength - (ocfPresent ? 4 : 0) - (fecfPresent ? 2 : 0);
 
         if(frameHeaderErrorControlPresent) {
             in.getShort();
@@ -131,14 +147,14 @@ public class AosTransferFrame extends AbstractTransferFrame {
             case M_PDU:
                 twoOctets = in.getShort();
                 firstHeaderPointer = (short) ((twoOctets & (short) 0x07FF));
-                packetZoneStart = (short) ((frameHeaderErrorControlPresent ? AOS_PRIMARY_HEADER_LENGTH + AOS_PRIMARY_HEADER_FHEC_LENGTH : AOS_PRIMARY_HEADER_LENGTH) + transferFrameInsertZoneLength + 2);
+                packetZoneStart = (short) (dataFieldStart + 2);
                 noStartPacket = firstHeaderPointer == AOS_M_PDU_FIRST_HEADER_POINTER_NO_PACKET;
                 idleFrame = firstHeaderPointer == AOS_M_PDU_FIRST_HEADER_POINTER_IDLE;
                 break;
             case B_PDU:
                 twoOctets = in.getShort();
                 bitstreamDataPointer = (short) ((twoOctets & (short) 0x3FFF));
-                bitstreamDataZoneStart = (short) ((frameHeaderErrorControlPresent ? AOS_PRIMARY_HEADER_LENGTH + AOS_PRIMARY_HEADER_FHEC_LENGTH : AOS_PRIMARY_HEADER_LENGTH) + transferFrameInsertZoneLength + 2);
+                bitstreamDataZoneStart = (short) (dataFieldStart + 2);
                 bitstreamAllValid = bitstreamDataPointer == AOS_B_PDU_FIRST_HEADER_POINTER_ALL_DATA;
                 idleFrame = bitstreamDataPointer == AOS_B_PDU_FIRST_HEADER_POINTER_IDLE;
                 break;
@@ -237,7 +253,7 @@ public class AosTransferFrame extends AbstractTransferFrame {
     }
 
     public short getPacketZoneLength() {
-        return (short) ((frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0)) - getPacketZoneStart());
+        return (short) ((frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0)) - securityTrailerLength - getPacketZoneStart());
     }
 
     public UserDataType getUserDataType() {
@@ -261,7 +277,7 @@ public class AosTransferFrame extends AbstractTransferFrame {
     }
 
     public short getBitstreamDataZoneLength() {
-        return (short) ((frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0)) - getBitstreamDataPointer());
+        return (short) ((frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0)) - securityTrailerLength - getBitstreamDataPointer());
     }
 
     public boolean isBitstreamAllValid() {

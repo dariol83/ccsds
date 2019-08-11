@@ -60,6 +60,9 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
 
     private byte[] ocf;
 
+    private byte[] securityHeader;
+    private byte[] securityTrailer;
+
     private List<AosTransferFrameBuilder.PayloadUnit> payloadUnits = new LinkedList<>();
 
     public AosTransferFrameBuilder(int length, boolean frameHeaderErrorControlPresent, int insertZoneLength, AosTransferFrame.UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
@@ -133,6 +136,25 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
 
     public AosTransferFrameBuilder setIdle() {
         this.idle = true;
+        return this;
+    }
+
+    public AosTransferFrameBuilder setSecurity(byte[] header, byte[] trailer) {
+        if(header == null && trailer == null) {
+            // Do not do anything
+            return this;
+        }
+        if(isFull()) {
+            throw new IllegalArgumentException("AOS Frame already full");
+        }
+        if(getFreeUserDataLength() < header.length + trailer.length) {
+            throw new IllegalArgumentException("AOS Frame cannot accomodate additional "
+                    + (header.length + trailer.length) + " bytes, remaining space is " + getFreeUserDataLength() + " bytes");
+        }
+        this.securityHeader = header;
+        this.securityTrailer = trailer;
+        this.freeUserDataLength -= (header.length + trailer.length);
+
         return this;
     }
 
@@ -245,6 +267,11 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
             bb.put(this.insertZone);
         }
 
+        // Write security header if present
+        if(this.securityHeader != null && this.securityHeader.length > 0) {
+            bb.put(this.securityHeader);
+        }
+
         if(userDataType == AosTransferFrame.UserDataType.M_PDU) {
             short firstHeaderPointer = computeMPDUFirstHeaderPointer();
             bb.putShort(firstHeaderPointer);
@@ -256,6 +283,11 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
         // Write the user data
         for(AosTransferFrameBuilder.PayloadUnit pu : this.payloadUnits) {
             bb.put(pu.data);
+        }
+
+        // Write security trailer if present
+        if(this.securityTrailer != null && this.securityTrailer.length > 0) {
+            bb.put(this.securityTrailer);
         }
 
         // Write the OCF (if present, 4 bytes)

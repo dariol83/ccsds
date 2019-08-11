@@ -26,6 +26,7 @@ import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * This class allows to send AOS frames built from space packets, bit streams or using the VCA mode. It can work in pull and push mode.
@@ -50,19 +51,26 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 
 	private volatile boolean replayFlag = false;
 
+	// Security info
+	private final Supplier<byte[]> secHeaderSupplier;
+	private final Supplier<byte[]> secTrailerSupplier;
+	private final int secHeaderLength;
+	private final int secTrailerLength;
+
 	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Function<Integer, AbstractOcf> ocfSupplier) {
 		this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, ocfSupplier, false, false, 0, null);
 	}
 
 	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Function<Integer, AbstractOcf> ocfSupplier, boolean virtualChannelFrameCountCycleInUse, boolean fhecfPresent, int insertZoneLength, Function<Integer, byte[]> insertZoneSupplier) {
-		this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, ocfSupplier, virtualChannelFrameCountCycleInUse, fhecfPresent, insertZoneLength, insertZoneSupplier, null);
+		this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, ocfSupplier, virtualChannelFrameCountCycleInUse, fhecfPresent, insertZoneLength, insertZoneSupplier, null, 0, 0, null, null);
 	}
 
 	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Function<Integer, AbstractOcf> ocfSupplier, IVirtualChannelDataProvider dataProvider) {
-		this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, ocfSupplier, false, false, 0, null, dataProvider);
+		this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, ocfSupplier, false, false, 0, null, dataProvider, 0, 0, null, null);
 	}
 
-	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Function<Integer, AbstractOcf> ocfSupplier, boolean virtualChannelFrameCountCycleInUse, boolean fhecfPresent, int insertZoneLength, Function<Integer, byte[]> insertZoneSupplier, IVirtualChannelDataProvider dataProvider) {
+	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Function<Integer, AbstractOcf> ocfSupplier, boolean virtualChannelFrameCountCycleInUse, boolean fhecfPresent, int insertZoneLength, Function<Integer, byte[]> insertZoneSupplier, IVirtualChannelDataProvider dataProvider,
+								   int secHeaderLength, int secTrailerLength, Supplier<byte[]> secHeaderSupplier, Supplier<byte[]> secTrailerSupplier) {
 		super(spacecraftId, virtualChannelId, mode, fecfPresent, dataProvider);
 		this.frameLength = frameLength;
 		this.ocfSupplier = ocfSupplier;
@@ -70,6 +78,19 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 		this.insertZoneLength = insertZoneLength;
 		this.fhecfPresent = fhecfPresent;
 		this.virtualChannelFrameCountCycleInUse = virtualChannelFrameCountCycleInUse;
+
+		this.secHeaderSupplier = secHeaderSupplier;
+		this.secTrailerSupplier = secTrailerSupplier;
+		this.secHeaderLength = Math.max(secHeaderLength, 0);
+		this.secTrailerLength = Math.max(secTrailerLength, 0);
+
+		if(secHeaderLength > 0 && secHeaderSupplier == null) {
+			throw new IllegalArgumentException("Security header length specified, but no security header supplier provided");
+		}
+
+		if(secTrailerLength > 0 && secTrailerSupplier == null) {
+			throw new IllegalArgumentException("Security trailer length specified, but no security trailer supplier provided");
+		}
 	}
 
 	public boolean isReplayFlag() {
@@ -318,7 +339,12 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 	}
 
 	protected AosTransferFrameBuilder createFrameBuilder(boolean isReplay) {
+		// Add security if present
+		byte[] secH = secHeaderSupplier != null ? secHeaderSupplier.get() : new byte[0];
+		byte[] secT = secTrailerSupplier != null ? secTrailerSupplier.get() : new byte[0];
+
 		return AosTransferFrameBuilder.create(getFrameLength(), isFhecfPresent(), getInsertZoneLength(), deriveAosType(), isOcfPresent(), isFecfPresent())
+				.setSecurity(secH, secT)
 				.setSpacecraftId(getSpacecraftId())
 				.setVirtualChannelId(getVirtualChannelId())
 				.setReplayFlag(isReplay);

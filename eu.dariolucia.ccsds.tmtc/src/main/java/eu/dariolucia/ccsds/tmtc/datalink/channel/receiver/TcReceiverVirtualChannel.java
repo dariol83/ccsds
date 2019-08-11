@@ -21,18 +21,8 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame;
 
 public class TcReceiverVirtualChannel extends AbstractReceiverVirtualChannel<TcTransferFrame> {
 
-    private final int secHeaderLength;
-    private final int secTrailerLength;
-
     public TcReceiverVirtualChannel(int virtualChannelId, VirtualChannelAccessMode mode, boolean throwExceptionOnVcViolation) {
-        this(virtualChannelId, mode, throwExceptionOnVcViolation, 0, 0);
-    }
-
-    public TcReceiverVirtualChannel(int virtualChannelId, VirtualChannelAccessMode mode, boolean throwExceptionOnVcViolation,
-                                    int secHeaderLength, int secTrailerLength) {
         super(virtualChannelId, mode, throwExceptionOnVcViolation);
-        this.secHeaderLength = secHeaderLength;
-        this.secTrailerLength = secTrailerLength;
     }
 
     @Override
@@ -47,7 +37,7 @@ public class TcReceiverVirtualChannel extends AbstractReceiverVirtualChannel<TcT
 
     @Override
     protected int retrieveFirstHeaderPointer(TcTransferFrame frame) {
-        return (frame.isSegmented() ? 1 : 0) + this.secHeaderLength;
+        return (frame.isSegmented() ? 1 : 0);
     }
 
     @Override
@@ -57,7 +47,7 @@ public class TcReceiverVirtualChannel extends AbstractReceiverVirtualChannel<TcT
 
     @Override
     protected int retrievePacketDataFieldLength(TcTransferFrame frame) {
-        return frame.getDataFieldLength() - secTrailerLength;
+        return frame.getDataFieldLength();
     }
 
     @Override

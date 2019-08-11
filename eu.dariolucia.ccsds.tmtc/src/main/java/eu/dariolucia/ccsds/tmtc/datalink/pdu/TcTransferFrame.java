@@ -222,17 +222,24 @@ public class TcTransferFrame extends AbstractTransferFrame {
         // Last octet
         virtualChannelFrameCount = (short) Byte.toUnsignedInt(in.get());
 
-        dataFieldStart = TC_PRIMARY_HEADER_LENGTH;
+        // If security is present, then the Transfer Frame Data Field is located as specified by CCSDS 232.0-B-3, 6.3.1.
+        if(securityHeaderLength > 0) {
+            dataFieldStart = (short) (TC_PRIMARY_HEADER_LENGTH + (segmented ? 1 : 0) + securityHeaderLength);
+            dataFieldLength = frameLength - dataFieldStart - securityTrailerLength - (fecfPresent ? 2 : 0);
+        } else {
+            dataFieldStart = TC_PRIMARY_HEADER_LENGTH;
+            dataFieldLength = frameLength - dataFieldStart - (fecfPresent ? 2 : 0);
+        }
 
         // 4.1.3.3
         if(getFrameType() == FrameType.BC) {
-            int dataFieldLength = frame.length - dataFieldStart - (fecfPresent ? 2 : 0) - securityHeaderLength - securityTrailerLength;
+            int dataFieldLength = frame.length - dataFieldStart - (fecfPresent ? 2 : 0) - securityTrailerLength;
             if(dataFieldLength == 1) {
                 controlCommandType = frame[dataFieldStart + securityHeaderLength] == 0x00 ? ControlCommandType.UNLOCK : ControlCommandType.RESERVED;
             } else if (dataFieldLength == 3) {
-                if(frame[dataFieldStart] == (byte) 0x82 && frame[dataFieldStart + securityHeaderLength + 1] == 0x00) {
+                if(frame[dataFieldStart] == (byte) 0x82 && frame[dataFieldStart + 1] == 0x00) {
                     controlCommandType = ControlCommandType.SET_VR;
-                    setVrValue = (short) Byte.toUnsignedInt(frame[dataFieldStart + securityHeaderLength + 2]);
+                    setVrValue = (short) Byte.toUnsignedInt(frame[dataFieldStart + 2]);
                 } else {
                     controlCommandType = ControlCommandType.RESERVED;
                 }
@@ -242,7 +249,9 @@ public class TcTransferFrame extends AbstractTransferFrame {
         }
 
         if(this.segmented && getFrameType() != FrameType.BC) {
-            byte segHeader = frame[dataFieldStart];
+            // If security is present, the segment header is before the security header, i.e. immediately following the TC primary header
+            // as per CCSDS 232.0-B-3, 6.3.1. This is in all cases, so we do not use the dataFieldStart here.
+            byte segHeader = frame[TC_PRIMARY_HEADER_LENGTH];
             this.mapId = (byte) (segHeader & 0x3F);
             this.sequenceFlag = SequenceFlagType.values()[((segHeader & 0xC0) >> 6)];
         }

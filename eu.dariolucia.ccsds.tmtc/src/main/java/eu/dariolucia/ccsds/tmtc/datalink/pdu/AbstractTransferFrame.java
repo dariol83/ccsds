@@ -71,6 +71,11 @@ public abstract class AbstractTransferFrame extends AnnotatedObject {
     protected short dataFieldStart;
 
     /**
+     * Length of the data field (i.e. excluding FECF, OCF and security fields, if present
+     */
+    protected int dataFieldLength;
+
+    /**
      * Operational control field start offset from the beginning of the frame: valid values only if ocdPresent is true.
      */
     protected short ocfStart;
@@ -255,9 +260,9 @@ public abstract class AbstractTransferFrame extends AnnotatedObject {
     /**
      * This method returns the length of the data field.
      *
-     * @return the length of the data field (without CLCW and FECF, if present)
+     * @return the length of the data field (without CLCW and FECF and security info, if present)
      */
     public int getDataFieldLength() {
-        return frame.length - dataFieldStart - (ocfPresent ? 4 : 0) - (fecfPresent ? 2 : 0);
+        return dataFieldLength;
     }
 }

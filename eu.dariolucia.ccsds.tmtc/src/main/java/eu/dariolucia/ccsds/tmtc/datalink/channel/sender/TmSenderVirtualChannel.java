@@ -44,19 +44,26 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
 
     private final int frameLength;
 
+    // Security info
+    private final Supplier<byte[]> secHeaderSupplier;
+    private final Supplier<byte[]> secTrailerSupplier;
+    private final int secHeaderLength;
+    private final int secTrailerLength;
+
     public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Supplier<Integer> masterChannelFrameCounterSupplier, Function<Integer, AbstractOcf> ocfSupplier) {
         this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, masterChannelFrameCounterSupplier, ocfSupplier, 0, null);
     }
 
     public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Supplier<Integer> masterChannelFrameCounterSupplier, Function<Integer, AbstractOcf> ocfSupplier, int secondaryHeaderLength, Function<Integer, byte[]> secondaryHeaderSupplier) {
-        this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, masterChannelFrameCounterSupplier, ocfSupplier, secondaryHeaderLength, secondaryHeaderSupplier, null);
+        this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, masterChannelFrameCounterSupplier, ocfSupplier, secondaryHeaderLength, secondaryHeaderSupplier, null, 0, 0, null, null);
     }
 
     public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Supplier<Integer> masterChannelFrameCounterSupplier, Function<Integer, AbstractOcf> ocfSupplier, IVirtualChannelDataProvider dataProvider) {
-        this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, masterChannelFrameCounterSupplier, ocfSupplier, 0, null, dataProvider);
+        this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, masterChannelFrameCounterSupplier, ocfSupplier, 0, null, dataProvider, 0, 0, null, null);
     }
 
-    public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Supplier<Integer> masterChannelFrameCounterSupplier, Function<Integer, AbstractOcf> ocfSupplier, int secondaryHeaderLength, Function<Integer, byte[]> secondaryHeaderSupplier, IVirtualChannelDataProvider dataProvider) {
+    public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Supplier<Integer> masterChannelFrameCounterSupplier, Function<Integer, AbstractOcf> ocfSupplier, int secondaryHeaderLength, Function<Integer, byte[]> secondaryHeaderSupplier, IVirtualChannelDataProvider dataProvider,
+                                  int secHeaderLength, int secTrailerLength, Supplier<byte[]> secHeaderSupplier, Supplier<byte[]> secTrailerSupplier) {
         super(spacecraftId, virtualChannelId, mode, fecfPresent, dataProvider);
         this.frameLength = frameLength;
         this.ocfSupplier = ocfSupplier;
@@ -65,6 +72,19 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
         this.masterChannelFrameCounterSupplier = masterChannelFrameCounterSupplier;
         if(mode == VirtualChannelAccessMode.Bitstream) {
             throw new IllegalArgumentException("Virtual channel " + virtualChannelId + " does not support access mode " + mode);
+        }
+
+        this.secHeaderSupplier = secHeaderSupplier;
+        this.secTrailerSupplier = secTrailerSupplier;
+        this.secHeaderLength = Math.max(secHeaderLength, 0);
+        this.secTrailerLength = Math.max(secTrailerLength, 0);
+
+        if(secHeaderLength > 0 && secHeaderSupplier == null) {
+            throw new IllegalArgumentException("Security header length specified, but no security header supplier provided");
+        }
+
+        if(secTrailerLength > 0 && secTrailerSupplier == null) {
+            throw new IllegalArgumentException("Security trailer length specified, but no security trailer supplier provided");
         }
     }
 
@@ -181,7 +201,7 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
 
     @Override
     public int getMaxUserDataLength() {
-        return TmTransferFrameBuilder.computeUserDataLength(getFrameLength(), getSecondaryHeaderLength(), isOcfPresent(), isFecfPresent());
+        return TmTransferFrameBuilder.computeUserDataLength(getFrameLength(), getSecondaryHeaderLength(), isOcfPresent(), isFecfPresent()) - secHeaderLength - secTrailerLength;
     }
 
     protected TmTransferFrame finalizeFullFrame() {
@@ -196,11 +216,17 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
         if(this.ocfSupplier != null) {
             ((TmTransferFrameBuilder) this.currentFrame).setOcf(this.ocfSupplier.apply(getVirtualChannelId()).getOcf());
         }
+
         return this.currentFrame.build();
     }
 
     protected TmTransferFrameBuilder createFrameBuilder() {
+        // Add security if present
+        byte[] secH = secHeaderSupplier != null ? secHeaderSupplier.get() : new byte[0];
+        byte[] secT = secTrailerSupplier != null ? secTrailerSupplier.get() : new byte[0];
+
         return TmTransferFrameBuilder.create(getFrameLength(), getSecondaryHeaderLength(), isOcfPresent(), isFecfPresent())
+                .setSecurity(secH, secT)
                 .setSpacecraftId(getSpacecraftId())
                 .setVirtualChannelId(getVirtualChannelId())
                 .setSynchronisationFlag(false)

@@ -16,8 +16,8 @@
 
 package eu.dariolucia.ccsds.tmtc.datalink.builder;
 
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.algorithm.Crc16Algorithm;
+import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -57,6 +57,10 @@ public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferF
     private byte[] ocf;
 
     private boolean idle;
+
+    private byte[] securityHeader;
+    private byte[] securityTrailer;
+
     private List<PayloadUnit> payloadUnits = new LinkedList<>();
 
     private TmTransferFrameBuilder(int length, int secondaryHeaderLength, boolean ocfPresent, boolean fecfPresent) {
@@ -144,6 +148,25 @@ public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferF
 
     public TmTransferFrameBuilder setIdle() {
         this.idle = true;
+        return this;
+    }
+
+    public TmTransferFrameBuilder setSecurity(byte[] header, byte[] trailer) {
+        if(header == null && trailer == null) {
+            // Do not do anything
+            return this;
+        }
+        if(isFull()) {
+            throw new IllegalArgumentException("TM Frame already full");
+        }
+        if(getFreeUserDataLength() < header.length + trailer.length) {
+            throw new IllegalArgumentException("TM Frame cannot accomodate additional "
+                    + (header.length + trailer.length) + " bytes, remaining space is " + getFreeUserDataLength() + " bytes");
+        }
+        this.securityHeader = header;
+        this.securityTrailer = trailer;
+        this.freeUserDataLength -= (header.length + trailer.length);
+
         return this;
     }
 
@@ -251,9 +274,19 @@ public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferF
             bb.put(this.secondaryHeader);
         }
 
+        // Write security header if present
+        if(this.securityHeader != null && this.securityHeader.length > 0) {
+            bb.put(this.securityHeader);
+        }
+
         // Write the user data
         for(PayloadUnit pu : this.payloadUnits) {
             bb.put(pu.data);
+        }
+
+        // Write security trailer if present
+        if(this.securityTrailer != null && this.securityTrailer.length > 0) {
+            bb.put(this.securityTrailer);
         }
 
         // Write the OCF (if present, 4 bytes)

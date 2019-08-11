@@ -71,8 +71,8 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
         }
         this.secHeaderSupplier = secHeaderSupplier;
         this.secTrailerSupplier = secTrailerSupplier;
-        this.secHeaderLength = secHeaderLength >= 0 ? secHeaderLength : 0;
-        this.secTrailerLength = secTrailerLength >= 0 ? secTrailerLength : 0;
+        this.secHeaderLength = Math.max(secHeaderLength, 0);
+        this.secTrailerLength = Math.max(secTrailerLength, 0);
 
         if(secHeaderLength > 0 && secHeaderSupplier == null) {
             throw new IllegalArgumentException("Security header length specified, but no security header supplier provided");

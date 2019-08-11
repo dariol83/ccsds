@@ -29,7 +29,11 @@ public class TmTransferFrame extends AbstractTransferFrame {
     public static final short TM_FIRST_HEADER_POINTER_IDLE = 2046;
 
     public static IDecodingFunction<TmTransferFrame> decodingFunction(boolean fecfPresent) {
-        return input -> new TmTransferFrame(input, fecfPresent);
+        return decodingFunction(fecfPresent, 0, 0);
+    }
+
+    public static IDecodingFunction<TmTransferFrame> decodingFunction(boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
+        return input -> new TmTransferFrame(input, fecfPresent, securityHeaderLength, securityTrailerLength);
     }
 
     private final int masterChannelFrameCount;
@@ -43,11 +47,22 @@ public class TmTransferFrame extends AbstractTransferFrame {
     private final boolean idleFrame;
 
     // Secondary header fields: valid values only if secondaryHeaderPresent == true
-    private byte secondaryHeaderVersionNumber;
-    private byte secondaryHeaderLength;
+    private final byte secondaryHeaderVersionNumber;
+    private final byte secondaryHeaderLength;
+
+    // Security header/trailer as per CCSDS 355.0-B-1
+    private final int securityHeaderLength;
+    private final int securityTrailerLength;
 
     public TmTransferFrame(byte[] frame, boolean fecfPresent) {
+        this(frame, fecfPresent, 0, 0);
+    }
+
+    public TmTransferFrame(byte[] frame, boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
         super(frame, fecfPresent);
+
+        this.securityHeaderLength = securityHeaderLength;
+        this.securityTrailerLength = securityTrailerLength;
 
         ByteBuffer in = ByteBuffer.wrap(frame);
         short twoOctets = in.getShort();
@@ -97,7 +112,15 @@ public class TmTransferFrame extends AbstractTransferFrame {
             secondaryHeaderLength = (byte) (tfshid & (byte) 0x3F);
 
             dataFieldStart += 1 + secondaryHeaderLength;
+        } else {
+            secondaryHeaderVersionNumber = 0;
+            secondaryHeaderLength = 0;
         }
+
+        // Use of security (if present)
+        dataFieldStart += securityHeaderLength;
+        // Compute the length of the data field
+        dataFieldLength = frame.length - dataFieldStart - securityTrailerLength - (ocfPresent ? 4 : 0) - (fecfPresent ? 2 : 0);
 
         // OCF
         if(ocfPresent) {
@@ -173,6 +196,51 @@ public class TmTransferFrame extends AbstractTransferFrame {
         } else {
             throw new IllegalStateException("Cannot return copy of Secondary Header, Secondary Header not present");
         }
+    }
+
+    /**
+     * This method returns whether security information (header, trailer or both) have been used.
+     *
+     * @return true if security blocks are part of the TC frame
+     */
+    public boolean isSecurityUsed() {
+        return this.securityHeaderLength != 0 || this.securityTrailerLength != 0;
+    }
+
+    /**
+     * This method returns the length of the security header field in bytes.
+     *
+     * @return the length of the security header field in bytes
+     */
+    public int getSecurityHeaderLength() {
+        return securityHeaderLength;
+    }
+
+    /**
+     * This method returns the length of the security trailer field in bytes.
+     *
+     * @return the length of the security trailer field in bytes
+     */
+    public int getSecurityTrailerLength() {
+        return securityTrailerLength;
+    }
+
+    /**
+     * This method returns a copy of the security header field.
+     *
+     * @return a copy of the security header field
+     */
+    public byte[] getSecurityHeaderCopy() {
+        return Arrays.copyOfRange(frame, TM_PRIMARY_HEADER_LENGTH + secondaryHeaderLength, TM_PRIMARY_HEADER_LENGTH + secondaryHeaderLength + securityHeaderLength);
+    }
+
+    /**
+     * This method returns a copy of the security trailer field.
+     *
+     * @return a copy of the security trailer field
+     */
+    public byte[] getSecurityTrailerCopy() {
+        return Arrays.copyOfRange(frame, frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0) - securityTrailerLength, frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0));
     }
 
     @Override
