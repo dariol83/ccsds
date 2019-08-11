@@ -19,8 +19,7 @@ package eu.dariolucia.ccsds.tmtc.datalink.builder;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class AosTransferFrameBuilderTest {
 
@@ -46,5 +45,71 @@ class AosTransferFrameBuilderTest {
         assertEquals(42, ttf.getVirtualChannelId());
         assertEquals(0xFED123, ttf.getVirtualChannelFrameCount());
         assertTrue(ttf.isValidHeader());
+        assertNotNull(ttf.toString());
     }
+
+    @Test
+    public void testAosFrameEncodingWithSecurity() {
+        byte[] secHeader = new byte[] { 0x01, 0x01, 0x01, 0x01 };
+        byte[] secTrailer = new byte[] { 0x0F, 0x0F };
+        int userData = AosTransferFrameBuilder.computeUserDataLength(892, true, 0, AosTransferFrame.UserDataType.IDLE, true, true);
+        AosTransferFrameBuilder b = AosTransferFrameBuilder.create(892, true, 0, AosTransferFrame.UserDataType.IDLE, true, true)
+                .setSpacecraftId(123)
+                .setVirtualChannelId(42)
+                .setVirtualChannelFrameCount(0xFED123)
+                .setReplayFlag(false)
+                .setVirtualChannelFrameCountUsageFlag(true)
+                .setVirtualChannelFrameCountCycle(10)
+                .setSecurity(secHeader, secTrailer)
+                .setIdle();
+        userData -= secHeader.length + secTrailer.length;
+        int remaining = b.addData(new byte[userData]);
+        assertEquals(0, remaining);
+
+        b.setOcf(new byte[] { (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA });
+
+        AosTransferFrame ttf = b.build();
+        assertEquals(123, ttf.getSpacecraftId());
+        assertEquals(42, ttf.getVirtualChannelId());
+        assertEquals(0xFED123, ttf.getVirtualChannelFrameCount());
+        assertTrue(ttf.isValidHeader());
+        assertTrue(ttf.isValid());
+        assertArrayEquals(secHeader, ttf.getSecurityHeaderCopy());
+        assertArrayEquals(secTrailer, ttf.getSecurityTrailerCopy());
+    }
+
+    @Test
+    public void testAosFrameEncodingWithSecurityAndInsertZone() {
+        byte[] insertZone = new byte[] { 0x0F, 0x0F, 0x0A, 0x55, 0x55};
+        byte[] secHeader = new byte[] { 0x01, 0x01, 0x01, 0x01 };
+        byte[] secTrailer = new byte[] { 0x0F, 0x0F };
+        int userData = AosTransferFrameBuilder.computeUserDataLength(892, true, insertZone.length, AosTransferFrame.UserDataType.IDLE, true, true);
+        AosTransferFrameBuilder b = AosTransferFrameBuilder.create(892, true, insertZone.length, AosTransferFrame.UserDataType.IDLE, true, true)
+                .setSpacecraftId(123)
+                .setVirtualChannelId(42)
+                .setVirtualChannelFrameCount(0xFED123)
+                .setReplayFlag(false)
+                .setVirtualChannelFrameCountUsageFlag(true)
+                .setVirtualChannelFrameCountCycle(10)
+                .setSecurity(secHeader, secTrailer)
+                .setInsertZone(insertZone)
+                .setIdle();
+        userData -= secHeader.length + secTrailer.length;
+        int remaining = b.addData(new byte[userData]);
+        assertEquals(0, remaining);
+
+        b.setOcf(new byte[] { (byte) 0xAA, (byte) 0xAA, (byte) 0xAA, (byte) 0xAA });
+
+        AosTransferFrame ttf = b.build();
+        assertEquals(123, ttf.getSpacecraftId());
+        assertEquals(42, ttf.getVirtualChannelId());
+        assertEquals(0xFED123, ttf.getVirtualChannelFrameCount());
+        assertTrue(ttf.isValidHeader());
+        assertTrue(ttf.isValid());
+        assertArrayEquals(secHeader, ttf.getSecurityHeaderCopy());
+        assertArrayEquals(secTrailer, ttf.getSecurityTrailerCopy());
+        assertArrayEquals(insertZone, ttf.getInsertZoneCopy());
+        assertEquals(AosTransferFrame.AOS_PRIMARY_HEADER_LENGTH + AosTransferFrame.AOS_PRIMARY_HEADER_FHEC_LENGTH + insertZone.length + secHeader.length, ttf.getDataFieldStart());
+    }
+
 }

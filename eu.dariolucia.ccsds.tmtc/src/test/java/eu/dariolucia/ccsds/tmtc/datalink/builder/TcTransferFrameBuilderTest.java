@@ -45,5 +45,6 @@ class TcTransferFrameBuilderTest {
         assertFalse(ttf.isControlCommandFlag());
         assertTrue(ttf.isBypassFlag());
         assertFalse(ttf.isSegmented());
+        assertNotNull(ttf.toString());
     }
 }

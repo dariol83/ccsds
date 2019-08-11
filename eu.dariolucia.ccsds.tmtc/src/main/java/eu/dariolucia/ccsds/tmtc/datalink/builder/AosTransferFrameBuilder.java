@@ -316,7 +316,8 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
         }
 
         // Return the frame
-        return new AosTransferFrame(encodedFrame, frameHeaderErrorControlPresent, insertZoneLength, userDataType, ocfPresent, fecfPresent);
+        return new AosTransferFrame(encodedFrame, frameHeaderErrorControlPresent, insertZoneLength, userDataType, ocfPresent, fecfPresent,
+                securityHeader != null ? securityHeader.length : 0, securityTrailer != null ? securityTrailer.length : 0);
     }
 
     private void computeFHEC(byte[] encodedFrame) {

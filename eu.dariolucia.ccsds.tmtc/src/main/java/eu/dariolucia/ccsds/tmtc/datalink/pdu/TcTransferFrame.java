@@ -427,16 +427,19 @@ public class TcTransferFrame extends AbstractTransferFrame {
                 "bypassFlag=" + bypassFlag +
                 ", controlCommandFlag=" + controlCommandFlag +
                 ", frameLength=" + frameLength +
+                ", segmented=" + segmented +
+                ", mapId=" + mapId +
+                ", sequenceFlag=" + sequenceFlag +
                 ", controlCommandType=" + controlCommandType +
                 ", setVrValue=" + setVrValue +
+                ", securityHeaderLength=" + securityHeaderLength +
+                ", securityTrailerLength=" + securityTrailerLength +
                 ", fecfPresent=" + fecfPresent +
                 ", ocfPresent=" + ocfPresent +
                 ", transferFrameVersionNumber=" + transferFrameVersionNumber +
                 ", spacecraftId=" + spacecraftId +
                 ", virtualChannelId=" + virtualChannelId +
                 ", virtualChannelFrameCount=" + virtualChannelFrameCount +
-                ", securityHeaderLength=" + securityHeaderLength +
-                ", securityTrailerLength=" + securityTrailerLength +
                 ", valid=" + valid +
                 '}';
     }

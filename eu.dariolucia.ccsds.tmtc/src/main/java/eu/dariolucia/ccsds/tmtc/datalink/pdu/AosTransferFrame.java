@@ -309,11 +309,58 @@ public class AosTransferFrame extends AbstractTransferFrame {
         }
     }
 
+
+    /**
+     * This method returns whether security information (header, trailer or both) have been used.
+     *
+     * @return true if security blocks are part of the TC frame
+     */
+    public boolean isSecurityUsed() {
+        return this.securityHeaderLength != 0 || this.securityTrailerLength != 0;
+    }
+
+    /**
+     * This method returns the length of the security header field in bytes.
+     *
+     * @return the length of the security header field in bytes
+     */
+    public int getSecurityHeaderLength() {
+        return securityHeaderLength;
+    }
+
+    /**
+     * This method returns the length of the security trailer field in bytes.
+     *
+     * @return the length of the security trailer field in bytes
+     */
+    public int getSecurityTrailerLength() {
+        return securityTrailerLength;
+    }
+
+    /**
+     * This method returns a copy of the security header field.
+     *
+     * @return a copy of the security header field
+     */
+    public byte[] getSecurityHeaderCopy() {
+        return Arrays.copyOfRange(frame, AOS_PRIMARY_HEADER_LENGTH + (frameHeaderErrorControlPresent ? 2 : 0) + transferFrameInsertZoneLength, AOS_PRIMARY_HEADER_LENGTH + (frameHeaderErrorControlPresent ? 2 : 0) + transferFrameInsertZoneLength + securityHeaderLength);
+    }
+
+    /**
+     * This method returns a copy of the security trailer field.
+     *
+     * @return a copy of the security trailer field
+     */
+    public byte[] getSecurityTrailerCopy() {
+        return Arrays.copyOfRange(frame, frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0) - securityTrailerLength, frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0));
+    }
+
     @Override
     public String toString() {
         return "AosTransferFrame{" +
                 "userDataType=" + userDataType +
                 ", frameHeaderErrorControlPresent=" + frameHeaderErrorControlPresent +
+                ", validHeader=" + validHeader +
                 ", transferFrameInsertZoneLength=" + transferFrameInsertZoneLength +
                 ", replayFlag=" + replayFlag +
                 ", virtualChannelFrameCountUsageFlag=" + virtualChannelFrameCountUsageFlag +
@@ -325,6 +372,8 @@ public class AosTransferFrame extends AbstractTransferFrame {
                 ", bitstreamDataPointer=" + bitstreamDataPointer +
                 ", bitstreamDataZoneStart=" + bitstreamDataZoneStart +
                 ", bitstreamAllValid=" + bitstreamAllValid +
+                ", securityHeaderLength=" + securityHeaderLength +
+                ", securityTrailerLength=" + securityTrailerLength +
                 ", fecfPresent=" + fecfPresent +
                 ", ocfPresent=" + ocfPresent +
                 ", transferFrameVersionNumber=" + transferFrameVersionNumber +

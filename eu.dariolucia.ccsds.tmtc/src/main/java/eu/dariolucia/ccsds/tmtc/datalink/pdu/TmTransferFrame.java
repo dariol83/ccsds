@@ -256,6 +256,8 @@ public class TmTransferFrame extends AbstractTransferFrame {
                 ", idleFrame=" + idleFrame +
                 ", secondaryHeaderVersionNumber=" + secondaryHeaderVersionNumber +
                 ", secondaryHeaderLength=" + secondaryHeaderLength +
+                ", securityHeaderLength=" + securityHeaderLength +
+                ", securityTrailerLength=" + securityTrailerLength +
                 ", fecfPresent=" + fecfPresent +
                 ", ocfPresent=" + ocfPresent +
                 ", transferFrameVersionNumber=" + transferFrameVersionNumber +

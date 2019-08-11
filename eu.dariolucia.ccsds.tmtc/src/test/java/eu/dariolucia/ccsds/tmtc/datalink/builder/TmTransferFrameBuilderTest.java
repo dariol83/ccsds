@@ -66,7 +66,7 @@ class TmTransferFrameBuilderTest {
                 .setPacketOrderFlag(false)
                 .setSynchronisationFlag(false)
                 .setSegmentLengthIdentifier(3)
-                .setOcf(new byte[] { 0x00, 0x00, 0x00, 0x00 });
+                .setOcf(new byte[] { 0x01, 0x02, 0x03, 0x04 });
 
         int residual = builder.addSpacePacket(new byte[userDataLength/2]);
         assertEquals(0, residual);
@@ -86,6 +86,7 @@ class TmTransferFrameBuilderTest {
         assertEquals(0, ttf.getFirstHeaderPointer());
         assertFalse(ttf.isIdleFrame());
         assertFalse(ttf.isNoStartPacket());
+        assertArrayEquals(new byte[] { 0x01, 0x02, 0x03, 0x04 }, ttf.getOcfCopy());
     }
 
     @Test
@@ -152,5 +153,167 @@ class TmTransferFrameBuilderTest {
         assertEquals(userDataLength/2, ttf.getFirstHeaderPointer());
         assertFalse(ttf.isIdleFrame());
         assertFalse(ttf.isNoStartPacket());
+    }
+
+    @Test
+    public void testFecfFrameEncoding() {
+        int userDataLength = TmTransferFrameBuilder.computeUserDataLength(1115, 0, true, true);
+        TmTransferFrameBuilder builder = TmTransferFrameBuilder.create(1115, 0, true, true)
+                .setSpacecraftId(789)
+                .setVirtualChannelId(2)
+                .setMasterChannelFrameCount(34)
+                .setVirtualChannelFrameCount(123)
+                .setPacketOrderFlag(false)
+                .setSynchronisationFlag(false)
+                .setSegmentLengthIdentifier(3)
+                .setOcf(new byte[] { 0x00, 0x00, 0x00, 0x00 });
+
+        int residual = builder.addSpacePacket(new byte[userDataLength/2]);
+        assertEquals(0, residual);
+        residual = builder.addSpacePacket(new byte[userDataLength/2 + 1]);
+        assertEquals(0, residual);
+
+        TmTransferFrame ttf = builder.build();
+
+        assertEquals(789, ttf.getSpacecraftId());
+        assertEquals(2, ttf.getVirtualChannelId());
+        assertEquals(34, ttf.getMasterChannelFrameCount());
+        assertEquals(123, ttf.getVirtualChannelFrameCount());
+        assertFalse(ttf.isPacketOrderFlag());
+        assertFalse(ttf.isSecondaryHeaderPresent());
+        assertFalse(ttf.isSynchronisationFlag());
+        assertEquals(3, ttf.getSegmentLengthIdentifier());
+        assertEquals(0, ttf.getFirstHeaderPointer());
+        assertFalse(ttf.isIdleFrame());
+        assertFalse(ttf.isNoStartPacket());
+        assertTrue(ttf.isValid());
+        assertTrue(ttf.isFecfPresent());
+    }
+
+    @Test
+    public void testSecurityFrameEncoding() {
+        byte[] secHeader = new byte[] { 0x01, 0x01, 0x01, 0x01 };
+        byte[] secTrailer = new byte[] { 0x0F, 0x0F };
+        int userDataLength = TmTransferFrameBuilder.computeUserDataLength(1115, 0, true, false);
+        TmTransferFrameBuilder builder = TmTransferFrameBuilder.create(1115, 0, true, false)
+                .setSpacecraftId(789)
+                .setVirtualChannelId(2)
+                .setMasterChannelFrameCount(34)
+                .setVirtualChannelFrameCount(123)
+                .setPacketOrderFlag(false)
+                .setSynchronisationFlag(false)
+                .setSegmentLengthIdentifier(3)
+                .setSecurity(secHeader, secTrailer)
+                .setOcf(new byte[] { 0x00, 0x00, 0x00, 0x00 });
+
+        // Security headers reduce the available space
+        userDataLength -= secHeader.length + secTrailer.length;
+        int residual = builder.addSpacePacket(new byte[userDataLength/2]);
+        assertEquals(0, residual);
+        residual = builder.addSpacePacket(new byte[userDataLength/2 + 1]);
+        assertEquals(0, residual);
+
+        TmTransferFrame ttf = builder.build();
+
+        assertEquals(789, ttf.getSpacecraftId());
+        assertEquals(2, ttf.getVirtualChannelId());
+        assertEquals(34, ttf.getMasterChannelFrameCount());
+        assertEquals(123, ttf.getVirtualChannelFrameCount());
+        assertFalse(ttf.isPacketOrderFlag());
+        assertFalse(ttf.isSecondaryHeaderPresent());
+        assertFalse(ttf.isSynchronisationFlag());
+        assertEquals(3, ttf.getSegmentLengthIdentifier());
+        assertEquals(0, ttf.getFirstHeaderPointer());
+        assertFalse(ttf.isIdleFrame());
+        assertFalse(ttf.isNoStartPacket());
+        assertTrue(ttf.isValid());
+        assertFalse(ttf.isFecfPresent());
+        assertEquals(TmTransferFrame.TM_PRIMARY_HEADER_LENGTH + secHeader.length, ttf.getDataFieldStart());
+        // Length of the frame, minus header length, minus OCF length, minus security header and trailer
+        assertEquals(1115 - 6 - 4 - 4 - 2, ttf.getDataFieldLength());
+        assertArrayEquals(secHeader, ttf.getSecurityHeaderCopy());
+        assertArrayEquals(secTrailer, ttf.getSecurityTrailerCopy());
+    }
+
+    @Test
+    public void testSecurityFecfFrameEncoding() {
+        byte[] secHeader = new byte[] { 0x01, 0x01, 0x01, 0x01 };
+        byte[] secTrailer = new byte[] { 0x0F, 0x0F };
+        int userDataLength = TmTransferFrameBuilder.computeUserDataLength(1115, 0, true, true);
+        TmTransferFrameBuilder builder = TmTransferFrameBuilder.create(1115, 0, true, true)
+                .setSpacecraftId(789)
+                .setVirtualChannelId(2)
+                .setMasterChannelFrameCount(34)
+                .setVirtualChannelFrameCount(123)
+                .setPacketOrderFlag(false)
+                .setSynchronisationFlag(false)
+                .setSegmentLengthIdentifier(3)
+                .setSecurity(secHeader, secTrailer)
+                .setOcf(new byte[] { 0x00, 0x00, 0x00, 0x00 });
+
+        // Security headers reduce the available space
+        userDataLength -= secHeader.length + secTrailer.length;
+        int residual = builder.addSpacePacket(new byte[userDataLength/2]);
+        assertEquals(0, residual);
+        residual = builder.addSpacePacket(new byte[userDataLength/2 + 1]);
+        assertEquals(0, residual);
+
+        TmTransferFrame ttf = builder.build();
+
+        assertEquals(789, ttf.getSpacecraftId());
+        assertEquals(2, ttf.getVirtualChannelId());
+        assertEquals(34, ttf.getMasterChannelFrameCount());
+        assertEquals(123, ttf.getVirtualChannelFrameCount());
+        assertFalse(ttf.isPacketOrderFlag());
+        assertFalse(ttf.isSecondaryHeaderPresent());
+        assertFalse(ttf.isSynchronisationFlag());
+        assertEquals(3, ttf.getSegmentLengthIdentifier());
+        assertEquals(0, ttf.getFirstHeaderPointer());
+        assertFalse(ttf.isIdleFrame());
+        assertFalse(ttf.isNoStartPacket());
+        assertTrue(ttf.isValid());
+        assertTrue(ttf.isFecfPresent());
+        assertEquals(TmTransferFrame.TM_PRIMARY_HEADER_LENGTH + secHeader.length, ttf.getDataFieldStart());
+        // Length of the frame, minus header length, minus OCF length, minus FECF, minus security header and trailer
+        assertEquals(1115 - 6 - 4 - 2 - 4 - 2, ttf.getDataFieldLength());
+        assertArrayEquals(secHeader, ttf.getSecurityHeaderCopy());
+        assertArrayEquals(secTrailer, ttf.getSecurityTrailerCopy());
+        assertNotNull(ttf.toString());
+    }
+
+    @Test
+    public void testSecondaryHeaderFrameEncoding() {
+        int userDataLength = TmTransferFrameBuilder.computeUserDataLength(1115, 5, true, false);
+        TmTransferFrameBuilder builder = TmTransferFrameBuilder.create(1115, 5, true, false)
+                .setSpacecraftId(789)
+                .setVirtualChannelId(2)
+                .setMasterChannelFrameCount(34)
+                .setVirtualChannelFrameCount(123)
+                .setPacketOrderFlag(false)
+                .setSynchronisationFlag(false)
+                .setSegmentLengthIdentifier(3)
+                .setOcf(new byte[] { 0x01, 0x02, 0x03, 0x04 })
+                .setSecondaryHeader(new byte[] { (byte) 0xFF, (byte) 0xFA, 0x11, 0x14, 0x76});
+
+        int residual = builder.addSpacePacket(new byte[userDataLength/2]);
+        assertEquals(0, residual);
+        residual = builder.addSpacePacket(new byte[userDataLength/2 + 1]);
+        assertEquals(0, residual);
+
+        TmTransferFrame ttf = builder.build();
+
+        assertEquals(789, ttf.getSpacecraftId());
+        assertEquals(2, ttf.getVirtualChannelId());
+        assertEquals(34, ttf.getMasterChannelFrameCount());
+        assertEquals(123, ttf.getVirtualChannelFrameCount());
+        assertFalse(ttf.isPacketOrderFlag());
+        assertTrue(ttf.isSecondaryHeaderPresent());
+        assertFalse(ttf.isSynchronisationFlag());
+        assertEquals(3, ttf.getSegmentLengthIdentifier());
+        assertEquals(0, ttf.getFirstHeaderPointer());
+        assertFalse(ttf.isIdleFrame());
+        assertFalse(ttf.isNoStartPacket());
+        assertArrayEquals(new byte[] { 0x01, 0x02, 0x03, 0x04 }, ttf.getOcfCopy());
+        assertArrayEquals(new byte[] { (byte) 0xFF, (byte) 0xFA, 0x11, 0x14, 0x76}, ttf.getSecondaryHeaderCopy());
     }
 }

@@ -309,7 +309,7 @@ public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferF
         }
 
         // Return the frame
-        return new TmTransferFrame(encodedFrame, fecfPresent);
+        return new TmTransferFrame(encodedFrame, fecfPresent, securityHeader != null ? securityHeader.length : 0, securityTrailer != null ? securityTrailer.length : 0);
     }
 
     private short computeFirstHeaderPointer() {

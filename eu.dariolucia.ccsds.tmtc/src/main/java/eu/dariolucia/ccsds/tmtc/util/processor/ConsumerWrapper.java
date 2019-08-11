@@ -21,16 +21,36 @@ import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * This class allows to adapt a {@link Consumer} implementation into a reactive {@link Flow.Subscriber} object.
+ *
+ * @param <T> the data type being consumed.
+ */
 public class ConsumerWrapper<T> implements Flow.Subscriber<T> {
 
     private final Function<Consumer<T>, Integer> backlogProvider;
     private final Consumer<T> delegate;
     private volatile Flow.Subscription subscription;
 
+    /**
+     * Create a {@link ConsumerWrapper} that requests Integer.MAX elements when the subscription is performed. Data
+     * received by the subscription is forwarded to the {@link Consumer} delegate.
+     *
+     * @param delegate the object that will ultimately receive all the data items received from the subscription
+     */
     public ConsumerWrapper(Consumer<T> delegate) {
         this(delegate, null);
     }
 
+    /**
+     * Create a {@link ConsumerWrapper} that requests a specific number of elements when the subscription is performed. Data
+     * received by the subscription is forwarded to the {@link Consumer} delegate. The exact number of elements to be
+     * requested is obtained by using the {@link Function} backlogProvider.
+     *
+     * @param delegate the object that will ultimately receive all the data items received from the subscription
+     * @param backlogProvider the function responsible to compute the number of requests that the {@link ConsumerWrapper}
+     *                        will perform upon registration and upon reception of a new data item
+     */
     public ConsumerWrapper(Consumer<T> delegate, Function<Consumer<T>, Integer> backlogProvider) {
         if(delegate == null) {
             throw new NullPointerException("Consumer shall not be null");
@@ -40,6 +60,11 @@ public class ConsumerWrapper<T> implements Flow.Subscriber<T> {
         this.backlogProvider = backlogProvider;
     }
 
+    /**
+     * This method registers the subscription and requests the next items to it.
+     *
+     * @param subscription the subscription
+     */
     @Override
     public void onSubscribe(Flow.Subscription subscription) {
         this.subscription = subscription;
@@ -51,6 +76,13 @@ public class ConsumerWrapper<T> implements Flow.Subscriber<T> {
         }
     }
 
+    /**
+     * This method forwards the received item to the registered delegate and, if there is a backlogProvider set,
+     * it will query it and, should the backlogProvider return a non-null Integer, the request(...) method will be called
+     * again on the subscription.
+     *
+     * @param item the item to be forwarded
+     */
     @Override
     public void onNext(T item) {
         this.delegate.accept(item);
@@ -62,11 +94,19 @@ public class ConsumerWrapper<T> implements Flow.Subscriber<T> {
         }
     }
 
+    /**
+     * This method does nothing.
+     *
+     * @param throwable the raised Throwable
+     */
     @Override
     public void onError(Throwable throwable) {
         //
     }
 
+    /**
+     * This method does nothing.
+     */
     @Override
     public void onComplete() {
         //
