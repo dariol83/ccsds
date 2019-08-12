@@ -25,6 +25,7 @@ module eu.dariolucia.ccsds.inspector {
 
     exports eu.dariolucia.ccsds.inspector.api;
     exports eu.dariolucia.ccsds.inspector.connectors.file;
+    exports eu.dariolucia.ccsds.inspector.connectors.tcp;
 
     exports eu.dariolucia.ccsds.inspector.application to javafx.graphics;
     exports eu.dariolucia.ccsds.inspector.view.controller to javafx.fxml;
