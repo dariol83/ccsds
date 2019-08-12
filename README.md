@@ -19,12 +19,22 @@ A simple but effective graphical interface is provided as separate module (eu.da
 ## TM/TC
 The TM/TC Library (eu.dariolucia.ccsds.tmtc) is a library that provide support to parse and build TM frames, TC frames, AOS frames, Space Packets. It allows encoding/decoding of space packets into TM frames, TC frames or AOS frames. It also provides some basic encodings (e.g. CLTU encoding/decoding, randomization, FECF encoding/checking, Reed-Solomon encoding/checking) but no error correction capabilities. 
 A simple graphical interface to inspect TM/TC/AOS/Space Packet data is provided as separate module (eu.dariolucia.ccsds.inspector). It is possible to implement custom connectors to allow inspection of data delivered from a custom source/protocol/format by providing a new 
-service (in Java 11 terms) implementing the interface eu.dariolucia.ccsds.inspector.api.IConnectorFactory.
+service (in Java 11 terms) implementing the interface eu.dariolucia.ccsds.inspector.api.IConnectorFactory. Some connectors to read data from file or socket are already available.
 
 ## ENC/DEC
 A packet identification/encoding/decoding library, which supports basic data types (integer, real, enumeration, CCSDS absolute and 
 relative time formats, strings, octet streams, bit streams) and array structures, as derived from the ECSS Packet Utilisation Standard (http://everyspec.com/ESA/download.php?spec=ECSS-E-70-41A.047794.pdf). The focus on this implementation is on reliable and efficient packet identification and decoding performance. Encoding performance has not been measured. 
 The packet structure is defined using a custom XML format definition, built by means of JAXB annotations.
+
+## Examples
+A modules providing examples on how to use the three modules above in a combined way, to demonstrate the capabilities of the library to write compact code. The following examples are going to be provided:
+- TM generator with output to file and/or TCP socket, from packet definition to TM CADU or TM frame;
+- TM processor with output to console, from CADU or TM frames read from a TCP socket to encoded parameter extraction;
+- TM processor with output to console, from SLE RAF to encoded parameter extraction;
+- TC generator from list of parameters (as defined in the packet definition) to CLTU with output to file and/or TCP socket;
+- TC generator from list of parameters to SLE CLTU;
+- TC processor with output to console, from CLTU to encoded parameter extraction.
+The main target of the examples module **is not to provide final applications ready to be used**, rather to explain the different levels and concepts of the libraries, and how to link the various objects together. 
 
 # Goals
 The purpose of this repository is to produce, as far as my possibilities allow, simple, well-designed, well-documented, well-tested code with top performance. For each module (graphical elements and tools excluded) I have the following targets:
