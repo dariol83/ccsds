@@ -17,6 +17,7 @@
 import eu.dariolucia.ccsds.inspector.connectors.file.AosFileConnectorFactory;
 import eu.dariolucia.ccsds.inspector.connectors.file.TcFileConnectorFactory;
 import eu.dariolucia.ccsds.inspector.connectors.file.TmFileConnectorFactory;
+import eu.dariolucia.ccsds.inspector.connectors.tcp.TmTcpConnectorFactory;
 import eu.dariolucia.ccsds.inspector.connectors.testing.TmTestConnectorFactory;
 
 module eu.dariolucia.ccsds.inspector {
@@ -41,5 +42,6 @@ module eu.dariolucia.ccsds.inspector {
             TmTestConnectorFactory,
             TmFileConnectorFactory,
             AosFileConnectorFactory,
-            TcFileConnectorFactory;
+            TcFileConnectorFactory,
+            TmTcpConnectorFactory;
 }
