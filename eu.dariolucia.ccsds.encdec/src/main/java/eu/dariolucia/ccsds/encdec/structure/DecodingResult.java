@@ -16,13 +16,13 @@
 
 package eu.dariolucia.ccsds.encdec.structure;
 
-import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.DataTypeEnum;
+import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class DecodingResult {
 
@@ -43,7 +43,7 @@ public class DecodingResult {
     }
 
     public Map<String, Object> getDecodedItemsAsMap() {
-        final Map<String, Object> map = new TreeMap<>();
+        final Map<String, Object> map = new LinkedHashMap<>();
         for(Item i : decodedItems) {
             i.visit(new IVisitor() {
                 @Override

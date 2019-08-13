@@ -69,7 +69,13 @@ public class DefaultPacketEncoder implements IPacketEncoder {
         PacketDefinition definition = definitions.retrieveDefinition(packetDefinitionId);
         // Create a definition walker
         EncodeWalker w = new EncodeWalker(definitions.getDefinitions(), definition, maxPacketSize, agencyEpoch, resolver);
+        // Notify encoding start
+        resolver.startPacketEncoding(definition);
         // Encode the definition
-        return w.walk();
+        byte[] data = w.walk();
+        // Notify encoding end
+        resolver.endPacketEncoding();
+        // Return the encoded block
+        return data;
     }
 }
