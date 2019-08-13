@@ -28,6 +28,7 @@ import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
 import eu.dariolucia.ccsds.tmtc.coding.ChannelEncoder;
 import eu.dariolucia.ccsds.tmtc.coding.encoder.ReedSolomonEncoder;
 import eu.dariolucia.ccsds.tmtc.coding.encoder.TmAsmEncoder;
+import eu.dariolucia.ccsds.tmtc.coding.encoder.TmRandomizerEncoder;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.TmSenderVirtualChannel;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux.TmMasterChannelMuxer;
@@ -57,6 +58,9 @@ public class TmGenerator {
     // If set, the Reed-Solomon codeblock with the derived interleaving depth will be generated and put at the end of each frame
     // If not set, no RS block will be generated.
     private final static String ARGS_USE_RS = "--rs";
+    // If set, the frame+RS block, if present, is randomized.
+    // If not set, randomization is not used.
+    private final static String ARGS_USE_RANDOMIZATION = "--randomize";
     // The path to the packet encoding definition file (special extension used).
     // This is a mandatory argument.
     private final static String ARGS_DEFINITION_PATH = "--definition";
@@ -91,6 +95,7 @@ public class TmGenerator {
     // Instance fields
     private boolean useAsm = false;
     private boolean useRs = false;
+    private boolean useRandomization = false;
     private Definition definition = null;
     private OutputStream outFile = null;
     private ServerSocket serverSocket = null;
@@ -100,7 +105,7 @@ public class TmGenerator {
     private boolean useClcw = false;
     private int frameLength = 1115;
     private List<Integer> vcIds = Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7);
-    private List<Integer> vcIdPriority = Arrays.asList(1, 1, 1, 1, 1, 1, 1);
+    private List<Integer> vcIdPriority = Arrays.asList(1, 1, 1, 1, 1, 1, 1, 1);
     private int scId = 0;
     // A fixed encode resolver with hardcoded default values and encoding for identification fields
     private final IEncodeResolver defaultResolver = new IdentificationFieldBasedResolver(new DefaultNullBasedResolver());
@@ -119,6 +124,11 @@ public class TmGenerator {
     public void setUseRs(boolean useRs) {
         checkState();
         this.useRs = useRs;
+    }
+
+    public void setUseRandomization(boolean useRandomization) {
+        checkState();
+        this.useRandomization = useRandomization;
     }
 
     public void setDefinition(Definition definition) {
@@ -196,6 +206,10 @@ public class TmGenerator {
         if(this.useRs) {
             // Add a ReedSolomon encoder, try to derive the interleaving depth: the frame length must be a multiple of 223 bytes
             channelEncoder.addEncodingFunction(new ReedSolomonEncoder<>(ReedSolomonAlgorithm.TM_255_223, this.frameLength / 223));
+        }
+        if(this.useRandomization) {
+            // Add a randomizer
+            channelEncoder.addEncodingFunction(new TmRandomizerEncoder<>());
         }
         if(this.useAsm) {
             // Add the TM attached synch marker
@@ -421,6 +435,7 @@ public class TmGenerator {
             System.out.println("--out_tcp                   port number where TM frames will be written if a TCP client connects. Default: disabled");
             System.out.println("--asm                       generate ASM block. Default: not generated");
             System.out.println("--rs                        generate RS codeblock. Default: not generated");
+            System.out.println("--randomize                 randomize the frame+RS. Default: not set");
             System.out.println("--fecf                      generate the Frame Error Control Field. Default: not generated");
             System.out.println("--clcw                      generate a dummy CLCW. Default: not generated");
             System.exit(-1);
@@ -467,6 +482,10 @@ public class TmGenerator {
                     break;
                 case ARGS_USE_CLCW:
                     tmGen.setUseClcw(true);
+                    i += 1;
+                    break;
+                case ARGS_USE_RANDOMIZATION:
+                    tmGen.setUseRandomization(true);
                     i += 1;
                     break;
                 case ARGS_VCID_LIST:
