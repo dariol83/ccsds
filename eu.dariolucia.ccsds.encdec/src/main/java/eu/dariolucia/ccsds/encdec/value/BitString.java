@@ -57,4 +57,56 @@ public class BitString {
     public String toString() {
         return "BitString["+length+"] " + Arrays.toString(data);
     }
+
+    /**
+     * This method parses a BitString encoded as a string. The expected format is a sequence of 0s and 1s. The data will
+     * be converted into a byte array, and the length of the BitString will be set equal to the length of the string.
+     *
+     * The first character (s.charAt(0)) is the most significant bit.
+     *
+     * @param s the BitString encoded as string of 0s and 1s
+     * @return the BitString object
+     * @throws BitStringFormatException if the format is not the expected one
+     */
+    public static BitString parseBitString(String s) {
+        byte[] data = new byte[(int) Math.ceil(s.length() / 8.0)];
+        int length = s.length();
+        int currentByteIdx = 0;
+        int currentBitIdx = 0;
+        for(int i = 0; i < s.length(); ++i) {
+            // read the char
+            char theChar = s.charAt(i);
+            switch (theChar) {
+                case '0':
+                    // Do not set anything
+                    // Advance
+                    ++currentBitIdx;
+                    if(currentBitIdx == 8) {
+                        currentBitIdx = 0;
+                        ++currentByteIdx;
+                    }
+                    break;
+                case '1':
+                    // Set the bit currentBitIdx at byte currentByteIdx to 1
+                    data[currentByteIdx] |= (byte) ((1 << (7 - currentBitIdx)) & 0xFF);
+                    // Advance
+                    ++currentBitIdx;
+                    if(currentBitIdx == 8) {
+                        currentBitIdx = 0;
+                        ++currentByteIdx;
+                    }
+                    break;
+                default:
+                    throw new BitStringFormatException("Cannot parse string: " + s);
+            }
+        }
+        return new BitString(data, length);
+    }
+
+    public static class BitStringFormatException extends RuntimeException {
+
+        public BitStringFormatException(String message) {
+            super(message);
+        }
+    }
 }
