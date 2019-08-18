@@ -47,7 +47,7 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 
 	private final boolean virtualChannelFrameCountCycleInUse;
 
-	private final AtomicInteger virtualChannelFrameCountCycle = new AtomicInteger(-1);
+	private final AtomicInteger virtualChannelFrameCountCycle = new AtomicInteger(0);
 
 	private volatile boolean replayFlag = false;
 
@@ -135,14 +135,6 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 
 	public void setVirtualChannelFrameCountCycle(int num) {
 		this.virtualChannelFrameCountCycle.set(num);
-	}
-
-	private int incrementVirtualChannelFrameCountCycle() {
-		int toReturn = this.virtualChannelFrameCountCycle.incrementAndGet() % 8;
-		if (toReturn == 0) {
-			this.virtualChannelFrameCountCycle.set(0);
-		}
-		return toReturn;
 	}
 
 	public void dispatchIdle(byte[] idlePattern) {
@@ -315,9 +307,10 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 		if (isVirtualChannelFrameCountCycleInUse()) {
 			((AosTransferFrameBuilder) this.currentFrame)
 					.setVirtualChannelFrameCountUsageFlag(true);
-			if (vcCount == 0) {
+			// If the vcCount is 0 and there were frames emitted before, then the cycle must increase
+			if (vcCount == 0 && getNbOfEmittedFrames() > 0) {
 				((AosTransferFrameBuilder) this.currentFrame)
-						.setVirtualChannelFrameCountCycle(incrementVirtualChannelFrameCountCycle());
+						.setVirtualChannelFrameCountCycle(this.virtualChannelFrameCountCycle.incrementAndGet());
 			} else {
 				((AosTransferFrameBuilder) this.currentFrame)
 						.setVirtualChannelFrameCountCycle(this.virtualChannelFrameCountCycle.get());

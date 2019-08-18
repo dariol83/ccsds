@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.sender;
 
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux.SimpleMuxer;
+import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
 import eu.dariolucia.ccsds.tmtc.ocf.builder.ClcwBuilder;
 import eu.dariolucia.ccsds.tmtc.ocf.pdu.AbstractOcf;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AosSenderVirtualChannelTest {
 
@@ -336,5 +338,66 @@ class AosSenderVirtualChannelTest {
         }
         //
         assertEquals(300, list.size());
+    }
+
+    @Test
+    public void testPushModeSpacePackets() {
+        // Create a sink consumer
+        List<AosTransferFrame> list = new LinkedList<>();
+        Consumer<AosTransferFrame> sink = list::add;
+
+        // Setup the VCs (0, 1 and 7 for idle frames)
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 1115, this::ocfSupplier, true, false, 0, null);
+
+        //
+        vc0.register(new IVirtualChannelSenderOutput() {
+            @Override
+            public void transferFrameGenerated(AbstractSenderVirtualChannel vc, AbstractTransferFrame generatedFrame, int bufferedBytes) {
+                sink.accept((AosTransferFrame) generatedFrame);
+            }
+        });
+
+        // Set the VC count to 16773000
+        vc0.setVirtualChannelFrameCounter(16773000);
+
+        // Generate space packets and stop when the number of emitted frames is more than 5000
+        // Expect increase of frame cycle from 0 to 1
+        while (list.size() < 5000) {
+            vc0.dispatch(generateSpacePackets(10));
+        }
+        //
+        assertEquals(0, list.get(0).getVirtualChannelFrameCountCycle());
+        assertEquals(0, list.get(1).getVirtualChannelFrameCountCycle());
+        assertEquals(1, list.get(list.size() - 1).getVirtualChannelFrameCountCycle());
+        assertTrue(list.get(0).isVirtualChannelFrameCountUsageFlag());
+    }
+
+    @Test
+    public void testPushModeSpacePacketsNoFrameCycleWrap() {
+        // Create a sink consumer
+        List<AosTransferFrame> list = new LinkedList<>();
+        Consumer<AosTransferFrame> sink = list::add;
+
+        // Setup the VCs (0, 1 and 7 for idle frames)
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 1115, this::ocfSupplier, true, false, 0, null);
+
+        //
+        vc0.register(new IVirtualChannelSenderOutput() {
+            @Override
+            public void transferFrameGenerated(AbstractSenderVirtualChannel vc, AbstractTransferFrame generatedFrame, int bufferedBytes) {
+                sink.accept((AosTransferFrame) generatedFrame);
+            }
+        });
+
+        // Generate space packets and stop when the number of emitted frames is more than 5000
+        // Expect no increase of frame cycle
+        while (list.size() < 5000) {
+            vc0.dispatch(generateSpacePackets(1).get(0));
+        }
+        //
+        assertEquals(0, list.get(0).getVirtualChannelFrameCountCycle());
+        assertEquals(0, list.get(1).getVirtualChannelFrameCountCycle());
+        assertEquals(0, list.get(list.size() - 1).getVirtualChannelFrameCountCycle());
+        assertTrue(list.get(0).isVirtualChannelFrameCountUsageFlag());
     }
 }
