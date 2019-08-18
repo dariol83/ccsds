@@ -263,6 +263,9 @@ class TmSenderVirtualChannelTest {
             }
         }
         //
+        assertEquals(10, vc0.getNbOfEmittedFrames());
+        assertEquals(10, vc1.getNbOfEmittedFrames());
+        assertEquals(10, vc7.getNbOfEmittedFrames());
         assertEquals(30, list.size());
     }
 

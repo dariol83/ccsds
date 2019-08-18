@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * This class represents an abstraction of a virtual channel using for sending purposes. Typical use cases for this class
@@ -64,12 +65,32 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
 
     private final IVirtualChannelDataProvider dataProvider;
 
+    private final AtomicLong emittedFrames = new AtomicLong(0);
+
     protected ITransferFrameBuilder<T> currentFrame;
 
+    /**
+     * This constructor initialises the virtual channel sender in push mode.
+     *
+     * @param spacecraftId the spacecraft id
+     * @param virtualChannelId the virtual channel id
+     * @param mode the mode
+     * @param fecfPresent true if the FECF is present, false otherwise
+     */
     protected AbstractSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent) {
         this(spacecraftId, virtualChannelId, mode, fecfPresent, null);
     }
 
+    /**
+     * This constructor initialises the virtual channel sender in pull mode (if the data provider is specified) or push
+     * mode (if the data provider is null).
+     *
+     * @param spacecraftId the spacecraft id
+     * @param virtualChannelId the virtual channel id
+     * @param mode the mode
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @param dataProvider the data provider to use: if specified then pull mode is enabled.
+     */
     protected AbstractSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, IVirtualChannelDataProvider dataProvider) {
         this.spacecraftId = spacecraftId;
         this.virtualChannelId = virtualChannelId;
@@ -247,6 +268,9 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
     }
 
     protected final void notifyTransferFrameGenerated(T frame, int currentBufferedData) {
+        // Increase emission
+        this.emittedFrames.incrementAndGet();
+        // Notify listeners
         this.listeners.forEach(o -> o.transferFrameGenerated(this, frame, currentBufferedData));
     }
 
@@ -272,20 +296,55 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
      * that the large space packets is segmented across frames. Subsequent packets will use different frames.
      *
      * @param packets the packets to be encapsulated inside transfer frames
-     * @return the amount of free bytes that are still available in the last generated but not emitted frame, or a value equal to getMaxUserDataLength if there is no pending frame (i.e. the frame was emitted)
+     * @return the amount of free bytes that are still available in the last generated but not emitted frame, or a value equal to getMaxUserDataLength if there is no pending frame
      */
     public abstract int dispatch(Collection<SpacePacket> packets);
 
+    /**
+     * This method calls dispatch(Collections.singletonList(isp)).
+     *
+     * @param isp the space packet to dispatch
+     *
+     * @return the amount of free bytes that are still available in the last generated but not emitted frame, or a value equal to getMaxUserDataLength if there is no pending frame
+     */
     public int dispatch(SpacePacket isp) {
         return dispatch(Collections.singletonList(isp));
     }
 
+    /**
+     * This method calls dispatch(Arrays.asList(isp)).
+     *
+     * @param isp the space packets to dispatch
+     * @return the amount of free bytes that are still available in the last generated but not emitted frame, or a value equal to getMaxUserDataLength if there is no pending frame
+     */
     public int dispatch(SpacePacket... isp) {
         return dispatch(Arrays.asList(isp));
     }
 
+    /**
+     * This method, when supported (AOS frames) dispatches a frame per invocation, containing the provided data as bitstream.
+     *
+     * @param bitstreamData the data to be put inside the frame
+     * @return the data available in the frame (typically, as returned by getMaxUserDataLength)
+     */
     public abstract int dispatch(BitstreamData bitstreamData);
 
+    /**
+     * This method is used to write the user data field of a frame directly, i.e. using the virtual channel in Virtual
+     * Channel Access (VCA) mode.
+     *
+     * For TM-based VCs, the VC will wait to receive a sufficient amount of packets to emit its last frame, i.e. frames
+     * are emitted once they are full. Depending on the amount and size of space packets, this method can result in zero, one or
+     * multiple frames being emitted.
+     *
+     * For TC-based VCs, the VC will always emit at least one frame. The VC will try to pack the provided data inside a single
+     * frame and will avoid segmentation if possible. For user data larger than the maximum frame size, the VC ensures
+     * that the user data is segmented across frames. At the end of the process, all frames are anyway emitted, i.e. there
+     * will be no remaining pending frame.
+     *
+     * @param userData the data to be put in the frame user data field
+     * @return the amount of free bytes that are still available in the last generated but not emitted frame, or a value equal to getMaxUserDataLength if there is no pending frame
+     */
     public abstract int dispatch(byte[] userData);
 
     /**
@@ -332,5 +391,15 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
      */
     public void reset() {
         this.currentFrame = null;
+    }
+
+    /**
+     * This method returns the number of frames emitted by this virtual channel after its creation. It can be used to
+     * check how many frames have been emitted by a dispatch() invocation.
+     *
+     * @return the total number of emitted frames since the creation of this object
+     */
+    public long getNbOfEmittedFrames() {
+        return this.emittedFrames.get();
     }
 }
