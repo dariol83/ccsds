@@ -37,17 +37,24 @@ import eu.dariolucia.ccsds.tmtc.transport.builder.SpacePacketBuilder;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.net.Socket;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 // Precondition: each packet definition contains a field match pointing to an identification field called APID, used to set the APID. Mandatory.
 // Precondition: if a packet definition contains a field named as an identification field, the expected identification field value is used (check implementation of the PacketBasedEncodeResolver
+// Precondition: TC packets have type 'TC'
 public class TcGenerator {
+
+    private final static String TC_PACKET_TYPE = "TC";
 
     private final static String FIELD_APID_NAME = "APID";
 
@@ -93,6 +100,9 @@ public class TcGenerator {
     // If not set, default is CLTU.
     private final static String ARGS_TYPE = "--type";
 
+    // The System.in reader
+    public final static BufferedReader CONSOLE = new BufferedReader(new InputStreamReader(System.in));
+
     // Instance fields
     private boolean useRandomization = false;
     private boolean useSegmentation = false;
@@ -107,8 +117,8 @@ public class TcGenerator {
     private String type = TYPE_CLTU;
     // A console-based interactive resolver, which asks the values using the command line interface
     private final IEncodeResolver defaultResolver = new IdentificationFieldBasedResolver(new ConsoleInteractiveResolver());
-
-    // TODO: add Consumer<byte[]> to re-use this class for the SLE example
+    // A programmatic Consumer that can be added
+    private Consumer<byte[]> optionalConsumer;
 
     private volatile boolean running = false;
 
@@ -169,13 +179,18 @@ public class TcGenerator {
         this.vcId = vcId;
     }
 
+    public void setOptionalConsumer(Consumer<byte[]> optionalConsumer) {
+        checkState();
+        this.optionalConsumer = optionalConsumer;
+    }
+
     private void checkState() {
         if(running) {
             throw new IllegalStateException("TM generator running, cannot configure");
         }
     }
 
-    public void startGeneration() {
+    public void startGeneration() throws IOException {
         // Check if the definition is available
         if(this.definition == null) {
             throw new IllegalStateException("A valid Definition database is required");
@@ -215,16 +230,18 @@ public class TcGenerator {
         // Now we are ready to start the generation
         // Create a map to keep track of the APID counter
         Map<Integer, AtomicInteger> apid2counter = new HashMap<>();
-        // Commands can be:
-        // - send_ad <TC Definition ID> [map]
-        // - send_bd <TC Definition ID> [map]
-        // - send_setvr <VR> (only frame/cltu mode)
-        // - send_unlock (only frame/cltu mode)
-        // - list
-        // - exit
+        System.out.println("Supported commands:\n" +
+                "         - send_ad <TC Definition ID> [map]\n" +
+                "         - send_bd <TC Definition ID> [map]\n" +
+                "         - send_setvr <VR> (only frame/cltu mode)\n" +
+                "         - send_unlock (only frame/cltu mode)\n" +
+                "         - list\n" +
+                "         - exit");
         String commandRead;
         do {
-            commandRead = System.console().readLine("> ");
+            System.out.print("> ");
+            System.out.flush();
+            commandRead = CONSOLE.readLine();
             if(commandRead.isBlank()) {
                 continue;
             }
@@ -242,12 +259,13 @@ public class TcGenerator {
                     break;
                 case CMD_LIST:
                     printDefinitions();
+                    break;
                 case CMD_EXIT:
-                    System.console().printf("\tExit...\n");
+                    System.out.printf("\tExit...\n");
                     System.exit(0);
                     break;
                 default:
-                    System.console().printf("Command not recognized: %s\n", commandRead);
+                    System.out.printf("Command not recognized: %s\n", commandRead);
                     break;
             }
         } while(true);
@@ -264,24 +282,32 @@ public class TcGenerator {
             }
         }
         if(packetDefinition != null) {
-            SpacePacket tcPacket = generatePacket(encoder, packetDefinition, apid2counter);
-            if(vc != null) {
-                vc.setAdMode(isAd);
-                if(mapId != null) {
-                    vc.setMapId(Integer.parseInt(mapId));
+            try {
+                SpacePacket tcPacket = generatePacket(encoder, packetDefinition, apid2counter);
+                if(vc != null) {
+                    vc.setAdMode(isAd);
+                    if(mapId != null) {
+                        vc.setMapId(Integer.parseInt(mapId));
+                    }
+                    vc.dispatch(tcPacket);
+                } else {
+                    send(tcPacket.getPacket());
                 }
-                vc.dispatch(tcPacket);
-            } else {
-                send(tcPacket.getPacket());
+            } catch(RuntimeException e) {
+                if (e.getMessage() != null && e.getMessage().equals("Encoding aborted by user")) {
+                    return;
+                } else {
+                    throw e;
+                }
             }
         } else {
-            System.console().printf("\tPacket definition %s not found\n", packetName);
+            System.out.printf("\tPacket definition %s not found\n", packetName);
         }
     }
 
     private void sendUnlock(TcSenderVirtualChannel vc) {
         if(vc == null) {
-            System.console().printf("\tFrame/CLTU transfer mode not set, cannot send Unlock\n");
+            System.out.printf("\tFrame/CLTU transfer mode not set, cannot send Unlock\n");
         } else {
             vc.dispatchUnlock();
         }
@@ -289,7 +315,7 @@ public class TcGenerator {
 
     private void sendSetVr(TcSenderVirtualChannel vc, String s) {
         if(vc == null) {
-            System.console().printf("\tFrame/CLTU transfer mode not set, cannot send Set_V(R)\n");
+            System.out.printf("\tFrame/CLTU transfer mode not set, cannot send Set_V(R)\n");
         } else {
             vc.dispatchSetVr(Integer.parseInt(s));
         }
@@ -297,9 +323,12 @@ public class TcGenerator {
 
     private void printDefinitions() {
         for(PacketDefinition pd : this.definition.getPacketDefinitions()) {
-            System.console().printf("\tPacket %s\n", pd.getId());
+            if(pd.getType() == null || !pd.getType().equals(TC_PACKET_TYPE)) {
+                continue;
+            }
+            System.out.printf("\tPacket %s\n", pd.getId());
             if(pd.getDescription() != null && !pd.getDescription().isBlank()) {
-                System.console().printf("\t\t%s\n", pd.getDescription());
+                System.out.printf("\t\t%s\n", pd.getDescription());
             }
         }
     }
@@ -334,13 +363,17 @@ public class TcGenerator {
     }
 
     private void send(byte[] data) {
-        System.console().printf("\tSent: " + StringUtil.toHexDump(data));
+        System.out.printf("\tSent: %s\n", StringUtil.toHexDump(data));
+        // If there is a consumer, forward
+        if(this.optionalConsumer != null) {
+            this.optionalConsumer.accept(data);
+        }
         // If the file is defined, go for it
         if(this.outFile != null) {
             try {
                 this.outFile.write(data);
                 this.outFile.flush();
-                System.console().printf("\tFile: " + StringUtil.toHexDump(data));
+                System.out.printf("\tFile: %s\n", StringUtil.toHexDump(data));
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -352,7 +385,7 @@ public class TcGenerator {
                 try {
                     this.outSocket = new Socket(this.host, this.port);
                 } catch (IOException e) {
-                    System.console().printf("\tCannot open socket to " + this.host + ":" + this.port + "\n");
+                    System.out.printf("\tCannot open socket to " + this.host + ":" + this.port + "\n");
                     this.outSocket = null;
                 }
             }
@@ -361,7 +394,7 @@ public class TcGenerator {
             try {
                 this.outSocket.getOutputStream().write(data);
                 this.outSocket.getOutputStream().flush();
-                System.console().printf("\tSock: " + StringUtil.toHexDump(data));
+                System.out.printf("\tSock: %s\n", StringUtil.toHexDump(data));
             } catch(Exception e) {
                 e.printStackTrace();
                 try {
@@ -389,7 +422,7 @@ public class TcGenerator {
             System.out.println("--segment                   use TC packet segmentation. Default: not used");
             System.out.println("--randomize                 randomize the frame. Default: not set");
             System.out.println("--fecf                      generate the Frame Error Control Field. Default: not generated");
-            System.out.println("--type                      set the output type, can be cltu, frame, segment, packet. Default: cltu");
+            System.out.println("--type                      set the output type, can be cltu, frame, packet. Default: cltu");
             System.exit(-1);
         }
         for(int i = 0; i < args.length;) {
@@ -448,67 +481,113 @@ public class TcGenerator {
 
         @Override
         public boolean getBooleanValue(EncodedParameter parameter, PathLocation location) {
-            return false;
+            return request(location.toString(), Boolean.class, Boolean::parseBoolean);
         }
 
         @Override
         public int getEnumerationValue(EncodedParameter parameter, PathLocation location) {
-            return 0;
+            return request(location.toString(), Integer.class, Integer::parseInt);
         }
 
         @Override
         public long getSignedIntegerValue(EncodedParameter parameter, PathLocation location) {
-            return 0;
+            return request(location.toString(), Long.class, Long::parseLong);
         }
 
         @Override
         public long getUnsignedIntegerValue(EncodedParameter parameter, PathLocation location) {
-            return 0;
+            return request(location.toString(), Long.class, Long::parseLong);
         }
 
         @Override
         public double getRealValue(EncodedParameter parameter, PathLocation location) {
-            return 0;
+            return request(location.toString(), Double.class, Double::parseDouble);
         }
 
         @Override
         public Instant getAbsoluteTimeValue(EncodedParameter parameter, PathLocation location) {
-            return null;
+            return request(location.toString(), Instant.class, this::parseInstant);
+        }
+
+        private Instant parseInstant(String s) {
+            Calendar t = DatatypeConverter.parseDateTime(s);
+            return t.toInstant();
         }
 
         @Override
         public Duration getRelativeTimeValue(EncodedParameter parameter, PathLocation location) {
-            return null;
+            return request(location.toString(), Duration.class, this::parseDuration);
+        }
+
+        private Duration parseDuration(String s) {
+            long t = Long.parseLong(s);
+            return Duration.ofMillis(t);
         }
 
         @Override
         public BitString getBitStringValue(EncodedParameter parameter, PathLocation location, int maxBitlength) {
-            return null;
+            return request(location.toString(), BitString.class, BitString::parseBitString, maxBitlength);
         }
 
         @Override
         public byte[] getOctetStringValue(EncodedParameter parameter, PathLocation location, int maxByteLength) {
-            return new byte[0];
+            return request(location.toString(), byte[].class, StringUtil::toByteArray, maxByteLength);
         }
 
         @Override
         public String getCharacterStringValue(EncodedParameter parameter, PathLocation location, int maxStringLength) {
-            return null;
+            return request(location.toString(), String.class, Function.identity(), maxStringLength);
         }
 
         @Override
         public Object getExtensionValue(EncodedParameter parameter, PathLocation location) {
-            return null;
+            // Not supported
+            throw new UnsupportedOperationException("Type not supported");
         }
 
         @Override
         public AbsoluteTimeDescriptor getAbsoluteTimeDescriptor(EncodedParameter parameter, PathLocation location, Instant value) {
-            return null;
+            // Not supported
+            throw new UnsupportedOperationException("Descriptor not supported");
         }
 
         @Override
         public RelativeTimeDescriptor getRelativeTimeDescriptor(EncodedParameter parameter, PathLocation location, Duration value) {
-            return null;
+            // Not supported
+            throw new UnsupportedOperationException("Descriptor not supported");
+        }
+
+        private <T> T request(String parameter, Class<T> clazz, Function<String, T> parseFunction) {
+            return request(parameter, clazz, parseFunction, -1);
+        }
+
+        private <T> T request(String parameter, Class<T> clazz, Function<String, T> parseFunction, int length) {
+            try {
+                String read = null;
+                while (read == null) {
+                    String promptString = parameter + " value (" + clazz.getSimpleName();
+                    if(length > -1) {
+                        promptString += ", length " + length;
+                    }
+                    promptString += "): ";
+                    System.out.print(promptString);
+                    System.out.flush();
+                    read = CONSOLE.readLine();
+                    if (read.equals("abort")) {
+                        continue; // This will quit the cycle and raise the abort exception
+                    } else {
+                        try {
+                            return parseFunction.apply(read.trim());
+                        } catch (Exception e) {
+                            System.out.printf("Value cannot be parsed as %s: %s", clazz.getSimpleName(), read);
+                            read = null;
+                        }
+                    }
+                }
+                throw new RuntimeException("Encoding aborted by user");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

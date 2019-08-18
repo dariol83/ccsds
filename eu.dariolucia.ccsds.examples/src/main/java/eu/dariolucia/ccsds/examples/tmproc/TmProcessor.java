@@ -46,10 +46,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
+// Precondition: TM packet definitions to be decoded must have type 'TM'
 public class TmProcessor {
+
+    private final static String TM_PACKET_TYPE = "TM";
 
     // If set, the CCSDS ASM will be expected before each frame
     // If not set, no ASM block is expected.
@@ -174,8 +178,8 @@ public class TmProcessor {
             virtualChannels[i] = new TmReceiverVirtualChannel(i, VirtualChannelAccessMode.Packet, true);
         }
         VirtualChannelReceiverDemux masterChannelDemuxer = new VirtualChannelReceiverDemux(virtualChannels);
-        // Then the packet identifier and decoder
-        IPacketIdentifier packetIdentifier = new FieldGroupBasedPacketIdentifier(this.definition);
+        // Then the packet identifier and decoder: for identification use only the type 'TM'
+        IPacketIdentifier packetIdentifier = new FieldGroupBasedPacketIdentifier(this.definition, false, Collections.singletonList(TM_PACKET_TYPE));
         IPacketDecoder packetDecoder = new DefaultPacketDecoder(this.definition);
         // Now create a virtual channel receiver, which is called back when a new TM frame or space packet is received/decoded by a VC
         IVirtualChannelReceiverOutput vcOutput = buildVirtualChannelReceiverOutput(packetIdentifier, packetDecoder);

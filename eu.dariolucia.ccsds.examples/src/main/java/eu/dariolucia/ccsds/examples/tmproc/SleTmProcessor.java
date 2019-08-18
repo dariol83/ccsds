@@ -45,12 +45,12 @@ import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
+// Precondition: TM packet definitions to be decoded must have type 'TM'
 public class SleTmProcessor {
+
+    private final static String TM_PACKET_TYPE = "TM";
 
     // The path to the packet encoding definition file (special extension used).
     // This is a mandatory argument.
@@ -127,7 +127,7 @@ public class SleTmProcessor {
         }
         VirtualChannelReceiverDemux masterChannelDemuxer = new VirtualChannelReceiverDemux(virtualChannels);
         // Then the packet identifier and decoder
-        IPacketIdentifier packetIdentifier = new FieldGroupBasedPacketIdentifier(this.definition);
+        IPacketIdentifier packetIdentifier = new FieldGroupBasedPacketIdentifier(this.definition, false, Collections.singletonList(TM_PACKET_TYPE));
         IPacketDecoder packetDecoder = new DefaultPacketDecoder(this.definition);
         // Now create a virtual channel receiver, which is called back when a new TM frame or space packet is received/decoded by a VC
         IVirtualChannelReceiverOutput vcOutput = buildVirtualChannelReceiverOutput(packetIdentifier, packetDecoder);

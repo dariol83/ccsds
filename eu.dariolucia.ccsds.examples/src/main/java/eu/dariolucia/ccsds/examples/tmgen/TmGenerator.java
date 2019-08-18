@@ -48,7 +48,10 @@ import java.util.stream.Collectors;
 // Precondition: each packet definition contains a field match pointing to an identification field called APID, used to set the APID. Mandatory.
 // Precondition: if a packet definition contains a field named as an identification field, the expected identification field value is used (check implementation of the PacketBasedEncodeResolver
 // Precondition: in the extension of each packet definition, the list of VC IDs, comma-separated, shall be present. If not present, the packet is assumed generated on all VCIDs, with the exclusion of VC7
+// Precondition: TM packets to be generated must have type 'TM'
 public class TmGenerator {
+
+    private final static String TM_PACKET_TYPE = "TM";
 
     private final static String FIELD_APID_NAME = "APID";
 
@@ -404,9 +407,12 @@ public class TmGenerator {
     }
 
     private Map<Integer, List<PacketDefinition>> partitionPacketsPerVc() {
-        // Navigate the definitions, read the VC info in the packet definition extension (comma separated) and build the partition
+        // Navigate the definitions, only TM packets, read the VC info in the packet definition extension (comma separated) and build the partition
         Map<Integer, List<PacketDefinition>> toReturn = new HashMap<>();
         for(PacketDefinition pd : this.definition.getPacketDefinitions()) {
+            if(pd.getType() == null || !pd.getType().equals(TM_PACKET_TYPE)) {
+                continue;
+            }
             List<Integer> vcsToAdd = this.vcIds;
             String extension = pd.getExtension();
             if(extension != null && !extension.isBlank()) {
