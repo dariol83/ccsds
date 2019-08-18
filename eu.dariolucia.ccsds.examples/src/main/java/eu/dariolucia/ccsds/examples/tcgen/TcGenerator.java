@@ -506,22 +506,12 @@ public class TcGenerator {
 
         @Override
         public Instant getAbsoluteTimeValue(EncodedParameter parameter, PathLocation location) {
-            return request(location.toString(), Instant.class, this::parseInstant);
-        }
-
-        private Instant parseInstant(String s) {
-            Calendar t = DatatypeConverter.parseDateTime(s);
-            return t.toInstant();
+            return request(location.toString(), Instant.class, Instant::parse);
         }
 
         @Override
         public Duration getRelativeTimeValue(EncodedParameter parameter, PathLocation location) {
-            return request(location.toString(), Duration.class, this::parseDuration);
-        }
-
-        private Duration parseDuration(String s) {
-            long t = Long.parseLong(s);
-            return Duration.ofMillis(t);
+            return request(location.toString(), Duration.class, Duration::parse);
         }
 
         @Override
