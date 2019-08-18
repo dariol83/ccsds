@@ -35,15 +35,21 @@ public class FieldGroupBasedPacketIdentifier implements IPacketIdentifier {
     private final boolean checkForAmbiguity;
 
     public FieldGroupBasedPacketIdentifier(Definition d) {
-        this(d, false);
+        this(d, false, null);
     }
 
     public FieldGroupBasedPacketIdentifier(Definition d, boolean checkForAmbiguity) {
+        this(d, checkForAmbiguity, null);
+    }
+
+    public FieldGroupBasedPacketIdentifier(Definition d, boolean checkForAmbiguity, List<String> typesToConsider) {
         // Build the list of IdSets
         identificationList = new ArrayList<>();
         for (PacketDefinition pd : d.getPacketDefinitions()) {
-            IdSet set = getOrCreateIdSet(pd);
-            set.addDefinition(pd);
+            if(typesToConsider == null || typesToConsider.contains(pd.getType())) {
+                IdSet set = getOrCreateIdSet(pd);
+                set.addDefinition(pd);
+            }
         }
         Collections.sort(identificationList);
         this.checkForAmbiguity = checkForAmbiguity;

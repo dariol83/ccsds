@@ -32,6 +32,9 @@ public class PacketDefinition {
     @XmlAttribute(name = "description")
     private String description;
 
+    @XmlAttribute(name = "type")
+    private String type;
+
     /**
      * The ordered list of matchers: beware, the order matters. Be consistent among packet definitions!
      */
@@ -91,6 +94,14 @@ public class PacketDefinition {
         this.structure = structure;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public String getExtension() {
         return extension;
     }
@@ -106,6 +117,7 @@ public class PacketDefinition {
         PacketDefinition that = (PacketDefinition) o;
         return Objects.equals(id, that.id) &&
                 Objects.equals(description, that.description) &&
+                Objects.equals(type, that.type) &&
                 Objects.equals(matchers, that.matchers) &&
                 Objects.equals(structure, that.structure) &&
                 Objects.equals(extension, that.extension);
@@ -113,6 +125,6 @@ public class PacketDefinition {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, description, matchers, structure, extension);
+        return Objects.hash(id, description, type, matchers, structure, extension);
     }
 }
