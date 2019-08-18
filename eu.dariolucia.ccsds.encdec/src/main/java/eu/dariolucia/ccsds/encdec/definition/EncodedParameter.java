@@ -40,6 +40,9 @@ public class EncodedParameter extends AbstractEncodedItem {
     @XmlElement(name="time")
     private GenerationTime time = null;
 
+    @XmlElement(name="value")
+    private String value = null;
+
     @XmlIDREF
     @XmlAttribute(name = "parameter")
     private ParameterDefinition linkedParameter = null;
@@ -96,6 +99,38 @@ public class EncodedParameter extends AbstractEncodedItem {
         this.time = time;
     }
 
+    /**
+     * The value assigned to this encoded parameter, or null if not set. The type of the value is a {@link String} object.
+     * Depending on the type, it can be parsed using the standard Java methods for objects:
+     * <ul>
+     *     <li>{@link Boolean#parseBoolean(String)} for values of type {@link DataTypeEnum#Boolean}</li>
+     *     <li>{@link Integer#parseInt(String)} for values of type {@link DataTypeEnum#Enumerated}</li>
+     *     <li>{@link Long#parseLong(String)} for values of type {@link DataTypeEnum#UnsignedInteger}</li>
+     *     <li>{@link Long#parseLong(String)} for values of type {@link DataTypeEnum#SignedInteger}</li>
+     *     <li>{@link Double#parseDouble(String)} for values of type {@link DataTypeEnum#Real}</li>
+     *     <li>{@link eu.dariolucia.ccsds.encdec.value.BitString#parseBitString(String)} for values of type {@link DataTypeEnum#BitString}</li>
+     *     <li>{@link eu.dariolucia.ccsds.encdec.value.StringUtil#toByteArray(String)} for values of type {@link DataTypeEnum#OctetString}</li>
+     *     <li>Direct value for values of type {@link DataTypeEnum#CharacterString}</li>
+     *     <li>{@link java.time.Instant#parse(CharSequence)} for values of type {@link DataTypeEnum#AbsoluteTime}</li>
+     *     <li>{@link java.time.Duration#parse(CharSequence)} for values of type {@link DataTypeEnum#RelativeTime}</li>
+     * </ul>
+     *
+     * Since the exact type of a parameter might be discovered only at encoding or decoding time, the {@link EncodedParameter} class
+     * does not provide a method to convert the string into the equivalent object.
+     *
+     * It must be noted that an {@link eu.dariolucia.ccsds.encdec.structure.IPacketEncoder} is not obliged to use this value,
+     * it depends on the encoder or associated {@link eu.dariolucia.ccsds.encdec.structure.IEncodeResolver} implementation.
+     *
+     * @return the value to be assigned to the parameter according to the definition (if set), or null (if not set)
+     */
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -104,12 +139,13 @@ public class EncodedParameter extends AbstractEncodedItem {
         return Objects.equals(type, that.type) &&
                 Objects.equals(length, that.length) &&
                 Objects.equals(time, that.time) &&
+                Objects.equals(value, that.value) &&
                 Objects.equals(linkedParameter, that.linkedParameter) &&
                 Objects.equals(paddedWidth, that.paddedWidth);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, length, time, linkedParameter, paddedWidth);
+        return Objects.hash(type, length, time, value, linkedParameter, paddedWidth);
     }
 }

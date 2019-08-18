@@ -44,6 +44,8 @@ class BitStringTest {
             assertNotNull(bs);
             assertArrayEquals(new byte[]{(byte)0xA4, 0x00}, bs.getData());
             assertEquals(9, bs.getLength());
+            String str2 = bs.toString();
+            assertEquals(str, str2);
         }
         {
             String str = "1010F1000";
@@ -51,6 +53,14 @@ class BitStringTest {
                 BitString bs = BitString.parseBitString(str);
                 fail("Exception expected");
             } catch (BitString.BitStringFormatException e) {
+                // Good
+            }
+        }
+        {
+            try {
+                BitString bs = new BitString(new byte[2], 17);
+                fail("Exception expected");
+            } catch (IllegalArgumentException e) {
                 // Good
             }
         }

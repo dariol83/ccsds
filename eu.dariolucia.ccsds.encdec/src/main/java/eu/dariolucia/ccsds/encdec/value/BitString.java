@@ -25,6 +25,10 @@ public class BitString {
     private final int length;
 
     public BitString(byte[] data, int length) {
+        if(data.length * 8 < length) {
+            throw new IllegalArgumentException("Number of bits in provided array is less than the length in bits of the " +
+                    "BitStream: data length " + data.length + ", BitStream length " + length);
+        }
         this.data = data;
         this.length = length;
     }
@@ -55,7 +59,14 @@ public class BitString {
 
     @Override
     public String toString() {
-        return "BitString["+length+"] " + Arrays.toString(data);
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < length; ++i) {
+            int byteIdx = i / Byte.SIZE;
+            int bitIdx = i % Byte.SIZE;
+            int val = this.data[byteIdx] & ((byte) ((1 << (7 - bitIdx)) & 0xFF));
+            sb.append(val == 0 ? "0" : "1");
+        }
+        return sb.toString();
     }
 
     /**
@@ -103,6 +114,9 @@ public class BitString {
         return new BitString(data, length);
     }
 
+    /**
+     * Exception raised by the {@link BitString#parseBitString(String)} method, in case of malformed input.
+     */
     public static class BitStringFormatException extends RuntimeException {
 
         public BitStringFormatException(String message) {
