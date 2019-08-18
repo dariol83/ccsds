@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  ~   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~   Licensed under the Apache License, Version 2.0 (the "License");
+  ~   you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  -->
+
+<ns1:packet_definitions xmlns:ns1="http://dariolucia.eu/ccsds/encdec">
+    <packets>
+        <packet id="DEF1">
+            <structure>
+                <!-- Signed integer 3 bits: 3 -->
+                <parameter id="PARAM1">
+                    <type_fixed type="SignedInteger" length="3" />
+                    <value>2</value>
+                </parameter>
+                <!-- Float 32 bits: 35 -->
+                <parameter id="PARAM2">
+                    <type_fixed type="Real" length="1" />
+                    <value>124.25</value>
+                </parameter>
+                <!-- Unsigned integer 6 bits: 41 -->
+                <parameter id="PARAM3">
+                    <type_fixed type="UnsignedInteger" length="6" />
+                    <value>61</value>
+                </parameter>
+                <!-- Boolean 1 bit: 42 -->
+                <parameter id="PARAM4">
+                    <type_fixed type="Boolean" length="0" />
+                    <value>true</value>
+                </parameter>
+                <!-- Boolean 1 bit: 43 -->
+                <parameter id="PARAM5">
+                    <type_fixed type="Boolean" length="0" />
+                    <value>false</value>
+                </parameter>
+                <!-- Bitstring 13 bits: 56 -->
+                <parameter id="PARAM6">
+                    <type_fixed type="BitString" length="13" />
+                    <value>0000010101010</value>
+                </parameter>
+                <!-- Octet string 3 bytes: 80 -->
+                <parameter id="PARAM7">
+                    <type_fixed type="OctetString" length="3" />
+                    <value>231292</value>
+                </parameter>
+                <!-- Char string 7 bytes: 136 -->
+                <parameter id="PARAM8">
+                    <type_fixed type="CharacterString" length="7" />
+                    <value>Hello01</value>
+                </parameter>
+                <!-- Boolean 1 bit: 137 -->
+                <parameter id="PARAM9">
+                    <type_fixed type="Boolean" length="0" />
+                    <value>true</value>
+                </parameter>
+                <!-- Absolute time 6 bytes: 185 -->
+                <parameter id="PARAM10">
+                    <type_fixed type="AbsoluteTime" length="1" />
+                    <value>1973-11-29T22:33:09.123456789Z</value>
+                </parameter>
+                <!-- Relative time 2 bytes: 201 -->
+                <parameter id="PARAM11">
+                    <type_fixed type="RelativeTime" length="2" />
+                    <value>PT1234.91156789S</value>
+                </parameter>
+                <!-- Signed integer 3 bits: 204 -->
+                <parameter id="PARAM12">
+                    <type_fixed type="UnsignedInteger" length="3" />
+                    <value>7</value>
+                </parameter>
+            </structure>
+        </packet>
+    </packets>
+
+    <parameters>
+        <parameter id="PARAM001" external_id="1234" description="Sample Parameter 1">
+            <type type="UnsignedInteger" length="7" />
+        </parameter>
+        <parameter id="PARAM002" external_id="1235" description="Sample Parameter 2">
+            <type type="SignedInteger" length="3" />
+        </parameter>
+        <parameter id="PARAM002" external_id="1236" description="Sample Parameter 3">
+            <type type="Real" length="1" />
+        </parameter>
+    </parameters>
+
+</ns1:packet_definitions>

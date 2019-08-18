@@ -111,8 +111,10 @@ public class EncodedParameter extends AbstractEncodedItem {
      *     <li>{@link eu.dariolucia.ccsds.encdec.value.BitString#parseBitString(String)} for values of type {@link DataTypeEnum#BitString}</li>
      *     <li>{@link eu.dariolucia.ccsds.encdec.value.StringUtil#toByteArray(String)} for values of type {@link DataTypeEnum#OctetString}</li>
      *     <li>Direct value for values of type {@link DataTypeEnum#CharacterString}</li>
-     *     <li>{@link java.time.Instant#parse(CharSequence)} for values of type {@link DataTypeEnum#AbsoluteTime}</li>
-     *     <li>{@link java.time.Duration#parse(CharSequence)} for values of type {@link DataTypeEnum#RelativeTime}</li>
+     *     <li>{@link java.time.Instant#parse(CharSequence)} for values of type {@link DataTypeEnum#AbsoluteTime}
+     *     with limitation on the number of digits for the fractional part of the second</li>
+     *     <li>{@link java.time.Duration#parse(CharSequence)} for values of type {@link DataTypeEnum#RelativeTime}
+     *     with limitation on the number of digits for the fractional part of the second</li>
      * </ul>
      *
      * Since the exact type of a parameter might be discovered only at encoding or decoding time, the {@link EncodedParameter} class

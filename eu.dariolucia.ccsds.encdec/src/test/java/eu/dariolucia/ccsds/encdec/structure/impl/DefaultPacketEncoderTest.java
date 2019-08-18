@@ -18,6 +18,8 @@ package eu.dariolucia.ccsds.encdec.structure.impl;
 
 import eu.dariolucia.ccsds.encdec.bit.BitEncoderDecoder;
 import eu.dariolucia.ccsds.encdec.definition.Definition;
+import eu.dariolucia.ccsds.encdec.structure.resolvers.DefaultNullBasedResolver;
+import eu.dariolucia.ccsds.encdec.structure.resolvers.DefinitionValueBasedResolver;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.PathLocationBasedResolver;
 import eu.dariolucia.ccsds.encdec.value.BitString;
 import eu.dariolucia.ccsds.encdec.value.MilUtil;
@@ -453,5 +455,52 @@ class DefaultPacketEncoderTest {
         };
 
         assertArrayEquals(expected, encoded);
+    }
+
+    @Test
+    public void testDefinition13() throws IOException {
+        InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions6.xml");
+        assertNotNull(defStr);
+        Definition d = Definition.load(defStr);
+
+        DefaultPacketEncoder encoder = new DefaultPacketEncoder(d);
+
+        // Now we can encode
+        byte[] encoded = encoder.encode("DEF1", new DefinitionValueBasedResolver(new DefaultNullBasedResolver(), false));
+        assertEquals(26, encoded.length);
+
+        // The final byte array should be the following
+        byte[] expected = new byte[] {
+                0b01001000, // 3 bits int + float
+                0b01011111, // float
+                0b00010000, // float
+                0b00000000, // float
+                0b00011110, // float + 6 bits (5) uint
+                (byte) 0b11000000, // 6 bits (1) unit + bool + bool + bitstring
+                (byte) 0b10101010, // bitstring
+                0b00100011, // byte string
+                0b00010010, // byte string
+                (byte) 0b10010010, // byte string
+                0x48, // char string
+                0x65, // char string
+                0x6c, // char string
+                0x6c, // char string
+                0x6f, // char string
+                0x30, // char string
+                0x31, // char string
+                (byte) 0b10001011, // absolute time
+                0b01011001, // absolute time
+                (byte) 0b10000010, // absolute time
+                0b01001111, // absolute time
+                (byte) 0b11110101, // absolute time
+                0b01000001, // absolute time
+                (byte) 0b11101001, // boolean bit + bit at idx 1 and the next 15 bits are the duration
+                0b00001011, // duration
+                (byte) 0b11110000 // duration + uint 3 bits + padding
+        };
+
+        // Exclude the fractionary part of the absolute time due to inhability of the parse method to read
+        // the full resolution of the time
+        assertArrayEquals(Arrays.copyOfRange(expected, 0, 20), Arrays.copyOfRange(encoded, 0, 20));
     }
 }
