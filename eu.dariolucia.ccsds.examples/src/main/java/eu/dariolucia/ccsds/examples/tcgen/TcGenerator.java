@@ -71,16 +71,16 @@ public class TcGenerator {
 
     // If set, the TC frame is randomized before CLTU encoding.
     // If not set, randomization is not used.
-    private final static String ARGS_USE_RANDOMIZATION = "--randomize";
+    public final static String ARGS_USE_RANDOMIZATION = "--randomize";
     // If set, the TC segmentation is used.
     // If not set,TC segmentation is not used.
-    private final static String ARGS_USE_SEGMENTATION = "--segment";
+    public final static String ARGS_USE_SEGMENTATION = "--segment";
     // The path to the packet encoding definition file (special extension used).
     // This is a mandatory argument.
-    private final static String ARGS_DEFINITION_PATH = "--definition";
+    public final static String ARGS_DEFINITION_PATH = "--definition";
     // If provided, the generated frames will be stored to the specified file in binary format, one after the other
     // If not provided, no file will be written.
-    private final static String ARGS_SINK_FILE = "--out_file";
+    public final static String ARGS_SINK_FILE = "--out_file";
     // If provided, the generated frames will be sent to the specified host.
     // If not provided, it is set to localhost.
     private final static String ARGS_SINK_TCP_HOST = "--out_host";
@@ -89,13 +89,13 @@ public class TcGenerator {
     private final static String ARGS_SINK_TCP_PORT = "--out_port";
     // If set, the FECF will be computed and added to all generated frames.
     // If not set, no FECF will be generated.
-    private final static String ARGS_USE_FECF = "--fecf";
+    public final static String ARGS_USE_FECF = "--fecf";
     // The spacecraft ID.
     // This is a mandatory argument.
-    private final static String ARGS_SCID = "--scid";
+    public final static String ARGS_SCID = "--scid";
     // The TC VC ID.
     // If not provided, VC 0 will be used.
-    private final static String ARGS_VCID = "--vcid";
+    public final static String ARGS_VCID = "--vcid";
     // The type emitted by the application: can be cltu, frame, packet.
     // If not set, default is CLTU.
     private final static String ARGS_TYPE = "--type";
@@ -563,9 +563,7 @@ public class TcGenerator {
                     System.out.print(promptString);
                     System.out.flush();
                     read = CONSOLE.readLine();
-                    if (read.equals("abort")) {
-                        continue; // This will quit the cycle and raise the abort exception
-                    } else {
+                    if (!read.equals("abort")) {
                         try {
                             return parseFunction.apply(read.trim());
                         } catch (Exception e) {
@@ -573,6 +571,7 @@ public class TcGenerator {
                             read = null;
                         }
                     }
+                    // If at this stage read is not null, then it was 'abort'
                 }
                 throw new RuntimeException("Encoding aborted by user");
             } catch (IOException e) {
