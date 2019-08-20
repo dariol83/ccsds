@@ -19,7 +19,7 @@ package eu.dariolucia.ccsds.tmtc.datalink.pdu;
 import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TmTransferFrameTest {
 
@@ -31,12 +31,13 @@ class TmTransferFrameTest {
         TmTransferFrame ttf = new TmTransferFrame(FIRST_FRAME, false);
         assertEquals(123, ttf.getSpacecraftId());
         assertEquals(2, ttf.getVirtualChannelId());
-        assertEquals(true, ttf.isOcfPresent());
+        assertTrue(ttf.isOcfPresent());
+        assertEquals(ttf.getLength() - 4, ttf.getOcfStart());
         assertEquals(3, ttf.getMasterChannelFrameCount());
         assertEquals(178, ttf.getVirtualChannelFrameCount());
-        assertEquals(true, ttf.isSecondaryHeaderPresent());
-        assertEquals(false, ttf.isSynchronisationFlag());
-        assertEquals(false, ttf.isPacketOrderFlag());
+        assertTrue(ttf.isSecondaryHeaderPresent());
+        assertFalse(ttf.isSynchronisationFlag());
+        assertFalse(ttf.isPacketOrderFlag());
         assertEquals(3, ttf.getSegmentLengthIdentifier());
         assertEquals(0, ttf.getSecondaryHeaderVersionNumber());
         assertEquals(3, ttf.getSecondaryHeaderLength());
@@ -44,6 +45,6 @@ class TmTransferFrameTest {
         ttf = new TmTransferFrame(SECOND_FRAME, false);
         assertEquals(123, ttf.getSpacecraftId());
         assertEquals(2, ttf.getVirtualChannelId());
-        assertEquals(true, ttf.isOcfPresent());
+        assertTrue(ttf.isOcfPresent());
     }
 }

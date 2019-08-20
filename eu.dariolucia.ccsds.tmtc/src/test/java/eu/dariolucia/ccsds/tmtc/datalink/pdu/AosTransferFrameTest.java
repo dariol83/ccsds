@@ -61,6 +61,7 @@ class AosTransferFrameTest {
         assertFalse(ttf.isValid());
         assertFalse(ttf.isIdleFrame());
         assertEquals(0, ttf.getFirstHeaderPointer());
+        assertNotNull(ttf.getPacketZoneCopy());
 
         ttf = new AosTransferFrame(AOS_FRAME_03, true, 0, AosTransferFrame.UserDataType.B_PDU, true, true);
         assertEquals(123, ttf.getSpacecraftId());
@@ -69,6 +70,7 @@ class AosTransferFrameTest {
         assertFalse(ttf.isValidHeader());
         assertFalse(ttf.isValid());
         assertFalse(ttf.isIdleFrame());
+        assertNotEquals(0, ttf.getFhec());
         assertEquals(2048, ttf.getBitstreamDataPointer());
     }
 }

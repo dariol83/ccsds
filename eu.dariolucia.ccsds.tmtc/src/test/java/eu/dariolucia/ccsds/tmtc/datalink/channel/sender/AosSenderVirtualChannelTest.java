@@ -31,8 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class AosSenderVirtualChannelTest {
 
@@ -338,6 +337,7 @@ class AosSenderVirtualChannelTest {
         }
         //
         assertEquals(300, list.size());
+        assertNotNull(list.get(0).getBitstreamDataZoneCopy());
     }
 
     @Test

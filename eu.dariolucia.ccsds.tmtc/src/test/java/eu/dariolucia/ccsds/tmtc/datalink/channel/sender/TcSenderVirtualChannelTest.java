@@ -75,6 +75,9 @@ class TcSenderVirtualChannelTest {
             assertEquals(0, list.get(i).getSecurityHeaderLength());
             assertEquals(0, list.get(i).getSecurityTrailerLength());
         }
+
+        assertFalse(vc0.isSecured());
+        assertFalse(vc0.isSegmented());
     }
 
     @Test
@@ -105,6 +108,39 @@ class TcSenderVirtualChannelTest {
         }
     }
 
+    @Test
+    public void testDoublePacketsUnsegmentedWithFecf() {
+        // Create a sink consumer
+        List<TcTransferFrame> list = new LinkedList<>();
+        IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
+        // Setup the VC
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, true, false);
+        // Register the sink
+        vc0.register(sink);
+        // Set channel properties (BD mode)
+        vc0.setAdMode(false);
+        // Generate 10 TC packets
+        for (int i = 0; i < 10; ++i) {
+            vc0.dispatch(generateSpacePacket(300, i*2), generateSpacePacket(300, i*2 + 1));
+        }
+        //
+        // Checks
+        assertEquals(10, list.size());
+        for (int i = 0; i < 10; ++i) {
+            assertTrue(list.get(i).isValid());
+            assertTrue(list.get(i).getFecf() != 0);
+            SpacePacket sp = new SpacePacket(Arrays.copyOfRange(list.get(i).getDataFieldCopy(), 0, 400 + SpacePacket.SP_PRIMARY_HEADER_LENGTH), true);
+            assertEquals(300, sp.getApid());
+            assertEquals(i*2, sp.getPacketSequenceCount());
+            assertEquals(400 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getLength());
+
+            SpacePacket sp2 = new SpacePacket(Arrays.copyOfRange(list.get(i).getDataFieldCopy(), sp.getPacketDataLength() + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getPacketDataLength() + SpacePacket.SP_PRIMARY_HEADER_LENGTH + 400 + SpacePacket.SP_PRIMARY_HEADER_LENGTH), true);
+            assertEquals(300, sp2.getApid());
+            assertEquals(i*2 + 1, sp2.getPacketSequenceCount());
+            assertEquals(400 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp2.getLength());
+        }
+    }
+
     // test segmentation + map ID
     @Test
     public void testSinglePacketSegmented() {
@@ -117,6 +153,8 @@ class TcSenderVirtualChannelTest {
         vc0.register(sink);
         // Set channel properties (BD mode)
         vc0.setAdMode(false);
+        // Set the map ID to 2, will be overwritten
+        vc0.setMapId(2);
 
         // Generate 10 TC packets
         for (int i = 0; i < 10; ++i) {
