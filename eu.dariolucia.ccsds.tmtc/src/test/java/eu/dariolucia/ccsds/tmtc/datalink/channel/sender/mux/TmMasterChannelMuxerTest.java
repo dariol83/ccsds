@@ -68,6 +68,10 @@ class TmMasterChannelMuxerTest {
             nextExpected += 1;
             nextExpected %= 256;
         }
+
+        // Reset: for coverage
+        mux.setExpectedCounter(0);
+        mux.setMasterChannelCounter(0);
     }
 
     private void generate(TmSenderVirtualChannel vc) {

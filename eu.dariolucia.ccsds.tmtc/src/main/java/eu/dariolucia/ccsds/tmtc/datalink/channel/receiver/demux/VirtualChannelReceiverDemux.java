@@ -31,11 +31,11 @@ public class VirtualChannelReceiverDemux implements Consumer<AbstractTransferFra
     private final Consumer<AbstractTransferFrame> missingVcHandler;
 
     public VirtualChannelReceiverDemux() {
-        this((Consumer<AbstractTransferFrame>) null);
+        this(null, new AbstractReceiverVirtualChannel[0]);
     }
 
     public VirtualChannelReceiverDemux(Consumer<AbstractTransferFrame> missingVcHandler) {
-        this.missingVcHandler = missingVcHandler;
+        this(missingVcHandler, new AbstractReceiverVirtualChannel[0]);
     }
 
     public VirtualChannelReceiverDemux(AbstractReceiverVirtualChannel... receivers) {

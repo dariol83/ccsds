@@ -64,14 +64,6 @@ public abstract class AbstractTransformationProcessor<T,K> implements Flow.Proce
         this.timely = timely;
     }
 
-    public AbstractTransformationProcessor(Function mapper, boolean timely) {
-        this(mapper, null, timely);
-    }
-
-    public AbstractTransformationProcessor(Function mapper) {
-        this(mapper, null, false);
-    }
-
     public boolean isRunning() {
         return running;
     }

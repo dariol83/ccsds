@@ -21,8 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ClcwBuilderTest {
 
@@ -38,12 +37,25 @@ class ClcwBuilderTest {
                 .setWaitFlag(false)
                 .setLockoutFlag(true)
                 .setRetransmitFlag(false)
+                .setReservedSpare(0)
                 .setVirtualChannelId(0)
                 .build();
 
-        assertTrue(Arrays.equals(new byte[] { 0x01, 0x00, (byte) 0xA6, (byte) 0x89 }, clcw.getOcf()));
+        assertArrayEquals(new byte[]{0x01, 0x00, (byte) 0xA6, (byte) 0x89}, clcw.getOcf());
         assertEquals(137, clcw.getReportValue());
         assertEquals(3, clcw.getFarmBCounter());
+        assertEquals(0, clcw.getStatusField());
+        assertTrue(clcw.isNoRfAvailableFlag());
+        assertFalse(clcw.isNoBitlockFlag());
+        assertFalse(clcw.isWaitFlag());
+        assertTrue(clcw.isLockoutFlag());
+        assertFalse(clcw.isRetransmitFlag());
+        assertEquals(0, clcw.getReservedSpare());
+        assertEquals(0, clcw.getVirtualChannelId());
+        assertTrue(clcw.isClcw());
+        assertEquals(0, clcw.getVersionNumber());
+        assertNotNull(clcw.toString());
+
     }
 
     @Test

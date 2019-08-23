@@ -338,6 +338,22 @@ class AosSenderVirtualChannelTest {
         //
         assertEquals(300, list.size());
         assertNotNull(list.get(0).getBitstreamDataZoneCopy());
+
+        // Dispatch user data -> exception
+        try {
+            vc0.dispatch(new byte[20]);
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
+
+        // Dispatch packet -> exception
+        try {
+            vc0.dispatch(generateSpacePackets(1).toArray(new SpacePacket[1]));
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
     }
 
     @Test
@@ -357,6 +373,11 @@ class AosSenderVirtualChannelTest {
             }
         });
 
+        assertNotNull(vc0.getOcfSupplier());
+        assertNull(vc0.getInsertZoneSupplier());
+        vc0.setReplayFlag(false);
+        assertFalse(vc0.isReplayFlag());
+
         // Set the VC count to 16773000
         vc0.setVirtualChannelFrameCounter(16773000);
 
@@ -370,6 +391,15 @@ class AosSenderVirtualChannelTest {
         assertEquals(0, list.get(1).getVirtualChannelFrameCountCycle());
         assertEquals(1, list.get(list.size() - 1).getVirtualChannelFrameCountCycle());
         assertTrue(list.get(0).isVirtualChannelFrameCountUsageFlag());
+
+        // Push idle -> exception
+        // Dispatch packet -> exception
+        try {
+            vc0.dispatchIdle(new byte[] { 0x55 });
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
     }
 
     @Test
@@ -399,5 +429,9 @@ class AosSenderVirtualChannelTest {
         assertEquals(0, list.get(1).getVirtualChannelFrameCountCycle());
         assertEquals(0, list.get(list.size() - 1).getVirtualChannelFrameCountCycle());
         assertTrue(list.get(0).isVirtualChannelFrameCountUsageFlag());
+
+        assertEquals(0, vc0.getVirtualChannelFrameCountCycle());
+        vc0.setVirtualChannelFrameCountCycle(2);
+        assertEquals(2, vc0.getVirtualChannelFrameCountCycle());
     }
 }

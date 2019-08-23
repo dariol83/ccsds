@@ -28,6 +28,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TcReceiverVirtualChannelTest {
 
@@ -37,6 +38,7 @@ class TcReceiverVirtualChannelTest {
     public void testTcVc0SpacePacket() {
         // Create a virtual channel for VC0
         TcReceiverVirtualChannel vc0 = new TcReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        assertEquals(256, vc0.getVcFrameCounterModulo());
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
         List<byte[]> badPackets = new CopyOnWriteArrayList<>();

@@ -32,10 +32,10 @@ public class VirtualChannelSenderBitstreamDataProcessor<T extends AbstractTransf
 	}
 
 	public VirtualChannelSenderBitstreamDataProcessor(Function<BitstreamData, Stream<T>> mapper, boolean timely) {
-		super(mapper, timely);
+		this(mapper, null, timely);
 	}
 
 	public VirtualChannelSenderBitstreamDataProcessor(Function<BitstreamData, Stream<T>> mapper) {
-		super(mapper);
+		this(mapper, false);
 	}
 }

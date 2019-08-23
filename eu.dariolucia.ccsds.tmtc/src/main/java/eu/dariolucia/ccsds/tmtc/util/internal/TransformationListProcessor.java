@@ -32,11 +32,11 @@ public class TransformationListProcessor<T,K> extends AbstractTransformationProc
     }
 
     public TransformationListProcessor(Function<T, ? extends Collection<K>> mapper, boolean timely) {
-        super(mapper, timely);
+        this(mapper, null, timely);
     }
 
     public TransformationListProcessor(Function<T, ? extends Collection<K>> mapper) {
-        super(mapper);
+        this(mapper, false);
     }
 
     @Override

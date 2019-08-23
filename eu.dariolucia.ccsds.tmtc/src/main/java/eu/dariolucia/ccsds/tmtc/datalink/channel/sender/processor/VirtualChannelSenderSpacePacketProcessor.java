@@ -31,10 +31,10 @@ public class VirtualChannelSenderSpacePacketProcessor<T extends AbstractTransfer
 	}
 
 	public VirtualChannelSenderSpacePacketProcessor(Function<SpacePacket, Stream<T>> mapper, boolean timely) {
-		super(mapper, timely);
+		this(mapper, null, timely);
 	}
 
 	public VirtualChannelSenderSpacePacketProcessor(Function<SpacePacket, Stream<T>> mapper) {
-		super(mapper);
+		this(mapper, false);
 	}
 }

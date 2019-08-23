@@ -33,11 +33,11 @@ public class TransformationProcessor<T,K> extends AbstractTransformationProcesso
 	}
 
 	public TransformationProcessor(Function<T, K> mapper, boolean timely) {
-		super(mapper, timely);
+		this(mapper, null, timely);
 	}
 
 	public TransformationProcessor(Function<T, K> mapper) {
-		super(mapper);
+		this(mapper, false);
 	}
 
 	@Override

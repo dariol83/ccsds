@@ -79,6 +79,9 @@ class TmSenderVirtualChannelTest {
         TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier, dataProvider);
         TmSenderVirtualChannel vc1 = new TmSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier, dataProvider);
         TmSenderVirtualChannel vc7 = new TmSenderVirtualChannel(123, 7, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier);
+
+        assertNotNull(vc0.getOcfSupplier());
+        assertNull(vc0.getSecondaryHeaderSupplier());
         //
         vc0.register(mux);
         vc1.register(mux);
@@ -114,6 +117,22 @@ class TmSenderVirtualChannelTest {
         assertEquals(1, list.get(2).getVirtualChannelId());
         assertEquals(0, list.get(3).getVirtualChannelId());
         assertEquals(7, list.get(4).getVirtualChannelId());
+
+        // Dispatch bitstream -> exception
+        try {
+            vc0.dispatch(new BitstreamData(new byte[20], 12));
+            fail("UnsupportedOperationException expected");
+        } catch(UnsupportedOperationException e) {
+            // Good
+        }
+
+        // Dispatch user data -> exception
+        try {
+            vc0.dispatch(new byte[20]);
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
     }
 
     private List<SpacePacket> generateSpacePacketList(int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
@@ -267,6 +286,14 @@ class TmSenderVirtualChannelTest {
         assertEquals(10, vc1.getNbOfEmittedFrames());
         assertEquals(10, vc7.getNbOfEmittedFrames());
         assertEquals(30, list.size());
+
+        // Dispatch packet -> exception
+        try {
+            vc0.dispatch(generateSpacePackets(1));
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
     }
 
     @Test

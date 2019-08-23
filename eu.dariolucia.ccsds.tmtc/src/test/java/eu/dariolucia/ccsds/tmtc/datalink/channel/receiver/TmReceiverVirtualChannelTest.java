@@ -44,13 +44,15 @@ class TmReceiverVirtualChannelTest {
     public void testTmVc0SpacePacket() {
         // Create a virtual channel for VC0
         TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        assertEquals(VirtualChannelAccessMode.Packet, vc0.getReceiverMode());
+        assertEquals(-1, vc0.getCurrentVcSequenceCounter());
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
         List<byte[]> badPackets = new CopyOnWriteArrayList<>();
-        vc0.register(new IVirtualChannelReceiverOutput() {
+        IVirtualChannelReceiverOutput output = new IVirtualChannelReceiverOutput() {
             @Override
             public void transferFrameReceived(AbstractReceiverVirtualChannel vc, AbstractTransferFrame receivedFrame) {
-
+                //
             }
 
             @Override
@@ -64,19 +66,21 @@ class TmReceiverVirtualChannelTest {
 
             @Override
             public void dataExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data) {
-
+                //
             }
 
             @Override
             public void bitstreamExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data, int numBits) {
-
+                //
             }
 
             @Override
             public void gapDetected(AbstractReceiverVirtualChannel vc, int expectedVc, int receivedVc, int missingFrames) {
-
+                //
             }
-        });
+        };
+        vc0.register(output);
+
         // Build the reader
         LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1));
         // Use stream approach: no need for decoder
@@ -89,6 +93,9 @@ class TmReceiverVirtualChannelTest {
         // Check the list of packets
         assertEquals(613, goodPackets.size());
         assertEquals(0, badPackets.size());
+
+        assertEquals(121, vc0.getCurrentVcSequenceCounter());
+        vc0.deregister(output);
     }
 
     @Test

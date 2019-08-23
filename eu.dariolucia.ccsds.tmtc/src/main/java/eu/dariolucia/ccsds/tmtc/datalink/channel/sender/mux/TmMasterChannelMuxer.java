@@ -109,7 +109,6 @@ public class TmMasterChannelMuxer extends SimpleMuxer<TmTransferFrame> {
 				try {
 					wait();
 				} catch (InterruptedException e) {
-					Thread.interrupted();
 					throw new RuntimeException(e);
 				}
 			}

@@ -31,10 +31,10 @@ public class VirtualChannelSenderUserDataProcessor<T extends AbstractTransferFra
 	}
 
 	public VirtualChannelSenderUserDataProcessor(Function<byte[], Stream<T>> mapper, boolean timely) {
-		super(mapper, timely);
+		this(mapper, null, timely);
 	}
 
 	public VirtualChannelSenderUserDataProcessor(Function<byte[], Stream<T>> mapper) {
-		super(mapper);
+		this(mapper, false);
 	}
 }

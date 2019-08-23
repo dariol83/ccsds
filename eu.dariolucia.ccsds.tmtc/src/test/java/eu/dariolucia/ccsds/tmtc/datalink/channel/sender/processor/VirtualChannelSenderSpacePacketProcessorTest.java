@@ -40,6 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class VirtualChannelSenderSpacePacketProcessorTest {
 
@@ -58,6 +59,8 @@ class VirtualChannelSenderSpacePacketProcessorTest {
 		TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(151, 0, VirtualChannelAccessMode.Packet, false, 1115, () -> mcCounter.getAndIncrement() % 256, this::ocfSupplier);
 		// Create the mapping function
 		VirtualChannelSenderSpacePacketFlatMapper<TmTransferFrame> vc0mapper = new VirtualChannelSenderSpacePacketFlatMapper<>(vc0);
+		// Check VC equality
+		assertEquals(vc0.getVirtualChannelId(), vc0mapper.getVirtualChannelId());
 		// Create the VC processor
 		VirtualChannelSenderSpacePacketProcessor<TmTransferFrame> vc0processor = new VirtualChannelSenderSpacePacketProcessor<>(vc0mapper);
 		// Link the processor to the space packet supplier
@@ -90,6 +93,17 @@ class VirtualChannelSenderSpacePacketProcessorTest {
 			}
 		}
 		assertEquals(5508, generatedFrames.size());
+
+		// Dispose the mapper
+		vc0mapper.dispose();
+
+		// Try again -> fail
+		try {
+			vc0mapper.apply(generateSpacePackets(1, 200).get(0));
+			fail("IllegalStateException expected");
+		} catch(IllegalStateException e) {
+			// Good
+		}
 	}
 
 	private List<SpacePacket> generateSpacePackets(int n, int usize) {
