@@ -17,8 +17,11 @@
 /**
  * This package contains classes and interfaces that allow the implementation of object-based, stream-based or
  * reactor-based reading, encoding and decoding of transfer frames:
- * - Reader: binary fixed length, binary ASM + fixed length, binary ASM + variable length + trailer, ASCII line-based
- * - Encoder: CLTU, CLTU randomizer, TM ASM, TM randomizer, Reed-Solomon
- * - Decoder: CLTU, CLTU derandomizer, TM ASM removal, Reed-Solomon (symbols removal, check only, no error correction)
+ * <ul>
+ * <li>Reader: binary fixed length, binary ASM + fixed length, binary ASM + variable length + trailer, ASCII line-based</li>
+ * <li>Encoder: CLTU, CLTU randomizer, TM ASM, TM randomizer, Reed-Solomon</li>
+ * <li>Decoder: CLTU, CLTU derandomizer, TM ASM removal, Reed-Solomon (symbols removal, check only, no error correction)</li>
+ * </ul>
+ *
  */
 package eu.dariolucia.ccsds.tmtc.coding;

@@ -47,11 +47,26 @@ import java.util.function.Function;
  */
 public class ChannelEncoder<T extends AbstractTransferFrame> implements Function<T, byte[]> {
 
-
+	/**
+	 * This static method creates a channel encoder, which does not copy the content of the {@link AbstractTransferFrame}.
+	 * It means that the {@link AbstractTransferFrame} could suffer from side-effects if a registered {@link IEncodingFunction}
+	 * performs in-place modifications.
+	 *
+	 * @param <T> the {@link AbstractTransferFrame} specific type
+	 * @return a new channel encoder to be configured
+	 */
 	public static <T extends AbstractTransferFrame> ChannelEncoder<T> create() {
 		return create(false);
 	}
 
+	/**
+	 * This static method creates a channel encoder. Copy of the content of each {@link AbstractTransferFrame} is performed
+	 * according to the value of the frameCopy argument.
+	 *
+	 * @param frameCopy true if the frame content must be copied before encoding it (the copy is encoded), false otherwise
+	 * @param <T> the {@link AbstractTransferFrame} specific type
+	 * @return a new channel encoder to be configured
+	 */
 	public static <T extends AbstractTransferFrame> ChannelEncoder<T> create(boolean frameCopy) {
 		return new ChannelEncoder<>(frameCopy);
 	}
@@ -66,6 +81,13 @@ public class ChannelEncoder<T extends AbstractTransferFrame> implements Function
 		this.frameCopy = frameCopy;
 	}
 
+	/**
+	 * This method adds an encoding function T, byte[] -> byte[] to the encoding chain. Functions are applied in the
+	 * order used to add them to the channel encoder.
+	 *
+	 * @param function the {@link IEncodingFunction} to add
+	 * @return this object instance
+	 */
 	public ChannelEncoder<T> addEncodingFunction(IEncodingFunction<T> function) {
 		if (this.configured) {
 			throw new IllegalStateException("Channel structure already configured");
@@ -74,11 +96,24 @@ public class ChannelEncoder<T extends AbstractTransferFrame> implements Function
 		return this;
 	}
 
+	/**
+	 * This method marks the encoder as configured, allows its usage and blocks any further addition of new {@link IEncodingFunction}
+	 * objects.
+	 *
+	 * @return this object instance
+	 */
 	public ChannelEncoder<T> configure() {
 		this.configured = true;
 		return this;
 	}
 
+	/**
+	 * This method applies the full encoding pipeline.
+	 *
+	 * @param abstractTransferFrame the transfer frame to encode
+	 * @return the encoded frame
+	 * @throws IllegalStateException if the encoder is not configured via ({@link ChannelEncoder#configure()}
+	 */
 	@Override
 	public byte[] apply(T abstractTransferFrame) {
 		if (!this.configured) {

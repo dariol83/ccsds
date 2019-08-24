@@ -17,8 +17,10 @@
 /**
  * This package contains the definition of the data link data structures, builder classes and channel access services,
  * supporting:
- * - TC frames: CCSDS 232.0-B-3;
- * - TM frames: CCSDS 132.0-B-2;
- * - AOS frames: CCSDS 732.0-B-3.
+ * <ul>
+ * <li>TC frames: CCSDS 232.0-B-3</li>
+ * <li>TM frames: CCSDS 132.0-B-2</li>
+ * <li>AOS frames: CCSDS 732.0-B-3</li>
+ * </ul>
  */
 package eu.dariolucia.ccsds.tmtc.datalink;

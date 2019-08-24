@@ -18,7 +18,6 @@ package eu.dariolucia.ccsds.tmtc.coding;
 
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
@@ -47,6 +46,15 @@ import java.util.function.Function;
  */
 public class ChannelDecoder<T extends AbstractTransferFrame> implements Function<byte[], T> {
 
+    /**
+     * This static method creates a channel decoder. Differently from {@link ChannelEncoder}, decoders do not copy the content of the byte[].
+     * Depending on the added functions, it is possible that the provided array is modified in-place. If this behaviour is not acceptable,
+     * the caller of the apply() method must clone the array beforehand.
+     *
+     * @param <T> the {@link AbstractTransferFrame} specific type
+     * @param f the decoding function transforming a byte[] to an object of type T, always applied at the end of the decoding chain
+     * @return a new channel decoder to be configured
+     */
     public static <T extends AbstractTransferFrame> ChannelDecoder<T> create(IDecodingFunction<T> f) {
         return new ChannelDecoder<>(f);
     }
@@ -64,6 +72,13 @@ public class ChannelDecoder<T extends AbstractTransferFrame> implements Function
         this.frameDecoder = frameDecoder;
     }
 
+    /**
+     * This method adds a function byte[] -> byte[] to the decoding chain. Functions are applied in the
+     * order used to add them to the channel decoder.
+     *
+     * @param function the {@link Function} to add
+     * @return this object instance
+     */
     public ChannelDecoder<T> addDecodingFunction(Function<byte[], byte[]> function) {
         if(this.configured) {
             throw new IllegalStateException("Channel decoder already configured");
@@ -72,11 +87,24 @@ public class ChannelDecoder<T extends AbstractTransferFrame> implements Function
         return this;
     }
 
+    /**
+     * This method marks the decoder as configured, allows its usage and blocks any further addition of new {@link Function}
+     * objects.
+     *
+     * @return this object instance
+     */
     public ChannelDecoder<T> configure() {
         this.configured = true;
         return this;
     }
 
+    /**
+     * This method applies the full decoding pipeline.
+     *
+     * @param item the encoded transfer frame to decode
+     * @return the decoded frame
+     * @throws IllegalStateException if the decoder is not configured via ({@link ChannelDecoder#configure()}
+     */
     @Override
     public T apply(byte[] item) {
         if(!this.configured) {

@@ -18,6 +18,10 @@ package eu.dariolucia.ccsds.tmtc.coding.reader;
 
 import java.io.IOException;
 
+/**
+ * This exception is used to indicate a loss of synchronisation by readers that use a sync marker to detect the start
+ * of a frame.
+ */
 public class SynchronizationLostException extends IOException {
 
     public SynchronizationLostException(String message) {

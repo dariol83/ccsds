@@ -19,6 +19,9 @@ package eu.dariolucia.ccsds.tmtc.coding.reader;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Abstract class used to implement {@link IChannelReader} that read frames from {@link InputStream} objects.
+ */
 public abstract class AbstractChannelReader implements IChannelReader {
 
     protected final InputStream stream;
@@ -30,6 +33,11 @@ public abstract class AbstractChannelReader implements IChannelReader {
         this.stream = stream;
     }
 
+    /**
+     * This method is used to close the underlying {@link InputStream}.
+     *
+     * @throws IOException in case the stream raises an exception on close
+     */
     public void close() throws IOException {
         this.stream.close();
     }

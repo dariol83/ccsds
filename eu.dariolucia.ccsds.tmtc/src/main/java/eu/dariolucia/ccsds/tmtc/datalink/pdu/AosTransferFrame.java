@@ -23,6 +23,10 @@ import eu.dariolucia.ccsds.tmtc.coding.IDecodingFunction;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+/**
+ * This class is used to decode and manipulate an AOS transfer frame, compliant to CCSDS 732.0-B-3. It includes also support
+ * for the security protocol, as defined by the same standard.
+ */
 public class AosTransferFrame extends AbstractTransferFrame {
 
     public static final int AOS_PRIMARY_HEADER_LENGTH = 6;
@@ -42,18 +46,56 @@ public class AosTransferFrame extends AbstractTransferFrame {
                     false
     );
 
+    /**
+     * Decoding function for AOS frames, which can be used when building {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder} objects.
+     * Security protocol information is considered missing.
+     *
+     * @param frameHeaderErrorControlPresent true if the FHEC is present, false otherwise
+     * @param transferFrameInsertZoneLength size of the insert zone field, 0 if not present
+     * @param userDataType user data type, depending on the channel access service: M_PDU, B_PDU, VCA or IDLE for VC 63 frames
+     * @param ocfPresent true if the OCF is present, false otherwise
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @return the AOS frame decoding function
+     */
     public static IDecodingFunction<AosTransferFrame> decodingFunction(boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
         return decodingFunction(frameHeaderErrorControlPresent, transferFrameInsertZoneLength, userDataType, ocfPresent, fecfPresent, 0, 0);
     }
 
+    /**
+     * Decoding function for AOS frames, which can be used when building {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder} objects.
+     *
+     * @param frameHeaderErrorControlPresent true if the FHEC is present, false otherwise
+     * @param transferFrameInsertZoneLength size of the insert zone field in bytes, 0 if not present
+     * @param userDataType user data type, depending on the channel access service: M_PDU, B_PDU, VCA or IDLE for VC 63 frames
+     * @param ocfPresent true if the OCF is present, false otherwise
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @param securityHeaderLength size of the security header length in bytes, 0 if not present
+     * @param securityTrailerLength size of the security trailer length in bytes, 0 if not present
+     * @return the AOS frame decoding function
+     */
     public static IDecodingFunction<AosTransferFrame> decodingFunction(boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
         return input -> new AosTransferFrame(input, frameHeaderErrorControlPresent, transferFrameInsertZoneLength, userDataType, ocfPresent, fecfPresent, securityHeaderLength, securityTrailerLength);
     }
 
+    /**
+     * Type of virtual channel access service
+     */
     public enum UserDataType {
+        /**
+         * The frame contains space packets
+         */
         M_PDU,
+        /**
+         * The frame contains bitstream data
+         */
         B_PDU,
+        /**
+         * The frame contains user data of unknown format/specification
+         */
         VCA,
+        /**
+         * The frame contains idle data
+         */
         IDLE
     }
 
@@ -83,10 +125,32 @@ public class AosTransferFrame extends AbstractTransferFrame {
     private final int securityHeaderLength;
     private final int securityTrailerLength;
 
+    /**
+     * Constructor of a AOS transfer frame, assuming no security protocol used.
+     *
+     * @param frame the frame data
+     * @param frameHeaderErrorControlPresent true if the FHEC is present, false otherwise
+     * @param transferFrameInsertZoneLength size of the insert zone field in bytes, 0 if not present
+     * @param userDataType user data type, depending on the channel access service: M_PDU, B_PDU, VCA or IDLE for VC 63 frames
+     * @param ocfPresent true if the OCF is present, false otherwise
+     * @param fecfPresent true if the FECF is present, false otherwise
+     */
     public AosTransferFrame(byte[] frame, boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
         this(frame, frameHeaderErrorControlPresent, transferFrameInsertZoneLength, userDataType, ocfPresent, fecfPresent, 0, 0);
     }
 
+    /**
+     * Constructor of a AOS transfer frame.
+     *
+     * @param frame the frame data
+     * @param frameHeaderErrorControlPresent true if the FHEC is present, false otherwise
+     * @param transferFrameInsertZoneLength size of the insert zone field in bytes, 0 if not present
+     * @param userDataType user data type, depending on the channel access service: M_PDU, B_PDU, VCA or IDLE for VC 63 frames
+     * @param ocfPresent true if the OCF is present, false otherwise
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @param securityHeaderLength size of the security header length in bytes, 0 if not present
+     * @param securityTrailerLength size of the security trailer length in bytes, 0 if not present
+     */
     public AosTransferFrame(byte[] frame, boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, UserDataType userDataType, boolean ocfPresent, boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
         super(frame, fecfPresent);
 
@@ -202,6 +266,12 @@ public class AosTransferFrame extends AbstractTransferFrame {
         return crc16 == crcFromFrame;
     }
 
+    /**
+     * This method returns the value as short of the FHEC field.
+     *
+     * @return the value of the FHEC as short
+     * @throws IllegalStateException if there is no FHEC defined on the AOS frame
+     */
     public short getFhec() {
         if(frameHeaderErrorControlPresent) {
             return ByteBuffer.wrap(frame, AOS_PRIMARY_HEADER_LENGTH, AOS_PRIMARY_HEADER_FHEC_LENGTH).getShort();
@@ -223,63 +293,144 @@ public class AosTransferFrame extends AbstractTransferFrame {
         return AOS_FRAME_HEADER_ERROR_CONTROL_RS_UTIL.decodeCodeword(codeword, true) != null;
     }
 
+    /**
+     * This method returns whether the FHEC field is present.
+     *
+     * @return true if the FHEC is present, false otherwise.
+     */
     public boolean isFrameHeaderErrorControlPresent() {
         return frameHeaderErrorControlPresent;
     }
 
+    /**
+     * If the FHEC field is present, this method returns whether the header fields protected by the FHEC present no modifications,
+     * i.e. the header fields are correct. If the FHEC is not present, this method returns always true.
+     *
+     * @return the validity status of the header field according to the evaluation of the FHEC is present. If not present, this method returns true.
+     */
     public boolean isValidHeader() {
         return validHeader;
     }
 
+    /**
+     * This method returns the length in bytes of the Transfer Frame Insert Zone field.
+     *
+     * @return the length of the Transfer Frame Insert Zone field
+     */
     public int getInsertZoneLength() {
         return transferFrameInsertZoneLength;
     }
 
+    /**
+     * This metod returns the value of the replay flag.
+     *
+     * @return true if the replay flag is set (1), false otherwise (0)
+     */
     public boolean isReplayFlag() {
         return replayFlag;
     }
 
+    /**
+     * This method returns the value of the VC frame count usage flag.
+     *
+     * @return true if the flag is set (1), false otherwise (0)
+     */
     public boolean isVirtualChannelFrameCountUsageFlag() {
         return virtualChannelFrameCountUsageFlag;
     }
 
+    /**
+     * This method returns the value of the VC frame count cycle.
+     *
+     * @return the value of the VC frame count cycle
+     */
     public byte getVirtualChannelFrameCountCycle() {
         return virtualChannelFrameCountCycle;
     }
 
+    /**
+     * This method returns whether this frame is an idle frame.
+     *
+     * @return true if the frame is an idle frame, false otherwise
+     */
     @Override
     public boolean isIdleFrame() {
         return idleFrame;
     }
 
+    /**
+     * This method returns the index of the first byte of the packet zone for M_PDU frame types. The index takes into
+     * account possible presence of the FHEC, insert zone and security header. In other words, this method returns the
+     * byte index immediately following the first header pointer.
+     *
+     * @return the index of the first byte of the packet zone
+     */
     public short getPacketZoneStart() {
         return packetZoneStart;
     }
 
+    /**
+     * This method returns the length of the packet zone for M_PDU frame types, taking into account the possible presence of OCF, FECF and
+     * security trailer.
+     *
+     * @return the length of the packet zone
+     */
     public short getPacketZoneLength() {
         return (short) ((frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0)) - securityTrailerLength - getPacketZoneStart());
     }
 
+    /**
+     * This method returns the user data type handled by this frame.
+     *
+     * @return the user data type
+     */
     public UserDataType getUserDataType() {
         return userDataType;
     }
 
+    /**
+     * This method returns the first header pointer value, in case of M_PDU type.
+     *
+     * @return the first header pointer value
+     */
     public short getFirstHeaderPointer() {
         return firstHeaderPointer;
     }
 
+    /**
+     * This method returns whether the frame contains no start of a packet.
+     *
+     * @return true if the frame contains no start of a packet
+     */
     public boolean isNoStartPacket() {
         return noStartPacket;
     }
 
+    /**
+     * This method returns the value of the bitstream pointer, in case of B_PDU type.
+     *
+     * @return the bitstream data pointer
+     */
     public short getBitstreamDataPointer() {
         return bitstreamDataPointer;
     }
 
+    /**
+     * This method returns the index of the first byte of the bitstream zone for B_PDU frame types. The index takes into
+     * account possible presence of the FHEC, insert zone and security header.
+     *
+     * @return the index of the first byte of the bitstream zone
+     */
     public short getBitstreamDataZoneStart() {
         return bitstreamDataZoneStart;
     }
 
+    /**
+     * This method returns the length of the bitstream zone for B_PDU frame types, taking into account the possible presence of OCF, FECF and
+     * security trailer.
+     *
+     * @return the length of the bitstream zone
+     */
     public short getBitstreamDataZoneLength() {
         return (short) ((frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0)) - securityTrailerLength - getBitstreamDataPointer());
     }
@@ -288,6 +439,12 @@ public class AosTransferFrame extends AbstractTransferFrame {
         return bitstreamAllValid;
     }
 
+    /**
+     * This method returns a copy of the complete bitstream data zone.
+     *
+     * @return a copy of the bitstream data zone
+     * @throws IllegalStateException if the frame has no B_PDU type
+     */
     public byte[] getBitstreamDataZoneCopy() {
         if(userDataType == UserDataType.B_PDU) {
             return Arrays.copyOfRange(frame, bitstreamDataZoneStart, bitstreamDataZoneStart + getBitstreamDataZoneLength());
@@ -296,6 +453,12 @@ public class AosTransferFrame extends AbstractTransferFrame {
         }
     }
 
+    /**
+     * This method returns a copy of the complete packet zone.
+     *
+     * @return a copy of the packet zone
+     * @throws IllegalStateException if the frame has no M_PDU type
+     */
     public byte[] getPacketZoneCopy() {
         if(userDataType == UserDataType.M_PDU) {
             return Arrays.copyOfRange(frame, packetZoneStart, packetZoneStart + getPacketZoneLength());
@@ -304,6 +467,12 @@ public class AosTransferFrame extends AbstractTransferFrame {
         }
     }
 
+    /**
+     * This method returns a copy of the complete insert zone.
+     *
+     * @return a copy of the insert zone
+     * @throws IllegalStateException if the frame has no insert zone
+     */
     public byte[] getInsertZoneCopy() {
         if(transferFrameInsertZoneLength > 0) {
             int startIdx = frameHeaderErrorControlPresent ? AOS_PRIMARY_HEADER_LENGTH + AOS_PRIMARY_HEADER_FHEC_LENGTH : AOS_PRIMARY_HEADER_LENGTH;
@@ -312,7 +481,6 @@ public class AosTransferFrame extends AbstractTransferFrame {
             throw new IllegalStateException("Cannot return copy of Insert Zone, Insert Zone not present");
         }
     }
-
 
     /**
      * This method returns whether security information (header, trailer or both) have been used.
@@ -344,7 +512,7 @@ public class AosTransferFrame extends AbstractTransferFrame {
     /**
      * This method returns a copy of the security header field.
      *
-     * @return a copy of the security header field
+     * @return a copy of the security header field, can have 0 length if not present
      */
     public byte[] getSecurityHeaderCopy() {
         return Arrays.copyOfRange(frame, AOS_PRIMARY_HEADER_LENGTH + (frameHeaderErrorControlPresent ? 2 : 0) + transferFrameInsertZoneLength, AOS_PRIMARY_HEADER_LENGTH + (frameHeaderErrorControlPresent ? 2 : 0) + transferFrameInsertZoneLength + securityHeaderLength);
@@ -353,7 +521,7 @@ public class AosTransferFrame extends AbstractTransferFrame {
     /**
      * This method returns a copy of the security trailer field.
      *
-     * @return a copy of the security trailer field
+     * @return a copy of the security trailer field, can have 0 length if not present
      */
     public byte[] getSecurityTrailerCopy() {
         return Arrays.copyOfRange(frame, frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0) - securityTrailerLength, frame.length - (fecfPresent ? 2 : 0) - (ocfPresent ? 4 : 0));
