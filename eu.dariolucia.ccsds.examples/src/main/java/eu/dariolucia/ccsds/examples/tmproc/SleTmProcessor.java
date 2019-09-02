@@ -207,7 +207,7 @@ public class SleTmProcessor {
                 }
 
                 @Override
-                public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame lastFrame, byte[] packet, boolean qualityIndicator) {
+                public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
                     SpacePacket sp = new SpacePacket(packet, qualityIndicator);
                     try {
                         // Identify the packet
@@ -215,7 +215,7 @@ public class SleTmProcessor {
                         // Log the packet
                         System.out.printf("%s, %d, %d, %s, %d, %d, %s, %s, %s",
                                 sp.getClass().getSimpleName(),
-                                lastFrame.getSpacecraftId(),
+                                firstFrame.getSpacecraftId(),
                                 vc.getVirtualChannelId(),
                                 packetName,
                                 sp.getLength(),
@@ -230,7 +230,7 @@ public class SleTmProcessor {
                         for(Map.Entry<String, Object> param : parameterMap.entrySet()) {
                             System.out.printf("%s, %d, %d, %s, %d, %d, %s, %s, %s",
                                     "Parameter",
-                                    lastFrame.getSpacecraftId(),
+                                    firstFrame.getSpacecraftId(),
                                     vc.getVirtualChannelId(),
                                     param.getKey(),
                                     0,

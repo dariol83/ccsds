@@ -47,4 +47,31 @@ class TcTransferFrameBuilderTest {
         assertFalse(ttf.isSegmented());
         assertNotNull(ttf.toString());
     }
+
+    @Test
+    public void testTcSecurityEncoding() {
+        int userDataLength = 120;
+        TcTransferFrameBuilder builder = TcTransferFrameBuilder.create(false)
+                .setSecurity(new byte[] {1, 2, 4}, new byte[] { 9, 8, 7, 6})
+                .setSpacecraftId(123)
+                .setVirtualChannelId(2)
+                .setFrameSequenceNumber(11)
+                .setBypassFlag(true)
+                .setControlCommandFlag(false);
+
+        int residual = builder.addData(new byte[userDataLength]);
+        assertEquals(0, residual);
+
+        TcTransferFrame ttf = builder.build();
+
+        assertEquals(123, ttf.getSpacecraftId());
+        assertEquals(2, ttf.getVirtualChannelId());
+        assertEquals(11, ttf.getVirtualChannelFrameCount());
+        assertFalse(ttf.isControlCommandFlag());
+        assertTrue(ttf.isBypassFlag());
+        assertFalse(ttf.isSegmented());
+        assertArrayEquals(new byte[] {1, 2, 4}, ttf.getSecurityHeaderCopy());
+        assertArrayEquals(new byte[] {9, 8, 7, 6}, ttf.getSecurityTrailerCopy());
+        assertNotNull(ttf.toString());
+    }
 }

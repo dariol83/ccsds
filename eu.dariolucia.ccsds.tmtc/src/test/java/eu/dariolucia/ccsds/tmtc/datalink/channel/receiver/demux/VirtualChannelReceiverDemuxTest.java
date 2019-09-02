@@ -56,7 +56,7 @@ class VirtualChannelReceiverDemuxTest {
             }
 
             @Override
-            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame lastFrame, byte[] packet, boolean qualityIndicator) {
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
                 assertEquals(0, vc.getVirtualChannelId());
                 if(qualityIndicator) {
                     goodPackets.add(packet);

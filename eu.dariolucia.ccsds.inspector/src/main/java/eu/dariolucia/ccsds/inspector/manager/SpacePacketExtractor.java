@@ -119,7 +119,7 @@ public class SpacePacketExtractor {
         }
 
         @Override
-        public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame lastFrame, byte[] packet, boolean qualityIndicator) {
+        public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
             try {
                 SpacePacket spp = new SpacePacket(packet, qualityIndicator);
                 spp.setAnnotationValue(IConnector.ANNOTATION_TIME_KEY, Instant.now());

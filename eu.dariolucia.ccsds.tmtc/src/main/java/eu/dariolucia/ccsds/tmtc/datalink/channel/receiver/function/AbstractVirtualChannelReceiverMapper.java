@@ -60,7 +60,7 @@ public abstract class AbstractVirtualChannelReceiverMapper<T extends AbstractTra
     }
 
     @Override
-    public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame lastFrame, byte[] packet, boolean qualityIndicator) {
+    public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
         // Not used
     }
 

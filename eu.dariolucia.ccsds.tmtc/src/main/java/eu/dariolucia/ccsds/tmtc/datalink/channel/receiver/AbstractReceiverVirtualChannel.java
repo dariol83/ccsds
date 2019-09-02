@@ -43,6 +43,8 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
     private int currentOffset = -1;
     //
     private int currentPacketLength = -1;
+    //
+    private T currentFirstFrame = null;
 
     protected AbstractReceiverVirtualChannel(int virtualChannelId, VirtualChannelAccessMode mode, boolean exceptionIfVcViolated) {
         this.virtualChannelId = virtualChannelId;
@@ -144,6 +146,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
             return;
         }
         // If gapDetected and pdu reconstruction is pending, close the pdu with dummy data and forwardItem pdu (quality = false)
+        // Clearly, the packet is closed only if you can close it (length fully known)
         if (gapDetected && isReconstructionPending()) {
             closeCurrentPacket(frame);
         }
@@ -167,8 +170,9 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                 // If we are here it means that we started reading a pdu, but we still do not know how long this
                 // pdu is.
                 // We need to read 6 - currentOffset bytes to derive a length. If this space is not even available
-                // before the start of the next pdu, or the end of the pdu, then we silently (TODO: is it OK silently?)
-                // discard the initial piece of pdu we read.
+                // before the start of the next pdu, or the end of the pdu, then we silently discard the initial piece
+                // of pdu we read. In such a case, there is a big problem with the data handling ... maybe we should
+                // just fail.
                 int headerToRead = 6 - this.currentOffset;
                 if (!frameContainsNoStartOfPacket(frame) && headerToRead > retrieveFirstHeaderPointer(frame)) {
                     // Problem: abort, what was read is really to short to make any guess about the pdu
@@ -201,9 +205,10 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                     if (yetToRead > firstHeaderPointer - alreadyRead) {
                         // Packet overlap: close the reconstruction of the current pdu and notify it with bad quality
                         System.arraycopy(fullFrame, firstFrameDataOffset + alreadyRead, this.currentPacket, this.currentOffset, firstHeaderPointer - alreadyRead);
-                        notifySpacePacketExtracted(frame, toPacket(), false);
+                        notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), false);
                         this.currentOffset = -1;
                         this.currentPacketLength = -1;
+                        this.currentFirstFrame = null;
                     } else {
                         // No pdu overlap: close the reconstruction with success
                         System.arraycopy(fullFrame, firstFrameDataOffset + alreadyRead, this.currentPacket, this.currentOffset, yetToRead);
@@ -212,9 +217,10 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                 }
                 // If the pdu is closed, notify it with success
                 if (this.currentPacketLength != -1 && (this.currentPacketLength == this.currentOffset)) {
-                    notifySpacePacketExtracted(frame, toPacket(), true);
+                    notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), true);
                     this.currentOffset = -1;
                     this.currentPacketLength = -1;
+                    this.currentFirstFrame = null;
                 }
             }
         }
@@ -229,6 +235,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
 
     protected final int nextPacket(T frame, byte[] fullFrame, int firstFrameDataOffset, int frameDataLength, int currentHeaderPointer) {
         this.currentOffset = 0;
+        this.currentFirstFrame = frame;
         // If at least 6 bytes are available, then the pdu length can be derived, do it
         if (currentHeaderPointer + 6 < frameDataLength) {
             ByteBuffer bb = ByteBuffer.wrap(fullFrame, firstFrameDataOffset + currentHeaderPointer, 6);
@@ -241,9 +248,10 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
             // If the pdu is complete, notify
             if (toRead == this.currentPacketLength) {
                 // Packet complete, notify
-                notifySpacePacketExtracted(frame, toPacket(), true);
+                notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), true);
                 this.currentOffset = -1;
                 this.currentPacketLength = -1;
+                this.currentFirstFrame = null;
             }
             return currentHeaderPointer + toRead;
         } else {
@@ -259,9 +267,14 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
         if (this.currentOffset == -1) {
             throw new IllegalStateException("Closing a void space pdu, this is a bug");
         }
-        notifySpacePacketExtracted(frame, toPacket(), false);
+        // Close only if you can
+        if(this.currentPacketLength > -1) {
+            notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), false);
+        }
+        // If you could not close it, then it is impossible to understand the length, there must have been a gap, ignored
         currentOffset = -1;
         currentPacketLength = -1;
+        currentFirstFrame = null;
     }
 
     protected byte[] toPacket() {

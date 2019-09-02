@@ -55,5 +55,7 @@ class VirtualChannelReceiverSpacePacketFlatMapperTest {
                 .collect(Collectors.toList()); // Collect the space packets
         // Check the list of packets
         assertEquals(613, packets.size());
+
+        packetMapper.dispose();
     }
 }

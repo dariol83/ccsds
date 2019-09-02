@@ -54,7 +54,7 @@ class AosReceiverVirtualChannelTest {
             }
 
             @Override
-            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame lastFrame, byte[] packet, boolean qualityIndicator) {
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
                 if(qualityIndicator) {
                     goodPackets.add(packet);
                 } else {
@@ -109,7 +109,7 @@ class AosReceiverVirtualChannelTest {
             }
 
             @Override
-            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame lastFrame, byte[] packet, boolean qualityIndicator) {
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
                 if(qualityIndicator) {
                     goodPackets.add(packet);
                 } else {
@@ -164,7 +164,7 @@ class AosReceiverVirtualChannelTest {
             }
 
             @Override
-            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame lastFrame, byte[] packet, boolean qualityIndicator) {
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
                 fail("No space packets expected");
             }
 

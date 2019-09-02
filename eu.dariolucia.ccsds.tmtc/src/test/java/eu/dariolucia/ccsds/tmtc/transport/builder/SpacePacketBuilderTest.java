@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.tmtc.transport.builder;
 
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
+import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -44,7 +45,13 @@ class SpacePacketBuilderTest {
         assertEquals(123, ttf.getApid());
         assertTrue(ttf.isTelemetryPacket());
         assertFalse(ttf.isIdle());
+        assertTrue(ttf.isQualityIndicator());
+        assertTrue(ttf.isSecondaryHeaderFlag());
         assertEquals(114, ttf.getPacketDataLength());
         assertEquals(120, ttf.getLength());
+        assertArrayEquals(ttf.getPacket(), ttf.getPacketCopy());
+        assertEquals(1, ttf.getDataFieldCopy()[0]);
+        assertEquals(1, ttf.getDataFieldCopy()[1]);
+        assertNotNull(ttf.toString());
     }
 }

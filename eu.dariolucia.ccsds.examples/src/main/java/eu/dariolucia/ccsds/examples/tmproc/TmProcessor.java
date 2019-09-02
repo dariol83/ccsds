@@ -214,7 +214,7 @@ public class TmProcessor {
                 }
 
                 @Override
-                public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame lastFrame, byte[] packet, boolean qualityIndicator) {
+                public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
                     SpacePacket sp = new SpacePacket(packet, qualityIndicator);
                     try {
                         // Identify the packet
@@ -222,7 +222,7 @@ public class TmProcessor {
                         // Log the packet
                         System.out.printf("%s, %d, %d, %s, %d, %d, %s, %s, %s\n",
                                 sp.getClass().getSimpleName(),
-                                lastFrame.getSpacecraftId(),
+                                firstFrame.getSpacecraftId(),
                                 vc.getVirtualChannelId(),
                                 packetName,
                                 sp.getLength(),
@@ -237,7 +237,7 @@ public class TmProcessor {
                         for(Map.Entry<String, Object> param : parameterMap.entrySet()) {
                             System.out.printf("%s, %d, %d, %s, %d, %d, %s, %s, %s\n",
                                     "Parameter",
-                                    lastFrame.getSpacecraftId(),
+                                    firstFrame.getSpacecraftId(),
                                     vc.getVirtualChannelId(),
                                     param.getKey(),
                                     0,

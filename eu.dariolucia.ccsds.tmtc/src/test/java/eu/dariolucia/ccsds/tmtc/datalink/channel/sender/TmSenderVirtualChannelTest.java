@@ -147,12 +147,16 @@ class TmSenderVirtualChannelTest {
     }
 
     private List<SpacePacket> generateSpacePackets(int n) {
+        return generateSpacePackets(n, 400);
+    }
+
+    private List<SpacePacket> generateSpacePackets(int n, int bodySize) {
         SpacePacketBuilder spp = SpacePacketBuilder.create()
                 .setApid(200)
                 .setQualityIndicator(true)
                 .setSecondaryHeaderFlag(false)
                 .setTelemetryPacket();
-        spp.addData(new byte[400]);
+        spp.addData(new byte[bodySize]);
         List<SpacePacket> toReturn = new LinkedList<>();
         for (int i = 0; i < n; ++i) {
             spp.setPacketSequenceCount(i % 16384);
@@ -329,5 +333,43 @@ class TmSenderVirtualChannelTest {
         vc0.deregister(mux);
     }
 
+    @Test
+    public void testPushModeSpacePackets() {
+        // Create a sink consumer
+        List<TmTransferFrame> list = new LinkedList<>();
+        Consumer<TmTransferFrame> sink = list::add;
+        // Setup the muxer
+        TmMasterChannelMuxer mux = new TmMasterChannelMuxer(sink);
+        // Setup the VCs (0)
+        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        //
+        vc0.register(mux);
 
+
+        int maxUserDataLength = vc0.getMaxUserDataLength();
+        // This is in frame 0
+        vc0.dispatch(generateSpacePackets(1, maxUserDataLength - SpacePacket.SP_PRIMARY_HEADER_LENGTH - 20));
+        // This is segmented on frame 0 and frame 1
+        vc0.dispatch(generateSpacePackets(1, maxUserDataLength - SpacePacket.SP_PRIMARY_HEADER_LENGTH - 500));
+        // This is in frame 1
+        vc0.dispatch(generateSpacePackets(1, 400));
+        // This is in frame 1, frame 2, frame 3 e part of frame 4
+        int remaining = vc0.dispatch(generateSpacePackets(1, 3 * maxUserDataLength));
+        // This is in frame 4
+        vc0.dispatch(generateSpacePackets(1, remaining - SpacePacket.SP_PRIMARY_HEADER_LENGTH));
+        // This is in frame 5, one single byte remains free in frame 5
+        vc0.dispatch(generateSpacePackets(1, maxUserDataLength - SpacePacket.SP_PRIMARY_HEADER_LENGTH - 1));
+        // This is in frame 5 and frame 6
+        remaining = vc0.dispatch(generateSpacePackets(1, maxUserDataLength - SpacePacket.SP_PRIMARY_HEADER_LENGTH - 400));
+        // This is in frame 6, 2 bytes free in frame 6
+        vc0.dispatch(generateSpacePackets(1, remaining - SpacePacket.SP_PRIMARY_HEADER_LENGTH - 2));
+        // This is in frame 6, 7 and 8
+        remaining = vc0.dispatch(generateSpacePackets(1, maxUserDataLength + 200 - SpacePacket.SP_PRIMARY_HEADER_LENGTH));
+        // This is in frame 8, closed
+        vc0.dispatch(generateSpacePackets(1, remaining - SpacePacket.SP_PRIMARY_HEADER_LENGTH));
+
+        assertEquals(9, list.size());
+
+        // list.stream().map(TmTransferFrame::getFrame).map(StringUtil::toHexDump).forEach(System.out::println);
+    }
 }

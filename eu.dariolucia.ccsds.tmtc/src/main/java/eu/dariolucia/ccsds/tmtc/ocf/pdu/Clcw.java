@@ -25,28 +25,24 @@ public class Clcw extends AbstractOcf {
         RESERVED3
     }
 
-    private byte versionNumber;
-    private byte statusField;
-    private byte reservedSpare;
-    private CopEffectType copInEffect;
-    private short virtualChannelId;
+    private final byte versionNumber;
+    private final byte statusField;
+    private final byte reservedSpare;
+    private final CopEffectType copInEffect;
+    private final short virtualChannelId;
 
-    private boolean noRfAvailableFlag;
-    private boolean noBitlockFlag;
-    private boolean lockoutFlag;
-    private boolean waitFlag;
-    private boolean retransmitFlag;
+    private final boolean noRfAvailableFlag;
+    private final boolean noBitlockFlag;
+    private final boolean lockoutFlag;
+    private final boolean waitFlag;
+    private final boolean retransmitFlag;
 
-    private byte farmBCounter;
+    private final byte farmBCounter;
 
-    private short reportValue;
+    private final short reportValue;
 
     public Clcw(byte[] ocf) {
         super(ocf);
-        decode();
-    }
-
-    private void decode() {
         // 4.2.1.2.2
         if(!clcw) {
             throw new IllegalArgumentException("CLCW Type: expected 0, actual 1");

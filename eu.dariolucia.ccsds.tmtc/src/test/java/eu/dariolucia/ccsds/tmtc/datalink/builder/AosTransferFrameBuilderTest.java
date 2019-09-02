@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class AosTransferFrameBuilderTest {
 
     @Test
-    public void testAosFrameEncoding() {
+    public void testAosIdleFrameEncoding() {
         int userData = AosTransferFrameBuilder.computeUserDataLength(892, true, 0, AosTransferFrame.UserDataType.IDLE, true, true);
         AosTransferFrameBuilder b = AosTransferFrameBuilder.create(892, true, 0, AosTransferFrame.UserDataType.IDLE, true, true)
                 .setSpacecraftId(123)
@@ -51,6 +51,27 @@ class AosTransferFrameBuilderTest {
         assertEquals(10, ttf.getVirtualChannelFrameCountCycle());
         assertFalse(ttf.isReplayFlag());
         assertEquals(0, ttf.getInsertZoneLength());
+
+        try {
+            ttf.getBitstreamDataZoneCopy();
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
+
+        try {
+            ttf.getPacketZoneCopy();
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
+
+        try {
+            ttf.getInsertZoneCopy();
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
     }
 
     @Test

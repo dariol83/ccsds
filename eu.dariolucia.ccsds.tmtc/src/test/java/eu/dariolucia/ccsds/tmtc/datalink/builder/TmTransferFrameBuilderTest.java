@@ -20,6 +20,7 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class TmTransferFrameBuilderTest {
 
@@ -125,6 +126,52 @@ class TmTransferFrameBuilderTest {
         assertEquals(TmTransferFrame.TM_FIRST_HEADER_POINTER_NO_PACKET, ttf.getFirstHeaderPointer());
         assertFalse(ttf.isIdleFrame());
         assertTrue(ttf.isNoStartPacket());
+    }
+
+    @Test
+    public void testNoPacketsNoOcfFrameEncoding() {
+        int userDataLength = TmTransferFrameBuilder.computeUserDataLength(1115, 0, false, false);
+        TmTransferFrameBuilder builder = TmTransferFrameBuilder.create(1115, 0, false, false)
+                .setSpacecraftId(789)
+                .setVirtualChannelId(2)
+                .setMasterChannelFrameCount(34)
+                .setVirtualChannelFrameCount(123)
+                .setPacketOrderFlag(false)
+                .setSynchronisationFlag(false)
+                .setSegmentLengthIdentifier(3);
+
+        int residual = builder.addData(new byte[userDataLength]);
+        assertEquals(0, residual);
+
+        TmTransferFrame ttf = builder.build();
+
+        assertEquals(789, ttf.getSpacecraftId());
+        assertEquals(2, ttf.getVirtualChannelId());
+        assertEquals(34, ttf.getMasterChannelFrameCount());
+        assertEquals(123, ttf.getVirtualChannelFrameCount());
+        assertFalse(ttf.isPacketOrderFlag());
+        assertFalse(ttf.isSecondaryHeaderPresent());
+        assertFalse(ttf.isSynchronisationFlag());
+        assertFalse(ttf.isOcfPresent());
+        assertFalse(ttf.isFecfPresent());
+        assertEquals(3, ttf.getSegmentLengthIdentifier());
+        assertEquals(TmTransferFrame.TM_FIRST_HEADER_POINTER_NO_PACKET, ttf.getFirstHeaderPointer());
+        assertFalse(ttf.isIdleFrame());
+        assertTrue(ttf.isNoStartPacket());
+
+        try {
+            ttf.getOcfCopy();
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
+
+        try {
+            ttf.getFecf();
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
     }
 
     @Test
