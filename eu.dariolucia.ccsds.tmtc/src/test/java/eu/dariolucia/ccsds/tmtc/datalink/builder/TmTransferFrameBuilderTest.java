@@ -19,6 +19,7 @@ package eu.dariolucia.ccsds.tmtc.datalink.builder;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import org.junit.jupiter.api.Test;
 
+import static eu.dariolucia.ccsds.tmtc.util.TestUtil.assertException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -372,5 +373,50 @@ class TmTransferFrameBuilderTest {
         assertFalse(ttf.isNoStartPacket());
         assertArrayEquals(new byte[] { 0x01, 0x02, 0x03, 0x04 }, ttf.getOcfCopy());
         assertArrayEquals(new byte[] { (byte) 0xFF, (byte) 0xFA, 0x11, 0x14, 0x76}, ttf.getSecondaryHeaderCopy());
+    }
+
+    @Test
+    public void testErrorCases() {
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.computeUserDataLength(1115, 70, false, false));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 70, false, false));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 0, false, false).setSpacecraftId(-1));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 0, false, false).setSpacecraftId(1024));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 0, false, false).setVirtualChannelId(-1));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 0, false, false).setVirtualChannelId(10));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 0, false, false).setVirtualChannelFrameCount(-1));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 0, false, false).setVirtualChannelFrameCount(300));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 0, false, false).setMasterChannelFrameCount(-1));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 0, false, false).setMasterChannelFrameCount(300));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 0, false, false).setSecondaryHeader(new byte[3]));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 2, false, false).setSecondaryHeader(new byte[3]));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 2, false, false).setSegmentLengthIdentifier(4));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 2, false, false).setSegmentLengthIdentifier(-1));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 2, false, false).setOcf(new byte[3]));
+        assertException(IllegalArgumentException.class, () -> TmTransferFrameBuilder.create(1115, 2, true, false).setOcf(new byte[3]));
+        assertException(IllegalArgumentException.class, () -> {
+            TmTransferFrameBuilder tb = TmTransferFrameBuilder.create(1115, 0, false, false);
+            tb.addData(new byte[1109]);
+            tb.setSecurity(new byte[4], new byte[2]);
+        });
+        assertException(IllegalArgumentException.class, () -> {
+            TmTransferFrameBuilder tb = TmTransferFrameBuilder.create(1115, 0, false, false);
+            tb.addData(new byte[1104]);
+            tb.setSecurity(new byte[4], new byte[2]);
+        });
+        assertException(IllegalStateException.class, () -> {
+            TmTransferFrameBuilder tb = TmTransferFrameBuilder.create(1115, 0, false, false);
+            tb.addData(new byte[1100]);
+            tb.build();
+        });
+        assertException(IllegalStateException.class, () -> {
+            TmTransferFrameBuilder tb = TmTransferFrameBuilder.create(1115, 3, false, false);
+            tb.addData(new byte[1106]);
+            tb.build();
+        });
+        assertException(IllegalStateException.class, () -> {
+            TmTransferFrameBuilder tb = TmTransferFrameBuilder.create(1115, 0, true, false);
+            tb.addData(new byte[1109]);
+            tb.build();
+        });
     }
 }

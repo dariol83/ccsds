@@ -73,7 +73,7 @@ public class ChannelDecoder<T extends AbstractTransferFrame> implements Function
     }
 
     /**
-     * This method adds a function byte[] -> byte[] to the decoding chain. Functions are applied in the
+     * This method adds a function byte[] to byte[] to the decoding chain. Functions are applied in the
      * order used to add them to the channel decoder.
      *
      * @param function the {@link Function} to add

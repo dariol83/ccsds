@@ -82,7 +82,7 @@ public class ChannelEncoder<T extends AbstractTransferFrame> implements Function
 	}
 
 	/**
-	 * This method adds an encoding function T, byte[] -> byte[] to the encoding chain. Functions are applied in the
+	 * This method adds an encoding function T, byte[] to byte[] to the encoding chain. Functions are applied in the
 	 * order used to add them to the channel encoder.
 	 *
 	 * @param function the {@link IEncodingFunction} to add

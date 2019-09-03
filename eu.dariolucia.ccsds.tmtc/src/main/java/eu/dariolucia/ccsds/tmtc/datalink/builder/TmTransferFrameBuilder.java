@@ -112,7 +112,7 @@ public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferF
     }
 
     public TmTransferFrameBuilder setSecondaryHeader(byte[] secondaryHeader) {
-        if(secondaryHeaderLength == 0) throw new IllegalStateException("Secondary header not marked as present");
+        if(secondaryHeaderLength == 0) throw new IllegalArgumentException("Secondary header not marked as present");
         if(secondaryHeaderLength != secondaryHeader.length) throw new IllegalArgumentException("Secondary header length preallocated to " + secondaryHeaderLength + " octets, got " + secondaryHeader.length + " octets");
 
         this.secondaryHeader = secondaryHeader;
@@ -139,7 +139,7 @@ public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferF
     }
 
     public TmTransferFrameBuilder setOcf(byte[] ocf) {
-        if(!ocfPresent) throw new IllegalStateException("OCF not marked as present");
+        if(!ocfPresent) throw new IllegalArgumentException("OCF not marked as present");
         if(ocf.length != 4) throw new IllegalArgumentException("OCF wrong size, expected 4, got " + ocf.length);
 
         this.ocf = ocf;
