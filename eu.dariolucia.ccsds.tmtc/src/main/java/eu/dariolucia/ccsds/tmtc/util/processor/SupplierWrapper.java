@@ -16,11 +16,11 @@
 
 package eu.dariolucia.ccsds.tmtc.util.processor;
 
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Flow;
 import java.util.concurrent.SubmissionPublisher;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -124,5 +124,18 @@ public class SupplierWrapper<T> extends SubmissionPublisher<T> {
             this.activationThread.interrupt();
             this.activationThread = null;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SupplierWrapper<?> that = (SupplierWrapper<?>) o;
+        return supplier.equals(that.supplier);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(supplier);
     }
 }

@@ -66,4 +66,28 @@ class SpacePacketTest {
             // Good
         }
     }
+
+    @Test
+    public void testAnnotatedPacket() {
+        SpacePacket ttf = SpacePacket.decodingFunction().apply(StringUtil.toByteArray(SP1_DUMP));
+
+        assertTrue(ttf.getAnnotationKeys().isEmpty());
+        ttf.setAnnotationValue("x", 123);
+        assertEquals(123, ttf.getAnnotationValue("x"));
+        assertNull(ttf.getAnnotationValue("y"));
+        ttf.setAnnotationValueIfAbsent("x", 333);
+        assertEquals(123, ttf.getAnnotationValue("x"));
+        assertEquals(1, ttf.getAnnotationKeys().size());
+        assertTrue(ttf.isAnnotationPresent("x"));
+        assertFalse(ttf.isAnnotationPresent("y"));
+        ttf.clearAnnotationValue("y");
+        assertTrue(ttf.isAnnotationPresent("x"));
+        ttf.clearAnnotationValue("x");
+        assertFalse(ttf.isAnnotationPresent("x"));
+        ttf.setAnnotationValue("x", 123);
+        ttf.setAnnotationValue("y", "abc");
+        assertEquals(2, ttf.getAnnotationKeys().size());
+        ttf.clearAnnotations();
+        assertTrue(ttf.getAnnotationKeys().isEmpty());
+    }
 }

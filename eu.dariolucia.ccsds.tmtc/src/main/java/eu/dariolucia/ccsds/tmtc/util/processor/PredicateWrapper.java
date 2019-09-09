@@ -65,7 +65,7 @@ public class PredicateWrapper<T> extends TransformationListProcessor<T, T> {
 	 * @param filter the filter to use
 	 */
 	public PredicateWrapper(Predicate<T> filter) {
-		this(filter, null, false);
+		this(filter, false);
 	}
 
 	private static class FilterMap<T> implements Function<T, List<T>> {

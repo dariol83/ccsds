@@ -19,6 +19,7 @@ package eu.dariolucia.ccsds.tmtc.datalink.builder;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
 import org.junit.jupiter.api.Test;
 
+import static eu.dariolucia.ccsds.tmtc.util.TestUtil.assertException;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AosTransferFrameBuilderTest {
@@ -141,4 +142,34 @@ class AosTransferFrameBuilderTest {
         assertEquals(AosTransferFrame.AOS_PRIMARY_HEADER_LENGTH + AosTransferFrame.AOS_PRIMARY_HEADER_FHEC_LENGTH + insertZone.length + secHeader.length, ttf.getDataFieldStart());
     }
 
+    @Test
+    public void testAosFrameEncodingErrors() {
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false).setSpacecraftId(-1));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false).setSpacecraftId(1024));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false).setVirtualChannelId(-1));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false).setVirtualChannelId(68));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false).setVirtualChannelFrameCount(-1));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false).setVirtualChannelFrameCount(16777216));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false).setVirtualChannelFrameCountCycle(-1));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false).setVirtualChannelFrameCountCycle(16216));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false).setInsertZone(new byte[3]));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 2, AosTransferFrame.UserDataType.VCA, false, false).setInsertZone(new byte[3]));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 2, AosTransferFrame.UserDataType.VCA, false, false).setOcf(new byte[3]));
+        assertException(IllegalArgumentException.class, () -> AosTransferFrameBuilder.create(1115, false, 2, AosTransferFrame.UserDataType.VCA, true, false).setOcf(new byte[3]));
+        assertException(IllegalArgumentException.class, () -> {
+            AosTransferFrameBuilder tb = AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false);
+            tb.addData(new byte[1109]);
+            tb.setSecurity(new byte[4], new byte[2]);
+        });
+        assertException(IllegalArgumentException.class, () -> {
+            AosTransferFrameBuilder tb = AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false);
+            tb.addData(new byte[1104]);
+            tb.setSecurity(new byte[4], new byte[2]);
+        });
+        assertException(IllegalStateException.class, () -> {
+            AosTransferFrameBuilder tb = AosTransferFrameBuilder.create(1115, false, 0, AosTransferFrame.UserDataType.VCA, false, false);
+            tb.addData(new byte[1100]);
+            tb.build();
+        });
+    }
 }

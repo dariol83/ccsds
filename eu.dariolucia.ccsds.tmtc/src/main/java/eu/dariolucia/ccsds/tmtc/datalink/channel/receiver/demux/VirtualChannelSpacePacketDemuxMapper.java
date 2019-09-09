@@ -27,27 +27,56 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class VirtualChannelSpacePacketDemuxMapper implements Function<AbstractTransferFrame, List<SpacePacket>> {
+/**
+ * This class is used to stream out packets from a transfer frame stream. It must be noted that frames for which no virtual
+ * channel is registered are dropped. Subclassing can be used to provide additional functionalities, e.g. attaching the virtual
+ * channel ID as annotated value to the generated space packets.
+ *
+ * This class is not thread-safe.
+ */
+public class VirtualChannelSpacePacketDemuxMapper<T extends AbstractTransferFrame> implements Function<T, List<SpacePacket>> {
 
     private final Map<Integer, VirtualChannelReceiverSpacePacketMapper> vcid2mapper = new HashMap<>();
 
+    /**
+     * Create an instance of {@link VirtualChannelSpacePacketDemuxMapper}.
+     */
     public VirtualChannelSpacePacketDemuxMapper() {
         // Nothing
     }
 
-    public void register(AbstractReceiverVirtualChannel channel) {
+    /**
+     * This method is used to register a virtual channel.
+     *
+     * @param channel the virtual channel to register
+     * @throws IllegalArgumentException if the virtual channel ID was already registered
+     */
+    public void register(AbstractReceiverVirtualChannel<T> channel) {
         if(this.vcid2mapper.containsKey(channel.getVirtualChannelId())) {
             throw new IllegalArgumentException("Virtual channel receiver for VCID " + channel.getVirtualChannelId() + " already registered");
         }
-        this.vcid2mapper.put(channel.getVirtualChannelId(), new VirtualChannelReceiverSpacePacketMapper(channel));
+        this.vcid2mapper.put(channel.getVirtualChannelId(), new VirtualChannelReceiverSpacePacketMapper<>(channel));
     }
 
+    /**
+     * This method invokes {@link VirtualChannelSpacePacketDemuxMapper#processFrame(AbstractTransferFrame)}.
+     *
+     * @param frame the frame to process
+     * @return the list of space packets emitted by the associated virtual channel
+     */
     @Override
-    public List<SpacePacket> apply(AbstractTransferFrame frame) {
+    public List<SpacePacket> apply(T frame) {
         return processFrame(frame);
     }
 
-    public List<SpacePacket> processFrame(AbstractTransferFrame frame) {
+    /**
+     * This method routes the provided frame to the correct virtual channel (if registered) and collect its
+     * output. The output is returned as list.
+     *
+     * @param frame the frame to process
+     * @return the list of space packets emitted by the associated virtual channel
+     */
+    public List<SpacePacket> processFrame(T frame) {
         int vcId = frame.getVirtualChannelId();
         VirtualChannelReceiverSpacePacketMapper packetMapper = this.vcid2mapper.get(vcId);
         if(packetMapper != null) {

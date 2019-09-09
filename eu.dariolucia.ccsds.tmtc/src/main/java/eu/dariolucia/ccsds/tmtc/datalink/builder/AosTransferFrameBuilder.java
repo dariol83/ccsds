@@ -114,7 +114,7 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
 
     public AosTransferFrameBuilder setInsertZone(byte[] insertZone) {
         if(insertZoneLength == 0) {
-            throw new IllegalStateException("Insert Zone not marked as present");
+            throw new IllegalArgumentException("Insert Zone not marked as present");
         }
         if(insertZoneLength != insertZone.length) {
             throw new IllegalArgumentException("Insert Zone length preallocated to " + insertZoneLength + " octets, got " + insertZone.length + " octets");
@@ -160,7 +160,7 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
 
     public AosTransferFrameBuilder setOcf(byte[] ocf) {
         if(!ocfPresent) {
-            throw new IllegalStateException("OCF not marked as present");
+            throw new IllegalArgumentException("OCF not marked as present");
         }
         if(ocf.length != 4) {
             throw new IllegalArgumentException("OCF wrong size, expected 4, got " + ocf.length);

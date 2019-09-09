@@ -68,6 +68,7 @@ class ChannelDecoderProcessorTest {
                 break;
             }
         }
+        rawFramePublisher.deactivate();
         assertEquals(152, retrievedFrames.size());
     }
 
@@ -93,7 +94,7 @@ class ChannelDecoderProcessorTest {
         // Link the consumer to the processor
         p.subscribe(collector);
         // Start the processing by activating the publisher, the processing chain is in place
-        rawFramePublisher.activate(false);
+        rawFramePublisher.activate(true);
         // When the activate returns, all frames should be in the processing queue. The SupplierWrapper is in fact
         // asynchronous. So we need to wait a bit. Let's use active wait. Max wait is 10 seconds.
         for (int i = 0; i < 100; ++i) {
@@ -110,7 +111,7 @@ class ChannelDecoderProcessorTest {
         // Build the reader (as supplier)
         LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1));
         // Wrap the reader in a Flow.Publisher
-        SupplierWrapper<byte[]> rawFramePublisher = new SupplierWrapper<>(reader);
+        SupplierWrapper<byte[]> rawFramePublisher = new SupplierWrapper<>(reader, true);
         // Build the decoder: TM Frame decoding function, no FECF
         ChannelDecoder<TmTransferFrame> cd = ChannelDecoder.create(TmTransferFrame.decodingFunction(false))
                 .addDecodingFunction(new TmAsmDecoder()) // Add ASM removal with default ASM
@@ -141,10 +142,12 @@ class ChannelDecoderProcessorTest {
         // Link the consumer to the processor
         p.subscribe(collector);
         // Start the processing by activating the publisher, the processing chain is in place
-        rawFramePublisher.activate(false);
+        rawFramePublisher.activate(true);
         // When the activate returns, all frames should be in the processing queue. The SupplierWrapper is in fact
         // asynchronous. We wait a fixed amount (1 second) and then we check.
         Thread.sleep(1000);
+        //
+        rawFramePublisher.deactivate();
         // Only 10 items in the list
         assertEquals(10, retrievedFrames.size());
     }
