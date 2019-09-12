@@ -75,7 +75,7 @@ public class CcsdsInspector extends Application {
 	/**
 	 * Exit the application with a confirmation.
 	 *
-	 * @param e
+	 * @param e the exit event
 	 */
 	public static void performExit(Event e) {
 		Alert alert = new Alert(AlertType.CONFIRMATION);
