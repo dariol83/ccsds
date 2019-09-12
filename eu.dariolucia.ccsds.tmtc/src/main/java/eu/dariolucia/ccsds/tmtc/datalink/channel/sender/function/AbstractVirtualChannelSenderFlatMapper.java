@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  * of {@link SpacePacket}, {@link eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData} or byte[], depending on the
  * virtual channel access mode, into a stream of transfer frames, derived from {@link AbstractTransferFrame}.
  *
- * Since this object must return a {@link Stream<T>} when apply(K) is called, this function must be applied using the
+ * Since this object must return a {@link Stream} when apply(K) is called, this function must be applied using the
  * {@link Stream#flatMap(Function)} method.
  *
  * When the use of the flat mapper is over, the method dispose() shall be called to deregister the flat mapper from the

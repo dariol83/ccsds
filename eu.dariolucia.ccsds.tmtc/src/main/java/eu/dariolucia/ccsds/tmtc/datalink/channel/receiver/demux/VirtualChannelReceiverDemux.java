@@ -69,8 +69,8 @@ public class VirtualChannelReceiverDemux implements Consumer<AbstractTransferFra
      * Create a demux with the provided virtual channels and a handler for transfer frames belonging to unregistered virtual
      * channels.
      *
-     * @param missingVcHandler
-     * @param receivers
+     * @param missingVcHandler the handler for not registered VCs
+     * @param receivers the initial set of virtual channels
      */
     public VirtualChannelReceiverDemux(Consumer<AbstractTransferFrame> missingVcHandler, AbstractReceiverVirtualChannel... receivers) {
         this.missingVcHandler = missingVcHandler;
@@ -95,7 +95,7 @@ public class VirtualChannelReceiverDemux implements Consumer<AbstractTransferFra
      * This method processes a transfer frame.
      *
      * @see VirtualChannelReceiverDemux#processFrame(AbstractTransferFrame)
-     * @param frame
+     * @param frame the frame to process
      */
     @Override
     public void accept(AbstractTransferFrame frame) {
