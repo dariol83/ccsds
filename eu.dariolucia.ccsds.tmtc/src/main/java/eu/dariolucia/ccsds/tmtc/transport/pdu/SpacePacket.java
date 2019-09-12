@@ -23,6 +23,9 @@ import java.util.Arrays;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * This class is used to decode and manipulate a space packet, compliant to CCSDS 133.0-B-1.
+ */
 public class SpacePacket extends AnnotatedObject {
 
     public static final int SP_PRIMARY_HEADER_LENGTH = 6;
@@ -51,25 +54,22 @@ public class SpacePacket extends AnnotatedObject {
 
     private final boolean qualityIndicator;
 
-    private boolean telemetryPacket;
+    private final boolean telemetryPacket;
 
-    private boolean secondaryHeaderFlag;
+    private final boolean secondaryHeaderFlag;
 
-    private short apid;
+    private final short apid;
 
-    private SequenceFlagType sequenceFlag;
+    private final SequenceFlagType sequenceFlag;
 
-    private short packetSequenceCount;
+    private final short packetSequenceCount;
 
-    private int packetDataLength;
+    private final int packetDataLength;
 
     public SpacePacket(byte[] packet, boolean qualityIndicator) {
         this.packet = packet;
         this.qualityIndicator = qualityIndicator;
-        decode();
-    }
 
-    protected void decode() {
         ByteBuffer in = ByteBuffer.wrap(packet);
         // First 2 octets
         short twoOctets = in.getShort();

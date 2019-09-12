@@ -19,6 +19,11 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.sender.function;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.AbstractSenderVirtualChannel;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
+/**
+ * Flat mapper used to convert user data as byte[].
+ *
+ * @param <T> the destination frame type
+ */
 public class VirtualChannelSenderUserDataFlatMapper<T extends AbstractTransferFrame> extends AbstractVirtualChannelSenderFlatMapper<T, byte[]> {
 
     public VirtualChannelSenderUserDataFlatMapper(AbstractSenderVirtualChannel<T> sender) {

@@ -20,6 +20,11 @@ import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.AbstractReceiverVirtua
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
 
+/**
+ * Mapper used to convert frames to {@link BitstreamData}.
+ *
+ * @param <T> the source frame type
+ */
 public class VirtualChannelReceiverBitstreamDataMapper<T extends AbstractTransferFrame> extends AbstractVirtualChannelReceiverMapper<T, BitstreamData> {
 
     public VirtualChannelReceiverBitstreamDataMapper(AbstractReceiverVirtualChannel<T> virtualChannel) {

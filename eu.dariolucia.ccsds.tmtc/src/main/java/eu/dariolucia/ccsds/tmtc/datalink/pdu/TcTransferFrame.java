@@ -23,6 +23,10 @@ import eu.dariolucia.ccsds.tmtc.coding.IDecodingFunction;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+/**
+ * This class is used to decode and manipulate a TC transfer frame, compliant to CCSDS 232.0-B-3. It includes also support
+ * for the security protocol, as defined by the same standard.
+ */
 public class TcTransferFrame extends AbstractTransferFrame {
 
     /**

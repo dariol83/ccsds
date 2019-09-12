@@ -24,8 +24,24 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * This class allows to build a CCSDS TM frame using a typical Builder pattern. Once a frame is built, the builder should
+ * not be re-used, as the internals (such as the payload data) are not cleaned up upon build.
+ *
+ * This class is not thread-safe.
+ */
 public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferFrame> {
 
+    /**
+     * This static method allows to compute the length of the user data field of a TM frame, based on the frame characteristics.
+     * It has to be noted that the security data is part of length returned by this method.
+     *
+     * @param length the total frame length in bytes
+     * @param secHeaderLength length of the secondary header, 0 if absent
+     * @param ocfPresent true if the OCF is present, false otherwise
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @return size of the user data field in bytes (including the security fields, if present)
+     */
     public static int computeUserDataLength(int length, int secHeaderLength, boolean ocfPresent, boolean fecfPresent) {
         if(secHeaderLength > 63) {
             throw new IllegalArgumentException("Transfer Frame Secondary Header Length cannot be greater than 63, actual " + secHeaderLength);
@@ -34,6 +50,15 @@ public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferF
         return length - TmTransferFrame.TM_PRIMARY_HEADER_LENGTH - (secHeaderLength == 0 ? 0 : 1 + secHeaderLength) - (ocfPresent ? 4 : 0) - (fecfPresent ? 2 : 0);
     }
 
+    /**
+     * This method creates an instance of this class.
+     *
+     * @param length the total frame length in bytes
+     * @param secHeaderLength length in bytes of the secondary header, 0 if absent
+     * @param ocfPresent true if the OCF is present, false otherwise
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @return the builder object
+     */
     public static TmTransferFrameBuilder create(int length, int secHeaderLength, boolean ocfPresent, boolean fecfPresent) {
         return new TmTransferFrameBuilder(length, secHeaderLength, ocfPresent, fecfPresent);
     }

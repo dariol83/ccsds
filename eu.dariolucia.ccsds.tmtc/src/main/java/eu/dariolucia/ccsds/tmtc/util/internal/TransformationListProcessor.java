@@ -25,6 +25,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Flow;
 import java.util.function.Function;
 
+/**
+ * A processor that transform input data of type T into an output data of type K via the provided {@link Function}.
+ * Each element of the returned list is processed.
+ *
+ * @param <T> the input type
+ * @param <K> the output type
+ */
 public class TransformationListProcessor<T,K> extends AbstractTransformationProcessor<T,K> {
 
     public TransformationListProcessor(Function<T, ? extends Collection<K>> mapper, ExecutorService executor, boolean timely) {

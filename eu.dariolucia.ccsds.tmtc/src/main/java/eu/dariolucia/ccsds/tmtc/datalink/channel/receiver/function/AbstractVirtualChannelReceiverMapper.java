@@ -19,9 +19,21 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.function;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.AbstractReceiverVirtualChannel;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.IVirtualChannelReceiverOutput;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 
 import java.util.function.Function;
 
+/**
+ * This abstract class allows, when subclassed, to use a virtual channel as a {@link Function} object, converting a stream
+ * of transfer frames, derived from {@link AbstractTransferFrame}, into a different object, e.g list of {@link SpacePacket},
+ * {@link eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData} or byte[], depending on the virtual channel access mode.
+ *
+ * When the use of the mapper is over, the method dispose() shall be called to deregister the mapper from the
+ * virtual channel.
+ *
+ * @param <T> the specific frame class
+ * @param <K> the specific output
+ */
 public abstract class AbstractVirtualChannelReceiverMapper<T extends AbstractTransferFrame, K> implements Function<T, K>, IVirtualChannelReceiverOutput {
 
     private final AbstractReceiverVirtualChannel<T> virtualChannel;

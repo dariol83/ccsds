@@ -22,16 +22,44 @@ import eu.dariolucia.ccsds.tmtc.coding.IDecodingFunction;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+/**
+ * This class is used to decode and manipulate a TM transfer frame, compliant to CCSDS 132.0-B-2. It includes also support
+ * for the security protocol, as defined by the same standard.
+ */
 public class TmTransferFrame extends AbstractTransferFrame {
 
+    /**
+     * Length of the primary header
+     */
     public static final int TM_PRIMARY_HEADER_LENGTH = 6;
+    /**
+     * Value of the first header pointer when no start of packet is present inside the frame
+     */
     public static final short TM_FIRST_HEADER_POINTER_NO_PACKET = 2047;
+    /**
+     * Value of the first header pointer in case of idle frame
+     */
     public static final short TM_FIRST_HEADER_POINTER_IDLE = 2046;
 
+    /**
+     * Decoding function for TM frames, which can be used when building {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder} objects.
+     * Security protocol information is considered missing.
+     *
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @return the TM frame decoding function
+     */
     public static IDecodingFunction<TmTransferFrame> decodingFunction(boolean fecfPresent) {
         return decodingFunction(fecfPresent, 0, 0);
     }
 
+    /**
+     * Decoding function for TM frames, which can be used when building {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder} objects.
+     *
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @param securityHeaderLength size of the security header length in bytes, 0 if not present
+     * @param securityTrailerLength size of the security trailer length in bytes, 0 if not present
+     * @return the TM frame decoding function
+     */
     public static IDecodingFunction<TmTransferFrame> decodingFunction(boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
         return input -> new TmTransferFrame(input, fecfPresent, securityHeaderLength, securityTrailerLength);
     }
@@ -54,10 +82,24 @@ public class TmTransferFrame extends AbstractTransferFrame {
     private final int securityHeaderLength;
     private final int securityTrailerLength;
 
+    /**
+     * Constructor of a TM transfer frame, assuming no security protocol used.
+     *
+     * @param frame the frame data
+     * @param fecfPresent true if the FECF is present, false otherwise
+     */
     public TmTransferFrame(byte[] frame, boolean fecfPresent) {
         this(frame, fecfPresent, 0, 0);
     }
 
+    /**
+     * Constructor of a TM transfer frame.
+     *
+     * @param frame the frame data
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @param securityHeaderLength size of the security header length in bytes, 0 if not present
+     * @param securityTrailerLength size of the security trailer length in bytes, 0 if not present
+     */
     public TmTransferFrame(byte[] frame, boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
         super(frame, fecfPresent);
 
@@ -149,30 +191,65 @@ public class TmTransferFrame extends AbstractTransferFrame {
         return crc16 == crcFromFrame;
     }
 
+    /**
+     * This method returns the value of the master channel frame count.
+     *
+     * @return the value of the master channel frame count field
+     */
     public int getMasterChannelFrameCount() {
         return masterChannelFrameCount;
     }
 
+    /**
+     * This method returns whether the secondary header flag is set.
+     *
+     * @return true if the flag is set, false otherwise
+     */
     public boolean isSecondaryHeaderPresent() {
         return secondaryHeaderPresent;
     }
 
+    /**
+     * This method returns whether the sync flag is set.
+     *
+     * @return true if the flag is set, false otherwise
+     */
     public boolean isSynchronisationFlag() {
         return synchronisationFlag;
     }
 
+    /**
+     * This method returns whether the packet order flag is set.
+     *
+     * @return true if the flag is set, false otherwise
+     */
     public boolean isPacketOrderFlag() {
         return packetOrderFlag;
     }
 
+    /**
+     * This method returns the value of the segment length identifier.
+     *
+     * @return the value of the segment length identifier field
+     */
     public byte getSegmentLengthIdentifier() {
         return segmentLengthIdentifier;
     }
 
+    /**
+     * This method returns the value of the first header pointer.
+     *
+     * @return the value of the first header pointer field
+     */
     public short getFirstHeaderPointer() {
         return firstHeaderPointer;
     }
 
+    /**
+     * This method returns whether the frame contains no start of a space packet.
+     *
+     * @return true if the frame does not contain the start of a packet, false otherwise
+     */
     public boolean isNoStartPacket() {
         return noStartPacket;
     }
@@ -182,14 +259,33 @@ public class TmTransferFrame extends AbstractTransferFrame {
         return idleFrame;
     }
 
+    /**
+     * This method returns the value of the secondary header version number. The value is meaningful only if the
+     * secondary header is marked as present.
+     *
+     * @return the value of the secondary header version number field
+     */
     public byte getSecondaryHeaderVersionNumber() {
         return secondaryHeaderVersionNumber;
     }
 
+    /**
+     * This method returns the value of the secondary header length. The value is meaningful only if the
+     * secondary header is marked as present.
+     *
+     * @return the value of the secondary header length
+     */
     public byte getSecondaryHeaderLength() {
         return secondaryHeaderLength;
     }
 
+    /**
+     * This method returns a copy of the secondary header. If the secondary header is not present, an {@link IllegalStateException}
+     * is thrown.
+     *
+     * @return the copy of the secondary header
+     * @throws IllegalStateException if the secondary header is not present
+     */
     public byte[] getSecondaryHeaderCopy() {
         if(secondaryHeaderPresent) {
             return Arrays.copyOfRange(frame, TM_PRIMARY_HEADER_LENGTH + 1, TM_PRIMARY_HEADER_LENGTH + 1 + secondaryHeaderLength);

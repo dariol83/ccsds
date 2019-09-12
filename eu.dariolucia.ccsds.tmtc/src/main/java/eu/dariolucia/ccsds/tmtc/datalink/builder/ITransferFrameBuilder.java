@@ -18,10 +18,25 @@ package eu.dariolucia.ccsds.tmtc.datalink.builder;
 
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
+/**
+ * A common interface for builder objects that construct transfer frames.
+ *
+ * @param <T> the specific type of the transfer frame
+ */
 public interface ITransferFrameBuilder<T extends AbstractTransferFrame> {
 
+    /**
+     * Factory method to create the transfer frame.
+     *
+     * @return the transfer frame
+     */
     T build();
 
+    /**
+     * This method returns the currently available user data in bytes.
+     *
+     * @return the currently available user data in bytes
+     */
     int getFreeUserDataLength();
 
 }

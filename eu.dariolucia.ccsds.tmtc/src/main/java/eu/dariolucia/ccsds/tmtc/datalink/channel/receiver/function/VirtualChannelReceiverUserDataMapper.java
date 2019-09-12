@@ -18,7 +18,13 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.function;
 
 import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.AbstractReceiverVirtualChannel;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
 
+/**
+ * Mapper used to convert frames to byte[].
+ *
+ * @param <T> the source frame type
+ */
 public class VirtualChannelReceiverUserDataMapper<T extends AbstractTransferFrame> extends AbstractVirtualChannelReceiverMapper<T, byte[]> {
 
     public VirtualChannelReceiverUserDataMapper(AbstractReceiverVirtualChannel<T> virtualChannel) {

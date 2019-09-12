@@ -24,12 +24,31 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * This class allows to build a CCSDS TC frame using a typical Builder pattern. Once a frame is built, the builder should
+ * not be re-used, as the internals (such as the payload data) are not cleaned up upon build.
+ *
+ * This class is not thread-safe.
+ */
 public class TcTransferFrameBuilder implements ITransferFrameBuilder<TcTransferFrame> {
 
+    /**
+     * This static method allows to compute the maximum length of the user data field of a TC frame, based on the frame characteristics.
+     * It has to be noted that the security data is part of length returned by this method.
+     *
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @return size of the user data field in bytes (including the security fields, if present)
+     */
     public static int computeMaxUserDataLength(boolean fecfPresent) {
         return TcTransferFrame.MAX_TC_FRAME_LENGTH - TcTransferFrame.TC_PRIMARY_HEADER_LENGTH - (fecfPresent ? 2 : 0);
     }
 
+    /**
+     * This method creates an instance of this class.
+     *
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @return the builder object
+     */
     public static TcTransferFrameBuilder create(boolean fecfPresent) {
         return new TcTransferFrameBuilder(fecfPresent);
     }

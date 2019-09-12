@@ -21,6 +21,9 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
 
 import java.util.Arrays;
 
+/**
+ * Virtual channel for the reception and processing of AOS frames.
+ */
 public class AosReceiverVirtualChannel extends AbstractReceiverVirtualChannel<AosTransferFrame> {
 
     public AosReceiverVirtualChannel(int virtualChannelId, VirtualChannelAccessMode mode, boolean throwExceptionOnVcViolation) {

@@ -16,6 +16,9 @@
 
 package eu.dariolucia.ccsds.tmtc.ocf.pdu;
 
+/**
+ * This class handles the Communications Link Control Word (CLCW) data, as per CCSDS 232.0-B-3.
+ */
 public class Clcw extends AbstractOcf {
 
     public enum CopEffectType {

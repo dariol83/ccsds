@@ -19,6 +19,9 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.receiver;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame;
 
+/**
+ * Virtual channel for the reception and processing of TC frames.
+ */
 public class TcReceiverVirtualChannel extends AbstractReceiverVirtualChannel<TcTransferFrame> {
 
     public TcReceiverVirtualChannel(int virtualChannelId, VirtualChannelAccessMode mode, boolean throwExceptionOnVcViolation) {

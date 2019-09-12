@@ -23,6 +23,11 @@ import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Mapper used to convert frames to a list of {@link SpacePacket}.
+ *
+ * @param <T> the source frame type
+ */
 public class VirtualChannelReceiverSpacePacketMapper<T extends AbstractTransferFrame> extends AbstractVirtualChannelReceiverMapper<T, List<SpacePacket>> {
 
     public VirtualChannelReceiverSpacePacketMapper(AbstractReceiverVirtualChannel<T> virtualChannel) {

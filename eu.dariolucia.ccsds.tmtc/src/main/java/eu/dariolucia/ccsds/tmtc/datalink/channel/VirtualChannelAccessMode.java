@@ -16,8 +16,20 @@
 
 package eu.dariolucia.ccsds.tmtc.datalink.channel;
 
+/**
+ * This enumeration lists the different access mode for a virtual channel, as supported by this library.
+ */
 public enum VirtualChannelAccessMode {
+	/**
+	 * The virtual channel delivers space packets
+	 */
 	Packet,
+	/**
+	 * The virtual channel delivers bitstream data (AOS only)
+	 */
 	Bitstream,
+	/**
+	 * The virtual channel delivers raw data (direct access, or VCA)
+	 */
 	Data
 }

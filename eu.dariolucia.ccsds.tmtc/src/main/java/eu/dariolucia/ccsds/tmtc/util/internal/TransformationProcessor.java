@@ -21,7 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 /**
- * A processor that transfor input data of type T into output data of type K.
+ * A processor that transform input data of type T into output data of type K via the provided {@link Function}.
  *
  * @param <T> the input type
  * @param <K> the output type

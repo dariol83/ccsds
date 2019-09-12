@@ -25,6 +25,20 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+/**
+ * This class represents an abstraction of a virtual channel using for receiving purposes. Typical use cases for this class
+ * (and derivatives) are in the implementation of a telemetry stream processed by a ground segment system, or for the
+ * reception and processing of telecommands. This class expects that an external entity pushes one or more transfer frames.
+ * Space packets, bitstream data or user data are emitted as extracted from the frame. If frame gaps are detected, these
+ * are reported.
+ *
+ * In order to receive the extracted space packets, gap notifications, and other data, registration of a {@link IVirtualChannelReceiverOutput}
+ * implementation shall be performed via the register method.
+ *
+ * This class is not thread safe.
+ *
+ * @param <T> the type of transfer frame
+ */
 public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferFrame> implements Consumer<T> {
 
     private final List<IVirtualChannelReceiverOutput> listeners = new CopyOnWriteArrayList<>();

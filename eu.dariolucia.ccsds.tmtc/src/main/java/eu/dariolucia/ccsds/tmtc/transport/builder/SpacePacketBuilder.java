@@ -23,6 +23,12 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * This class allows to build a CCSDS space packet using a typical Builder pattern. Once a packet is built, the builder should
+ * not be re-used, as the internals (such as the payload data) are not cleaned up upon build.
+ *
+ * This class is not thread-safe.
+ */
 public class SpacePacketBuilder {
 
     public static SpacePacketBuilder create(boolean qualityIndicator) {

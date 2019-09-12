@@ -24,8 +24,26 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * This class allows to build a CCSDS AOS frame using a typical Builder pattern. Once a frame is built, the builder should
+ * not be re-used, as the internals (such as the payload data) are not cleaned up upon build.
+ *
+ * This class is not thread-safe.
+ */
 public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransferFrame> {
 
+    /**
+     * This static method allows to compute the length of the user data field of a AOS frame, based on the frame characteristics.
+     * It has to be noted that the security data is part of length returned by this method.
+     *
+     * @param length the total frame length in bytes
+     * @param frameHeaderErrorControlPresent true if the frame header error control is present, false otherwise
+     * @param transferFrameInsertZoneLength length in bytes of the transfer frame insert zone, 0 if absent
+     * @param userDataType the type of user data delivered by the transfer frame
+     * @param ocfPresent true if the OCF is present, false otherwise
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @return size of the user data field in bytes (including the security fields, if present)
+     */
     public static int computeUserDataLength(int length, boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, AosTransferFrame.UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
         int typeBasedLength = 0;
         if(userDataType == AosTransferFrame.UserDataType.M_PDU || userDataType == AosTransferFrame.UserDataType.B_PDU) {
@@ -34,6 +52,17 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
         return length - AosTransferFrame.AOS_PRIMARY_HEADER_LENGTH - (frameHeaderErrorControlPresent ? AosTransferFrame.AOS_PRIMARY_HEADER_FHEC_LENGTH : 0) - transferFrameInsertZoneLength - typeBasedLength - (ocfPresent ? 4 : 0) - (fecfPresent ? 2 : 0);
     }
 
+    /**
+     * This method creates an instance of this class.
+     *
+     * @param length the total frame length in bytes
+     * @param frameHeaderErrorControlPresent true if the frame header error control is present, false otherwise
+     * @param transferFrameInsertZoneLength length in bytes of the transfer frame insert zone, 0 if absent
+     * @param userDataType the type of user data delivered by the transfer frame
+     * @param ocfPresent true if the OCF is present, false otherwise
+     * @param fecfPresent true if the FECF is present, false otherwise
+     * @return the builder object
+     */
     public static AosTransferFrameBuilder create(int length, boolean frameHeaderErrorControlPresent, int transferFrameInsertZoneLength, AosTransferFrame.UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
         return new AosTransferFrameBuilder(length, frameHeaderErrorControlPresent, transferFrameInsertZoneLength, userDataType, ocfPresent, fecfPresent);
     }

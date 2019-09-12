@@ -16,6 +16,9 @@
 
 package eu.dariolucia.ccsds.tmtc.transport.pdu;
 
+/**
+ * This class provides an implementation of a bitstream, as defined by the AOS data link protocol.
+ */
 public class BitstreamData {
 
 	private static final BitstreamData INVALID_BITSTREAM_DATA = new BitstreamData();

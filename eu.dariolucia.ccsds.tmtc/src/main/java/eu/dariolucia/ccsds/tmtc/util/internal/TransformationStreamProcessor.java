@@ -21,6 +21,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * A processor that transform input data of type T into an output data of type K via the provided {@link Function}.
+ * Each element of the returned stream is processed.
+ *
+ * @param <T> the input type
+ * @param <K> the output type
+ */
 public class TransformationStreamProcessor<T, K> extends AbstractTransformationProcessor<T, K> {
 
     public TransformationStreamProcessor(Function<T, Stream<K>> mapper, ExecutorService executor, boolean timely) {

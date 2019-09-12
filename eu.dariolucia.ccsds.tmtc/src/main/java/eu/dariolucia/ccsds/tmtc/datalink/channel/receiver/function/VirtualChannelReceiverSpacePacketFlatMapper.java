@@ -23,6 +23,11 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+/**
+ * Mapper used to convert frames to a stream of {@link SpacePacket}, to be used with {@link Stream#flatMap(Function)}.
+ *
+ * @param <T> the source frame type
+ */
 public class VirtualChannelReceiverSpacePacketFlatMapper<T extends AbstractTransferFrame> implements Function<T, Stream<SpacePacket>> {
 
     private VirtualChannelReceiverSpacePacketMapper<T> mapper;

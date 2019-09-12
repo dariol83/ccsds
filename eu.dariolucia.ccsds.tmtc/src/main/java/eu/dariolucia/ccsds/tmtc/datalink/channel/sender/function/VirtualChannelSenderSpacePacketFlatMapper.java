@@ -20,6 +20,11 @@ import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.AbstractSenderVirtualCha
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 
+/**
+ * Flat mapper used to convert {@link SpacePacket}.
+ *
+ * @param <T> the destination frame type
+ */
 public class VirtualChannelSenderSpacePacketFlatMapper<T extends AbstractTransferFrame> extends AbstractVirtualChannelSenderFlatMapper<T, SpacePacket> {
 
     public VirtualChannelSenderSpacePacketFlatMapper(AbstractSenderVirtualChannel<T> sender) {
