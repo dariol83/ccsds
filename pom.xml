@@ -25,6 +25,17 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <junit.version>5.5.0-M1</junit.version>
+        <openjfx.version>11.0.2</openjfx.version>
+        <jaxb.version>2.3.2</jaxb.version>
+        <jasn1.version>1.11.1</jasn1.version>
+        <antlr.version>2.7.7</antlr.version>
+        <jacoco.version>0.8.2</jacoco.version>
+    </properties>
+
     <modules>
         <module>eu.dariolucia.ccsds.tmtc</module>
         <module>eu.dariolucia.ccsds.inspector</module>
@@ -78,18 +89,29 @@
                     <nohelp>true</nohelp>
                 </configuration>
             </plugin>
+            <!-- JaCoCo -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <!-- attached to Maven test phase -->
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <junit.version>5.5.0-M1</junit.version>
-        <openjfx.version>11.0.2</openjfx.version>
-        <jaxb.version>2.3.2</jaxb.version>
-        <jasn1.version>1.11.1</jasn1.version>
-        <antlr.version>2.7.7</antlr.version>
-    </properties>
 
     <dependencies>
         <dependency>
