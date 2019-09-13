@@ -27,25 +27,25 @@ relative time formats, strings, octet streams, bit streams) and array structures
 The packet structure is defined using a custom XML format definition, built by means of JAXB annotations.
 
 ## Examples
-A modules providing examples on how to use the three modules above in a combined way, to demonstrate the capabilities of the library to write compact code. The following examples are going to be provided:
+A modules providing examples on how to use the three modules above in a combined way, to demonstrate the capabilities of the library to write compact code. The following examples are provided:
 - TM generator with output to file and/or TCP socket, from packet definition to TM CADU or TM frame;
 - TM processor with output to console, from CADU or TM frames read from a TCP socket to encoded parameter extraction;
 - TM processor with output to console, from SLE RAF to encoded parameter extraction;
 - TC generator from list of parameters (as defined in the packet definition) to CLTU with output to file and/or TCP socket;
 - TC generator from list of parameters to SLE CLTU;
-- TC processor with output to console, from CLTU to encoded parameter extraction.
+- TC processor with output to console, from CLTU to encoded parameter extraction (work in progress).
 
-The main target of the examples module **is not to provide final applications ready to be used**, rather to explain the different levels and concepts of the libraries, and how to link the various objects together. 
+**The main target of the examples module is not to provide final applications ready to be used**, rather to explain the different levels and concepts of the libraries, and how to link the various objects together. 
 
 # Goals
-The purpose of this repository is to produce, as far as my possibilities allow, simple, well-designed, well-documented, well-tested code with top performance. For each module (graphical elements and tools excluded) I have the following targets:
-- at least 90% line coverage with unit tests (easy to check with IntelliJ);
+The purpose of this repository is to produce, as far as my possibilities allow, simple, well-designed, well-documented, well-tested code with top performance. For each module (examples and tools excluded) I have the following targets:
+- at least 90% line coverage with unit tests (easy to check with the generated JaCoCo reports);
 - a set of performance tests;
 - no warnings when compiling;
 - good documentation at package, class, instance variable and method level;
 - provide specific code, and not generic, one-fits-all code: generic code is usually slow because it is over-engineered. No way. Simplicity is the key.
 
-Each module is built using Maven and can be compiled out of the box (if all its dependencies are satisfied) with Maven.
+Each module is built using Maven and can be compiled out of the box (if all its dependencies are satisfied) with Maven. If you want to compile them all in one go, just run 'mvn clean install' on the root folder.
 
 # License
 All original source code on this repository is released under the terms and conditions of the Apache License 2.0. The source code includes code and resources from other authors, which can be freely obtained from the web. To be more specific:
