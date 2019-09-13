@@ -23,6 +23,11 @@ public class BitstreamData {
 
 	private static final BitstreamData INVALID_BITSTREAM_DATA = new BitstreamData();
 
+	/**
+	 * A sentry object used to indicate an invalid bitstream data.
+	 *
+	 * @return the invalid sentry object for invalid bitstreams
+	 */
 	public static BitstreamData invalid() {
 		return INVALID_BITSTREAM_DATA;
 	}
@@ -31,6 +36,12 @@ public class BitstreamData {
 	private final int numBits;
 	private final boolean invalid;
 
+	/**
+	 * Constructor of a bitstream object.
+	 *
+	 * @param data the byte array containing the bitstream
+	 * @param numBits the number of bits composing the bitstream
+	 */
 	public BitstreamData(byte[] data, int numBits) {
 		int requiredData = numBits / 8 + (numBits % 8 == 0 ? 0 : 1);
 		if (data.length < requiredData) {
@@ -47,14 +58,29 @@ public class BitstreamData {
 		this.invalid = true;
 	}
 
+	/**
+	 * This method returns whether the bitstream object is invalid or not.
+	 *
+	 * @return true if invalid, false otherwise
+	 */
 	public boolean isInvalid() {
 		return invalid;
 	}
 
+	/**
+	 * This method returns the underlying bitstream data array.
+	 *
+	 * @return the underlying data array
+	 */
 	public byte[] getData() {
 		return data;
 	}
 
+	/**
+	 * This method returns the number of bits in the bitstream.
+	 *
+	 * @return the number of bits in the bitstream
+	 */
 	public int getNumBits() {
 		return numBits;
 	}

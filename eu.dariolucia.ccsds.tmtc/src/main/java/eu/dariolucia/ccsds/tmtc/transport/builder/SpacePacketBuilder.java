@@ -31,10 +31,21 @@ import java.util.List;
  */
 public class SpacePacketBuilder {
 
+    /**
+     * This method creates an instance of this class.
+     *
+     * @param qualityIndicator true if the quality is good, false otherwise
+     * @return the builder object
+     */
     public static SpacePacketBuilder create(boolean qualityIndicator) {
         return new SpacePacketBuilder(qualityIndicator);
     }
 
+    /**
+     * This method creates an instance of this class, with positive quality indicator.
+     *
+     * @return the builder object
+     */
     public static SpacePacketBuilder create() {
         return create(true);
     }
@@ -55,7 +66,7 @@ public class SpacePacketBuilder {
 
     private List<byte[]> payloadUnits = new LinkedList<>();
 
-    public SpacePacketBuilder(boolean qualityIndicator) {
+    private SpacePacketBuilder(boolean qualityIndicator) {
         this.qualityIndicator = qualityIndicator;
         this.freeUserDataLength = SpacePacket.MAX_SPACE_PACKET_LENGTH - SpacePacket.SP_PRIMARY_HEADER_LENGTH;
     }
@@ -108,7 +119,7 @@ public class SpacePacketBuilder {
 
     public int addData(byte[] b, int offset, int length) {
         // Compute if you can add the requested amount
-        int dataToBeWritten = freeUserDataLength >= length ? length : freeUserDataLength;
+        int dataToBeWritten = Math.min(freeUserDataLength, length);
         int notWrittenData = freeUserDataLength < length ? length - freeUserDataLength : 0;
         if(dataToBeWritten > 0) {
             this.payloadUnits.add(Arrays.copyOfRange(b, offset, offset + dataToBeWritten));
@@ -130,7 +141,7 @@ public class SpacePacketBuilder {
     }
 
     public SpacePacket build() {
-        int payloadDataLength = this.payloadUnits.stream().map(o -> o.length).reduce(0, (a,b) -> a + b);
+        int payloadDataLength = this.payloadUnits.stream().map(o -> o.length).reduce(0, Integer::sum);
         int packetLength = SpacePacket.SP_PRIMARY_HEADER_LENGTH + payloadDataLength;
 
         ByteBuffer bb = ByteBuffer.allocate(packetLength);

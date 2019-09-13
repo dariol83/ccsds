@@ -94,7 +94,7 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
 
     private List<AosTransferFrameBuilder.PayloadUnit> payloadUnits = new LinkedList<>();
 
-    public AosTransferFrameBuilder(int length, boolean frameHeaderErrorControlPresent, int insertZoneLength, AosTransferFrame.UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
+    private AosTransferFrameBuilder(int length, boolean frameHeaderErrorControlPresent, int insertZoneLength, AosTransferFrame.UserDataType userDataType, boolean ocfPresent, boolean fecfPresent) {
         this.length = length;
         this.insertZoneLength = insertZoneLength;
         this.frameHeaderErrorControlPresent = frameHeaderErrorControlPresent;

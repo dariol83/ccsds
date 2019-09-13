@@ -28,12 +28,24 @@ import java.util.function.Function;
  */
 public class SpacePacket extends AnnotatedObject {
 
+    /**
+     * The length of the primary header
+     */
     public static final int SP_PRIMARY_HEADER_LENGTH = 6;
 
+    /**
+     * The value of the APID field for idle packets
+     */
     public static final short SP_IDLE_APID_VALUE = 0x07FF;
 
+    /**
+     * The maximum space packet length
+     */
     public static final int MAX_SPACE_PACKET_LENGTH = 65536 + SP_PRIMARY_HEADER_LENGTH;
 
+    /**
+     * Enumeration for sequence flag possible values
+     */
     public enum SequenceFlagType {
         CONTINUE,
         FIRST,
@@ -41,11 +53,21 @@ public class SpacePacket extends AnnotatedObject {
         UNSEGMENTED
     }
 
+    /**
+     * Decoding function for space packets, assuming a positive quality indicator.
+     *
+     * @return the space packet decoding function
+     */
     public static Function<byte[], SpacePacket> decodingFunction() {
         // Default quality indicator is set to true
         return (input) -> new SpacePacket(input, true);
     }
 
+    /**
+     * Decoding bifunction for space packets.
+     *
+     * @return the space packet decoding bifunction
+     */
     public static BiFunction<byte[], Boolean, SpacePacket> decodingBiFunction() {
         return SpacePacket::new;
     }
@@ -66,6 +88,13 @@ public class SpacePacket extends AnnotatedObject {
 
     private final int packetDataLength;
 
+    /**
+     * Constructor of a space packet. The size of the packet argument must match exactly the space packet, otherwise
+     * am {@link IllegalArgumentException} will be thrown.
+     *
+     * @param packet the space packet data
+     * @param qualityIndicator quality indicator of the packet, true if it is good, false otherwise
+     */
     public SpacePacket(byte[] packet, boolean qualityIndicator) {
         this.packet = packet;
         this.qualityIndicator = qualityIndicator;
@@ -74,11 +103,7 @@ public class SpacePacket extends AnnotatedObject {
         // First 2 octets
         short twoOctets = in.getShort();
 
-        short versionNumber = (short) (((twoOctets & (short) 0xE000) & 0xFFFF) >> 13);
-        // 4.1.2.2.2
-        // if (versionNumber != 0) {
-        //     throw new IllegalArgumentException("Packet Version Number: expected 0, actual " + versionNumber);
-        // }
+        // First 3 bits are the space packet version number: it should be 000, not checked
 
         telemetryPacket = (twoOctets & (short) 0x1000) == 0;
         secondaryHeaderFlag = (twoOctets & (short) 0x0800) != 0;
@@ -102,42 +127,92 @@ public class SpacePacket extends AnnotatedObject {
         }
     }
 
+    /**
+     * This method returns the direct reference to the space packet array.
+     *
+     * @return the space packet array
+     */
     public byte[] getPacket() {
         return packet;
     }
 
+    /**
+     * This method returns the value of the quality indicator flag.
+     *
+     * @return true if the quality is good, false otherwise
+     */
     public boolean isQualityIndicator() {
         return qualityIndicator;
     }
 
+    /**
+     * This method returns true if the space packet is a TM packet, false if it is a TC packet.
+     *
+     * @return true if TM packet, false if TC packet
+     */
     public boolean isTelemetryPacket() {
         return telemetryPacket;
     }
 
+    /**
+     * This method returns whether the secondary header is present.
+     *
+     * @return true if the secondary header is present, false otherwise
+     */
     public boolean isSecondaryHeaderFlag() {
         return secondaryHeaderFlag;
     }
 
+    /**
+     * This method returns the value of the application process ID.
+     *
+     * @return the value of the APID field
+     */
     public short getApid() {
         return apid;
     }
 
+    /**
+     * This method returns the value of the sequence flag.
+     *
+     * @return the value of the sequence flag
+     */
     public SequenceFlagType getSequenceFlag() {
         return sequenceFlag;
     }
 
+    /**
+     * This method returns the value of the packet sequence count.
+     *
+     * @return the value of the packet sequence count
+     */
     public short getPacketSequenceCount() {
         return packetSequenceCount;
     }
 
+    /**
+     * This method returns the value of the packet user data length in bytes.
+     *
+     * @return the value of the packet user data length in bytes
+     */
     public int getPacketDataLength() {
         return packetDataLength;
     }
 
+    /**
+     * This method returns whether the packet is an idle packet.
+     *
+     * @return true if the packet is an idle packet, false otherwise
+     */
     public boolean isIdle() {
         return this.apid == SP_IDLE_APID_VALUE;
     }
 
+    /**
+     * This method returns a copy of the space packet array.
+     *
+     * @return a copy of the space packet array
+     */
     public byte[] getPacketCopy() {
         return Arrays.copyOfRange(this.packet, 0, this.packet.length);
     }
@@ -147,6 +222,11 @@ public class SpacePacket extends AnnotatedObject {
         return this.packet.length;
     }
 
+    /**
+     * This method returns a copy of the space packet data field.
+     *
+     * @return a copy of the space packet data field
+     */
     public byte[] getDataFieldCopy() {
         return Arrays.copyOfRange(this.packet, SP_PRIMARY_HEADER_LENGTH, this.packet.length);
     }
