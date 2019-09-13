@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.encdec.structure.impl;
 
 import eu.dariolucia.ccsds.encdec.definition.Definition;
 import eu.dariolucia.ccsds.encdec.structure.DecodingResult;
+import eu.dariolucia.ccsds.encdec.structure.ParameterValue;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.PathLocationBasedResolver;
 import eu.dariolucia.ccsds.encdec.time.impl.DefaultGenerationTimeProcessor;
 import eu.dariolucia.ccsds.encdec.value.BitString;
@@ -462,7 +463,47 @@ class DefaultPacketDecoderTest {
         decodeAndCompare(d, "DEF12", map, encoded);
     }
 
-    public void decodeAndCompare(Definition d, String packetDefinition, Map<String, Object> originalMap, byte[] encoded) {
+    @Test
+    public void testDefinition13() throws IOException {
+        InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions8.xml");
+        assertNotNull(defStr);
+        Definition d = Definition.load(defStr);
+
+        DefaultPacketEncoder encoder = new DefaultPacketEncoder(d);
+        // Define the resolver map
+        Map<String, Object> map = new TreeMap<>();
+        map.put("DEF1.PARAM1", 2);
+        map.put("DEF1.PARAM2", 124.25f);
+        map.put("DEF1.PARAM3", 61);
+        map.put("DEF1.PARAM4", true);
+        map.put("DEF1.PARAM5", false);
+        map.put("DEF1.PARAM6", new BitString(new byte[]{0x05, 0x50}, 13)); // Remember: the bits after the 13th one are not relevant and won't be encoded/decoded
+        map.put("DEF1.PARAM7", new byte[]{0x23, 0x12, (byte) 0x92});
+        map.put("DEF1.PARAM8", "Hello01");
+        map.put("DEF1.PARAM9", true);
+        map.put("DEF1.PARAM10", Instant.ofEpochSecond(123456789, 0));
+        map.put("DEF1.PARAM11", Duration.ofSeconds(127, 0));
+        map.put("DEF1.PARAM12", 2);
+        // Now we can encode
+        byte[] encoded = encoder.encode("DEF1", new PathLocationBasedResolver(map));
+        assertEquals(26, encoded.length);
+
+        DecodingResult result = decodeAndCompare(d, "DEF1", map, encoded);
+
+        List<ParameterValue> values = result.getDecodedParameters();
+        assertNotNull(values);
+        assertEquals(11, values.size());
+        for(ParameterValue pv : values) {
+            String paramId = pv.getId();
+            String encodedParamId = paramId.replace("PP", "DEF1.PARAM");
+            Object expectedValue = map.get(encodedParamId);
+            compareEqual(expectedValue, pv.getValue());
+            assertNotNull(pv.toString());
+            assertNull(pv.getGenerationTime());
+        }
+    }
+
+    public DecodingResult decodeAndCompare(Definition d, String packetDefinition, Map<String, Object> originalMap, byte[] encoded) {
         DefaultPacketDecoder decoder = new DefaultPacketDecoder(d);
         DecodingResult dr = decoder.decode(packetDefinition, encoded);
 
@@ -471,20 +512,25 @@ class DefaultPacketDecoderTest {
         for (String key : originalMap.keySet()) {
             Object decodedVal = decodedMap.get(key);
             Object originalVal = originalMap.get(key);
-            // Now I should compare ... but in Java (with autoboxing) this can be really unreliable, so I have to invent
-            // something else: long comparison also for doubles and floats. Bad but good enough now.
-            if (decodedVal instanceof Number && originalVal instanceof Number) {
-                assertEquals(((Number) originalVal).longValue(), ((Number) decodedVal).longValue());
-            } else if (decodedVal instanceof byte[] && originalVal instanceof byte[]) {
-                assertArrayEquals((byte[]) originalVal, (byte[]) decodedVal);
-            } else if (decodedVal instanceof Instant && originalVal instanceof Instant) {
-                // Hard to write a generic comparison function, if the time encoding resolution is not known. Expect
-                // that the input is coherent at least up to the millisecond.
-                assertEquals(((Instant) originalVal).getEpochSecond(), ((Instant) decodedVal).getEpochSecond());
-                assertTrue(Math.abs(((Instant) originalVal).getNano() - ((Instant) decodedVal).getNano()) < 1000000);
-            } else {
-                assertEquals(originalVal, decodedVal);
-            }
+            compareEqual(decodedVal, originalVal);
+        }
+        return dr;
+    }
+
+    private void compareEqual(Object decodedVal, Object originalVal) {
+        // Now I should compare ... but in Java (with autoboxing) this can be really unreliable, so I have to invent
+        // something else: long comparison also for doubles and floats. Bad but good enough now.
+        if (decodedVal instanceof Number && originalVal instanceof Number) {
+            assertEquals(((Number) originalVal).longValue(), ((Number) decodedVal).longValue());
+        } else if (decodedVal instanceof byte[] && originalVal instanceof byte[]) {
+            assertArrayEquals((byte[]) originalVal, (byte[]) decodedVal);
+        } else if (decodedVal instanceof Instant && originalVal instanceof Instant) {
+            // Hard to write a generic comparison function, if the time encoding resolution is not known. Expect
+            // that the input is coherent at least up to the millisecond.
+            assertEquals(((Instant) originalVal).getEpochSecond(), ((Instant) decodedVal).getEpochSecond());
+            assertTrue(Math.abs(((Instant) originalVal).getNano() - ((Instant) decodedVal).getNano()) < 1000000);
+        } else {
+            assertEquals(originalVal, decodedVal);
         }
     }
 

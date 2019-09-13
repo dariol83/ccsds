@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  ~   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~   Licensed under the Apache License, Version 2.0 (the "License");
+  ~   you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  -->
+
+<ns1:packet_definitions xmlns:ns1="http://dariolucia.eu/ccsds/encdec">
+    <packets>
+        <packet id="DEF1">
+            <structure>
+                <!-- Signed integer 3 bits: 3 -->
+                <parameter id="PARAM1" parameter="PP1">
+                    <type_fixed type="SignedInteger" length="3" />
+                </parameter>
+                <!-- Float 32 bits: 35 -->
+                <parameter id="PARAM2" parameter="PP2">
+                    <type_fixed type="Real" length="1" />
+                </parameter>
+                <!-- Unsigned integer 6 bits: 41 -->
+                <parameter id="PARAM3" parameter="PP3">
+                    <type_fixed type="UnsignedInteger" length="6" />
+                </parameter>
+                <!-- Boolean 1 bit: 42 -->
+                <parameter id="PARAM4" parameter="PP4">
+                    <type_fixed type="Boolean" length="0" />
+                </parameter>
+                <!-- Boolean 1 bit: 43 -->
+                <parameter id="PARAM5" parameter="PP5">
+                    <type_fixed type="Boolean" length="0" />
+                </parameter>
+                <!-- Bitstring 13 bits: 56 -->
+                <parameter id="PARAM6" parameter="PP6">
+                    <type_fixed type="BitString" length="13" />
+                </parameter>
+                <!-- Octet string 3 bytes: 80 -->
+                <parameter id="PARAM7" parameter="PP7">
+                    <type_fixed type="OctetString" length="3" />
+                </parameter>
+                <!-- Char string 7 bytes: 136 -->
+                <parameter id="PARAM8" parameter="PP8">
+                    <type_fixed type="CharacterString" length="7" />
+                </parameter>
+                <!-- Boolean 1 bit: 137 -->
+                <parameter id="PARAM9">
+                    <type_fixed type="Boolean" length="0" />
+                </parameter>
+                <!-- Absolute time 6 bytes: 185 -->
+                <parameter id="PARAM10" parameter="PP10">
+                    <type_fixed type="AbsoluteTime" length="1" />
+                </parameter>
+                <!-- Relative time 2 bytes: 201 -->
+                <parameter id="PARAM11" parameter="PP11">
+                    <type_fixed type="RelativeTime" length="2" />
+                </parameter>
+                <!-- Signed integer 3 bits: 204 -->
+                <parameter id="PARAM12" parameter="PP12">
+                    <type_fixed type="SignedInteger" length="3" />
+                </parameter>
+            </structure>
+        </packet>
+    </packets>
+
+    <parameters>
+        <parameter id="PP1" external_id="1" description="Sample Parameter 1">
+            <!-- length can be different for decoding but good enough to keep the value -->
+            <type type="SignedInteger" length="32" />
+        </parameter>
+        <parameter id="PP2" external_id="2" description="Sample Parameter 2">
+            <type type="Real" length="1" />
+        </parameter>
+        <parameter id="PP3" external_id="3" description="Sample Parameter 3">
+            <type type="UnsignedInteger" length="8" />
+        </parameter>
+        <parameter id="PP4" external_id="4" description="Sample Parameter 4">
+            <type type="Boolean" length="0" />
+        </parameter>
+        <parameter id="PP5" external_id="5" description="Sample Parameter 5">
+            <type type="Boolean" length="0" />
+        </parameter>
+        <parameter id="PP6" external_id="6" description="Sample Parameter 6">
+            <type type="BitString" length="13" />
+        </parameter>
+        <parameter id="PP7" external_id="7" description="Sample Parameter 7">
+            <type type="OctetString" length="3" />
+        </parameter>
+        <parameter id="PP8" external_id="8" description="Sample Parameter 8">
+            <type type="CharacterString" length="7" />
+        </parameter>
+        <parameter id="PP10" external_id="10" description="Sample Parameter 10">
+            <type type="AbsoluteTime" length="1" />
+        </parameter>
+        <parameter id="PP11" external_id="11" description="Sample Parameter 11">
+            <type type="RelativeTime" length="2" />
+        </parameter>
+        <parameter id="PP12" external_id="3" description="Sample Parameter 12">
+            <type type="SignedInteger" length="3" />
+        </parameter>
+    </parameters>
+
+</ns1:packet_definitions>

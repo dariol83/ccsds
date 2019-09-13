@@ -77,16 +77,6 @@ public class ExtensionRegistry {
         } else {
             return ext;
         }
-        /*
-        for (Iterator<T> it = loader.iterator(); it.hasNext(); ) {
-            T object = it.next();
-            ExtensionId annotatedId = object.getClass().getAnnotation(ExtensionId.class);
-            if (annotatedId != null && annotatedId.id().equals(id)) {
-                return object;
-            }
-        }
-        throw new IllegalStateException("Access to extension " + clazz.getSimpleName() + " with id " + id + " required, but extension not found");
-        */
     }
 
 }

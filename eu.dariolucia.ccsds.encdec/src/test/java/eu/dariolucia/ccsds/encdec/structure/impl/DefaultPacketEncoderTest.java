@@ -20,6 +20,7 @@ import eu.dariolucia.ccsds.encdec.bit.BitEncoderDecoder;
 import eu.dariolucia.ccsds.encdec.definition.Definition;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.DefaultNullBasedResolver;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.DefinitionValueBasedResolver;
+import eu.dariolucia.ccsds.encdec.structure.resolvers.IdentificationFieldBasedResolver;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.PathLocationBasedResolver;
 import eu.dariolucia.ccsds.encdec.value.BitString;
 import eu.dariolucia.ccsds.encdec.value.MilUtil;
@@ -502,5 +503,50 @@ class DefaultPacketEncoderTest {
         // Exclude the fractionary part of the absolute time due to inhability of the parse method to read
         // the full resolution of the time
         assertArrayEquals(Arrays.copyOfRange(expected, 0, 20), Arrays.copyOfRange(encoded, 0, 20));
+    }
+
+    @Test
+    public void testDefinitionWithIdentifierResolver() throws IOException {
+        InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions7.xml");
+        assertNotNull(defStr);
+        Definition d = Definition.load(defStr);
+
+        DefaultPacketEncoder encoder = new DefaultPacketEncoder(d);
+        // Define the resolver map
+        Map<String, Object> map = new TreeMap<>();
+        map.put("DEF1.ACK_FIELD", 0);
+        map.put("DEF1.PARAM1", 2);
+        map.put("DEF1.PARAM2", 124.25f);
+        map.put("DEF1.PARAM3", 61);
+        map.put("DEF1.PARAM4", true);
+        map.put("DEF1.PARAM5", false);
+        map.put("DEF1.PARAM6", new BitString(new byte[] {0x05, 0x51}, 13));
+        map.put("DEF1.PARAM7", new byte[] {0x23, 0x12, (byte) 0x92});
+        map.put("DEF1.PARAM8", "Hello01");
+        map.put("DEF1.PARAM9", true);
+        map.put("DEF1.PARAM10", Instant.ofEpochSecond(123456789, 123456789));
+        map.put("DEF1.PARAM11", Duration.ofSeconds(1234, 91156789));
+        map.put("DEF1.PARAM12", 61);
+        // Now we can encode
+        byte[] encoded = encoder.encode("DEF1", new IdentificationFieldBasedResolver(new PathLocationBasedResolver(map)));
+
+        // The final byte array (start) should be the following
+        assertEquals(0, encoded[0]);
+        assertEquals(3, encoded[1]);
+        assertEquals(25, encoded[2]);
+    }
+
+    @Test
+    public void testDefinitionWithNullResolver() throws IOException {
+        InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions7.xml");
+        assertNotNull(defStr);
+        Definition d = Definition.load(defStr);
+
+        DefaultPacketEncoder encoder = new DefaultPacketEncoder(d);
+        // Now we can encode
+        byte[] encoded = encoder.encode("DEF1", new DefaultNullBasedResolver());
+
+        // First 12 bytes all zeroes
+        assertArrayEquals(new byte[12], Arrays.copyOfRange(encoded, 0, 12));
     }
 }

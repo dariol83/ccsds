@@ -44,14 +44,12 @@ public class DecodingResult {
 
     public Map<String, Object> getDecodedItemsAsMap() {
         final Map<String, Object> map = new LinkedHashMap<>();
-        for(Item i : decodedItems) {
-            i.visit(new IVisitor() {
-                @Override
-                public void visitParameter(Parameter p) {
-                    map.put(p.location.toString(), p.value);
-                }
-            });
-        }
+        visit(new IVisitor() {
+            @Override
+            public void visitParameter(Parameter p) {
+                map.put(p.location.toString(), p.value);
+            }
+        });
         return map;
     }
 

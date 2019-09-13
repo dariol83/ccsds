@@ -23,11 +23,11 @@ import java.util.Objects;
 
 /**
  * When the location is set with this class, it indicates that the related encoded item start at the position (in bits)
- * from the beginning of the data block to decode. In case of encoding, the structure rewinds or move forward to point to
+ * from the beginning of the data block to decode. In case of encoding, the structure moves the encoder to point to
  * the indicated bit position, before encoding the associated item.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class FixedAbsoluteLocation extends AbstractEncodedLocation{
+public class FixedAbsoluteLocation extends AbstractEncodedLocation {
 
     @XmlAttribute(name = "bit_absolute", required = true)
     private int absoluteLocation;
