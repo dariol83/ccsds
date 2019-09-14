@@ -26,6 +26,8 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>eu.dariolucia.ccsds.examples</artifactId>
+    <name>CCSDS Examples</name>
+    <description>Basic examples to explore the capabilities of the libraries present in the eu.dariolucia.ccsds group.</description>
 
     <dependencies>
         <dependency>

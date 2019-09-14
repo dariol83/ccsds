@@ -27,6 +27,8 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>eu.dariolucia.ccsds.sle.utlfx</artifactId>
+    <name>CCSDS SLE User Library FX</name>
+    <description>Graphical tool to initiate and inspect SLE-based communication sessions.</description>
 
     <dependencies>
         <dependency>

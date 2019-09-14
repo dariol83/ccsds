@@ -28,5 +28,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>eu.dariolucia.ccsds.tmtc</artifactId>
+    <name>CCSDS TM/TC</name>
+    <description>Library implementing data and protocol handling for TM frames, TC frames, AOS frames, Space Packets.
+    It supports Reed-Solomon, CLTU and frame checksum encoding and error-checking. Stream-based processing as well as
+    reactive streams are fully supported</description>
 
 </project>

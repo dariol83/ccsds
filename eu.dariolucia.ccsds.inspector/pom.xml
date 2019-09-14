@@ -28,6 +28,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>eu.dariolucia.ccsds.inspector</artifactId>
+    <name>CCSDS TM/TC Inspector</name>
+    <description>Graphical tool to read and process TM/TC data with extension capabilities, to allow implementation and
+        provision of different connectors.</description>
 
     <dependencies>
         <dependency>
