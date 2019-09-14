@@ -29,7 +29,9 @@ public interface IVirtualChannelReceiverOutput {
      * @param vc The virtual channel that received the frame
      * @param receivedFrame The received frame
      */
-    void transferFrameReceived(AbstractReceiverVirtualChannel vc, AbstractTransferFrame receivedFrame);
+    default void transferFrameReceived(AbstractReceiverVirtualChannel vc, AbstractTransferFrame receivedFrame) {
+        // None
+    }
 
     /**
      * This method signals the extraction of the provided packet, including the last frame, from the provided virtual channel.
@@ -39,7 +41,9 @@ public interface IVirtualChannelReceiverOutput {
      * @param packet the extracted space packet
      * @param qualityIndicator true if the packet has been fully extracted, false if there were problems (frame gap, packet overlap)
      */
-    void spacePacketExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator);
+    default void spacePacketExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+        // None
+    }
 
     /**
      * This method signals the reception of the provided user data from the provided virtual channel.
@@ -48,7 +52,9 @@ public interface IVirtualChannelReceiverOutput {
      * @param frame the frame containing the user data
      * @param data the user data
      */
-    void dataExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame frame, byte[] data);
+    default void dataExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame frame, byte[] data) {
+        // None
+    }
 
     /**
      * This method signals the reception of the provided bit data from the provided virtual channel.
@@ -58,7 +64,9 @@ public interface IVirtualChannelReceiverOutput {
      * @param data the bit data
      * @param numBits the number of valid bits in the bit data
      */
-    void bitstreamExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame frame, byte[] data, int numBits);
+    default void bitstreamExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame frame, byte[] data, int numBits) {
+        // None
+    }
 
     /**
      * This method signals the identification of a frame gap.
@@ -68,5 +76,7 @@ public interface IVirtualChannelReceiverOutput {
      * @param receivedVc the received VC counter
      * @param missingFrames the computed number of missing frames
      */
-    void gapDetected(AbstractReceiverVirtualChannel vc,int expectedVc, int receivedVc, int missingFrames);
+    default void gapDetected(AbstractReceiverVirtualChannel vc,int expectedVc, int receivedVc, int missingFrames) {
+        // None
+    }
 }

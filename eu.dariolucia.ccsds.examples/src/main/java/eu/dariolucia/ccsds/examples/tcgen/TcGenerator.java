@@ -286,7 +286,7 @@ public class TcGenerator {
                 SpacePacket tcPacket = generatePacket(encoder, packetDefinition, apid2counter);
                 if(vc != null) {
                     vc.setAdMode(isAd);
-                    if(mapId != null) {
+                    if(mapId != null && !mapId.isEmpty()) {
                         vc.setMapId(Integer.parseInt(mapId));
                     }
                     vc.dispatch(tcPacket);

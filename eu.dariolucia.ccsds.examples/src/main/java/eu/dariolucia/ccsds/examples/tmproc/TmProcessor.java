@@ -252,21 +252,6 @@ public class TmProcessor {
                         System.out.println("Packet ambiguity: " + e.getMessage() + "\n" + StringUtil.toHexDump(packet));
                     }
                 }
-
-                @Override
-                public void dataExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data) {
-                    // Not used
-                }
-
-                @Override
-                public void bitstreamExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data, int numBits) {
-                    // Not used
-                }
-
-                @Override
-                public void gapDetected(AbstractReceiverVirtualChannel vc, int expectedVc, int receivedVc, int missingFrames) {
-                    // Not used
-                }
             };
     }
 
