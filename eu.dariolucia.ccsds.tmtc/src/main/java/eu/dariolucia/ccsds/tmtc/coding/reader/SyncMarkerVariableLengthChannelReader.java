@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.tmtc.coding.reader;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 /**
  * This class is an implementation of the {@link IChannelReader} capable to read transfer units of variable lengths,
@@ -133,7 +134,7 @@ public class SyncMarkerVariableLengthChannelReader extends AbstractChannelReader
         byte[] b = new byte[defaultMaxBufferSize];
         int read = readNext(b, 0, b.length);
         if(read > 0) {
-            return b;
+            return Arrays.copyOfRange(b, 0, read);
         } else {
             return null;
         }
