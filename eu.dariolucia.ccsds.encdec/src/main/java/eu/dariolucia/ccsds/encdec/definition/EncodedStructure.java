@@ -25,6 +25,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * A container for encoded parameters, arrays and nested structures, to group related data together.
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class EncodedStructure extends AbstractEncodedItem {
 
@@ -42,6 +45,11 @@ public class EncodedStructure extends AbstractEncodedItem {
         this.encodedItems.addAll(Arrays.asList(encodedItems));
     }
 
+    /**
+     * The list of encoded items composing this encoded structure.
+     *
+     * @return the list of encoded items
+     */
     public List<AbstractEncodedItem> getEncodedItems() {
         return encodedItems;
     }

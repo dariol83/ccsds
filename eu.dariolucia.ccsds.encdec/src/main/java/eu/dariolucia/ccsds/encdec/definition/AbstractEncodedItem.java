@@ -43,10 +43,25 @@ public abstract class AbstractEncodedItem {
         this.id = id;
     }
 
+    /**
+     * The ID of the encoded item. This ID must be unique within the scope of the packet.
+     * It cannot be null.
+     *
+     * @return the ID of the encoded item
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * The location of the encoded item.
+     * When the packet encoding/decoding takes place, this field is used to move the position of the encoding/decoding
+     * index accordingly.
+     * It can be null.
+     *
+     * @return the encoding/decoding location of the item
+     * @see AbstractEncodedLocation
+     */
     public AbstractEncodedLocation getLocation() {
         return location;
     }

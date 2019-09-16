@@ -25,6 +25,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * The definition of a static or dynamic array. An array is a repetition of a sequence of one or more logically grouped encoded items.
+ * In its typical definition, the size (i.e. number of repetitions) is fixed by definition, and the definition of encoded items
+ * is a sequence of {@link EncodedParameter}. This data structure supports dynamic arrays, i.e. arrays whose number of
+ * repetitions are driven by the value of a referenced encoded parameter. Arrays of array and arrays of structures are also supported.
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class EncodedArray extends AbstractEncodedItem {
 
@@ -48,10 +54,22 @@ public class EncodedArray extends AbstractEncodedItem {
         this.encodedItems.addAll(Arrays.asList(encodedItems));
     }
 
+    /**
+     * This method returns the encoded items that will be repeated for every repetition of the array
+     *
+     * @return the elements composing one 'row' of the array
+     */
     public List<AbstractEncodedItem> getEncodedItems() {
         return encodedItems;
     }
 
+    /**
+     * This method returns the definition of the array size, i.e. {@link FixedArraySize} or {@link ReferenceArraySize}.
+     *
+     * This is a mandatory field.
+     *
+     * @return the definition of the array size
+     */
     public AbstractArraySize getSize() {
         return size;
     }

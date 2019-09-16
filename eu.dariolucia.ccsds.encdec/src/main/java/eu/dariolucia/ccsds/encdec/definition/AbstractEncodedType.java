@@ -32,6 +32,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 public abstract class AbstractEncodedType {
 
     public AbstractEncodedType() {
+        // Nothing to do
     }
 
 }

@@ -22,8 +22,10 @@ import javax.xml.bind.annotation.XmlAttribute;
 import java.util.Objects;
 
 /**
- * The field length of this class indicates the PFC of the associated encoded item. If present, it overwrites
- * the PFC code linked to the type.
+ * The field length of this class indicates the PFC-like of the associated encoded item. If present, it overwrites
+ * the PFC-like code linked to the type.
+ *
+ * For an understanding on how the 'length' value is used, refer to the {@link DataTypeEnum} class.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class FixedLength extends AbstractEncodedLength {
@@ -38,6 +40,13 @@ public class FixedLength extends AbstractEncodedLength {
         this.length = length;
     }
 
+    /**
+     * The 'length' to be used for the associated encoded parameter.
+     *
+     * This is a mandatory field.
+     *
+     * @return the 'length' to be used for encoding/decoding
+     */
     public int getLength() {
         return length;
     }

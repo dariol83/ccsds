@@ -27,6 +27,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 public abstract class AbstractEncodedLocation {
 
     public AbstractEncodedLocation() {
+        // Nothing to do
     }
-
 }

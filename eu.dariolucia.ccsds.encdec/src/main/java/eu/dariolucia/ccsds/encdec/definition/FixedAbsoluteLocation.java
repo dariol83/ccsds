@@ -39,6 +39,14 @@ public class FixedAbsoluteLocation extends AbstractEncodedLocation {
         this.absoluteLocation = absoluteLocation;
     }
 
+    /**
+     * The absolute location to move the encoding/decoding bit pointer to, computed from the beginning of the decoding
+     * block (as specified by the offset).
+     *
+     * This is a mandatory field.
+     *
+     * @return the fixed location as number of bits
+     */
     public int getAbsoluteLocation() {
         return absoluteLocation;
     }

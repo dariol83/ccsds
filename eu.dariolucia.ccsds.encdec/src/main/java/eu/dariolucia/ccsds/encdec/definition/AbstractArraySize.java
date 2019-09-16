@@ -24,5 +24,6 @@ package eu.dariolucia.ccsds.encdec.definition;
 public abstract class AbstractArraySize {
 
     public AbstractArraySize() {
+        // Nothing to do
     }
 }

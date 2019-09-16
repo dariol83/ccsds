@@ -21,6 +21,12 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import java.util.Objects;
 
+/**
+ * This type of {@link AbstractEncodedLocation} derives from {@link LastRelativeLocation}, but it allows to specify a different
+ * encoded item, in contrary to the last encoded/decoded item used by {@link LastRelativeLocation}.
+ * The reference field contains the ID of the encoded item that shall be used as positional reference. Once this item is
+ * identified, the bitOffset and bitAlignment fields are used to compute the final location.
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class EncodedItemRelativeLocation extends LastRelativeLocation {
 
@@ -35,6 +41,13 @@ public class EncodedItemRelativeLocation extends LastRelativeLocation {
         this.reference = reference;
     }
 
+    /**
+     * The ID of the encoded item that shall be used as positional reference.
+     *
+     * This is a mandatory field.
+     *
+     * @return the ID of the reference encoded item to use to derive the location
+     */
     public String getReference() {
         return reference;
     }

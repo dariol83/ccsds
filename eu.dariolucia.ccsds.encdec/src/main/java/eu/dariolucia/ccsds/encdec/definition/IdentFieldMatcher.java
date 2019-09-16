@@ -23,6 +23,9 @@ import javax.xml.bind.annotation.XmlIDREF;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Objects;
 
+/**
+ * One or more identification field matchers are defined at packet definition level.
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class IdentFieldMatcher {
 

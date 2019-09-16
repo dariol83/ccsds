@@ -19,6 +19,11 @@ package eu.dariolucia.ccsds.encdec.definition;
 import javax.xml.bind.annotation.*;
 import java.util.Objects;
 
+/**
+ * An encoded item that represents a single value. In addition to the field properties defined for an {@link AbstractEncodedItem},
+ * a parameter is defined by a mandatory type, an optional length, an optional generation time, an optional default value,
+ * an optional linked parameter and an optional padding.
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class EncodedParameter extends AbstractEncodedItem {
 
@@ -59,6 +64,17 @@ public class EncodedParameter extends AbstractEncodedItem {
         this.length = length;
     }
 
+    /**
+     * Bit padding allows to express a minimum length in bits for the encoded parameter.
+     * After encoding, if the encoded value is smaller than the specified padded width, the current encoding position
+     * is moved forward to align to the padded width. For instance, if an encoded parameter takes 9 bits, but its padded
+     * width is 12 bits, after encoding the position of the encoding pointer is moved forward by 3 bits, so that the overall
+     * length of the encoded parameter is equal to the padded width.
+     *
+     * This is an optional field.
+     *
+     * @return the padded width in bits, or null if no padding is defined
+     */
     public Integer getPaddedWidth() {
         return paddedWidth;
     }
@@ -67,6 +83,14 @@ public class EncodedParameter extends AbstractEncodedItem {
         this.paddedWidth = paddedWidth;
     }
 
+    /**
+     * The type of the encoded parameter.
+     *
+     * This is a mandatory field.
+     *
+     * @return the type of the encoded parameter
+     * @see AbstractEncodedType
+     */
     public AbstractEncodedType getType() {
         return type;
     }
@@ -75,6 +99,14 @@ public class EncodedParameter extends AbstractEncodedItem {
         this.type = type;
     }
 
+    /**
+     * The length of the encoded parameter.
+     *
+     * This is an optional field.
+     *
+     * @return the length of the encoded parameter, or null if the length shall be derived from the type
+     * @see AbstractEncodedLength
+     */
     public AbstractEncodedLength getLength() {
         return length;
     }
@@ -83,6 +115,14 @@ public class EncodedParameter extends AbstractEncodedItem {
         this.length = length;
     }
 
+    /**
+     * The associated top level parameter (or on-board parameter). When this field is specified, the decoding process
+     * will create an additional object, with the ID of the top level parameter and the value of the encoded parameter.
+     *
+     * This is an optional field.
+     *
+     * @return the associated top level parameter, or null if not set
+     */
     public ParameterDefinition getLinkedParameter() {
         return linkedParameter;
     }
@@ -91,6 +131,13 @@ public class EncodedParameter extends AbstractEncodedItem {
         this.linkedParameter = linkedParameter;
     }
 
+    /**
+     * The processing specification at decoding level to derive the generation time (or the input to compute the generation time).
+     *
+     * This is an optional field.
+     *
+     * @return the generation time processing specification, or null if not set.
+     */
     public GenerationTime getTime() {
         return time;
     }

@@ -23,13 +23,13 @@ import java.util.Objects;
 
 /**
  * This class defines how the generation time linked to associated encoded parameter must be computed.
- * The field absoluteTimeReference (absolute_ref) contains the name of the encoded parameter (type AbsoluteTime), which contains the
+ * The field absoluteTimeReference (absolute_ref) contains the ID of the encoded parameter (of type AbsoluteTime), which contains the
  * generation time. If not present, the generation time shall be provided by other means.
  * The field relativeTimeReference (offset_ref) contains the name of the encoded parameter (of type RelativeTime), which contains the
  * offset to be applied by a reference generation time. If the absoluteTimeReference is specified, then the offset is
  * applied to this time. Otherwise the reference generation time shall be provided by other means.
  * The field offset (offset) indicates a fixed number of milliseconds (positive or negative) in terms of generation
- * time offset.
+ * time offset, which is added/subtracted to the derived generation time.
  *
  * How the information is combined to obtain the final generation time is not part of this specification. An implementation
  * of the {@link eu.dariolucia.ccsds.encdec.time.IGenerationTimeProcessor} must be provided to the {@link eu.dariolucia.ccsds.encdec.structure.IPacketDecoder}
@@ -56,6 +56,13 @@ public class GenerationTime {
         this.offset = offset;
     }
 
+    /**
+     * Field containing the relative time reference specification.
+     *
+     * This is an optional field.
+     *
+     * @return the relative time reference specification
+     */
     public String getRelativeTimeReference() {
         return relativeTimeReference;
     }
@@ -64,6 +71,13 @@ public class GenerationTime {
         this.relativeTimeReference = relativeTimeReference;
     }
 
+    /**
+     * Field containing the absolute time reference specification.
+     *
+     * This is an optional field.
+     *
+     * @return the absolute time reference specification
+     */
     public String getAbsoluteTimeReference() {
         return absoluteTimeReference;
     }
@@ -72,6 +86,13 @@ public class GenerationTime {
         this.absoluteTimeReference = absoluteTimeReference;
     }
 
+    /**
+     * Field containing the time offset in milliseconds.
+     *
+     * This is an optional field.
+     *
+     * @return the offset in milliseconds
+     */
     public Integer getOffset() {
         return offset;
     }

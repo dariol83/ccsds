@@ -43,6 +43,12 @@ public class LastRelativeLocation extends AbstractEncodedLocation {
         this.bitAlignment = bitAlignment;
     }
 
+    /**
+     * The offset in bits that shall be added to the last bit of the last encoded/decoded item to compute the location.
+     * This offset can be positive or negative.
+     *
+     * @return the bit offset
+     */
     public int getBitOffset() {
         return bitOffset;
     }
@@ -51,6 +57,11 @@ public class LastRelativeLocation extends AbstractEncodedLocation {
         this.bitOffset = bitOffset;
     }
 
+    /**
+     * The bit alignment that shall be used (after applying the offset) to compute the final location.
+     *
+     * @return the bit alignment
+     */
     public int getBitAlignment() {
         return bitAlignment;
     }

@@ -37,6 +37,13 @@ public class FixedArraySize extends AbstractArraySize {
         this.length = length;
     }
 
+    /**
+     * The size (i.e. number of rows, or repetitions) of the associated encoded array.
+     *
+     * This is a mandatory field.
+     *
+     * @return the number of rows of the array
+     */
     public int getLength() {
         return length;
     }

@@ -30,18 +30,24 @@ import java.util.Objects;
 
 /**
  * This class is the root element of the definition database. It is a container for the identification fields,
- * the packet definitions and the parameter definitions.
- *
+ * the packet definitions and the parameter definitions:
+ * <ul>
+ *     <li>
  * The identification fields are the entities that allow to define identification criteria for
  * packet recognition.
- *
- * The packet definitions specify the structure of the packets in the form of identification criteria, parameters, positions, lengths and
- * types. For each encoded parameter, a way to specify how to compute its generation time is provided.
- *
+ * </li>
+ * <li>
+ * The packet definitions specify the structure of the packets in the form of identification criteria and encoded items
+ * (i.e. parameters/array/structures and related positions, lengths and
+ * types). For each encoded parameter, a way to specify how to compute its generation time is provided.
+ * </li>
+ * <li>
  * The parameter definitions specify the parameters as source of information to be encoded in packet definitions.
  * Their use is necessary when the type and length of the encoded parameter are derived from other fields, which
- * contain the IDs of these parameters. In ECSS PUS, these are called on-board parameters and are identified on-board
+ * contain the IDs of these parameters. In ECSS-E-70-41A, these are called on-board parameters and are identified on-board
  * by means of an unsigned integer.
+ * </li>
+ * </ul>
  */
 @XmlRootElement(name = "packet_definitions", namespace = "http://dariolucia.eu/ccsds/encdec")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -69,7 +75,7 @@ public class Definition {
      * This method serialises the provided {@link Definition} object to the provided
      * {@link OutputStream}.
      *
-     * @param d the definition to serialise
+     * @param d   the definition to serialise
      * @param out the output stream
      * @throws IOException in case of problems while serialising or writing to the stream
      */
@@ -96,14 +102,29 @@ public class Definition {
     @XmlElement(name = "parameter")
     private List<ParameterDefinition> parameters = new LinkedList<>();
 
+    /**
+     * This method returns the defined identification fields that can be used for packet recognition.
+     *
+     * @return the identification fields present in the definition
+     */
     public List<IdentField> getIdentificationFields() {
         return identificationFields;
     }
 
+    /**
+     * This method returns the packet definitions.
+     *
+     * @return the packet definitions
+     */
     public List<PacketDefinition> getPacketDefinitions() {
         return packetDefinitions;
     }
 
+    /**
+     * This method returns the parameters defined in the definition.
+     *
+     * @return the parameters present in the definition
+     */
     public List<ParameterDefinition> getParameters() {
         return parameters;
     }

@@ -21,16 +21,17 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import java.util.Objects;
 
+/**
+ * The fixed type linked to an encoded or top level parameter, in terms of {@link DataTypeEnum} and 'length'. The term
+ * 'length' is not the literal size in bits of the encoded parameter, but it is a numerical value that allows to derive
+ * such length. The exact specification is provided as part of the documentation of the {@link DataTypeEnum} enumeration.
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class FixedType extends AbstractEncodedType {
 
     @XmlAttribute(name="type", required = true)
     private DataTypeEnum type;
 
-    /**
-     * For enumeration, signed and unsigned integers, the length here always reflects the length of the field in bits.
-     * Check the ECSS-E-70-41 standard for the discrepancy with the ECSS PFC values.
-     */
     @XmlAttribute(name="length", required = true)
     private int length;
 
@@ -42,6 +43,13 @@ public class FixedType extends AbstractEncodedType {
         this.length = length;
     }
 
+    /**
+     * The type of the parameter, as defined by the returned {@link DataTypeEnum}.
+     *
+     * This is a mandatory field.
+     *
+     * @return the type of the parameter
+     */
     public DataTypeEnum getType() {
         return type;
     }
@@ -50,6 +58,15 @@ public class FixedType extends AbstractEncodedType {
         this.type = type;
     }
 
+    /**
+     * The length associated to the type. For enumeration, signed and unsigned integers, the length here always reflects
+     * the length of the field in bits.
+     * Check the ECSS-E-70-41 standard and the table in the {@link DataTypeEnum} for the discrepancy with the ECSS PFC values.
+     *
+     * This is a mandatory field.
+     *
+     * @return the 'length' of the field.
+     */
     public int getLength() {
         return length;
     }

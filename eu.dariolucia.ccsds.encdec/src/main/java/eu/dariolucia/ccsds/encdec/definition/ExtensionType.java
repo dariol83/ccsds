@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.encdec.definition;
 
+import eu.dariolucia.ccsds.encdec.extension.ExtensionId;
+import eu.dariolucia.ccsds.encdec.extension.IDecoderExtension;
 import eu.dariolucia.ccsds.encdec.extension.IEncoderExtension;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -24,8 +26,11 @@ import javax.xml.bind.annotation.XmlAttribute;
 import java.util.Objects;
 
 /**
- * The semantic of objects of this class is the following: the type of the encoded parameter is provided by an external
- * function ({@link IEncoderExtension}). If such function does not exist, an exception is thrown.
+ * The semantic of objects of this class is the following: the type is not one of those handled by the library, but
+ * the encoding/decoding is provided by an external functions, implemented by ({@link IEncoderExtension}) and {@link IDecoderExtension}
+ * registered extensions.
+ *
+ * If such functions do not exist, an exception is usually thrown during the encoding/decoding process.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ExtensionType extends AbstractEncodedType {
@@ -40,6 +45,14 @@ public class ExtensionType extends AbstractEncodedType {
         this.external = external;
     }
 
+    /**
+     * The ID identifying the external function to invoke. The ID shall be added as {@link ExtensionId} annotation to the
+     * {@link IEncoderExtension} and {@link IDecoderExtension} implementations.
+     *
+     * This is a mandatory field.
+     *
+     * @return the ID of the external encoding/decoding function to use
+     */
     public String getExternal() {
         return external;
     }
