@@ -39,6 +39,13 @@ public class ReferenceLength extends AbstractEncodedLength {
         this.reference = reference;
     }
 
+    /**
+     * The ID of the encoded parameter that contains the value to be used for the length.
+     *
+     * This is a mandatory field.
+     *
+     * @return the encoded parameter ID in the same packet
+     */
     public String getReference() {
         return reference;
     }

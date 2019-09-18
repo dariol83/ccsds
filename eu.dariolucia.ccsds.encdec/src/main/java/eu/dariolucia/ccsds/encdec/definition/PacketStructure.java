@@ -45,6 +45,11 @@ public class PacketStructure {
         this.encodedItems.addAll(Arrays.asList(encodedItems));
     }
 
+    /**
+     * The definition list of the encoded items.
+     *
+     * @return the encoded item definitions
+     */
     public List<AbstractEncodedItem> getEncodedItems() {
         return encodedItems;
     }

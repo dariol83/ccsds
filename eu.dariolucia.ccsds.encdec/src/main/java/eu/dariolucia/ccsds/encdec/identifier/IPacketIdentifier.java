@@ -16,6 +16,18 @@
 
 package eu.dariolucia.ccsds.encdec.identifier;
 
+/**
+ * Specification of the interface for packet identification service. Implementations of this interface can be used to
+ * identify packets.
+ */
 public interface IPacketIdentifier {
+    /**
+     * Identify the provided byte array as packet.
+     *
+     * @param packet the packet to identify (as byte array)
+     * @return the ID of the identified packet
+     * @throws PacketNotIdentifiedException when the packet could not be identified
+     * @throws PacketAmbiguityException if more than one packet identification definition matches the provided packet (this depends on the identification strategy)
+     */
     String identify(byte[] packet) throws PacketNotIdentifiedException, PacketAmbiguityException;
 }

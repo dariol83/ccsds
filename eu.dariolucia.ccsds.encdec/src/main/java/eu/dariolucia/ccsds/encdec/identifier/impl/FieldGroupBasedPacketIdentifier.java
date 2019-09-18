@@ -28,6 +28,35 @@ import javax.xml.bind.DatatypeConverter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * A simple and effective identification strategy, based on the partitioning of the packets by the number and type of packet identification matchers.
+ * When this class is created, the following initialisation is performed:
+ * <ul>
+ *  <li>A list of {@link IdSet} objects is built.</li>
+ *  <li>Each IdSet is identified by an ordered list of identification fields.</li>
+ *  <li>Packet definitions are added to the IdSet identified by the defined identification field matchers. If there is no such IdSet, a new one is created.</li>
+ *  <li>A packet definition added to an IdSet is identified by the concatenation of the values specified in its field matchers, stored as an array of integers.</li>
+ *  <li>Once all the packet definitions are indexed, the list of IdSet is sorted, according to the number of identification fields first, number of packets per IdSet, hashcode</li>
+ *  <li>Only the specified packet types are indexed.</li>
+ * </ul>
+ *
+ * Given the setup described above, the packet identification process is the following:
+ * <ul>
+ *     <li>The list of {@link IdSet} is iterated from the beginning</li>
+ *     <li>For each {@link IdSet}, the values of the corresponding identification fields is computed</li>
+ *     <li>The resulting values are sequenced in an array of integer, which is used to look up the packet in the IdSet</li>
+ *     <li>If there is such packet, the packet is identified and the definition ID is returned (unless the ambiguity checking is activated)</li>
+ *     <li>If there is no such packet, the next IdSet is checked</li>
+ * </ul>
+ *
+ * The approach described above has complexity O(k), with k being the number of partitions in terms of identification fields (or number of IdSet).
+ * The (omitted) constant factor includes the time to extract the values given the identification fields, build the packet key (as integer array) and
+ * look it up in an hashmap.
+ *
+ * In order to work, it is assumed that the matchers are always specified in the same order in all packet definitions, which is a reasonable assumption.
+ * While the assumption could be removed by adopting a total ordering on the identification fields, it is preferred to have it outside the scope of this class,
+ * so that users of this library can provide the best ordering according to the domain-specific characteristics.
+ */
 public class FieldGroupBasedPacketIdentifier implements IPacketIdentifier {
 
     private final List<IdSet> identificationList;

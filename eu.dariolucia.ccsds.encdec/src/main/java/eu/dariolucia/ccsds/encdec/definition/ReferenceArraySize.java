@@ -39,6 +39,13 @@ public class ReferenceArraySize extends AbstractArraySize {
         this.reference = reference;
     }
 
+    /**
+     * The ID of the encoded parameter that contains the value of the array size.
+     *
+     * This is a mandatory field.
+     *
+     * @return the encoded parameter ID in the same packet
+     */
     public String getReference() {
         return reference;
     }

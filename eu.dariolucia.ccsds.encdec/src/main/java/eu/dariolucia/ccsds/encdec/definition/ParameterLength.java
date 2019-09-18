@@ -45,6 +45,14 @@ public class ParameterLength extends AbstractEncodedLength {
         this.reference = reference;
     }
 
+    /**
+     * The ID of the encoded parameter that contains the external ID of the parameter definition, to be used to derive the
+     * length of the parameter to encode/decode.
+     *
+     * This is a mandatory field.
+     *
+     * @return the parameter reference
+     */
     public String getReference() {
         return reference;
     }

@@ -24,7 +24,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Objects;
 
 /**
- * One or more identification field matchers are defined at packet definition level.
+ * One or more identification field matchers are defined at packet definition level. When all the values extracted by
+ * the corresponding identification fields match the values by the identification field matchers, the packet is identified.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class IdentFieldMatcher {
@@ -45,6 +46,13 @@ public class IdentFieldMatcher {
         this.value = value;
     }
 
+    /**
+     * The identification field linked to this matcher.
+     *
+     * This is a mandatory field.
+     *
+     * @return the linked identification field
+     */
     public IdentField getField() {
         return field;
     }
@@ -53,6 +61,13 @@ public class IdentFieldMatcher {
         this.field = field;
     }
 
+    /**
+     * The value associated to this matcher.
+     *
+     * This is a mandatory field.
+     *
+     * @return the value of the matcher
+     */
     public int getValue() {
         return value;
     }

@@ -21,6 +21,13 @@ import eu.dariolucia.ccsds.encdec.extension.*;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
+/**
+ * Access point for the library extensions.
+ *
+ * This is an internal class.
+ *
+ * This class is thread-safe.
+ */
 public class ExtensionRegistry {
 
     private static ILengthMapper lengthMapper;

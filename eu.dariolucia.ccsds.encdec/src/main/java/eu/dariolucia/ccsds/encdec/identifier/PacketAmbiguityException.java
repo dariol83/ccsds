@@ -16,6 +16,9 @@
 
 package eu.dariolucia.ccsds.encdec.identifier;
 
+/**
+ * Exception reporting that the an ambiguity was found during the identification process of a packet.
+ */
 public class PacketAmbiguityException extends Exception {
     public PacketAmbiguityException(String s) {
         super(s);

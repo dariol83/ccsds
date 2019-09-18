@@ -16,6 +16,9 @@
 
 package eu.dariolucia.ccsds.encdec.identifier;
 
+/**
+ * Exception reporting that no packet identification was found for the provided packet.
+ */
 public class PacketNotIdentifiedException extends Exception {
 
     private byte[] packet;
@@ -29,6 +32,11 @@ public class PacketNotIdentifiedException extends Exception {
         this("Unknown packet", packet);
     }
 
+    /**
+     * This method returns the not-identified packet.
+     *
+     * @return the unidentified packet
+     */
     public byte[] getPacket() {
         return packet;
     }

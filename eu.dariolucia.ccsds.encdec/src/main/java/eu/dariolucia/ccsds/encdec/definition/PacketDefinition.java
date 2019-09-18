@@ -22,6 +22,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * The definition of a packet in terms of matchers and structure. Such definition is composed by:
+ * <ul>
+ *     <li>a mandatory ID, which must be unique among the packet definitions</li>
+ *     <li>an optional textual description</li>
+ *     <li>an optional type, which is a label that can be used to include/exclude categories of packets from the identification process</li>
+ *     <li>an optional identification definition, which contains an ordered list of matchers</li>
+ *     <li>an optional packet structure, which contains the structural definition of the packet</li>
+ *     <li>an optional extension, which is a textual value that can be used to carry any additional information</li>
+ * </ul>
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class PacketDefinition {
 
@@ -66,6 +77,13 @@ public class PacketDefinition {
         getMatchers().addAll(Arrays.asList(matchers));
     }
 
+    /**
+     * The description of the packet.
+     *
+     * This is an optional field.
+     *
+     * @return the packet description
+     */
     public String getDescription() {
         return description;
     }
@@ -74,6 +92,13 @@ public class PacketDefinition {
         this.description = description;
     }
 
+    /**
+     * The ID of the packet. Within a definition object, there cannot be two packets with the same ID.
+     *
+     * This is a mandatory field.
+     *
+     * @return the packet ID
+     */
     public String getId() {
         return id;
     }
@@ -82,10 +107,26 @@ public class PacketDefinition {
         this.id = id;
     }
 
+    /**
+     * The list of identification field matchers, which unequivocally identify this packet. The definition order matters
+     * and a consistent order among packet definitions is mandatory, in order to achieve correct packet identification
+     * results.
+     *
+     * This is an optional field. The list can be empty.
+     *
+     * @return the list of identity field matchers
+     */
     public List<IdentFieldMatcher> getMatchers() {
         return matchers;
     }
 
+    /**
+     * The definition of the structure (in terms of encoded items) of this packet.
+     *
+     * This is an optional field.
+     *
+     * @return the packet structure definition
+     */
     public PacketStructure getStructure() {
         return structure;
     }
@@ -94,6 +135,13 @@ public class PacketDefinition {
         this.structure = structure;
     }
 
+    /**
+     * The type associated to this packet (e.g. "TM" or "TC", or whatever).
+     *
+     * This is an optional field.
+     *
+     * @return the packet type
+     */
     public String getType() {
         return type;
     }
@@ -102,6 +150,13 @@ public class PacketDefinition {
         this.type = type;
     }
 
+    /**
+     * The extension string associated to this packet.
+     *
+     * This is an optional field.
+     *
+     * @return the packet extension (not used by the library)
+     */
     public String getExtension() {
         return extension;
     }

@@ -19,6 +19,14 @@ package eu.dariolucia.ccsds.encdec.definition;
 import javax.xml.bind.annotation.*;
 import java.util.Objects;
 
+/**
+ * This class allows to define a parameter entity, i.e. an element with an ID, data type and description independently of
+ * an encoded parameter. This approach allows to link different encoded parameters, defined in different packets, to the
+ * same parameter entity. In other words, the sampled value of the same physical entity (the parameter) can be delivered to the
+ * processing facility by means of encoded parameters delivered by different packets.
+ *
+ * For {@link ParameterType} and {@link ParameterLength} correct usage, the external ID must be correctly specified.
+ */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ParameterDefinition {
 
@@ -50,6 +58,13 @@ public class ParameterDefinition {
         this.type = type;
     }
 
+    /**
+     * The ID of this parameter.
+     *
+     * This is a mandatory field.
+     *
+     * @return the parameter ID
+     */
     public String getId() {
         return id;
     }
@@ -58,6 +73,13 @@ public class ParameterDefinition {
         this.id = id;
     }
 
+    /**
+     * The description of this parameter.
+     *
+     * This is an optional field.
+     *
+     * @return the parameter description
+     */
     public String getDescription() {
         return description;
     }
@@ -66,6 +88,13 @@ public class ParameterDefinition {
         this.description = description;
     }
 
+    /**
+     * The (fixed) type of this parameter. It cannot be of type 'deduced'.
+     *
+     * This is an optional field.
+     *
+     * @return the parameter type
+     */
     public FixedType getType() {
         return type;
     }
@@ -74,6 +103,13 @@ public class ParameterDefinition {
         this.type = type;
     }
 
+    /**
+     * The external ID of this parameter, i.e. an ID that identifies this parameter in an external system.
+     *
+     * This is an optional field.
+     *
+     * @return the parameter external ID
+     */
     public long getExternalId() {
         return externalId;
     }
@@ -82,6 +118,13 @@ public class ParameterDefinition {
         this.externalId = externalId;
     }
 
+    /**
+     * The extension string associated to this parameter.
+     *
+     * This is an optional field.
+     *
+     * @return the parameter extension
+     */
     public String getExtension() {
         return extension;
     }
