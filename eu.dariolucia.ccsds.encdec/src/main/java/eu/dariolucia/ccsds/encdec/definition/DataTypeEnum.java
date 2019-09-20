@@ -99,7 +99,6 @@ public enum DataTypeEnum {
      *     <li>If length is 0, an explicit CUC/CDS (selection driven by {@link eu.dariolucia.ccsds.encdec.structure.IEncodeResolver#getAbsoluteTimeDescriptor(EncodedParameter, PathLocation, Instant)} with P-Field is used</li>
      *     <li>If length is 1, then implicit CDS, with optional agency-epoch, 16 bits day segment and no sub-milli segment</li>
      *     <li>If length is 2, then implicit CDS, with optional agency-epoch, 16 bits day segment and sub-milli segment with 16 bits resolution (microseconds)</li>
-     *     <li>If length is 2, then implicit CDS, with optional agency-epoch, 16 bits day segment and sub-milli segment with 16 bits resolution (microseconds)</li>
      *     <li>If length is from 3 to 18, then implicit CUC is used, with optional agency-epoch, ((length+1)/4, rounded down) octets of coarse time and ((length+1) modulo 4) octets of fine time</li>
      * </ul>
      */
@@ -110,7 +109,6 @@ public enum DataTypeEnum {
      * <ul>
      *     <li>If length is 0, an explicit CUC/CDS (selection driven by {@link eu.dariolucia.ccsds.encdec.structure.IEncodeResolver#getAbsoluteTimeDescriptor(EncodedParameter, PathLocation, Instant)} with P-Field is used</li>
      *     <li>If length is 1, then implicit CDS, with optional agency-epoch, 16 bits day segment and no sub-milli segment</li>
-     *     <li>If length is 2, then implicit CDS, with optional agency-epoch, 16 bits day segment and sub-milli segment with 16 bits resolution (microseconds)</li>
      *     <li>If length is 2, then implicit CDS, with optional agency-epoch, 16 bits day segment and sub-milli segment with 16 bits resolution (microseconds)</li>
      *     <li>If length is from 3 to 18, then implicit CUC is used, with optional agency-epoch, ((length+1)/4, rounded down) octets of coarse time and ((length+1) modulo 4) octets of fine time</li>
      * </ul>

@@ -25,6 +25,9 @@ import eu.dariolucia.ccsds.encdec.time.IGenerationTimeProcessor;
 
 import java.time.Instant;
 
+/**
+ * The default packet decoder provided by the library.
+ */
 public class DefaultPacketDecoder implements IPacketDecoder {
 
     /**
@@ -35,19 +38,23 @@ public class DefaultPacketDecoder implements IPacketDecoder {
     private final PacketDefinitionIndexer definitions;
     private final Instant agencyEpoch;
 
+    /**
+     * Construct a default packet decoder with the provided definition indexer and agency epoch.
+     *
+     * @param definitions the definition indexer
+     * @param agencyEpoch the agency epoch, can be null
+     */
     public DefaultPacketDecoder(PacketDefinitionIndexer definitions, Instant agencyEpoch) {
         this.definitions = definitions;
         this.agencyEpoch = agencyEpoch;
     }
 
-    public DefaultPacketDecoder(Definition definitions, Instant agencyEpoch) {
-        this(new PacketDefinitionIndexer(definitions), agencyEpoch);
-    }
-
-    public DefaultPacketDecoder(PacketDefinitionIndexer definitions) {
-        this(definitions, null);
-    }
-
+    /**
+     * Construct a default packet decoder with the provided definition: a {@link PacketDefinitionIndexer} is constructed
+     * and the agency epoch is set to null.
+     *
+     * @param definitions the {@link Definition} object to be used
+     */
     public DefaultPacketDecoder(Definition definitions) {
         this(new PacketDefinitionIndexer(definitions), null);
     }

@@ -29,6 +29,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 
+/**
+ * The internal class used to encode packets.
+ */
 public class EncodeWalker extends StructureWalker<byte[]> {
 
     private final IEncodeResolver resolver;

@@ -503,6 +503,21 @@ class DefaultPacketDecoderTest {
         }
     }
 
+    @Test
+    public void testDefinitionUnknown() throws IOException {
+        InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions8.xml");
+        assertNotNull(defStr);
+        Definition d = Definition.load(defStr);
+        DefaultPacketDecoder decoder = new DefaultPacketDecoder(d);
+        try {
+            DecodingResult dr = decoder.decode("Not there", new byte[0]);
+            fail("IllegalArgumentException expected");
+        } catch (IllegalArgumentException e) {
+            // Good
+        }
+
+    }
+
     public DecodingResult decodeAndCompare(Definition d, String packetDefinition, Map<String, Object> originalMap, byte[] encoded) {
         DefaultPacketDecoder decoder = new DefaultPacketDecoder(d);
         DecodingResult dr = decoder.decode(packetDefinition, encoded);

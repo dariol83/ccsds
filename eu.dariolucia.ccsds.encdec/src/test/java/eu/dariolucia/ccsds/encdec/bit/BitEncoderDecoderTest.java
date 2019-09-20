@@ -71,6 +71,14 @@ class BitEncoderDecoderTest {
     }
 
     @Test
+    public void testReset() {
+        BitEncoderDecoder bed = new BitEncoderDecoder(new byte[] { 0x55 });
+        bed.resetNextBits(6);
+        bed.setCurrentBitIndex(0);
+        assertEquals(1, bed.getNextIntegerUnsigned(8));
+    }
+
+    @Test
     public void testOperations() {
         BitEncoderDecoder bed = new BitEncoderDecoder(80);
 

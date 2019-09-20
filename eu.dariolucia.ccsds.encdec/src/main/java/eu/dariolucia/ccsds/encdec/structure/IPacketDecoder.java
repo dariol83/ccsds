@@ -18,8 +18,23 @@ package eu.dariolucia.ccsds.encdec.structure;
 
 import eu.dariolucia.ccsds.encdec.time.IGenerationTimeProcessor;
 
+/**
+ * An interface implemented by objects with packet decoding capabilities. The decoding is performed by providing a byte[],
+ * an offset and a length, and optionally a {@link IGenerationTimeProcessor} used to derive the generation time.
+ */
 public interface IPacketDecoder {
 
+    /**
+     * Decode the provided byte[], from offset to offset + length, using the definition specified by the packetDefinitionId
+     * and using the provided timeProcessor to derive the generation time of each encoded parameter.
+     *
+     * @param packetDefinitionId the packet definition to use
+     * @param data the data to decode
+     * @param offset the data offset
+     * @param length the length
+     * @param timeProcessor an optional {@link IGenerationTimeProcessor} to derive the generation time
+     * @return the result of the decoding as {@link DecodingResult}
+     */
     DecodingResult decode(String packetDefinitionId, byte[] data, int offset, int length, IGenerationTimeProcessor timeProcessor);
 
     default DecodingResult decode(String packetDefinitionId, byte[] data, int offset, int length) {

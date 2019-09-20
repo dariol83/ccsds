@@ -22,6 +22,20 @@ import eu.dariolucia.ccsds.encdec.time.IGenerationTimeProcessor;
 import java.time.Duration;
 import java.time.Instant;
 
+/**
+ * A {@link IGenerationTimeProcessor} implementation, which applies the rules as defined by the {@link eu.dariolucia.ccsds.encdec.definition.GenerationTime}
+ * linked to the {@link EncodedParameter} definition.
+ *
+ * It allows to specify, at creation time, a reference generation time (e.g. the packet generation time). When the computeGenerationTime method is invoked,
+ * this implementation:
+ * <ul>
+ *     <li>checks if there is one time set, between the reference generation time and the derived generation time: if not, an exception is raised. If both are present,
+ *     then the derived generation time is used</li>
+ *     <li>the derived offset is applied</li>
+ *     <li>the fixed offset is applied</li>
+ *     <li>the result is returned</li>
+ * </ul>
+ */
 public class DefaultGenerationTimeProcessor implements IGenerationTimeProcessor {
 
     private final Instant referenceGenerationTime;

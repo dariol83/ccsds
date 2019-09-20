@@ -65,4 +65,13 @@ class BitStringTest {
             }
         }
     }
+
+    @Test
+    public void testBitStringHash() {
+        String str = "01001";
+        BitString bs = BitString.parseBitString(str);
+        BitString bs2 = BitString.parseBitString(str);
+        assertEquals(bs.hashCode(), bs2.hashCode());
+        assertEquals(bs, bs2);
+    }
 }

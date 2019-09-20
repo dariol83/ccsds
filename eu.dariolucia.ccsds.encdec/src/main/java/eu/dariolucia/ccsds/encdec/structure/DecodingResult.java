@@ -18,30 +18,60 @@ package eu.dariolucia.ccsds.encdec.structure;
 
 import eu.dariolucia.ccsds.encdec.definition.DataTypeEnum;
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
+import eu.dariolucia.ccsds.encdec.definition.ParameterDefinition;
 
+import java.lang.reflect.Parameter;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * An object of this class contains the result of a packet decoding operation. All the decoded {@link DecodingResult.Item}
+ * can be retrieved, as well as the {@link ParameterValue} linked to associated {@link ParameterDefinition}.
+ *
+ * The class specifies a {@link IVisitor} interface that can be implemented and used to visit the result.
+ */
 public class DecodingResult {
 
     private final List<Item> decodedItems;
     private final List<ParameterValue> decodedParameters;
 
+    /**
+     * Construct an object with the provided list of decoded {@link Item} and list of {@link ParameterValue}.
+     *
+     * @param decodedItems the list of decoded items
+     * @param decodedParameters the list of parameter values
+     */
     public DecodingResult(List<Item> decodedItems, List<ParameterValue> decodedParameters) {
         this.decodedItems = List.copyOf(decodedItems);
         this.decodedParameters = List.copyOf(decodedParameters);
     }
 
+    /**
+     * This method returns the list of the decoded items.
+     *
+     * @return the list of decoded items
+     */
     public List<Item> getDecodedItems() {
         return decodedItems;
     }
 
+    /**
+     * This method returns the list of decoded parameters.
+     *
+     * @return the list of decoded parameters
+     */
     public List<ParameterValue> getDecodedParameters() {
         return decodedParameters;
     }
 
+    /**
+     * This method returns all the decoded items (parameters) as flat map. The key is the decoded item location, the value is the
+     * value of the decoded parameter.
+     *
+     * @return the flat map of decoded parameters
+     */
     public Map<String, Object> getDecodedItemsAsMap() {
         final Map<String, Object> map = new LinkedHashMap<>();
         visit(new IVisitor() {
@@ -53,12 +83,20 @@ public class DecodingResult {
         return map;
     }
 
+    /**
+     * This method allows to visit the hierarchical structure of the decoded result.
+     *
+     * @param v the visitor object
+     */
     public void visit(IVisitor v) {
         for(Item i : decodedItems) {
             i.visit(v);
         }
     }
 
+    /**
+     * This interface allows to visit the hierarchical structure of the decoded result.
+     */
     public interface IVisitor {
         default void visitParameter(Parameter p) {}
         default void visitArrayStart(Array a) {}
@@ -84,7 +122,6 @@ public class DecodingResult {
     }
 
     public static class Parameter extends Item {
-
         public final EncodedParameter parameter;
         public final DataTypeEnum actualType;
         public final Object value;

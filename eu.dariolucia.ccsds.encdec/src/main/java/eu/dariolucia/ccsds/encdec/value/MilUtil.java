@@ -42,12 +42,24 @@ public class MilUtil {
         }
     }
 
+    /**
+     * Derive a MIL 32 bits real from the raw representation.
+     *
+     * @param rawBits the raw representation (as long)
+     * @return the real value as double
+     */
     public static double fromMil32Real(long rawBits) {
         long mantissa = convertToNative( ( rawBits & 0xffffff00L ) >> 8, 24 );
         long exponent = convertToNative( ( rawBits & 0x000000ffL ), 8 );
         return (double) mantissa * Math.pow( 2.0, ( exponent - 23.0 ) );
     }
 
+    /**
+     * Derive a MIL 48 bits real from the raw representation.
+     *
+     * @param rawBits the raw representation (as long)
+     * @return the real value as double
+     */
     public static double fromMil48Real(long rawBits) {
         long exponent = convertToNative( ( rawBits & 0x000000ff0000L ) >> 16, 8 );
         long mantissa = convertToNative( ( ( rawBits & 0x00000000ffffL ) ) +
@@ -66,6 +78,12 @@ public class MilUtil {
         }
     }
 
+    /**
+     * Convert a real number into the MIL 32 bits (raw format).
+     *
+     * @param d the real value to convert
+     * @return the raw bit representation
+     */
     public static long toMil32Real(double d) {
         long exponent = (long)( Math.ceil(
                 Math.log( Math.abs( d ) ) / Math.log( 2.0 ) ) );
@@ -79,6 +97,12 @@ public class MilUtil {
                 ( ( mantissa & 0xffffff ) << 8 );
     }
 
+    /**
+     * Convert a real number into the MIL 48 bits (raw format).
+     *
+     * @param d the real value to convert
+     * @return the raw bit representation
+     */
     public static long toMil48Real(double d) {
         long exponent = (long)( Math.ceil(
                 Math.log( Math.abs( d ) ) / Math.log( 2.0 ) ) );

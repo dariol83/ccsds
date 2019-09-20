@@ -24,6 +24,9 @@ import eu.dariolucia.ccsds.encdec.structure.PacketDefinitionIndexer;
 
 import java.time.Instant;
 
+/**
+ * The default packet encoder provided by the library.
+ */
 public class DefaultPacketEncoder implements IPacketEncoder {
 
     /**
@@ -37,28 +40,37 @@ public class DefaultPacketEncoder implements IPacketEncoder {
 
     private final Instant agencyEpoch;
 
+    /**
+     * Construct a default packet encoder from the provided packet definition indexer, using maxPacketSize as packet construction
+     * buffer, and with the provided agency epoch.
+     *
+     * @param definitions the definitions to use
+     * @param maxPacketSize the maximum size of an encoded packet
+     * @param agencyEpoch the agency epoch, can be null
+     */
     public DefaultPacketEncoder(PacketDefinitionIndexer definitions, int maxPacketSize, Instant agencyEpoch) {
         this.definitions = definitions;
         this.maxPacketSize = maxPacketSize;
         this.agencyEpoch = agencyEpoch;
     }
 
-    public DefaultPacketEncoder(Definition definitions, int maxPacketSize, Instant agencyEpoch) {
-        this(new PacketDefinitionIndexer(definitions), maxPacketSize, agencyEpoch);
-    }
-
-    public DefaultPacketEncoder(PacketDefinitionIndexer definitions, int maxPacketSize) {
-       this(definitions, maxPacketSize, null);
-    }
-
+    /**
+     * Construct a default packet encoder from the provided definition, using maxPacketSize as packet construction
+     * buffer, and with a null agency epoch. A {@link PacketDefinitionIndexer} is constructed internally.
+     *
+     * @param definitions the definitions to use
+     * @param maxPacketSize the maximum size of an encoded packet
+     */
     public DefaultPacketEncoder(Definition definitions, int maxPacketSize) {
         this(new PacketDefinitionIndexer(definitions), maxPacketSize, null);
     }
 
-    public DefaultPacketEncoder(PacketDefinitionIndexer definitions) {
-        this(definitions, DEFAULT_MAX_PACKET_SIZE);
-    }
-
+    /**
+     * Construct a default packet encoder from the provided definition, using DEFAULT_MAX_PACKET_SIZE as packet construction
+     * buffer, and with a null agency epoch. A {@link PacketDefinitionIndexer} is constructed internally.
+     *
+     * @param definitions the definitions to use
+     */
     public DefaultPacketEncoder(Definition definitions) {
         this(definitions, DEFAULT_MAX_PACKET_SIZE);
     }

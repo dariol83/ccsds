@@ -19,11 +19,20 @@ package eu.dariolucia.ccsds.encdec.value;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * A bit string class. A bit string is defined by a byte[] and the number of bits delivering the information.
+ */
 public class BitString {
 
     private final byte[] data;
     private final int length;
 
+    /**
+     * Construct a bit string from the provided byte[], and considering the specified number of bits.
+     *
+     * @param data the array containing the information
+     * @param length the length of the bit string in bits
+     */
     public BitString(byte[] data, int length) {
         if(data.length * 8 < length) {
             throw new IllegalArgumentException("Number of bits in provided array is less than the length in bits of the " +
@@ -33,10 +42,20 @@ public class BitString {
         this.length = length;
     }
 
+    /**
+     * Return the underlying data.
+     *
+     * @return the data
+     */
     public byte[] getData() {
         return data;
     }
 
+    /**
+     * Return the length of the bit string in bits.
+     *
+     * @return the length of the bit string in bits
+     */
     public int getLength() {
         return length;
     }

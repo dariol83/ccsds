@@ -20,15 +20,34 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * A {@link PathLocation} represents a logical path inside a packet. It always starts with the ID of the packet definition.
+ * Separation among path components is performed by dots, i.e. '.'.
+ * Separation between the array name and the array index is performed by a hash.
+ *
+ * This class is immutable.
+ */
 public final class PathLocation {
 
     public static final char PATH_COMPONENT_SEPARATOR = '.';
     public static final char ARRAY_INDEX_SEPARATOR = '#';
 
+    /**
+     * Create a new {@link PathLocation} with the provided items.
+     *
+     * @param items the parts composing the path
+     * @return the {@link PathLocation} instance
+     */
     public static PathLocation of(String... items) {
         return new PathLocation(items);
     }
 
+    /**
+     * Create a new {@link PathLocation} with the provided list of items.
+     *
+     * @param items the parts composing the path
+     * @return the {@link PathLocation} instance
+     */
     public static PathLocation of(List<String> items) {
         return new PathLocation(items.toArray(new String[0]));
     }
@@ -56,18 +75,39 @@ public final class PathLocation {
         this.pathComponents = List.copyOf(items);
     }
 
+    /**
+     * Return the first component of the path.
+     *
+     * @return the first component of the path
+     */
     public String first() {
         return at(0);
     }
 
+    /**
+     * Return the last component of the path.
+     *
+     * @return the last component of the path
+     */
     public String last() {
         return at(this.pathComponents.size() - 1);
     }
 
+    /**
+     * Return the length of the path in terms of components.
+     *
+     * @return the length of the path in terms of components
+     */
     public int length() {
         return this.pathComponents.size();
     }
 
+    /**
+     * Return the component path at the specified position.
+     *
+     * @param idx the position in the path
+     * @return the component path at the specified position
+     */
     public String at(int idx) {
         PathLocationItem item = this.pathComponents.get(idx);
         if(item.name != null) {
@@ -77,6 +117,13 @@ public final class PathLocation {
         }
     }
 
+    /**
+     * Return a new {@link PathLocation} after appending the specified index. It assumes that the last component
+     * indicates an array.
+     *
+     * @param idx the array index to append
+     * @return the new {@link PathLocation}
+     */
     public PathLocation appendIndex(int idx) {
         // Check if it can be appended
         if(pathComponents.isEmpty() || pathComponents.get(pathComponents.size() - 1).name == null) {
@@ -87,24 +134,46 @@ public final class PathLocation {
         return new PathLocation(copy);
     }
 
+    /**
+     * Return a new {@link PathLocation} after appending the specified path component.
+     *
+     * @param pathComponent the path component to append
+     * @return the new {@link PathLocation}
+     */
     public PathLocation append(String pathComponent) {
         List<PathLocationItem> copy = new LinkedList<>(pathComponents);
         copy.add(new PathLocationItem(pathComponent));
         return new PathLocation(copy);
     }
 
+    /**
+     * Return the parent path component.
+     *
+     * @return the parent path component
+     */
     public PathLocation parent() {
         return new PathLocation(pathComponents.subList(0, pathComponents.size() - 1));
     }
 
+    /**
+     * Check if this {@link PathLocation} is parent of the provided path location.
+     *
+     * @param potentialChild the path location to check
+     * @return true if this is a parent of the provided path location, otherwise false
+     */
     public boolean isParentOf(PathLocation potentialChild) {
         return potentialChild.toString().startsWith(this.toString());
     }
 
+    /**
+     * Check if this {@link PathLocation} is child of the provided path location.
+     *
+     * @param potentialParent the path location to check
+     * @return true if this is a child of the provided path location, otherwise false
+     */
     public boolean isChildOf(PathLocation potentialParent) {
         return potentialParent.isParentOf(potentialParent);
     }
-
 
     @Override
     public String toString() {
@@ -137,7 +206,6 @@ public final class PathLocation {
     public int hashCode() {
         return Objects.hash(pathComponents);
     }
-
 
     private class PathLocationItem {
 

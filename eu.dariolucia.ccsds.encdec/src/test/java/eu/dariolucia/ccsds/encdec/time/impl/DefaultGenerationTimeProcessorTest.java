@@ -14,20 +14,22 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.encdec.structure;
+package eu.dariolucia.ccsds.encdec.time.impl;
 
-/**
- * An interface implemented by objects with packet encoding capabilities. The encoding is performed by providing a packet
- * definition ID and a {@link IEncodeResolver} implementation.
- */
-public interface IPacketEncoder {
+import org.junit.jupiter.api.Test;
 
-    /**
-     * Encode a packet by providing a packet definition ID and a {@link IEncodeResolver} implementation.
-     *
-     * @param packetDefinitionId the packet definition to use
-     * @param resolver the resolver for the values
-     * @return the encoded packet as byte[]
-     */
-    byte[] encode(String packetDefinitionId, IEncodeResolver resolver);
+import static org.junit.jupiter.api.Assertions.*;
+
+class DefaultGenerationTimeProcessorTest {
+
+    @Test
+    void computeGenerationTimeNullTest() {
+        DefaultGenerationTimeProcessor timeProc = new DefaultGenerationTimeProcessor(null);
+        try {
+            timeProc.computeGenerationTime(null, null, null, null, 0);
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
+    }
 }

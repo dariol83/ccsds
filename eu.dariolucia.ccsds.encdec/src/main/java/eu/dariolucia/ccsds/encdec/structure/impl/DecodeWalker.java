@@ -32,6 +32,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+/**
+ * The internal class used to decode packets.
+ */
 public class DecodeWalker extends StructureWalker<DecodingResult> {
 
     private final Map<PathLocation, DecodingResult.Item> location2item = new LinkedHashMap<>();

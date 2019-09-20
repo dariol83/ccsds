@@ -21,8 +21,21 @@ import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import java.time.Duration;
 import java.time.Instant;
 
+/**
+ * Implementations of this interface can be provided to the decoding process, to compute the generation time of each extracted parameter sample.
+ */
 public interface IGenerationTimeProcessor {
 
+    /**
+     * Compute the generation time of the specified encoded parameter.
+     *
+     * @param ei the {@link EncodedParameter} definition
+     * @param value the value of the encoded parameter
+     * @param derivedGenerationTime the generation time as derived by the encoded parameter definition, can be null
+     * @param derivedOffset the offset as derived by the encoded parameter definition, can be null
+     * @param fixedOffsetMs the fixed offset in milliseconds
+     * @return the computed generation time
+     */
     Instant computeGenerationTime(EncodedParameter ei, Object value, Instant derivedGenerationTime, Duration derivedOffset, Integer fixedOffsetMs);
 
 }

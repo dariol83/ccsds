@@ -195,6 +195,8 @@ class FieldGroupBasedPacketIdentifierTest {
             String id = identifier.identify(p);
             fail("PacketNotIdentifiedException expected");
         } catch (PacketNotIdentifiedException e) {
+            assertNotNull(e.getPacket());
+            assertArrayEquals(createPacket(304, 3, 25), e.getPacket());
             // Good
         }
 

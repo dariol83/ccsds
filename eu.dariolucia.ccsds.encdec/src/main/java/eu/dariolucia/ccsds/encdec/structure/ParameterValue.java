@@ -18,30 +18,63 @@ package eu.dariolucia.ccsds.encdec.structure;
 
 import java.time.Instant;
 
+/**
+ * An instance of this class is provided in the {@link DecodingResult} object for each {@link eu.dariolucia.ccsds.encdec.definition.EncodedParameter}
+ * that is linked to a {@link eu.dariolucia.ccsds.encdec.definition.ParameterDefinition}. In such case, the instance contains
+ * the ID of the {@link eu.dariolucia.ccsds.encdec.definition.ParameterDefinition}, the value and the generation time, if computed.
+ */
 public class ParameterValue {
 
     private final String id;
     private final Object value;
     private final Instant generationTime;
 
+    /**
+     * Construct a {@link ParameterValue} instance.
+     *
+     * @param id the ID of the {@link ParameterValue}
+     * @param value the value as extracted from the packet
+     * @param time the generation time, can be null
+     */
     public ParameterValue(String id, Object value, Instant time) {
         this.id = id;
         this.value = value;
         this.generationTime = time;
     }
 
+    /**
+     * Construct a {@link ParameterValue} instance with null generation time.
+     *
+     * @param id the ID of the {@link ParameterValue}
+     * @param value the value as extracted from the packet
+     */
     public ParameterValue(String id, Object value) {
         this(id, value, null);
     }
 
+    /**
+     * Return the generation time, can be null.
+     *
+     * @return the generation time or null if not computed
+     */
     public Instant getGenerationTime() {
         return generationTime;
     }
 
+    /**
+     * Return the {@link eu.dariolucia.ccsds.encdec.definition.ParameterDefinition} ID linked to the decoded parameter.
+     *
+     * @return the {@link eu.dariolucia.ccsds.encdec.definition.ParameterDefinition} ID
+     */
     public String getId() {
         return id;
     }
 
+    /**
+     * Return the value extracted from the decoded parameter.
+     *
+     * @return the decoded value
+     */
     public Object getValue() {
         return value;
     }

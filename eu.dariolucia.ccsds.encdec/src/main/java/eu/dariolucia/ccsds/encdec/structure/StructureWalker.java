@@ -26,6 +26,17 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Supplier;
 
+/**
+ * This abstract class is a walker for packet definitions. It is used by subclasses to encode/decode packets according to
+ * the specified definition.
+ *
+ * This class can be subclassed to perform other operations on a packet definition: subclasses will get invocation of the
+ * various XXXstart and XXXend methods when appropriate.
+ *
+ * The walk() method can return an object, whose type is specified as type parameter.
+ *
+ * @param <T> the result type of the walk operation
+ */
 public abstract class StructureWalker<T> {
 
     protected final PacketDefinition definition;
