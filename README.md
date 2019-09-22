@@ -1,5 +1,9 @@
+[<img src="https://img.shields.io/maven-central/v/eu.dariolucia.ccsds/eu.dariolucia.ccsds?color=greem&style=plastic">](https://search.maven.org/search?q=eu.dariolucia.ccsds)
+
 # An open source implementation of CCSDS protocols and formats in Java 11
 This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS, Space Packet) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
+
+Stable releases are published on Maven Central. The latest code version is always available on the master branch here on GitHub.
 
 **Disclaimer: this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested). It is not endorsed by any organization, association or company. It is the result of my passion for software engineering and coding, and of hours spent developing during my evenings (often with a beer in front of me and my ukulele on the side). Even if I put the best of me into this, compliance to the different standards as well as correct behaviour is not guaranteed. As the Apache License makes clear, use the modules of this repository at your own risk.**
 
@@ -33,7 +37,7 @@ A modules providing examples on how to use the three modules above in a combined
 - TM processor with output to console, from SLE RAF to encoded parameter extraction;
 - TC generator from list of parameters (as defined in the packet definition) to CLTU with output to file and/or TCP socket;
 - TC generator from list of parameters to SLE CLTU;
-- TC processor with output to console, from CLTU to encoded parameter extraction (work in progress).
+- TC processor with output to console, from CLTU to encoded parameter extraction.
 
 **The main target of the examples module is not to provide final applications ready to be used**, rather to explain the different levels and concepts of the libraries, and how to link the various objects together. 
 
