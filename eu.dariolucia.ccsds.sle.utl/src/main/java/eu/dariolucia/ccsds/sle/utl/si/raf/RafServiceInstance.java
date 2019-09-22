@@ -38,6 +38,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * One object of this class represents an RAF Service Instance.
+ */
 public class RafServiceInstance extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(RafServiceInstance.class.getName());
@@ -69,7 +72,7 @@ public class RafServiceInstance extends ServiceInstance {
 	private final RafEncDec encDec = new RafEncDec();
 
 	public RafServiceInstance(PeerConfiguration apiConfiguration,
-                              RafServiceInstanceConfiguration serviceInstanceConfiguration) throws Exception {
+                              RafServiceInstanceConfiguration serviceInstanceConfiguration) {
 		super(apiConfiguration, serviceInstanceConfiguration);
 	}
 
@@ -89,6 +92,13 @@ public class RafServiceInstance extends ServiceInstance {
 		resetState();
 	}
 
+	/**
+	 * This method requests the transmission of a START operation.
+	 *
+	 * @param start the start time
+	 * @param end the end time
+	 * @param frameQuality the frame quality
+	 */
 	public void start(Date start, Date end, RafRequestedFrameQualityEnum frameQuality) {
 		dispatchFromUser(() -> doStart(start, end, frameQuality));
 	}
@@ -161,6 +171,9 @@ public class RafServiceInstance extends ServiceInstance {
 		}
 	}
 
+	/**
+	 * This method requests the transmission of a STOP operation.
+	 */
 	public void stop() {
 		dispatchFromUser(() -> doStop());
 	}
@@ -206,6 +219,12 @@ public class RafServiceInstance extends ServiceInstance {
 		}
 	}
 
+	/**
+	 * This method requests the transmission of a SCHEDULE-STATUS-REPORT operation.
+	 *
+	 * @param isStop true if the scheduled report shall be stopped, false otherwise
+	 * @param period (evaluated only if isStop is set to false) the report period in seconds, or null to ask for an immediate report
+	 */
 	public void scheduleStatusReport(boolean isStop, Integer period) {
 		dispatchFromUser(() -> doScheduleStatusReport(isStop, period));
 	}
@@ -261,7 +280,12 @@ public class RafServiceInstance extends ServiceInstance {
 		}
 	}
 
-	public void getParameter(RafParameterEnum parameter) throws Exception {
+	/**
+	 * This method requests the transmission of a GET-PARAMETER operation.
+	 *
+	 * @param parameter the parameter to retrieve
+	 */
+	public void getParameter(RafParameterEnum parameter) {
 		dispatchFromUser(() -> doGetParameter(parameter));
 	}
 

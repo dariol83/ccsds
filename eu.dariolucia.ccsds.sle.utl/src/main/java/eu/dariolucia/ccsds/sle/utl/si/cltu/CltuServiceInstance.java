@@ -41,6 +41,9 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.logging.Logger;
 
+/**
+ * One object of this class represents an CLTU Service Instance.
+ */
 public class CltuServiceInstance extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(CltuServiceInstance.class.getName());
@@ -86,7 +89,7 @@ public class CltuServiceInstance extends ServiceInstance {
 	private final CltuEncDec encDec = new CltuEncDec();
 
 	public CltuServiceInstance(PeerConfiguration apiConfiguration,
-                               CltuServiceInstanceConfiguration serviceInstanceConfiguration) throws Exception {
+                               CltuServiceInstanceConfiguration serviceInstanceConfiguration) {
 		super(apiConfiguration, serviceInstanceConfiguration);
 	}
 
@@ -109,6 +112,11 @@ public class CltuServiceInstance extends ServiceInstance {
 		resetState();
 	}
 
+	/**
+	 * This method requests the transmission of a START operation.
+	 *
+	 * @param firstCltuId the first CLTU to be expected
+	 */
 	public void start(Long firstCltuId) {
 		dispatchFromUser(() -> doStart(firstCltuId));
 	}
@@ -166,6 +174,9 @@ public class CltuServiceInstance extends ServiceInstance {
 		}
 	}
 
+	/**
+	 * This method requests the transmission of a STOP operation.
+	 */
 	public void stop() {
 		dispatchFromUser(() -> doStop());
 	}
@@ -211,7 +222,13 @@ public class CltuServiceInstance extends ServiceInstance {
 		}
 	}
 
-	public void scheduleStatusReport(boolean isStop, Integer period) throws Exception {
+	/**
+	 * This method requests the transmission of a SCHEDULE-STATUS-REPORT operation.
+	 *
+	 * @param isStop true if the scheduled report shall be stopped, false otherwise
+	 * @param period (evaluated only if isStop is set to false) the report period in seconds, or null to ask for an immediate report
+	 */
+	public void scheduleStatusReport(boolean isStop, Integer period) {
 		dispatchFromUser(() -> doScheduleStatusReport(isStop, period));
 	}
 
@@ -266,8 +283,18 @@ public class CltuServiceInstance extends ServiceInstance {
 		}
 	}
 
+	/**
+	 * This method requests the transmission of a TRANSFER-DATA containing a CLTU.
+	 *
+	 * @param cltuIdentificationId the ID of the CLTU
+	 * @param earliestTxTime the earliest radiation start time, can be null
+	 * @param latestTxTime the latest radiation end time, can be null
+	 * @param durationMicrosec the delay time in microseconds
+	 * @param produceNotification true is an ASYNC-NOTIFY shall be produced upon radiation
+	 * @param data the CLTU
+	 */
 	public void transferData(long cltuIdentificationId, Date earliestTxTime, Date latestTxTime, long durationMicrosec,
-			boolean produceNotification, byte[] data) throws Exception {
+			boolean produceNotification, byte[] data) {
 		dispatchFromUser(() -> doTransferData(cltuIdentificationId, earliestTxTime, latestTxTime, durationMicrosec,
 				produceNotification, data));
 	}
@@ -334,7 +361,14 @@ public class CltuServiceInstance extends ServiceInstance {
 		}
 	}
 
-	public void throwEvent(long eventInvocationId, int eventId, byte[] eventQualifier) throws Exception {
+	/**
+	 * This method requests the transmission of a THROW-EVENT operation.
+	 *
+	 * @param eventInvocationId the ID of the event invocation
+	 * @param eventId the ID of the event
+	 * @param eventQualifier the event qualifier
+	 */
+	public void throwEvent(long eventInvocationId, int eventId, byte[] eventQualifier) {
 		dispatchFromUser(() -> doThrowEvent(eventInvocationId, eventId, eventQualifier));
 	}
 
@@ -385,7 +419,12 @@ public class CltuServiceInstance extends ServiceInstance {
 		}
 	}
 
-	public void getParameter(CltuParameterEnum parameter) throws Exception {
+	/**
+	 * This method requests the transmission of a GET-PARAMETER operation.
+	 *
+	 * @param parameter the parameter to retrieve
+	 */
+	public void getParameter(CltuParameterEnum parameter) {
 		dispatchFromUser(() -> doGetParameter(parameter));
 	}
 

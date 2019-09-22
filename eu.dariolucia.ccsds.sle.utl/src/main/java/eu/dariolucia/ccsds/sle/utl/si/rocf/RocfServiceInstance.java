@@ -38,6 +38,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * One object of this class represents an ROCF Service Instance.
+ */
 public class RocfServiceInstance extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(RocfServiceInstance.class.getName());
@@ -75,7 +78,7 @@ public class RocfServiceInstance extends ServiceInstance {
 	private final RocfEncDec encDec = new RocfEncDec();
 
 	public RocfServiceInstance(PeerConfiguration apiConfiguration,
-                               RocfServiceInstanceConfiguration serviceInstanceConfiguration) throws Exception {
+                               RocfServiceInstanceConfiguration serviceInstanceConfiguration) {
 		super(apiConfiguration, serviceInstanceConfiguration);
 	}
 
@@ -95,6 +98,16 @@ public class RocfServiceInstance extends ServiceInstance {
 		resetState();
 	}
 
+	/**
+	 * This method requests the transmission of a START operation.
+	 *
+	 * @param start the start time
+	 * @param end the end time
+	 * @param requestedGVCID2 the global virtual channel ID
+	 * @param tcVcId the requested TC VC ID
+	 * @param controlWordType the type of OCF to receive
+	 * @param updateMode the requested update mode
+	 */
 	public void start(Date start, Date end, GVCID requestedGVCID2, Integer tcVcId, RocfControlWordTypeEnum controlWordType,
 			RocfUpdateModeEnum updateMode) {
 		dispatchFromUser(() -> doStart(start, end, requestedGVCID2, tcVcId, controlWordType, updateMode));
@@ -200,6 +213,9 @@ public class RocfServiceInstance extends ServiceInstance {
 		}
 	}
 
+	/**
+	 * This method requests the transmission of a STOP operation.
+	 */
 	public void stop() {
 		dispatchFromUser(this::doStop);
 	}
@@ -245,6 +261,12 @@ public class RocfServiceInstance extends ServiceInstance {
 		}
 	}
 
+	/**
+	 * This method requests the transmission of a SCHEDULE-STATUS-REPORT operation.
+	 *
+	 * @param isStop true if the scheduled report shall be stopped, false otherwise
+	 * @param period (evaluated only if isStop is set to false) the report period in seconds, or null to ask for an immediate report
+	 */
 	public void scheduleStatusReport(boolean isStop, Integer period) {
 		dispatchFromUser(() -> doScheduleStatusReport(isStop, period));
 	}
@@ -300,6 +322,11 @@ public class RocfServiceInstance extends ServiceInstance {
 		}
 	}
 
+	/**
+	 * This method requests the transmission of a GET-PARAMETER operation.
+	 *
+	 * @param parameter the parameter to retrieve
+	 */
 	public void getParameter(RocfParameterEnum parameter) {
 		dispatchFromUser(() -> doGetParameter(parameter));
 	}

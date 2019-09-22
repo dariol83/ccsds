@@ -38,6 +38,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * One object of this class represents an RCF Service Instance.
+ */
 public class RcfServiceInstance extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(RcfServiceInstance.class.getName());
@@ -68,7 +71,7 @@ public class RcfServiceInstance extends ServiceInstance {
 	private final RcfEncDec encDec = new RcfEncDec();
 
 	public RcfServiceInstance(PeerConfiguration apiConfiguration,
-                              RcfServiceInstanceConfiguration serviceInstanceConfiguration) throws Exception {
+                              RcfServiceInstanceConfiguration serviceInstanceConfiguration) {
 		super(apiConfiguration, serviceInstanceConfiguration);
 	}
 
@@ -88,6 +91,13 @@ public class RcfServiceInstance extends ServiceInstance {
 		resetState();
 	}
 
+	/**
+	 * This method requests the transmission of a START operation.
+	 *
+	 * @param start the start time
+	 * @param end the end time
+	 * @param requestedGVCID2 the global virtual channel ID
+	 */
 	public void start(Date start, Date end, GVCID requestedGVCID2) {
 		dispatchFromUser(() -> doStart(start, end, requestedGVCID2));
 	}
@@ -169,6 +179,9 @@ public class RcfServiceInstance extends ServiceInstance {
 		}
 	}
 
+	/**
+	 * This method requests the transmission of a STOP operation.
+	 */
 	public void stop() {
 		dispatchFromUser(() -> doStop());
 	}
@@ -214,6 +227,12 @@ public class RcfServiceInstance extends ServiceInstance {
 		}
 	}
 
+	/**
+	 * This method requests the transmission of a SCHEDULE-STATUS-REPORT operation.
+	 *
+	 * @param isStop true if the scheduled report shall be stopped, false otherwise
+	 * @param period (evaluated only if isStop is set to false) the report period in seconds, or null to ask for an immediate report
+	 */
 	public void scheduleStatusReport(boolean isStop, Integer period) {
 		dispatchFromUser(() -> doScheduleStatusReport(isStop, period));
 	}
@@ -269,6 +288,11 @@ public class RcfServiceInstance extends ServiceInstance {
 		}
 	}
 
+	/**
+	 * This method requests the transmission of a GET-PARAMETER operation.
+	 *
+	 * @param parameter the parameter to retrieve
+	 */
 	public void getParameter(RcfParameterEnum parameter) {
 		dispatchFromUser(() -> doGetParameter(parameter));
 	}

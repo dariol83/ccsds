@@ -18,9 +18,11 @@ package eu.dariolucia.ccsds.sle.utl.si;
 
 /**
  * This enumeration is used to specify the service instance initiator role:
- * - USER: the user is meant to connect to the remote peer, send the TML context message and start the binding process
- * - PROVIDER: the provider is meant to connect to the local peer, send the TML context message and start the binding process
- * - USER OR PROVIDER: the user can connect to the provider or the other way round.
+ * <ul>
+ * <li>USER: the user is meant to connect to the remote peer, send the TML context message and start the binding process</li>
+ * <li>PROVIDER: the provider is meant to connect to the local peer, send the TML context message and start the binding process</li>
+ * <li>USER OR PROVIDER: the user can connect to the provider or the other way round.</li>
+ * </ul>
  */
 public enum InitiatorRoleEnum {
 	USER,
