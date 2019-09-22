@@ -170,16 +170,16 @@ public class PacketDefinition {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PacketDefinition that = (PacketDefinition) o;
-        return Objects.equals(id, that.id) &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(type, that.type) &&
-                Objects.equals(matchers, that.matchers) &&
-                Objects.equals(structure, that.structure) &&
-                Objects.equals(extension, that.extension);
+        return Objects.equals(getId(), that.getId()) &&
+                Objects.equals(getDescription(), that.getDescription()) &&
+                Objects.equals(getType(), that.getType()) &&
+                Objects.equals(getMatchers(), that.getMatchers()) &&
+                Objects.equals(getStructure(), that.getStructure()) &&
+                Objects.equals(getExtension(), that.getExtension());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, description, type, matchers, structure, extension);
+        return Objects.hash(getId(), getDescription(), getType(), getMatchers(), getStructure(), getExtension());
     }
 }

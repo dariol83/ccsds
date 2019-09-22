@@ -58,12 +58,13 @@ public class EncodedStructure extends AbstractEncodedItem {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         EncodedStructure that = (EncodedStructure) o;
-        return getId().equals(that.getId()) && encodedItems.equals(that.encodedItems);
+        return Objects.equals(getEncodedItems(), that.getEncodedItems());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), encodedItems);
+        return Objects.hash(super.hashCode(), getEncodedItems());
     }
 }

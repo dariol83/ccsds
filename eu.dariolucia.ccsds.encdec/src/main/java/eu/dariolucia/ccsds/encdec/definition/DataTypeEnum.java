@@ -143,7 +143,7 @@ public enum DataTypeEnum {
      * @throws IllegalArgumentException if no literal corresponds to the provided code
      */
     public static DataTypeEnum fromCode(int code) {
-        if(code <= 0 || code > 12) {
+        if(code <= 0 || code >= 12) {
             throw new IllegalArgumentException("Data type code " + code + " not supported");
         }
         return DataTypeEnum.values()[code - 1];

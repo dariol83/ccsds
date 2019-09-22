@@ -33,9 +33,9 @@ public class IntAdapter extends XmlAdapter<String, Integer> {
     @Override
     public Integer unmarshal(String s) {
         if(s.startsWith("0x")) {
-            return Integer.parseInt(s, 16);
+            return Integer.parseInt(s.substring(2), 16);
         } else if(s.startsWith("0b")) {
-            return Integer.parseInt(s, 2);
+            return Integer.parseInt(s.substring(2), 2);
         } else if(s.startsWith("0")) {
             return Integer.parseInt(s, 8);
         } else {

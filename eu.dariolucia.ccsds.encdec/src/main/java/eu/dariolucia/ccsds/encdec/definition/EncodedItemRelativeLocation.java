@@ -60,12 +60,13 @@ public class EncodedItemRelativeLocation extends LastRelativeLocation {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         EncodedItemRelativeLocation that = (EncodedItemRelativeLocation) o;
-        return reference.equals(that.reference);
+        return Objects.equals(getReference(), that.getReference());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(reference);
+        return Objects.hash(super.hashCode(), getReference());
     }
 }

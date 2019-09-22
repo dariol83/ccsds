@@ -60,11 +60,11 @@ public class FixedAbsoluteLocation extends AbstractEncodedLocation {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FixedAbsoluteLocation that = (FixedAbsoluteLocation) o;
-        return absoluteLocation == that.absoluteLocation;
+        return getAbsoluteLocation() == that.getAbsoluteLocation();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(absoluteLocation);
+        return Objects.hash(getAbsoluteLocation());
     }
 }

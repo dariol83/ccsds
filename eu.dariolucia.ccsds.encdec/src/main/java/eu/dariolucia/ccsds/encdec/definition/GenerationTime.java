@@ -106,13 +106,13 @@ public class GenerationTime {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         GenerationTime that = (GenerationTime) o;
-        return Objects.equals(relativeTimeReference, that.relativeTimeReference) &&
-                Objects.equals(absoluteTimeReference, that.absoluteTimeReference) &&
-                Objects.equals(offset, that.offset);
+        return Objects.equals(getRelativeTimeReference(), that.getRelativeTimeReference()) &&
+                Objects.equals(getAbsoluteTimeReference(), that.getAbsoluteTimeReference()) &&
+                Objects.equals(getOffset(), that.getOffset());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(relativeTimeReference, absoluteTimeReference, offset);
+        return Objects.hash(getRelativeTimeReference(), getAbsoluteTimeReference(), getOffset());
     }
 }

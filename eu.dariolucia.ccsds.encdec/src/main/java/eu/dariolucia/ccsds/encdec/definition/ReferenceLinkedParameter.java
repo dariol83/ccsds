@@ -22,36 +22,31 @@ import javax.xml.bind.annotation.XmlAttribute;
 import java.util.Objects;
 
 /**
- * The semantic of objects of this class is the following: the length of the encoded parameter is equal to the length of the
- * parameter (PFC, according to its type) identified by the value contained in the referenced encoded field. If the value
- * is encoded as enum (PTC=2), signed (PTC=3) or unsigned (PTC=4) integer, the library will look for a parameter having external ID
- * equals to the value and it will use the length specified for such parameter. This approach can be used to encode parameters
- * whose type and length is deduced by an ID encoded in a previous field (e.g. as ECSS PUS does for deduced values).
+ * The semantic of objects of this class is the following: the linked top level parameter is identified by the value
+ * contained in the referenced encoded field. If the value is encoded as enum (PTC=2), signed (PTC=3) or unsigned (PTC=4)
+ * integer, the library will look for a parameter having external ID equals to the value.
  *
- * If the value is not an integer or the external ID is not found, a registered external length mapper will be invoked
- * ({@link eu.dariolucia.ccsds.encdec.extension.ILengthMapper}). If such length mapper does not exist, an exception
- * will be raised.
+ * If the value is not an integer or the external ID is not found, an exception might be raised during the decoding process.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ParameterLength extends AbstractEncodedLength {
+public class ReferenceLinkedParameter extends AbstractLinkedParameter {
 
     @XmlAttribute(name = "ref", required = true)
     private String reference;
 
-    public ParameterLength() {
+    public ReferenceLinkedParameter() {
     }
 
-    public ParameterLength(String reference) {
+    public ReferenceLinkedParameter(String reference) {
         this.reference = reference;
     }
 
     /**
-     * The ID of the encoded parameter that contains the external ID of the parameter definition, to be used to derive the
-     * length of the parameter to encode/decode.
+     * The ID of the encoded parameter that contains the external ID of the {@link ParameterDefinition}.
      *
      * This is a mandatory field.
      *
-     * @return the parameter reference
+     * @return the encoded parameter ID that contains (as value) the extenal ID of the top level parameter
      */
     public String getReference() {
         return reference;
@@ -65,7 +60,7 @@ public class ParameterLength extends AbstractEncodedLength {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ParameterLength that = (ParameterLength) o;
+        ReferenceLinkedParameter that = (ReferenceLinkedParameter) o;
         return Objects.equals(getReference(), that.getReference());
     }
 

@@ -134,12 +134,13 @@ public class Definition {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Definition that = (Definition) o;
-        return identificationFields.equals(that.identificationFields) &&
-                packetDefinitions.equals(that.packetDefinitions) && parameters.equals(that.parameters);
+        return Objects.equals(getIdentificationFields(), that.getIdentificationFields()) &&
+                Objects.equals(getPacketDefinitions(), that.getPacketDefinitions()) &&
+                Objects.equals(getParameters(), that.getParameters());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(identificationFields, packetDefinitions, parameters);
+        return Objects.hash(getIdentificationFields(), getPacketDefinitions(), getParameters());
     }
 }

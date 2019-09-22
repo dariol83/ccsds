@@ -80,12 +80,12 @@ public class FixedType extends AbstractEncodedType {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FixedType fixedType = (FixedType) o;
-        return length == fixedType.length &&
-                type == fixedType.type;
+        return getLength() == fixedType.getLength() &&
+                getType() == fixedType.getType();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, length);
+        return Objects.hash(getType(), getLength());
     }
 }

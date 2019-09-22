@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.encdec.definition;
 
 import javax.xml.bind.annotation.*;
+import java.util.Objects;
 
 /**
  * This class represents a generalisation of an encoded item (simple parameter, arrays, data structures). The item is
@@ -72,5 +73,19 @@ public abstract class AbstractEncodedItem {
 
     public void setLocation(AbstractEncodedLocation location) {
         this.location = location;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        AbstractEncodedItem that = (AbstractEncodedItem) o;
+        return Objects.equals(id, that.id) &&
+                Objects.equals(location, that.location);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, location);
     }
 }

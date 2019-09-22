@@ -18,6 +18,8 @@ package eu.dariolucia.ccsds.encdec.structure;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class PathLocationTest {
@@ -69,5 +71,22 @@ class PathLocationTest {
         PathLocation p1 = PathLocation.of("a", "b", "c");
         PathLocation p2 = p1.appendIndex(3);
         assertTrue(p2.isChildOf(p1));
+    }
+
+    @Test
+    void testConstructor() {
+        PathLocation pl = PathLocation.of("the", "path", "with#1", "array");
+        assertEquals("the.path.with#1.array", pl.toString());
+
+        PathLocation pl2 = PathLocation.of(Arrays.asList("the", "path", "with#1", "array"));
+        assertEquals("the.path.with#1.array", pl.toString());
+        assertEquals(pl, pl2);
+
+        try {
+            PathLocation pl3 = PathLocation.of((String[]) null);
+            fail("NullPointerException expected");
+        } catch(NullPointerException e) {
+            // Good
+        }
     }
 }

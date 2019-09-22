@@ -64,11 +64,11 @@ public class ParameterType extends AbstractEncodedType {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ParameterType that = (ParameterType) o;
-        return reference.equals(that.reference);
+        return Objects.equals(getReference(), that.getReference());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(reference);
+        return Objects.hash(getReference());
     }
 }

@@ -59,11 +59,11 @@ public class ReferenceLength extends AbstractEncodedLength {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ReferenceLength that = (ReferenceLength) o;
-        return reference.equals(that.reference);
+        return Objects.equals(getReference(), that.getReference());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(reference);
+        return Objects.hash(getReference());
     }
 }

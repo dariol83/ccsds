@@ -138,15 +138,15 @@ public class ParameterDefinition {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ParameterDefinition that = (ParameterDefinition) o;
-        return externalId == that.externalId &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(type, that.type) &&
-                Objects.equals(extension, that.extension);
+        return getExternalId() == that.getExternalId() &&
+                Objects.equals(getId(), that.getId()) &&
+                Objects.equals(getDescription(), that.getDescription()) &&
+                Objects.equals(getType(), that.getType()) &&
+                Objects.equals(getExtension(), that.getExtension());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, externalId, description, type, extension);
+        return Objects.hash(getId(), getExternalId(), getDescription(), getType(), getExtension());
     }
 }

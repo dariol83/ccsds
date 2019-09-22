@@ -66,11 +66,11 @@ public class ExtensionType extends AbstractEncodedType {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ExtensionType that = (ExtensionType) o;
-        return external.equals(that.external);
+        return Objects.equals(getExternal(), that.getExternal());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(external);
+        return Objects.hash(getExternal());
     }
 }

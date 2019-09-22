@@ -59,11 +59,11 @@ public class PacketStructure {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PacketStructure that = (PacketStructure) o;
-        return encodedItems.equals(that.encodedItems);
+        return Objects.equals(getEncodedItems(), that.getEncodedItems());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(encodedItems);
+        return Objects.hash(getEncodedItems());
     }
 }

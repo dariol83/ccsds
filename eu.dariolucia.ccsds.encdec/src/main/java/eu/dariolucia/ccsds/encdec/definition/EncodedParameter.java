@@ -48,9 +48,11 @@ public class EncodedParameter extends AbstractEncodedItem {
     @XmlElement(name="value")
     private String value = null;
 
-    @XmlIDREF
-    @XmlAttribute(name = "parameter")
-    private ParameterDefinition linkedParameter = null;
+    @XmlElements({
+            @XmlElement(name="parameter_fixed",type=FixedLinkedParameter.class),
+            @XmlElement(name="parameter_ref",type=ReferenceLinkedParameter.class),
+    })
+    private AbstractLinkedParameter linkedParameter = null;
 
     @XmlAttribute(name = "pad_to")
     private Integer paddedWidth = null;
@@ -116,18 +118,19 @@ public class EncodedParameter extends AbstractEncodedItem {
     }
 
     /**
-     * The associated top level parameter (or on-board parameter). When this field is specified, the decoding process
-     * will create an additional object, with the ID of the top level parameter and the value of the encoded parameter.
+     * The associated top level parameter (or on-board parameter) derivation rule. When this field is specified, the decoding process
+     * will create an additional object ({@link eu.dariolucia.ccsds.encdec.structure.ParameterValue}, with the ID of the
+     * top level parameter and the value of the encoded parameter.
      *
      * This is an optional field.
      *
-     * @return the associated top level parameter, or null if not set
+     * @return the associated top level parameter derivation rule, or null if not set
      */
-    public ParameterDefinition getLinkedParameter() {
+    public AbstractLinkedParameter getLinkedParameter() {
         return linkedParameter;
     }
 
-    public void setLinkedParameter(ParameterDefinition linkedParameter) {
+    public void setLinkedParameter(AbstractLinkedParameter linkedParameter) {
         this.linkedParameter = linkedParameter;
     }
 
@@ -184,17 +187,18 @@ public class EncodedParameter extends AbstractEncodedItem {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         EncodedParameter that = (EncodedParameter) o;
-        return Objects.equals(type, that.type) &&
-                Objects.equals(length, that.length) &&
-                Objects.equals(time, that.time) &&
-                Objects.equals(value, that.value) &&
-                Objects.equals(linkedParameter, that.linkedParameter) &&
-                Objects.equals(paddedWidth, that.paddedWidth);
+        return Objects.equals(getType(), that.getType()) &&
+                Objects.equals(getLength(), that.getLength()) &&
+                Objects.equals(getTime(), that.getTime()) &&
+                Objects.equals(getValue(), that.getValue()) &&
+                Objects.equals(getLinkedParameter(), that.getLinkedParameter()) &&
+                Objects.equals(getPaddedWidth(), that.getPaddedWidth());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type, length, time, value, linkedParameter, paddedWidth);
+        return Objects.hash(super.hashCode(), getType(), getLength(), getTime(), getValue(), getLinkedParameter(), getPaddedWidth());
     }
 }

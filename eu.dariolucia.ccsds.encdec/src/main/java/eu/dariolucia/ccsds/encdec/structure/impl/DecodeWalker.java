@@ -113,7 +113,28 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
         attachToParent(parameter);
         // If a mapping exists, map the value now
         if(ei.getLinkedParameter() != null) {
-            decodedParameters.add(new ParameterValue(ei.getLinkedParameter().getId(), value));
+            AbstractLinkedParameter linkedParameter = ei.getLinkedParameter();
+            if(linkedParameter instanceof FixedLinkedParameter) {
+                decodedParameters.add(new ParameterValue(((FixedLinkedParameter) linkedParameter).getParameter().getId(), value));
+            } else if(linkedParameter instanceof ReferenceLinkedParameter) {
+                // Look up for the reference encoded parameter
+                String refItem = ((ReferenceLinkedParameter) linkedParameter).getReference();
+                Object linkedParamValue = this.encodedParameter2value.get(refItem);
+                if (linkedParamValue == null) {
+                    throw new RuntimeException("No encoded item " + refItem + " used as reference for linked parameter for " + ei.getId() + ", null value");
+                }
+                if (!(linkedParamValue instanceof Number)) {
+                    throw new RuntimeException("Encoded item " + refItem + " value used as reference for linked parameter for " + ei.getId() + ", is not a number");
+                }
+                // Look up the definition using the external ID
+                ParameterDefinition pd = retrieveParameterDefinitionByExternalId(((Number)linkedParamValue).intValue());
+                if(pd == null) {
+                    throw new RuntimeException("No parameter with ID " + ((Number)linkedParamValue).intValue() + " found as specified by encoded item " + refItem + " connected to encoded parameter " + ei.getId() + " as linked parameter");
+                } else {
+                    decodedParameters.add(new ParameterValue(pd.getId(), value));
+                }
+            }
+
         }
         return value;
     }

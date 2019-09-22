@@ -81,12 +81,12 @@ public class IdentFieldMatcher {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IdentFieldMatcher that = (IdentFieldMatcher) o;
-        return field.equals(that.field) &&
-                value.equals(that.value);
+        return Objects.equals(getField(), that.getField()) &&
+                Objects.equals(getValue(), that.getValue());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(field, value);
+        return Objects.hash(getField(), getValue());
     }
 }

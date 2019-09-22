@@ -60,11 +60,11 @@ public class FixedLength extends AbstractEncodedLength {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FixedLength that = (FixedLength) o;
-        return length == that.length;
+        return getLength() == that.getLength();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(length);
+        return Objects.hash(getLength());
     }
 }

@@ -19,51 +19,51 @@ package eu.dariolucia.ccsds.encdec.definition;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlIDREF;
 import java.util.Objects;
 
 /**
- * The semantic of objects of this class is the following: the size of the associated array is equal to the
- * value contained in the referenced encoded field, which must be encoded as a signed (PTC=3) or unsigned (PTC=4)
- * integer.
+ * The fixed top level parameter, linked to an encoded parameter.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ReferenceArraySize extends AbstractArraySize {
+public class FixedLinkedParameter extends AbstractLinkedParameter {
 
-    @XmlAttribute(name = "ref", required = true)
-    private String reference;
+    @XmlIDREF
+    @XmlAttribute(name="parameter", required = true)
+    private ParameterDefinition parameter;
 
-    public ReferenceArraySize() {
+    public FixedLinkedParameter() {
     }
 
-    public ReferenceArraySize(String reference) {
-        this.reference = reference;
+    public FixedLinkedParameter(ParameterDefinition id) {
+        this.parameter = id;
     }
 
     /**
-     * The ID of the encoded parameter that contains the value of the array size.
+     * The {@link ParameterDefinition} of the linked top level parameter.
      *
      * This is a mandatory field.
      *
-     * @return the encoded parameter ID in the same packet
+     * @return the definition of the linked top level parameter
      */
-    public String getReference() {
-        return reference;
+    public ParameterDefinition getParameter() {
+        return parameter;
     }
 
-    public void setReference(String reference) {
-        this.reference = reference;
+    public void setParameter(ParameterDefinition parameter) {
+        this.parameter = parameter;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ReferenceArraySize that = (ReferenceArraySize) o;
-        return Objects.equals(getReference(), that.getReference());
+        FixedLinkedParameter that = (FixedLinkedParameter) o;
+        return Objects.equals(getParameter(), that.getParameter());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getReference());
+        return Objects.hash(getParameter());
     }
 }

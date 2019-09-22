@@ -75,12 +75,12 @@ public class LastRelativeLocation extends AbstractEncodedLocation {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LastRelativeLocation that = (LastRelativeLocation) o;
-        return bitOffset == that.bitOffset &&
-                bitAlignment == that.bitAlignment;
+        return getBitOffset() == that.getBitOffset() &&
+                getBitAlignment() == that.getBitAlignment();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(bitOffset, bitAlignment);
+        return Objects.hash(getBitOffset(), getBitAlignment());
     }
 }

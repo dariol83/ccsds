@@ -226,17 +226,17 @@ public class IdentField {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		IdentField that = (IdentField) o;
-		return byteOffset == that.byteOffset &&
-				byteLength == that.byteLength &&
+		return getByteOffset() == that.getByteOffset() &&
+				getByteLength() == that.getByteLength() &&
 				lShift == that.lShift &&
 				rShift == that.rShift &&
-				id.equals(that.id) &&
-				Objects.equals(andMask, that.andMask) &&
-				Objects.equals(orMask, that.orMask);
+				Objects.equals(getId(), that.getId()) &&
+				Objects.equals(getAndMask(), that.getAndMask()) &&
+				Objects.equals(getOrMask(), that.getOrMask());
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, byteOffset, byteLength, andMask, orMask, lShift, rShift);
+		return Objects.hash(getId(), getByteOffset(), getByteLength(), getAndMask(), getOrMask(), lShift, rShift);
 	}
 }

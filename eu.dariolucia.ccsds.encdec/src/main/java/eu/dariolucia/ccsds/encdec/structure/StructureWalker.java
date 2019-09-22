@@ -261,22 +261,22 @@ public abstract class StructureWalker<T> {
             String refItem = ((ReferenceType) type).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw new RuntimeException("No encoded item " + refItem + " used as reference for type of " + ei.getId() + ", cannot encode");
+                throw new RuntimeException("No encoded item " + refItem + " used as reference for type of " + ei.getId());
             }
             if (!(value instanceof Number)) {
-                throw new RuntimeException("Encoded item " + refItem + " used as reference for type of " + ei.getId() + " is not a number, cannot encode");
+                throw new RuntimeException("Encoded item " + refItem + " used as reference for type of " + ei.getId() + " is not a number");
             }
             dataTypeEnum = DataTypeEnum.fromCode(((Number) value).intValue());
             if (length != null) {
                 dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
             } else {
-                throw new RuntimeException("Encoded item " + ei.getId() + " use reference for type but there is no indication for length, cannot encode");
+                throw new RuntimeException("Encoded item " + ei.getId() + " use reference for type but there is no indication for length");
             }
         } else if (type instanceof ParameterType) {
             String refItem = ((ParameterType) type).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw new RuntimeException("No encoded item " + refItem + " used as parameter reference for type of " + ei.getId() + ", cannot encode");
+                throw new RuntimeException("No encoded item " + refItem + " used as parameter reference for type of " + ei.getId());
             }
             if (value instanceof Number) {
                 int externalId = ((Number) value).intValue();
@@ -287,7 +287,7 @@ public abstract class StructureWalker<T> {
                     if (length != null) {
                         dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
                     } else {
-                        throw new RuntimeException("No length specified for encoded parameter " + ei.getId() + " even if type references a parameter that cannot be found via external ID, cannot encode");
+                        throw new RuntimeException("No length specified for encoded parameter " + ei.getId() + " even if type references a parameter that cannot be found via external ID");
                     }
                 } else {
                     dataTypeEnum = pd.getType().getType();
@@ -304,7 +304,7 @@ public abstract class StructureWalker<T> {
                 if (length != null) {
                     dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
                 } else {
-                    throw new RuntimeException("No length specified for encoded parameter " + ei.getId() + " even if type references a parameter, whose referenced value is not an external ID, cannot encode");
+                    throw new RuntimeException("No length specified for encoded parameter " + ei.getId() + " even if type references a parameter, whose referenced value is not an external ID");
                 }
             }
         } else {
@@ -320,17 +320,17 @@ public abstract class StructureWalker<T> {
             String refItem = ((ReferenceLength) length).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw new RuntimeException("No encoded item " + refItem + " used as reference for length");
+                throw new RuntimeException("No encoded item " + refItem + " used as reference for length, null value");
             }
             if (!(value instanceof Number)) {
-                throw new RuntimeException("Encoded item " + refItem + " used as reference for length is not a number");
+                throw new RuntimeException("Encoded item " + refItem + " value used as reference for length is not a number");
             }
             return ((Number) value).intValue();
         } else if (length instanceof ParameterLength) {
             String refItem = ((ParameterLength) length).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw new RuntimeException("No encoded item " + refItem + " used as parameter reference for length");
+                throw new RuntimeException("No encoded item " + refItem + " used as parameter reference for length, null value");
             }
             if (value instanceof Number) {
                 int externalId = ((Number) value).intValue();

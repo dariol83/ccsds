@@ -19,64 +19,28 @@
     <packets>
         <packet id="DEF1">
             <structure>
-                <!-- Signed integer 3 bits: 3 -->
+                <!-- Signed integer -->
                 <parameter id="PARAM1">
-                    <type_fixed type="SignedInteger" length="3" />
-                    <parameter_fixed parameter="PP1" />
+                    <type_fixed type="SignedInteger" length="8" />
                 </parameter>
-                <!-- Float 32 bits: 35 -->
-                <parameter id="PARAM2">
-                    <type_fixed type="Real" length="1" />
-                    <parameter_fixed parameter="PP2" />
-                </parameter>
-                <!-- Unsigned integer 6 bits: 41 -->
+                <!-- Array: PARAM1 records, each record 2 values: onboard ID, value of the ID, type and length depending on the onboard ID -->
+                <array id="ARRAY1">
+                    <size_ref ref="PARAM1" />
+                    <parameter id="PARAM_A1">
+                        <type_fixed type="SignedInteger" length="16" />
+                    </parameter>
+                    <parameter id="PARAM_A2">
+                        <type_param ref="PARAM_A1" />
+                        <parameter_ref ref="PARAM_A1" />
+                    </parameter>
+                </array>
+                <!-- Signed integer -->
                 <parameter id="PARAM3">
-                    <type_fixed type="UnsignedInteger" length="6" />
-                    <parameter_fixed parameter="PP3" />
+                    <type_fixed type="SignedInteger" length="16" />
                 </parameter>
-                <!-- Boolean 1 bit: 42 -->
                 <parameter id="PARAM4">
-                    <type_fixed type="Boolean" length="0" />
-                    <parameter_fixed parameter="PP4" />
-                </parameter>
-                <!-- Boolean 1 bit: 43 -->
-                <parameter id="PARAM5">
-                    <type_fixed type="Boolean" length="0" />
-                    <parameter_fixed parameter="PP5" />
-                </parameter>
-                <!-- Bitstring 13 bits: 56 -->
-                <parameter id="PARAM6">
-                    <type_fixed type="BitString" length="13" />
-                    <parameter_fixed parameter="PP6" />
-                </parameter>
-                <!-- Octet string 3 bytes: 80 -->
-                <parameter id="PARAM7">
-                    <type_fixed type="OctetString" length="3" />
-                    <parameter_fixed parameter="PP7" />
-                </parameter>
-                <!-- Char string 7 bytes: 136 -->
-                <parameter id="PARAM8">
-                    <type_fixed type="CharacterString" length="7" />
-                    <parameter_fixed parameter="PP8" />
-                </parameter>
-                <!-- Boolean 1 bit: 137 -->
-                <parameter id="PARAM9">
-                    <type_fixed type="Boolean" length="0" />
-                </parameter>
-                <!-- Absolute time 6 bytes: 185 -->
-                <parameter id="PARAM10">
-                    <type_fixed type="AbsoluteTime" length="1" />
-                    <parameter_fixed parameter="PP10" />
-                </parameter>
-                <!-- Relative time 2 bytes: 201 -->
-                <parameter id="PARAM11">
-                    <type_fixed type="RelativeTime" length="2" />
-                    <parameter_fixed parameter="PP11" />
-                </parameter>
-                <!-- Signed integer 3 bits: 204 -->
-                <parameter id="PARAM12">
-                    <type_fixed type="SignedInteger" length="3" />
-                    <parameter_fixed parameter="PP12" />
+                    <type_param ref="PARAM3" />
+                    <length_param ref="PARAM3" />
                 </parameter>
             </structure>
         </packet>
@@ -114,8 +78,8 @@
         <parameter id="PP11" external_id="11" description="Sample Parameter 11">
             <type type="RelativeTime" length="2" />
         </parameter>
-        <parameter id="PP12" external_id="3" description="Sample Parameter 12">
-            <type type="SignedInteger" length="3" />
+        <parameter id="PP12" external_id="12" description="Sample Parameter 12">
+            <type type="SignedInteger" length="6" />
         </parameter>
     </parameters>
 

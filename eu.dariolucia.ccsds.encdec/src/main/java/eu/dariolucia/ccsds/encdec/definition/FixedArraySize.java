@@ -57,11 +57,11 @@ public class FixedArraySize extends AbstractArraySize {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FixedArraySize that = (FixedArraySize) o;
-        return length == that.length;
+        return getLength() == that.getLength();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(length);
+        return Objects.hash(getLength());
     }
 }
