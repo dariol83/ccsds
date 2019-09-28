@@ -1,5 +1,4 @@
 [<img src="https://img.shields.io/maven-central/v/eu.dariolucia.ccsds/eu.dariolucia.ccsds?color=greem&style=plastic">](https://search.maven.org/search?q=eu.dariolucia.ccsds)
-
 [<img src="https://img.shields.io/travis/dariol83/ccsds?style=plastic">](https://travis-ci.org/dariol83/ccsds)
 
 # An open source implementation of CCSDS protocols and formats in Java 11
