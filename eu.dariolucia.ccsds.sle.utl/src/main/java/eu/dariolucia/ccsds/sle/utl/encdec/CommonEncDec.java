@@ -46,7 +46,7 @@ public abstract class CommonEncDec {
 
 	private volatile int version;
 
-	CommonEncDec() {
+	protected CommonEncDec() {
 		defaultDecodingProvider = getDefaultDecodingProvider();
 		currentDecodingProvider = defaultDecodingProvider;
 	}

@@ -22,7 +22,9 @@ import com.beanit.jasn1.ber.types.BerNull;
 import com.beanit.jasn1.ber.types.BerObjectIdentifier;
 import com.beanit.jasn1.ber.types.BerOctetString;
 import com.beanit.jasn1.ber.types.string.BerVisibleString;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.ConditionalTime;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Credentials;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Time;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.isp1.credentials.HashInput;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.isp1.credentials.ISP1Credentials;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.service.instance.id.OidValues;
@@ -377,5 +379,31 @@ public class PduFactoryUtil {
         }
         days -= DAYS_FROM_1958_to_1970;
         return new long[]{days * 86400L * 1000L + millisec, picosec};
+    }
+
+    /**
+     * Maps the provided ConditionalTime object into a Java Date, or null if the time is not set.
+     *
+     * @param theTime the condition time to convert
+     * @return the corresponding Date object
+     */
+    public static Date toDate(ConditionalTime theTime) {
+        if(theTime == null || theTime.getUndefined() != null) {
+            return null;
+        } else {
+            Time t = theTime.getKnown();
+            if(t.getCcsdsFormat() != null) {
+                // Millisecond resolution
+                long[] components = buildTimeMillis(t.getCcsdsFormat().value);
+                return new Date(components[0]);
+            } else if(t.getCcsdsPicoFormat() != null) {
+                // Picosecond resolution
+                long[] components = buildTimeMillisPico(t.getCcsdsPicoFormat().value);
+                return new Date(components[0]);
+            } else {
+                // Problem
+                throw new IllegalArgumentException("ConditionalTime does not deliver any time!");
+            }
+        }
     }
 }

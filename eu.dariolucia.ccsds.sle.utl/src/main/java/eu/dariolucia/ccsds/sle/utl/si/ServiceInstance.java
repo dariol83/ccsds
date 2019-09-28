@@ -196,7 +196,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		return this.lastErrorMessage;
 	}
 
-	private Integer getSleVersion() {
+	protected final Integer getSleVersion() {
 		return this.sleVersion;
 	}
 
@@ -205,7 +205,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		this.dispatcher.execute(t);
 	}
 
-	private void dispatchFromProvider(Runnable r) {
+	protected final void dispatchFromProvider(Runnable r) {
 		SleTask t = new SleTask(SleTask.FROM_PROVIDER_TYPE, r);
 		this.dispatcher.execute(t);
 	}
@@ -748,6 +748,10 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		notifyStateUpdate();
 	}
 
+	protected final String getRemotePeer() {
+		return getInitiatorIdentifier().equals(this.peerConfiguration.getLocalId()) ? getResponderIdentifier() : getInitiatorIdentifier();
+	}
+
 	private void handleSleUnbindReturn(SleUnbindReturn pdu) {
 		clearError();
 
@@ -788,21 +792,22 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		notifyStateUpdate();
 	}
 
-	protected final boolean authenticate(Credentials responderCredentials, AuthenticationModeEnum... authModeEnums) {
+	protected final boolean authenticate(Credentials remoteCredentials, AuthenticationModeEnum... authModeEnums) {
+		String remoteId = getRemotePeer();
 		int authDelay = this.peerConfiguration.getAuthenticationDelay();
 		Optional<RemotePeer> remotePeer = this.peerConfiguration.getRemotePeers().stream()
-				.filter((a) -> a.getId().equals(getResponderIdentifier())).findFirst();
+				.filter((a) -> a.getId().equals(remoteId)).findFirst();
 		if (remotePeer.isPresent()) {
 			AuthenticationModeEnum requiredAuthMode = remotePeer.get().getAuthenticationMode();
 			boolean credentialsRequired = requiredAuthMode == AuthenticationModeEnum.ALL
 					|| (requiredAuthMode == AuthenticationModeEnum.BIND
 							&& Arrays.asList(authModeEnums).contains(AuthenticationModeEnum.BIND));
-			if (credentialsRequired && responderCredentials.getUnused() != null) {
+			if (credentialsRequired && remoteCredentials.getUnused() != null) {
 				// Credential required, but they are set as unused
 				LOG.severe(() -> getServiceInstanceIdentifier()
 						+ ": Credential required but the received operation does not provide them");
 				return false;
-			} else if (!credentialsRequired && responderCredentials.getUsed() != null) {
+			} else if (!credentialsRequired && remoteCredentials.getUsed() != null) {
 				// No credentials required, but they are present
 				LOG.severe(() -> getServiceInstanceIdentifier()
 						+ ": Credential not required but the received operation provides them");
@@ -813,7 +818,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 						+ ": Credential not required, operation credentials empty, ok");
 				return true;
 			} else {
-				byte[] encodedCredentials = responderCredentials.getUsed().value;
+				byte[] encodedCredentials = remoteCredentials.getUsed().value;
 				boolean result = PduFactoryUtil.performAuthentication(remotePeer.get(), encodedCredentials, authDelay);
 				if (!result) {
 					LOG.severe(
@@ -823,7 +828,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			}
 		} else {
 			LOG.severe(() -> getServiceInstanceIdentifier() + ": Credentials for remote peer "
-					+ getResponderIdentifier() + " not present");
+					+ remoteId + " not present");
 			return false;
 		}
 	}
@@ -977,6 +982,11 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			encodeAndSend(null, resp, "UNBIND-RETURN");
 			// Update state
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBOUND);
+			// We do not remove the TML channel by calling disconnect, so that it is possible to rebind again, unless
+			// the UNBIND mentions END.
+			if(pdu.getUnbindReason().intValue() == UnbindReasonEnum.END.getCode()) {
+				disconnect(null);
+			}
 		} else {
 			// Do nothing
 			LOG.log(Level.WARNING, getServiceInstanceIdentifier()
@@ -1040,6 +1050,19 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		notifyPduReceived(pdu, "BIND-RETURN", getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
+	}
+
+	public void dispose() {
+		dispatchFromUser(() -> doDispose());
+	}
+
+	private void doDispose() {
+		// Disconnect if UNBOUND, PEER-ABORT if !UNBOUND
+		if(getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND) {
+			disconnect(null);
+		} else {
+			peerAbort(PeerAbortReasonEnum.OPERATIONAL_REQUIREMENTS);
+		}
 	}
 
 	protected void disconnect(String reason) {
@@ -1107,6 +1130,17 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 				op = decodePdu(pdu);
 			} catch (IOException e) {
 				disconnect("Exception while decoding PDU " + Arrays.toString(pdu) + " from channel " + channel, e,
+						null);
+				//
+				notifyPduDecodingError(pdu);
+				// Generate state and notify update
+				notifyStateUpdate();
+				return;
+			} catch (RuntimeException e) {
+				LOG.log(Level.SEVERE, getServiceInstanceIdentifier() + ": internal exception raised on decoding pdu, " +
+						"this is potentially a software bug or a severe protocol encoding/decoding error");
+				// Before the exception is swallowed, log...
+				disconnect("Internal exception while decoding PDU " + Arrays.toString(pdu) + " from channel " + channel, e,
 						null);
 				//
 				notifyPduDecodingError(pdu);

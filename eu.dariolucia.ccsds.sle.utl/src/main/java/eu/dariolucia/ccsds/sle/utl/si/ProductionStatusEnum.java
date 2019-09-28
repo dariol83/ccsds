@@ -18,7 +18,7 @@ package eu.dariolucia.ccsds.sle.utl.si;
 
 public enum ProductionStatusEnum {
 	RUNNING,
-	HALTED,
 	INTERRUPTED,
+	HALTED,
 	UNKNOWN
 }
