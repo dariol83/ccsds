@@ -1,6 +1,7 @@
 [<img src="https://img.shields.io/maven-central/v/eu.dariolucia.ccsds/eu.dariolucia.ccsds?color=greem&style=plastic">](https://search.maven.org/search?q=eu.dariolucia.ccsds)
 [<img src="https://img.shields.io/travis/dariol83/ccsds?style=plastic">](https://travis-ci.org/dariol83/ccsds)
 [<img src="https://img.shields.io/sonar/violations/eu.dariolucia.ccsds:eu.dariolucia.ccsds?format=long&server=https%3A%2F%2Fsonarcloud.io&style=plastic">](https://sonarcloud.io/dashboard?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds)
+[<img src="https://img.shields.io/sonar/quality_gate/eu.dariolucia.ccsds:eu.dariolucia.ccsds?server=https%3A%2F%2Fsonarcloud.io&style=plastic">](https://sonarcloud.io/dashboard?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds)
 
 # An open source implementation of CCSDS protocols and formats in Java 11
 This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS, Space Packet) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
