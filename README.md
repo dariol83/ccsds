@@ -46,9 +46,11 @@ A modules providing examples on how to use the three modules above in a combined
 
 # Goals
 The purpose of this repository is to produce, as far as my possibilities allow, simple, well-designed, well-documented, well-tested code with top performance. For each module (examples and tools excluded) I have the following targets:
-- at least 90% line coverage with unit tests (easy to check with the generated JaCoCo reports);
+- full CI integration with Travis CI;
+- at least 90% line coverage with unit tests (measured by JaCoCo and reported in Sonarcloud);
 - a set of performance tests;
 - no warnings when compiling;
+- a *reasonable* quality gate, with *reasonable* QA metrics measured by Sonarcloud;
 - good documentation at package, class, instance variable and method level;
 - provide specific code, and not generic, one-fits-all code: generic code is usually slow because it is over-engineered. No way. Simplicity is the key.
 
