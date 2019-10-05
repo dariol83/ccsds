@@ -47,8 +47,8 @@ public class PathLocationBasedResolver implements IEncodeResolver {
 
     public PathLocationBasedResolver(Map<String, Object> location2value, AbsoluteTimeDescriptor absoluteTimeDescriptor, RelativeTimeDescriptor relativeTimeDescriptor) {
         this.location2value = location2value;
-        this.absoluteTimeDescriptor = Objects.requireNonNullElseGet(absoluteTimeDescriptor, () -> AbsoluteTimeDescriptor.cuc(4, 3));
-        this.relativeTimeDescriptor = Objects.requireNonNullElseGet(relativeTimeDescriptor, () -> RelativeTimeDescriptor.cuc(4, 3));
+        this.absoluteTimeDescriptor = Objects.requireNonNullElseGet(absoluteTimeDescriptor, () -> AbsoluteTimeDescriptor.newCucDescriptor(4, 3));
+        this.relativeTimeDescriptor = Objects.requireNonNullElseGet(relativeTimeDescriptor, () -> RelativeTimeDescriptor.newCucDescriptor(4, 3));
     }
 
     private Object safeGet(PathLocation location) {

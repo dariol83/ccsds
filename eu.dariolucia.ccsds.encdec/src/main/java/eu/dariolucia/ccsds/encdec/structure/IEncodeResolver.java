@@ -185,7 +185,7 @@ public interface IEncodeResolver {
          * @param fineTime the size of fine time in bytes
          * @return the CUC descriptor
          */
-        public static AbsoluteTimeDescriptor cuc(int coarseTime, int fineTime) {
+        public static AbsoluteTimeDescriptor newCucDescriptor(int coarseTime, int fineTime) {
             return new AbsoluteTimeDescriptor(true, coarseTime, fineTime, false, 0);
         }
 
@@ -196,7 +196,7 @@ public interface IEncodeResolver {
          * @param subMsPart the size of sub-millisecond field (0: not used, 1: microseconds, 2: picoseconds).
          * @return the CDS descriptor
          */
-        public static AbsoluteTimeDescriptor cds(boolean use16bits, int subMsPart) {
+        public static AbsoluteTimeDescriptor newCdsDescriptor(boolean use16bits, int subMsPart) {
             return new AbsoluteTimeDescriptor(false, 0, 0, use16bits, subMsPart);
         }
 
@@ -227,7 +227,7 @@ public interface IEncodeResolver {
          * @param fineTime the size of fine time in bytes
          * @return the CUC descriptor
          */
-        public static RelativeTimeDescriptor cuc(int coarseTime, int fineTime) {
+        public static RelativeTimeDescriptor newCucDescriptor(int coarseTime, int fineTime) {
             return new RelativeTimeDescriptor(coarseTime, fineTime);
         }
 

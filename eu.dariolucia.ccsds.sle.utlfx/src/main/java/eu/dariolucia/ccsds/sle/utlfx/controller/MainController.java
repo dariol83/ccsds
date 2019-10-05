@@ -33,6 +33,7 @@ import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuServiceInstance;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstance;
 import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfServiceInstance;
 import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfServiceInstance;
+import eu.dariolucia.ccsds.sle.utlfx.util.LogUtil;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
@@ -59,6 +60,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
+import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
@@ -517,29 +519,7 @@ public class MainController implements Initializable, IServiceInstanceListener {
 
 	@FXML
 	private void saveLogsMenuItemSelected(ActionEvent e) {
-		FileChooser fc = new FileChooser();
-		fc.setTitle("Save logs to...");
-		File f = fc.showSaveDialog(this.serviceInstanceListView.getScene().getWindow());
-		if (f != null) {
-			try {
-				if (!f.exists()) {
-					f.createNewFile();
-				}
-				PrintStream ps = new PrintStream(f);
-				for (LogRecord lr : this.logTableView.getItems()) {
-					ps.println(new Date(lr.getMillis()).toString() + "\t" + lr.getLevel().getName() + "\t"
-							+ lr.getMessage());
-				}
-				ps.flush();
-				ps.close();
-				LOG.log(Level.INFO, "Logs exported to " + f.getAbsolutePath() + " successfully");
-				DialogUtils.showInfo("File saved", "Logs successfully saved to " + f.getAbsolutePath());
-			} catch (IOException e1) {
-				LOG.log(Level.SEVERE, "Error while saving logs to " + f.getAbsolutePath(), e1);
-				DialogUtils.showError("Cannot save file to " + f.getAbsolutePath(), "Error while saving logs to "
-						+ f.getAbsolutePath() + ", check the related log entry for the detailed error");
-			}
-		}
+		LogUtil.saveLogsToFile(LOG, this.serviceInstanceListView.getScene().getWindow(), this.logTableView);
 	}
 
 	@FXML

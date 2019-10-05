@@ -35,8 +35,8 @@ public class DefaultNullBasedResolver implements IEncodeResolver {
     private final RelativeTimeDescriptor relativeTimeDescriptor;
 
     public DefaultNullBasedResolver() {
-        this.absoluteTimeDescriptor = AbsoluteTimeDescriptor.cuc(4, 3);
-        this.relativeTimeDescriptor = RelativeTimeDescriptor.cuc(4, 3);
+        this.absoluteTimeDescriptor = AbsoluteTimeDescriptor.newCucDescriptor(4, 3);
+        this.relativeTimeDescriptor = RelativeTimeDescriptor.newCucDescriptor(4, 3);
     }
 
     @Override

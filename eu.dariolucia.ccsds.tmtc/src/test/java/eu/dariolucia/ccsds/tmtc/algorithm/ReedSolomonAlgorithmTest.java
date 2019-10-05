@@ -21,8 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ReedSolomonAlgorithmTest {
 
@@ -67,7 +66,10 @@ class ReedSolomonAlgorithmTest {
                 }
             }
             long timeEnd = System.currentTimeMillis();
-            System.out.println("RS encoded frames: " + encodedTimes + ", encoding time: " + (timeEnd - time) + " ms, encoding speed: " + ((double)encodedTimes/(double)(timeEnd - time))*1000 + " frames/sec");
+            double rate = ((double)encodedTimes/(double)(timeEnd - time))*1000;
+            System.out.println("RS encoded frames: " + encodedTimes + ", encoding time: " + (timeEnd - time) + " ms, encoding speed: " + rate + " frames/sec");
+            // Guarantee at least 1 mbps: at 1279 bytes per CADU, this means ca 100 frames per second
+            assertTrue(rate > 100);
         }
     }
 

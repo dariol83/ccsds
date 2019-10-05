@@ -16,18 +16,9 @@
 
 package eu.dariolucia.ccsds.sle.utlfx.manager;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-
 import eu.dariolucia.ccsds.sle.utlfx.application.ApplicationConfiguration;
 import eu.dariolucia.ccsds.sle.utlfx.dialogs.DialogUtils;
+import eu.dariolucia.ccsds.sle.utlfx.util.LogUtil;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.event.EventHandler;
@@ -37,8 +28,14 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import javafx.stage.FileChooser;
 import javafx.util.Callback;
+
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 public class SiLogManager {
 
@@ -156,28 +153,7 @@ public class SiLogManager {
 	}
 
 	public void saveSiLogs() {
-		FileChooser fc = new FileChooser();
-		fc.setTitle("Save logs to...");
-		File f = fc.showSaveDialog(this.siLogTableView.getScene().getWindow());
-		if (f != null) {
-			try {
-				if (!f.exists()) {
-					f.createNewFile();
-				}
-				PrintStream ps = new PrintStream(f);
-				for (LogRecord lr : this.siLogTableView.getItems()) {
-					ps.println(new Date(lr.getMillis()).toString() + "\t" + lr.getLevel().getName() + "\t"
-							+ lr.getMessage());
-				}
-				ps.flush();
-				ps.close();
-				DialogUtils.showInfo("File saved", "Logs successfully saved to " + f.getAbsolutePath());
-			} catch (IOException e1) {
-				LOG.log(Level.SEVERE, "Error while saving logs to " + f.getAbsolutePath(), e1);
-				DialogUtils.showError("Cannot save file to " + f.getAbsolutePath(), "Error while saving logs to "
-						+ f.getAbsolutePath() + ", check the related log entry for the detailed error");
-			}
-		}
+		LogUtil.saveLogsToFile(LOG, this.siLogTableView.getScene().getWindow(), this.siLogTableView);
 	}
 
 	protected String buildTableMessage(LogRecord value) {
