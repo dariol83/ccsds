@@ -41,14 +41,14 @@ public class CltuNotification {
 	}
 
 	public enum CltuNotificationTypeEnum {
-		cltuRadiated,
-		slduExpired,
-		productionInterrupted, 
-		productionHalted,
-		productionOperational, 
-		bufferEmpty, 
-		actionListCompleted, 
-		actionListNotCompleted,
-		eventConditionEvFalse
+		CLTU_RADIATED,
+		SLDU_EXPIRED,
+		PRODUCTION_INTERRUPTED,
+		PRODUCTION_HALTED,
+		PRODUCTION_OPERATIONAL,
+		BUFFER_EMPTY,
+		ACTION_LIST_COMPLETED,
+		ACTION_LIST_NOT_COMPLETED,
+		EVENT_CONDITION_EV_FALSE
 	}
 }

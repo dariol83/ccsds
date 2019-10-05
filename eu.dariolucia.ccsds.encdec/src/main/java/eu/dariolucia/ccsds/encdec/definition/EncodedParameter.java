@@ -153,17 +153,17 @@ public class EncodedParameter extends AbstractEncodedItem {
      * The value assigned to this encoded parameter, or null if not set. The type of the value is a {@link String} object.
      * Depending on the type, it can be parsed using the standard Java methods for objects:
      * <ul>
-     *     <li>{@link Boolean#parseBoolean(String)} for values of type {@link DataTypeEnum#Boolean}</li>
-     *     <li>{@link Integer#parseInt(String)} for values of type {@link DataTypeEnum#Enumerated}</li>
-     *     <li>{@link Long#parseLong(String)} for values of type {@link DataTypeEnum#UnsignedInteger}</li>
-     *     <li>{@link Long#parseLong(String)} for values of type {@link DataTypeEnum#SignedInteger}</li>
-     *     <li>{@link Double#parseDouble(String)} for values of type {@link DataTypeEnum#Real}</li>
-     *     <li>{@link eu.dariolucia.ccsds.encdec.value.BitString#parseBitString(String)} for values of type {@link DataTypeEnum#BitString}</li>
-     *     <li>{@link eu.dariolucia.ccsds.encdec.value.StringUtil#toByteArray(String)} for values of type {@link DataTypeEnum#OctetString}</li>
-     *     <li>Direct value for values of type {@link DataTypeEnum#CharacterString}</li>
-     *     <li>{@link java.time.Instant#parse(CharSequence)} for values of type {@link DataTypeEnum#AbsoluteTime}
+     *     <li>{@link Boolean#parseBoolean(String)} for values of type {@link DataTypeEnum#BOOLEAN}</li>
+     *     <li>{@link Integer#parseInt(String)} for values of type {@link DataTypeEnum#ENUMERATED}</li>
+     *     <li>{@link Long#parseLong(String)} for values of type {@link DataTypeEnum#UNSIGNED_INTEGER}</li>
+     *     <li>{@link Long#parseLong(String)} for values of type {@link DataTypeEnum#SIGNED_INTEGER}</li>
+     *     <li>{@link Double#parseDouble(String)} for values of type {@link DataTypeEnum#REAL}</li>
+     *     <li>{@link eu.dariolucia.ccsds.encdec.value.BitString#parseBitString(String)} for values of type {@link DataTypeEnum#BIT_STRING}</li>
+     *     <li>{@link eu.dariolucia.ccsds.encdec.value.StringUtil#toByteArray(String)} for values of type {@link DataTypeEnum#OCTET_STRING}</li>
+     *     <li>Direct value for values of type {@link DataTypeEnum#CHARACTER_STRING}</li>
+     *     <li>{@link java.time.Instant#parse(CharSequence)} for values of type {@link DataTypeEnum#ABSOLUTE_TIME}
      *     with limitation on the number of digits for the fractional part of the second</li>
-     *     <li>{@link java.time.Duration#parse(CharSequence)} for values of type {@link DataTypeEnum#RelativeTime}
+     *     <li>{@link java.time.Duration#parse(CharSequence)} for values of type {@link DataTypeEnum#RELATIVE_TIME}
      *     with limitation on the number of digits for the fractional part of the second</li>
      * </ul>
      *

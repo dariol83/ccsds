@@ -39,10 +39,10 @@ import java.util.function.Supplier;
  */
 public abstract class CommonEncDec {
 
-	private final Map<Integer, Supplier<? extends BerType>> decodingTemplateProvider = new HashMap<>();
-	private final Supplier<? extends BerType> defaultDecodingProvider;
+	private final Map<Integer, Supplier<BerType>> decodingTemplateProvider = new HashMap<>();
+	private final Supplier<BerType> defaultDecodingProvider;
 
-	private volatile Supplier<? extends BerType> currentDecodingProvider;
+	private volatile Supplier<BerType> currentDecodingProvider;
 
 	private volatile int version;
 
@@ -58,7 +58,7 @@ public abstract class CommonEncDec {
 	 * @param version the SLE version
 	 * @param decoderProvider the supplier providing instances capable to deserialize SLE PDUs of the specified version
 	 */
-	protected final void register(int version, Supplier<? extends BerType> decoderProvider) {
+	protected final void register(int version, Supplier<BerType> decoderProvider) {
 		this.decodingTemplateProvider.put(version, decoderProvider);
 	}
 
@@ -130,7 +130,7 @@ public abstract class CommonEncDec {
 	 *
 	 * @return the factory function as {@link Supplier}, which instantiates the default decoding wrapper class.
 	 */
-	protected abstract Supplier<? extends BerType> getDefaultDecodingProvider();
+	protected abstract Supplier<BerType> getDefaultDecodingProvider();
 
 	/**
 	 * This method wraps the provided SLE PDU into the appropriate (according by the selected SLE version) transfer

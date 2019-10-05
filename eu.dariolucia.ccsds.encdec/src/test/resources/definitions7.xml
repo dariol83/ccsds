@@ -33,59 +33,59 @@
             <structure>
                 <!-- ACK_FIELD -->
                 <parameter id="ACK_FIELD">
-                    <type_fixed type="SignedInteger" length="8" />
+                    <type_fixed type="SIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_TYPE -->
                 <parameter id="PUS_TYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_SUBTYPE -->
                 <parameter id="PUS_SUBTYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- Float 32 bits -->
                 <parameter id="PARAM2">
-                    <type_fixed type="Real" length="1" />
+                    <type_fixed type="REAL" length="1" />
                 </parameter>
                 <!-- Unsigned integer 6 bits -->
                 <parameter id="PARAM3">
-                    <type_fixed type="UnsignedInteger" length="6" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="6" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM4">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM5">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Bitstring 13 bits -->
                 <parameter id="PARAM6">
-                    <type_fixed type="BitString" length="13" />
+                    <type_fixed type="BIT_STRING" length="13" />
                 </parameter>
                 <!-- Octet string 3 bytes -->
                 <parameter id="PARAM7">
-                    <type_fixed type="OctetString" length="3" />
+                    <type_fixed type="OCTET_STRING" length="3" />
                 </parameter>
                 <!-- Char string 7 bytes -->
                 <parameter id="PARAM8">
-                    <type_fixed type="CharacterString" length="7" />
+                    <type_fixed type="CHARACTER_STRING" length="7" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM9">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Absolute time 6 bytes -->
                 <parameter id="PARAM10">
-                    <type_fixed type="AbsoluteTime" length="1" />
+                    <type_fixed type="ABSOLUTE_TIME" length="1" />
                 </parameter>
                 <!-- Relative time 2 bytes -->
                 <parameter id="PARAM11">
-                    <type_fixed type="RelativeTime" length="2" />
+                    <type_fixed type="RELATIVE_TIME" length="2" />
                 </parameter>
                 <!-- Signed integer 8 bits -->
                 <parameter id="PARAM12">
-                    <type_fixed type="SignedInteger" length="8" />
+                    <type_fixed type="SIGNED_INTEGER" length="8" />
                 </parameter>
             </structure>
         </packet>
@@ -98,31 +98,31 @@
             <structure>
                 <!-- ACK_FIELD -->
                 <parameter id="ACK_FIELD">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_TYPE -->
                 <parameter id="PUS_TYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_SUBTYPE -->
                 <parameter id="PUS_SUBTYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM5">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Bitstring 13 bits -->
                 <parameter id="PARAM6">
-                    <type_fixed type="BitString" length="13" />
+                    <type_fixed type="BIT_STRING" length="13" />
                 </parameter>
                 <!-- Octet string 3 bytes -->
                 <parameter id="PARAM7">
-                    <type_fixed type="OctetString" length="3" />
+                    <type_fixed type="OCTET_STRING" length="3" />
                 </parameter>
                 <!-- Relative time 2 bytes -->
                 <parameter id="PARAM11">
-                    <type_fixed type="RelativeTime" length="2" />
+                    <type_fixed type="RELATIVE_TIME" length="2" />
                 </parameter>
             </structure>
         </packet>
@@ -135,27 +135,27 @@
             <structure>
                 <!-- ACK_FIELD -->
                 <parameter id="ACK_FIELD">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_TYPE -->
                 <parameter id="PUS_TYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_SUBTYPE -->
                 <parameter id="PUS_SUBTYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM5">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Octet string 3 bytes -->
                 <parameter id="PARAM7">
-                    <type_fixed type="OctetString" length="3" />
+                    <type_fixed type="OCTET_STRING" length="3" />
                 </parameter>
                 <!-- Relative time 2 bytes -->
                 <parameter id="PARAM11">
-                    <type_fixed type="RelativeTime" length="2" />
+                    <type_fixed type="RELATIVE_TIME" length="2" />
                 </parameter>
             </structure>
         </packet>
@@ -168,27 +168,27 @@
             <structure>
                 <!-- ACK_FIELD -->
                 <parameter id="ACK_FIELD">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_TYPE -->
                 <parameter id="PUS_TYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_SUBTYPE -->
                 <parameter id="PUS_SUBTYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM5">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Octet string 3 bytes -->
                 <parameter id="PARAM7">
-                    <type_fixed type="OctetString" length="3" />
+                    <type_fixed type="OCTET_STRING" length="3" />
                 </parameter>
                 <!-- Relative time 2 bytes -->
                 <parameter id="PARAM11">
-                    <type_fixed type="RelativeTime" length="2" />
+                    <type_fixed type="RELATIVE_TIME" length="2" />
                 </parameter>
             </structure>
         </packet>
@@ -202,33 +202,33 @@
             <structure>
                 <!-- ACK_FIELD -->
                 <parameter id="ACK_FIELD">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_TYPE -->
                 <parameter id="PUS_TYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_SUBTYPE -->
                 <parameter id="PUS_SUBTYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <parameter id="FILLER">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <parameter id="F1">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM5">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Octet string 3 bytes -->
                 <parameter id="PARAM7">
-                    <type_fixed type="OctetString" length="3" />
+                    <type_fixed type="OCTET_STRING" length="3" />
                 </parameter>
                 <!-- Relative time 2 bytes -->
                 <parameter id="PARAM11">
-                    <type_fixed type="RelativeTime" length="2" />
+                    <type_fixed type="RELATIVE_TIME" length="2" />
                 </parameter>
             </structure>
         </packet>
@@ -242,61 +242,61 @@
             <structure>
                 <!-- ACK_FIELD -->
                 <parameter id="ACK_FIELD">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_TYPE -->
                 <parameter id="PUS_TYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_SUBTYPE -->
                 <parameter id="PUS_SUBTYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <parameter id="FILLER">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <parameter id="F1">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- Float 32 bits -->
                 <parameter id="PARAM2">
-                    <type_fixed type="Real" length="1" />
+                    <type_fixed type="REAL" length="1" />
                 </parameter>
                 <!-- Unsigned integer 6 bits -->
                 <parameter id="PARAM3">
-                    <type_fixed type="UnsignedInteger" length="6" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="6" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM4">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM5">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Bitstring 13 bits -->
                 <parameter id="PARAM6">
-                    <type_fixed type="BitString" length="13" />
+                    <type_fixed type="BIT_STRING" length="13" />
                 </parameter>
                 <!-- Octet string 3 bytes -->
                 <parameter id="PARAM7">
-                    <type_fixed type="OctetString" length="3" />
+                    <type_fixed type="OCTET_STRING" length="3" />
                 </parameter>
                 <!-- Char string 7 bytes -->
                 <parameter id="PARAM8">
-                    <type_fixed type="CharacterString" length="7" />
+                    <type_fixed type="CHARACTER_STRING" length="7" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM9">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Absolute time 6 bytes -->
                 <parameter id="PARAM10">
-                    <type_fixed type="AbsoluteTime" length="1" />
+                    <type_fixed type="ABSOLUTE_TIME" length="1" />
                 </parameter>
                 <!-- Relative time 2 bytes -->
                 <parameter id="PARAM11">
-                    <type_fixed type="RelativeTime" length="2" />
+                    <type_fixed type="RELATIVE_TIME" length="2" />
                 </parameter>
             </structure>
         </packet>
@@ -309,27 +309,27 @@
             <structure>
                 <!-- ACK_FIELD -->
                 <parameter id="ACK_FIELD">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_TYPE -->
                 <parameter id="PUS_TYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_SUBTYPE -->
                 <parameter id="PUS_SUBTYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM5">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Octet string 3 bytes -->
                 <parameter id="PARAM7">
-                    <type_fixed type="OctetString" length="3" />
+                    <type_fixed type="OCTET_STRING" length="3" />
                 </parameter>
                 <!-- Relative time 2 bytes -->
                 <parameter id="PARAM11">
-                    <type_fixed type="RelativeTime" length="2" />
+                    <type_fixed type="RELATIVE_TIME" length="2" />
                 </parameter>
             </structure>
         </packet>
@@ -343,33 +343,33 @@
             <structure>
                 <!-- ACK_FIELD -->
                 <parameter id="ACK_FIELD">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_TYPE -->
                 <parameter id="PUS_TYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- PUS_SUBTYPE -->
                 <parameter id="PUS_SUBTYPE">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <parameter id="FILLER">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <parameter id="F1">
-                    <type_fixed type="UnsignedInteger" length="8" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- Boolean 1 bit -->
                 <parameter id="PARAM5">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                 </parameter>
                 <!-- Octet string 3 bytes -->
                 <parameter id="PARAM7">
-                    <type_fixed type="OctetString" length="3" />
+                    <type_fixed type="OCTET_STRING" length="3" />
                 </parameter>
                 <!-- Relative time 2 bytes -->
                 <parameter id="PARAM11">
-                    <type_fixed type="RelativeTime" length="2" />
+                    <type_fixed type="RELATIVE_TIME" length="2" />
                 </parameter>
             </structure>
         </packet>

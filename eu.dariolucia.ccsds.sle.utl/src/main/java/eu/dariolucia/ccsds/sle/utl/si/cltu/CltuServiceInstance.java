@@ -48,6 +48,21 @@ public class CltuServiceInstance extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(CltuServiceInstance.class.getName());
 
+	private static final String START_NAME = "START";
+	private static final String STOP_NAME = "STOP";
+	private static final String SCHEDULE_STATUS_REPORT_NAME = "SCHEDULE-STATUS-REPORT";
+	private static final String TRANSFER_DATA_NAME = "TRANSFER-DATA";
+	private static final String THROW_EVENT_NAME = "THROW-EVENT";
+	private static final String GET_PARAMETER_NAME = "GET-PARAMETER";
+	private static final String GET_PARAMETER_RETURN_NAME = "GET-PARAMETER-RETURN";
+	private static final String START_RETURN_NAME = "START-RETURN";
+	private static final String STOP_RETURN_NAME = "STOP-RETURN";
+	private static final String STATUS_REPORT_NAME = "STATUS-REPORT";
+	private static final String TRANSFER_DATA_RETURN_NAME = "TRANSFER-DATA-RETURN";
+	private static final String ASYNC_NOTIFY_NAME = "ASYNC-NOTIFY";
+	private static final String THROW_EVENT_RETURN_NAME = "THROW-EVENT-RETURN";
+	private static final String SCHEDULE_STATUS_REPORT_RETURN_NAME = "SCHEDULE-STATUS-REPORT-RETURN";
+
 	// Configuration or GET_PARAMETER
 	private Integer maxCltuLength;
 	private Integer minCltuDelay;
@@ -152,14 +167,14 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "START", null);
+			notifyPduSentError(pdu, START_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(invokeId, pdu, "START");
+		boolean resultOk = encodeAndSend(invokeId, pdu, START_NAME);
 
 		if (resultOk) {
 			// If all fine, transition to new state: START_PENDING and notify PDU sent
@@ -167,7 +182,7 @@ public class CltuServiceInstance extends ServiceInstance {
 			// Set the first cltu identification
 			this.firstCltuIdentification = firstCltuId;
 			// Notify PDU
-			notifyPduSent(pdu, "START", getLastPduSent());
+			notifyPduSent(pdu, START_NAME, getLastPduSent());
 
 			// Generate state and notify update
 			notifyStateUpdate();
@@ -178,7 +193,7 @@ public class CltuServiceInstance extends ServiceInstance {
 	 * This method requests the transmission of a STOP operation.
 	 */
 	public void stop() {
-		dispatchFromUser(() -> doStop());
+		dispatchFromUser(this::doStop);
 	}
 
 	private void doStop() {
@@ -204,19 +219,19 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "STOP", null);
+			notifyPduSentError(pdu, STOP_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(invokeId, pdu, "STOP");
+		boolean resultOk = encodeAndSend(invokeId, pdu, STOP_NAME);
 
 		if (resultOk) {
 			// If all fine, transition to new state: STOP_PENDING and notify PDU sent
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.STOP_PENDING);
-			notifyPduSent(pdu, "STOP", getLastPduSent());
+			notifyPduSent(pdu, STOP_NAME, getLastPduSent());
 			// Generate state and notify update
 			notifyStateUpdate();
 		}
@@ -265,18 +280,18 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "SCHEDULE-STATUS-REPORT", null);
+			notifyPduSentError(pdu, SCHEDULE_STATUS_REPORT_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(invokeId, pdu, "SCHEDULE-STATUS-REPORT");
+		boolean resultOk = encodeAndSend(invokeId, pdu, SCHEDULE_STATUS_REPORT_NAME);
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, "SCHEDULE-STATUS-REPORT", getLastPduSent());
+			notifyPduSent(pdu, SCHEDULE_STATUS_REPORT_NAME, getLastPduSent());
 
 			// Generate state and notify update
 			notifyStateUpdate();
@@ -343,18 +358,18 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "TRANSFER-DATA", null);
+			notifyPduSentError(pdu, TRANSFER_DATA_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(invokeId, pdu, "TRANSFER-DATA");
+		boolean resultOk = encodeAndSend(invokeId, pdu, TRANSFER_DATA_NAME);
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, "TRANSFER-DATA", getLastPduSent());
+			notifyPduSent(pdu, TRANSFER_DATA_NAME, getLastPduSent());
 
 			// Generate state and notify update
 			notifyStateUpdate();
@@ -401,18 +416,18 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "THROW-EVENT", null);
+			notifyPduSentError(pdu, THROW_EVENT_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(invokeId, pdu, "THROW-EVENT");
+		boolean resultOk = encodeAndSend(invokeId, pdu, THROW_EVENT_NAME);
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, "THROW-EVENT", getLastPduSent());
+			notifyPduSent(pdu, THROW_EVENT_NAME, getLastPduSent());
 
 			// Generate state and notify update
 			notifyStateUpdate();
@@ -455,18 +470,18 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "GET-PARAMETER", null);
+			notifyPduSentError(pdu, GET_PARAMETER_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(invokeId, pdu, "GET-PARAMETER");
+		boolean resultOk = encodeAndSend(invokeId, pdu, GET_PARAMETER_NAME);
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, "GET-PARAMETER", getLastPduSent());
+			notifyPduSent(pdu, GET_PARAMETER_NAME, getLastPduSent());
 
 			// Generate state and notify update
 			notifyStateUpdate();
@@ -481,7 +496,7 @@ public class CltuServiceInstance extends ServiceInstance {
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
 			disconnect("Get parameter return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -492,7 +507,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Get parameter return received, but wrong credentials");
-			notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -505,9 +520,8 @@ public class CltuServiceInstance extends ServiceInstance {
 		// PDU received
 		if (pdu.getResult().getPositiveResult() != null) {
 			if (pdu.getResult().getPositiveResult().getParAcquisitionSequenceLength() != null) {
-				int val = pdu.getResult().getPositiveResult().getParAcquisitionSequenceLength().getParameterValue()
+				this.acquisitionSequenceLength = pdu.getResult().getPositiveResult().getParAcquisitionSequenceLength().getParameterValue()
 						.intValue();
-				this.acquisitionSequenceLength = val;
 			} else if (pdu.getResult().getPositiveResult().getParBitLockRequired() != null) {
 				this.bitlockRequired = pdu.getResult().getPositiveResult().getParBitLockRequired().getParameterValue()
 						.intValue() == 0;
@@ -530,9 +544,8 @@ public class CltuServiceInstance extends ServiceInstance {
 					this.clcwPhysicalChannel = null;
 				}
 			} else if (pdu.getResult().getPositiveResult().getParDeliveryMode() != null) {
-				DeliveryModeEnum val = DeliveryModeEnum.values()[pdu.getResult().getPositiveResult()
+				this.deliveryMode = DeliveryModeEnum.values()[pdu.getResult().getPositiveResult()
 						.getParDeliveryMode().getParameterValue().intValue()];
-				this.deliveryMode = val;
 			} else if (pdu.getResult().getPositiveResult().getParCltuIdentification() != null) {
 				this.cltuIdentification = pdu.getResult().getPositiveResult().getParCltuIdentification()
 						.getParameterValue().longValue();
@@ -557,32 +570,27 @@ public class CltuServiceInstance extends ServiceInstance {
 				this.modulationIndex = pdu.getResult().getPositiveResult().getParModulationIndex().getParameterValue()
 						.intValue();
 			} else if (pdu.getResult().getPositiveResult().getParNotificationMode() != null) {
-				CltuNotificationModeEnum val = CltuNotificationModeEnum.values()[pdu.getResult().getPositiveResult()
+				this.notificationMode = CltuNotificationModeEnum.values()[pdu.getResult().getPositiveResult()
 						.getParNotificationMode().getParameterValue().intValue()];
-				this.notificationMode = val;
 			} else if (pdu.getResult().getPositiveResult().getParPlop1IdleSequenceLength() != null) {
 				this.plop1IdleSequenceLength = pdu.getResult().getPositiveResult().getParPlop1IdleSequenceLength()
 						.getParameterValue().intValue();
 			} else if (pdu.getResult().getPositiveResult().getParPlopInEffect() != null) {
-				CltuPlopInEffectEnum val = CltuPlopInEffectEnum.values()[pdu.getResult().getPositiveResult()
+				this.plopInEffect = CltuPlopInEffectEnum.values()[pdu.getResult().getPositiveResult()
 						.getParPlopInEffect().getParameterValue().intValue()];
-				this.plopInEffect = val;
 			} else if (pdu.getResult().getPositiveResult().getParProtocolAbortMode() != null) {
-				CltuProtocolAbortModeEnum val = CltuProtocolAbortModeEnum.values()[pdu.getResult().getPositiveResult()
+				this.protocolAbortMode = CltuProtocolAbortModeEnum.values()[pdu.getResult().getPositiveResult()
 						.getParProtocolAbortMode().getParameterValue().intValue()];
-				this.protocolAbortMode = val;
 			} else if (pdu.getResult().getPositiveResult().getParReportingCycle() != null) {
 				if (pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
 						.getPeriodicReportingOff() != null) {
 					this.reportingCycle = null;
 				} else {
-					int val = pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
+					this.reportingCycle = pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
 							.getPeriodicReportingOn().intValue();
-					this.reportingCycle = val;
 				}
 			} else if (pdu.getResult().getPositiveResult().getParReturnTimeout() != null) {
-				int val = pdu.getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue();
-				this.returnTimeoutPeriod = val;
+				this.returnTimeoutPeriod = pdu.getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue();
 			} else if (pdu.getResult().getPositiveResult().getParRfAvailableRequired() != null) {
 				this.rfAvailableRequired = pdu.getResult().getPositiveResult().getParRfAvailableRequired()
 						.getParameterValue().intValue() == 0;
@@ -599,7 +607,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -612,7 +620,7 @@ public class CltuServiceInstance extends ServiceInstance {
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
 			disconnect("Get parameter return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -623,7 +631,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Get parameter return received, but wrong credentials");
-			notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -639,9 +647,8 @@ public class CltuServiceInstance extends ServiceInstance {
 				this.bitlockRequired = pdu.getResult().getPositiveResult().getParBitLockRequired().getParameterValue()
 						.intValue() == 0;
 			} else if (pdu.getResult().getPositiveResult().getParDeliveryMode() != null) {
-				DeliveryModeEnum val = DeliveryModeEnum.values()[pdu.getResult().getPositiveResult()
+				this.deliveryMode = DeliveryModeEnum.values()[pdu.getResult().getPositiveResult()
 						.getParDeliveryMode().getParameterValue().intValue()];
-				this.deliveryMode = val;
 			} else if (pdu.getResult().getPositiveResult().getParCltuIdentification() != null) {
 				this.cltuIdentification = pdu.getResult().getPositiveResult().getParCltuIdentification()
 						.getParameterValue().longValue();
@@ -658,21 +665,18 @@ public class CltuServiceInstance extends ServiceInstance {
 				this.modulationIndex = pdu.getResult().getPositiveResult().getParModulationIndex().getParameterValue()
 						.intValue();
 			} else if (pdu.getResult().getPositiveResult().getParPlopInEffect() != null) {
-				CltuPlopInEffectEnum val = CltuPlopInEffectEnum.values()[pdu.getResult().getPositiveResult()
+				this.plopInEffect = CltuPlopInEffectEnum.values()[pdu.getResult().getPositiveResult()
 						.getParPlopInEffect().getParameterValue().intValue()];
-				this.plopInEffect = val;
 			} else if (pdu.getResult().getPositiveResult().getParReportingCycle() != null) {
 				if (pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
 						.getPeriodicReportingOff() != null) {
 					this.reportingCycle = null;
 				} else {
-					int val = pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
+					this.reportingCycle = pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
 							.getPeriodicReportingOn().intValue();
-					this.reportingCycle = val;
 				}
 			} else if (pdu.getResult().getPositiveResult().getParReturnTimeout() != null) {
-				int val = pdu.getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue();
-				this.returnTimeoutPeriod = val;
+				this.returnTimeoutPeriod = pdu.getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue();
 			} else if (pdu.getResult().getPositiveResult().getParRfAvailableRequired() != null) {
 				this.rfAvailableRequired = pdu.getResult().getPositiveResult().getParRfAvailableRequired()
 						.getParameterValue().intValue() == 0;
@@ -689,7 +693,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -702,7 +706,7 @@ public class CltuServiceInstance extends ServiceInstance {
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
 			disconnect("Get parameter return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -713,7 +717,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Get parameter return received, but wrong credentials");
-			notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -726,9 +730,8 @@ public class CltuServiceInstance extends ServiceInstance {
 		// PDU received
 		if (pdu.getResult().getPositiveResult() != null) {
 			if (pdu.getResult().getPositiveResult().getParAcquisitionSequenceLength() != null) {
-				int val = pdu.getResult().getPositiveResult().getParAcquisitionSequenceLength().getParameterValue()
+				this.acquisitionSequenceLength = pdu.getResult().getPositiveResult().getParAcquisitionSequenceLength().getParameterValue()
 						.intValue();
-				this.acquisitionSequenceLength = val;
 			} else if (pdu.getResult().getPositiveResult().getParBitLockRequired() != null) {
 				this.bitlockRequired = pdu.getResult().getPositiveResult().getParBitLockRequired().getParameterValue()
 						.intValue() == 0;
@@ -741,9 +744,8 @@ public class CltuServiceInstance extends ServiceInstance {
 					this.clcwPhysicalChannel = null;
 				}
 			} else if (pdu.getResult().getPositiveResult().getParDeliveryMode() != null) {
-				DeliveryModeEnum val = DeliveryModeEnum.values()[pdu.getResult().getPositiveResult()
+				this.deliveryMode = DeliveryModeEnum.values()[pdu.getResult().getPositiveResult()
 						.getParDeliveryMode().getParameterValue().intValue()];
-				this.deliveryMode = val;
 			} else if (pdu.getResult().getPositiveResult().getParCltuIdentification() != null) {
 				this.cltuIdentification = pdu.getResult().getPositiveResult().getParCltuIdentification()
 						.getParameterValue().longValue();
@@ -763,32 +765,27 @@ public class CltuServiceInstance extends ServiceInstance {
 				this.modulationIndex = pdu.getResult().getPositiveResult().getParModulationIndex().getParameterValue()
 						.intValue();
 			} else if (pdu.getResult().getPositiveResult().getParNotificationMode() != null) {
-				CltuNotificationModeEnum val = CltuNotificationModeEnum.values()[pdu.getResult().getPositiveResult()
+				this.notificationMode = CltuNotificationModeEnum.values()[pdu.getResult().getPositiveResult()
 						.getParNotificationMode().getParameterValue().intValue()];
-				this.notificationMode = val;
 			} else if (pdu.getResult().getPositiveResult().getParPlop1IdleSequenceLength() != null) {
 				this.plop1IdleSequenceLength = pdu.getResult().getPositiveResult().getParPlop1IdleSequenceLength()
 						.getParameterValue().intValue();
 			} else if (pdu.getResult().getPositiveResult().getParPlopInEffect() != null) {
-				CltuPlopInEffectEnum val = CltuPlopInEffectEnum.values()[pdu.getResult().getPositiveResult()
+				this.plopInEffect = CltuPlopInEffectEnum.values()[pdu.getResult().getPositiveResult()
 						.getParPlopInEffect().getParameterValue().intValue()];
-				this.plopInEffect = val;
 			} else if (pdu.getResult().getPositiveResult().getParProtocolAbortMode() != null) {
-				CltuProtocolAbortModeEnum val = CltuProtocolAbortModeEnum.values()[pdu.getResult().getPositiveResult()
+				this.protocolAbortMode = CltuProtocolAbortModeEnum.values()[pdu.getResult().getPositiveResult()
 						.getParProtocolAbortMode().getParameterValue().intValue()];
-				this.protocolAbortMode = val;
 			} else if (pdu.getResult().getPositiveResult().getParReportingCycle() != null) {
 				if (pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
 						.getPeriodicReportingOff() != null) {
 					this.reportingCycle = null;
 				} else {
-					int val = pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
+					this.reportingCycle = pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
 							.getPeriodicReportingOn().intValue();
-					this.reportingCycle = val;
 				}
 			} else if (pdu.getResult().getPositiveResult().getParReturnTimeout() != null) {
-				int val = pdu.getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue();
-				this.returnTimeoutPeriod = val;
+				this.returnTimeoutPeriod = pdu.getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue();
 			} else if (pdu.getResult().getPositiveResult().getParRfAvailableRequired() != null) {
 				this.rfAvailableRequired = pdu.getResult().getPositiveResult().getParRfAvailableRequired()
 						.getParameterValue().intValue() == 0;
@@ -805,7 +802,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -816,7 +813,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.START_PENDING) {
 			disconnect("Start return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "START-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -827,7 +824,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Start return received, but wrong credentials");
-			notifyPduReceived(pdu, "START-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -850,7 +847,7 @@ public class CltuServiceInstance extends ServiceInstance {
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "START-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -861,7 +858,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.STOP_PENDING) {
 			disconnect("Stop return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "STOP-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -872,7 +869,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Stop return received, but wrong credentials");
-			notifyPduReceived(pdu, "STOP-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -894,7 +891,7 @@ public class CltuServiceInstance extends ServiceInstance {
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "STOP-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -905,7 +902,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
 			disconnect("Status report received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "STATUS-REPORT", getLastPduReceived());
+			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -916,7 +913,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Status report received, but wrong credentials");
-			notifyPduReceived(pdu, "STATUS-REPORT", getLastPduReceived());
+			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -932,7 +929,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		this.bufferAvailable = pdu.getCltuBufferAvailable().longValue();
 
 		// Notify PDU
-		notifyPduReceived(pdu, "STATUS-REPORT", getLastPduReceived());
+		notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -943,7 +940,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
 			disconnect("Transfer data return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "TRANSFER-DATA-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, TRANSFER_DATA_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -954,7 +951,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Transfer data return received, but wrong credentials");
-			notifyPduReceived(pdu, "TRANSFER-DATA-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, TRANSFER_DATA_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -970,13 +967,12 @@ public class CltuServiceInstance extends ServiceInstance {
 		// PDU received
 		if (pdu.getResult().getPositiveResult() != null) {
 			//
-			LOG.info(getServiceInstanceIdentifier() + ": Transfer data return (" + this.cltuIdentification + ") received, positive result");
+			LOG.info(String.format("%s: Transfer data return (%d) received, positive result", getServiceInstanceIdentifier(), this.cltuIdentification));
 		} else {
-			LOG.warning(getServiceInstanceIdentifier() + ": Transfer data return (" + this.cltuIdentification + ") received, negative result: "
-					+ CltuDiagnosticsStrings.getTransferDataDiagnostic(pdu.getResult().getNegativeResult()));
+			LOG.warning(String.format("%s: Transfer data return (%d) received, negative result: %s", getServiceInstanceIdentifier(), this.cltuIdentification, CltuDiagnosticsStrings.getTransferDataDiagnostic(pdu.getResult().getNegativeResult())));
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "TRANSFER-DATA-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, TRANSFER_DATA_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -988,7 +984,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE
 				&& this.currentState != ServiceInstanceBindingStateEnum.READY) {
 			disconnect("Async notify received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "ASYNC-NOTIFY", getLastPduReceived());
+			notifyPduReceived(pdu, ASYNC_NOTIFY_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -999,7 +995,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Async notify received, but wrong credentials");
-			notifyPduReceived(pdu, "ASYNC-NOTIFY", getLastPduReceived());
+			notifyPduReceived(pdu, ASYNC_NOTIFY_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -1011,7 +1007,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		this.notification = mapNotification(pdu.getCltuNotification());
 
 		// Notify PDU
-		notifyPduReceived(pdu, "ASYNC-NOTIFY", getLastPduReceived());
+		notifyPduReceived(pdu, ASYNC_NOTIFY_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -1022,7 +1018,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
 			disconnect("Throw event return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "THROW-EVENT-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, THROW_EVENT_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -1033,7 +1029,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Throw event return received, but wrong credentials");
-			notifyPduReceived(pdu, "THROW-EVENT-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, THROW_EVENT_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -1047,13 +1043,12 @@ public class CltuServiceInstance extends ServiceInstance {
 		// PDU received
 		if (pdu.getResult().getPositiveResult() != null) {
 			//
-			LOG.info("Throw event return (" + this.eventInvocationIdentification + ") received, positive result");
+			LOG.info(String.format("Throw event return (%d) received, positive result", this.eventInvocationIdentification));
 		} else {
-			LOG.warning("Throw event return (" + this.eventInvocationIdentification + ") received, negative result: "
-					+ CltuDiagnosticsStrings.getThrowEventDiagnostic(pdu.getResult().getNegativeResult()));
+			LOG.warning(String.format("Throw event return (%d) received, negative result: %s", this.eventInvocationIdentification, CltuDiagnosticsStrings.getThrowEventDiagnostic(pdu.getResult().getNegativeResult())));
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "THROW-EVENT-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, THROW_EVENT_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -1064,7 +1059,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
 			disconnect("Schedule status report return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "SCHEDULE-STATUS-REPORT-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -1075,7 +1070,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Schedule status report return received, but wrong credentials");
-			notifyPduReceived(pdu, "SCHEDULE-STATUS-REPORT-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -1094,7 +1089,7 @@ public class CltuServiceInstance extends ServiceInstance {
 					+ CltuDiagnosticsStrings.getScheduleStatusReportDiagnostic(pdu.getResult().getNegativeResult()));
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "SCHEDULE-STATUS-REPORT-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -1150,34 +1145,34 @@ public class CltuServiceInstance extends ServiceInstance {
 	private CltuNotification mapNotification(
 			eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.structures.CltuNotification cltuNotification) {
 		if (cltuNotification.getActionListCompleted() != null) {
-			return new CltuNotification(CltuNotificationTypeEnum.actionListCompleted,
+			return new CltuNotification(CltuNotificationTypeEnum.ACTION_LIST_COMPLETED,
 					cltuNotification.getActionListCompleted().longValue());
 		}
 		if (cltuNotification.getActionListNotCompleted() != null) {
-			return new CltuNotification(CltuNotificationTypeEnum.actionListNotCompleted,
+			return new CltuNotification(CltuNotificationTypeEnum.ACTION_LIST_NOT_COMPLETED,
 					cltuNotification.getActionListNotCompleted().longValue());
 		}
 		if (cltuNotification.getBufferEmpty() != null) {
-			return new CltuNotification(CltuNotificationTypeEnum.bufferEmpty, null);
+			return new CltuNotification(CltuNotificationTypeEnum.BUFFER_EMPTY, null);
 		}
 		if (cltuNotification.getCltuRadiated() != null) {
-			return new CltuNotification(CltuNotificationTypeEnum.cltuRadiated, null);
+			return new CltuNotification(CltuNotificationTypeEnum.CLTU_RADIATED, null);
 		}
 		if (cltuNotification.getEventConditionEvFalse() != null) {
-			return new CltuNotification(CltuNotificationTypeEnum.eventConditionEvFalse,
+			return new CltuNotification(CltuNotificationTypeEnum.EVENT_CONDITION_EV_FALSE,
 					cltuNotification.getEventConditionEvFalse().longValue());
 		}
 		if (cltuNotification.getProductionHalted() != null) {
-			return new CltuNotification(CltuNotificationTypeEnum.productionHalted, null);
+			return new CltuNotification(CltuNotificationTypeEnum.PRODUCTION_HALTED, null);
 		}
 		if (cltuNotification.getProductionInterrupted() != null) {
-			return new CltuNotification(CltuNotificationTypeEnum.productionInterrupted, null);
+			return new CltuNotification(CltuNotificationTypeEnum.PRODUCTION_INTERRUPTED, null);
 		}
 		if (cltuNotification.getProductionOperational() != null) {
-			return new CltuNotification(CltuNotificationTypeEnum.productionOperational, null);
+			return new CltuNotification(CltuNotificationTypeEnum.PRODUCTION_OPERATIONAL, null);
 		}
 		if (cltuNotification.getSlduExpired() != null) {
-			return new CltuNotification(CltuNotificationTypeEnum.slduExpired, null);
+			return new CltuNotification(CltuNotificationTypeEnum.SLDU_EXPIRED, null);
 		}
 		LOG.severe(getServiceInstanceIdentifier() + ": Inspection of CLTU notification failed in recognising the notified information");
 		return null;
@@ -1288,5 +1283,4 @@ public class CltuServiceInstance extends ServiceInstance {
 	private CltuServiceInstanceConfiguration getCltuConfiguration() {
 		return (CltuServiceInstanceConfiguration) this.serviceInstanceConfiguration;
 	}
-
 }

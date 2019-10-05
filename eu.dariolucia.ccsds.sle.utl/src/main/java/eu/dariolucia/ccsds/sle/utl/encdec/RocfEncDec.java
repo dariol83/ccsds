@@ -76,7 +76,7 @@ public class RocfEncDec extends CommonEncDec {
 	}
 
 	@Override
-	protected Supplier<? extends BerType> getDefaultDecodingProvider() {
+	protected Supplier<BerType> getDefaultDecodingProvider() {
 		return RocfProviderToUserPdu::new;
 	}
 

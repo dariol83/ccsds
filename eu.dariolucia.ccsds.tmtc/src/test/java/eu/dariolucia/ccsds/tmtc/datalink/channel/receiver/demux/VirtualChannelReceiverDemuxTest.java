@@ -40,9 +40,9 @@ class VirtualChannelReceiverDemuxTest {
     @Test
     public void testTmVc0SpacePacket() {
         // Create a virtual channel for VC0
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         // Create a virtual channel for VC7
-        TmReceiverVirtualChannel vc7 = new TmReceiverVirtualChannel(7, VirtualChannelAccessMode.Data, true);
+        TmReceiverVirtualChannel vc7 = new TmReceiverVirtualChannel(7, VirtualChannelAccessMode.DATA, true);
         // Create a VC demux for VC0 and VC7
         VirtualChannelReceiverDemux demux = new VirtualChannelReceiverDemux(vc0, vc7);
         // Subscribe a packet collector for VC0
@@ -102,7 +102,7 @@ class VirtualChannelReceiverDemuxTest {
     @Test
     public void testTmVc0MissingHandler() {
         // Create a virtual channel for VC0
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         // Unhandled frames
         List<AbstractTransferFrame> notHandled = new LinkedList<>();
         // Create a VC demux for VC0 and VC7
@@ -164,13 +164,13 @@ class VirtualChannelReceiverDemuxTest {
     @Test
     public void testDoubleRegistration() {
         // Create a virtual channel for VC0
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         // Unhandled frames
         List<AbstractTransferFrame> notHandled = new LinkedList<>();
         // Create a VC demux for VC0 and VC7
         VirtualChannelReceiverDemux demux = new VirtualChannelReceiverDemux(notHandled::add, vc0);
         // Register again vc0
-        TmReceiverVirtualChannel vc0double = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc0double = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         try {
             demux.register(vc0);
             fail("IllegalArgumentException expected");

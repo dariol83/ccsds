@@ -46,7 +46,7 @@ class VirtualChannelSenderBitstreamProcessorTest {
 		// First of all, create the VC sender: capable to process user data blocks and build AOS frames.
 		// I build it here, so that I can get the max user data field size, this is needed to build the bitstream blocks so that the frame is filled
 		// (even if useful data might be less).
-		AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(151, 0, VirtualChannelAccessMode.Bitstream, false, 1115, this::ocfSupplier);
+		AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(151, 0, VirtualChannelAccessMode.BITSTREAM, false, 1115, this::ocfSupplier);
 
 		// Prebuild 5508 bitstream blocks of 306 bytes: it should generate 5508 TM frames
 		List<BitstreamData> dataBlocks = new LinkedList<>();

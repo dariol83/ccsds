@@ -131,8 +131,8 @@ class DefinitionTest {
         d.getIdentificationFields().add(new IdentField("P3", 14, 3));
 
         {
-            EncodedParameter ep1 = new EncodedParameter("ENC01", new FixedType(DataTypeEnum.CharacterString, 23), null);
-            EncodedParameter ep2 = new EncodedParameter("ENC02", new FixedType(DataTypeEnum.UnsignedInteger, 8), null);
+            EncodedParameter ep1 = new EncodedParameter("ENC01", new FixedType(DataTypeEnum.CHARACTER_STRING, 23), null);
+            EncodedParameter ep2 = new EncodedParameter("ENC02", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), null);
             PacketStructure packetStructure = new PacketStructure(ep1, ep2);
             d.getPacketDefinitions().add(new PacketDefinition(
                     "DEF1",
@@ -143,7 +143,7 @@ class DefinitionTest {
             ));
         }
         {
-            EncodedParameter ep1 = new EncodedParameter("ENC01", new FixedType(DataTypeEnum.UnsignedInteger, 8), null);
+            EncodedParameter ep1 = new EncodedParameter("ENC01", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), null);
             EncodedParameter ep2 = new EncodedParameter("ENC02", new ReferenceType("ENC01"), new FixedLength(6));
 
             EncodedArray a1 = new EncodedArray(ep1, ep2);
@@ -163,7 +163,7 @@ class DefinitionTest {
             ));
         }
         {
-            EncodedParameter ep1 = new EncodedParameter("ENC01", new FixedType(DataTypeEnum.UnsignedInteger, 8), null);
+            EncodedParameter ep1 = new EncodedParameter("ENC01", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), null);
             EncodedParameter ep2 = new EncodedParameter("ENC02", new ReferenceType("ENC01"), new FixedLength(6));
 
             EncodedArray a1 = new EncodedArray(ep1, ep2);
@@ -173,17 +173,17 @@ class DefinitionTest {
             EncodedStructure es = new EncodedStructure(a1);
             es.setId("STR1");
 
-            EncodedParameter ep3 = new EncodedParameter("ENC03", new FixedType(DataTypeEnum.UnsignedInteger, 8), null);
-            EncodedParameter ep4 = new EncodedParameter("ENC04", new FixedType(DataTypeEnum.UnsignedInteger, 8), null);
+            EncodedParameter ep3 = new EncodedParameter("ENC03", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), null);
+            EncodedParameter ep4 = new EncodedParameter("ENC04", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), null);
             ep4.setLocation(new LastRelativeLocation(5, 16));
-            EncodedParameter ep5 = new EncodedParameter("ENC05", new FixedType(DataTypeEnum.UnsignedInteger, 8), null);
+            EncodedParameter ep5 = new EncodedParameter("ENC05", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), null);
             ep5.setLocation(new EncodedItemRelativeLocation(17, 0, ep3.getId()));
 
-            EncodedParameter ep6 = new EncodedParameter("ENC06", new FixedType(DataTypeEnum.UnsignedInteger, 8), null);
+            EncodedParameter ep6 = new EncodedParameter("ENC06", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), null);
             ep6.setLocation(new FixedAbsoluteLocation(98));
 
-            EncodedParameter ep7 = new EncodedParameter("ENC07", new FixedType(DataTypeEnum.UnsignedInteger, 8), null);
-            d.getParameters().add(new ParameterDefinition("IDP2", 1, "Description2", new FixedType(DataTypeEnum.UnsignedInteger, 8)));
+            EncodedParameter ep7 = new EncodedParameter("ENC07", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), null);
+            d.getParameters().add(new ParameterDefinition("IDP2", 1, "Description2", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8)));
             ep7.setLinkedParameter(new FixedLinkedParameter(d.getParameters().get(0)));
 
             PacketStructure packetStructure = new PacketStructure(es, ep3, ep4, ep5, ep6, ep7);
@@ -196,12 +196,12 @@ class DefinitionTest {
             ));
         }
         {
-            EncodedParameter ep1 = new EncodedParameter("ENC01", new FixedType(DataTypeEnum.CharacterString, 23), null);
-            EncodedParameter ep2 = new EncodedParameter("ENC02", new FixedType(DataTypeEnum.UnsignedInteger, 8), null);
-            EncodedParameter ep3 = new EncodedParameter("ENC03", new FixedType(DataTypeEnum.UnsignedInteger, 8), new ParameterLength("ENC02"));
+            EncodedParameter ep1 = new EncodedParameter("ENC01", new FixedType(DataTypeEnum.CHARACTER_STRING, 23), null);
+            EncodedParameter ep2 = new EncodedParameter("ENC02", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), null);
+            EncodedParameter ep3 = new EncodedParameter("ENC03", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), new ParameterLength("ENC02"));
             EncodedParameter ep4 = new EncodedParameter("ENC04", new ParameterType("ENC02"), new ParameterLength("ENC02"));
             ep4.setLocation(new LastRelativeLocation(0, 0));
-            EncodedParameter ep5 = new EncodedParameter("ENC05", new FixedType(DataTypeEnum.UnsignedInteger, 8), new ReferenceLength("ENC02"));
+            EncodedParameter ep5 = new EncodedParameter("ENC05", new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), new ReferenceLength("ENC02"));
             ep5.setTime(new GenerationTime("ENC01", "ENC02", 10));
             ep5.setLocation(new FixedAbsoluteLocation(200));
             EncodedParameter ep6 = new EncodedParameter("ENC06", new ExtensionType("MyExtension"), null);
@@ -211,7 +211,7 @@ class DefinitionTest {
             EncodedArray arr1 = new EncodedArray();
             arr1.setId("ARR1");
             arr1.setSize(new ReferenceArraySize("ENC02"));
-            arr1.getEncodedItems().add(new EncodedParameter("A1", new FixedType(DataTypeEnum.Enumerated, 8), null));
+            arr1.getEncodedItems().add(new EncodedParameter("A1", new FixedType(DataTypeEnum.ENUMERATED, 8), null));
 
             PacketStructure packetStructure = new PacketStructure(ep1, ep2, ep3, ep4, ep5, ep6, arr1);
             d.getPacketDefinitions().add(new PacketDefinition(
@@ -230,14 +230,14 @@ class DefinitionTest {
             d.getPacketDefinitions().add(pd2);
         }
         {
-            d.getParameters().add(new ParameterDefinition("IDP1", 1, "Description", new FixedType(DataTypeEnum.Enumerated, 3)));
+            d.getParameters().add(new ParameterDefinition("IDP1", 1, "Description", new FixedType(DataTypeEnum.ENUMERATED, 3)));
 
             ParameterDefinition pd = new ParameterDefinition();
             pd.setId("IDP3");
             pd.setDescription("Desc");
             pd.setExtension("aaa");
             pd.setExternalId(123);
-            pd.setType(new FixedType(DataTypeEnum.Enumerated, 8));
+            pd.setType(new FixedType(DataTypeEnum.ENUMERATED, 8));
             d.getParameters().add(pd);
         }
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -254,9 +254,9 @@ class DefinitionTest {
     public void testSettersGetters() {
         FixedType ft = new FixedType();
         ft.setLength(20);
-        ft.setType(DataTypeEnum.UnsignedInteger);
+        ft.setType(DataTypeEnum.UNSIGNED_INTEGER);
         assertEquals(20, ft.getLength());
-        assertEquals(DataTypeEnum.UnsignedInteger, ft.getType());
+        assertEquals(DataTypeEnum.UNSIGNED_INTEGER, ft.getType());
 
         IdentField ifield = new IdentField("ID", 0, 2);
         IdentFieldMatcher ifm = new IdentFieldMatcher();
@@ -281,14 +281,14 @@ class DefinitionTest {
         assertEquals(1, rl.getBitAlignment());
         assertEquals(2, rl.getBitOffset());
 
-        EncodedParameter ep1 = new EncodedParameter("ENC01", new FixedType(DataTypeEnum.CharacterString, 23), null);
-        ep1.setType(new FixedType(DataTypeEnum.UnsignedInteger, 8));
+        EncodedParameter ep1 = new EncodedParameter("ENC01", new FixedType(DataTypeEnum.CHARACTER_STRING, 23), null);
+        ep1.setType(new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8));
         ep1.setLength(new FixedLength(20));
         ep1.setValue("23");
         ep1.setPaddedWidth(null);
         ep1.setTime(new GenerationTime());
 
-        assertEquals(new FixedType(DataTypeEnum.UnsignedInteger, 8), ep1.getType());
+        assertEquals(new FixedType(DataTypeEnum.UNSIGNED_INTEGER, 8), ep1.getType());
         assertEquals(new FixedLength(20), ep1.getLength());
         assertEquals("23", ep1.getValue());
         assertNull(ep1.getPaddedWidth());

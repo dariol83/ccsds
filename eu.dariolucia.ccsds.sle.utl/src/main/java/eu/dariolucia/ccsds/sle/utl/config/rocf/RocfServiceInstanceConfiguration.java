@@ -145,6 +145,7 @@ public class RocfServiceInstanceConfiguration extends ServiceInstanceConfigurati
     private Date endTime;
 
     public RocfServiceInstanceConfiguration() {
+        super();
     }
 
     public DeliveryModeEnum getDeliveryMode() {

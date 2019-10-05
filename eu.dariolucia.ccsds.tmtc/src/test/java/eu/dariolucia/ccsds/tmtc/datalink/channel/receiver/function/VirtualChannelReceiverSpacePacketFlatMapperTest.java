@@ -37,7 +37,7 @@ class VirtualChannelReceiverSpacePacketFlatMapperTest {
     @Test
     public void testTmVc0SpacePacket() {
         // Create a virtual channel for VC0
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         // Create a space packet extractor function on the virtual channel (frame -> list of space packets)
         VirtualChannelReceiverSpacePacketMapper<TmTransferFrame> packetMapper = new VirtualChannelReceiverSpacePacketMapper<>(vc0);
         // Create a flat mapper, to be used for stream processing (frame -> stream of space packets

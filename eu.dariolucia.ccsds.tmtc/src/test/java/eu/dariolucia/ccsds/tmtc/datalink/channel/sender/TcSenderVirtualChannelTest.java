@@ -54,7 +54,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, false);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, false);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -86,7 +86,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, true, false);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, true, false);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -114,7 +114,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, true, false);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, true, false);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -148,7 +148,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, true);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, true);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -184,7 +184,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, true, true);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, true, true);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -220,7 +220,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, false);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, false);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -247,7 +247,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, false);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, false);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -277,7 +277,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, true);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, true);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -323,7 +323,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, false);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, false);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -367,7 +367,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, true);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, true);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -415,7 +415,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, false);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, false);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -439,7 +439,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, false);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, false);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -469,7 +469,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, true);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, true);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -537,7 +537,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Data, false, true);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, false, true);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -577,7 +577,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Data, false, false);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, false, false);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)
@@ -614,7 +614,7 @@ class TcSenderVirtualChannelTest {
         List<TcTransferFrame> list = new LinkedList<>();
         IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
         // Setup the VC
-        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Data, false, true);
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, false, true);
         // Register the sink
         vc0.register(sink);
         // Set channel properties (BD mode)

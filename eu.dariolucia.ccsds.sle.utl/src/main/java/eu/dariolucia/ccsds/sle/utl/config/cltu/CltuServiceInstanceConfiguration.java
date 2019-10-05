@@ -99,6 +99,7 @@ public class CltuServiceInstanceConfiguration extends ServiceInstanceConfigurati
     private Date endTime;
 
     public CltuServiceInstanceConfiguration() {
+        super();
     }
 
     public Integer getMinReportingCycle() {

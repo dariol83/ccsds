@@ -37,7 +37,7 @@ class TcReceiverVirtualChannelTest {
     @Test
     public void testTcVc0SpacePacket() {
         // Create a virtual channel for VC0
-        TcReceiverVirtualChannel vc0 = new TcReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        TcReceiverVirtualChannel vc0 = new TcReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         assertEquals(256, vc0.getVcFrameCounterModulo());
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();

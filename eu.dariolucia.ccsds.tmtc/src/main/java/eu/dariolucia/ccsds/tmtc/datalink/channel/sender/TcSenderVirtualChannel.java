@@ -66,7 +66,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
                                   int secHeaderLength, int secTrailerLength, Supplier<byte[]> secHeaderSupplier, Supplier<byte[]> secTrailerSupplier) {
         super(spacecraftId, virtualChannelId, mode, fecfPresent);
         this.segmented = segmented;
-        if(mode == VirtualChannelAccessMode.Bitstream) {
+        if(mode == VirtualChannelAccessMode.BITSTREAM) {
            throw new IllegalArgumentException("Virtual channel " + virtualChannelId + " does not support access mode " + mode);
         }
         this.secHeaderSupplier = secHeaderSupplier;
@@ -215,7 +215,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
      * @return the number of remaining free bytes in the not-yet-sent TC frame (0 in this implementation).
      */
     public int dispatch(boolean adMode, int mapId, Collection<SpacePacket> pkts) {
-        if (getMode() != VirtualChannelAccessMode.Packet) {
+        if (getMode() != VirtualChannelAccessMode.PACKET) {
             throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested Packet access");
         }
         List<SpacePacket> packets = new ArrayList<>(pkts);
@@ -335,7 +335,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
     }
 
     public int dispatch(boolean adMode, int mapId, byte[] userData) {
-        if (getMode() != VirtualChannelAccessMode.Data) {
+        if (getMode() != VirtualChannelAccessMode.DATA) {
             throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested User Data access");
         }
         int maxDataPerFrame = getMaxUserDataLength();

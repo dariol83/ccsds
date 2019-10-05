@@ -25,125 +25,134 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types
 
 public class CltuDiagnosticsStrings {
 
-	public static String getScheduleStatusReportDiagnostic(DiagnosticScheduleStatusReport negativeResult) {
-		if (negativeResult.getCommon() != null) {
-			return "COMMON - " + getCommonDiagnostics(negativeResult.getCommon().intValue());
-		} else {
-			return "SPECIFIC - " + getScheduleStatusReportSpecificDiagnostics(negativeResult.getSpecific().intValue());
-		}
+	private CltuDiagnosticsStrings() {
+		// Private constructor
 	}
 
-	private static String getCommonDiagnostics(int intValue) {
-		switch (intValue) {
-		case 100:
-			return "duplicateInvokeId";
-		case 127:
-			return "otherReason";
-		}
-		return "<unknown value> " + intValue;
-	}
+    public static String getScheduleStatusReportDiagnostic(DiagnosticScheduleStatusReport negativeResult) {
+        if (negativeResult.getCommon() != null) {
+            return "COMMON - " + getCommonDiagnostics(negativeResult.getCommon().intValue());
+        } else {
+            return "SPECIFIC - " + getScheduleStatusReportSpecificDiagnostics(negativeResult.getSpecific().intValue());
+        }
+    }
 
-	private static String getScheduleStatusReportSpecificDiagnostics(int intValue) {
-		switch (intValue) {
-		case 0:
-			return "notSupportedInThisDeliveryMode";
-		case 1:
-			return "alreadyStopped";
-		case 2:
-			return "invalidReportingCycle";
-		}
-		return "<unknown value> " + intValue;
-	}
+    private static String getCommonDiagnostics(int intValue) {
+        switch (intValue) {
+            case 100:
+                return "duplicateInvokeId";
+            case 127:
+                return "otherReason";
+            default:
+                return "<unknown value> " + intValue;
+        }
+    }
 
-	public static String getDiagnostic(Diagnostics negativeResult) {
-		return getCommonDiagnostics(negativeResult.intValue());
-	}
+    private static String getScheduleStatusReportSpecificDiagnostics(int intValue) {
+        switch (intValue) {
+            case 0:
+                return "notSupportedInThisDeliveryMode";
+            case 1:
+                return "alreadyStopped";
+            case 2:
+                return "invalidReportingCycle";
+			default:
+				return "<unknown value> " + intValue;
+        }
+    }
 
-	public static String getStartDiagnostic(DiagnosticCltuStart negativeResult) {
-		if (negativeResult.getCommon() != null) {
-			return "COMMON - " + getCommonDiagnostics(negativeResult.getCommon().intValue());
-		} else {
-			return "SPECIFIC - " + getStartSpecificDiagnostic(negativeResult.getSpecific().intValue());
-		}
-	}
+    public static String getDiagnostic(Diagnostics negativeResult) {
+        return getCommonDiagnostics(negativeResult.intValue());
+    }
 
-	private static String getStartSpecificDiagnostic(int intValue) {
-		switch (intValue) {
-		case 0:
-			return "outOfService";
-		case 1:
-			return "unableToComply";
-		case 2:
-			return "productionTimeExpired";
-		case 3:
-			return "invalidCltu";
-		}
-		return "<unknown value> " + intValue;
-	}
+    public static String getStartDiagnostic(DiagnosticCltuStart negativeResult) {
+        if (negativeResult.getCommon() != null) {
+            return "COMMON - " + getCommonDiagnostics(negativeResult.getCommon().intValue());
+        } else {
+            return "SPECIFIC - " + getStartSpecificDiagnostic(negativeResult.getSpecific().intValue());
+        }
+    }
 
-	public static String getGetParameterDiagnostic(DiagnosticCltuGetParameter negativeResult) {
-		if (negativeResult.getCommon() != null) {
-			return "COMMON - " + getCommonDiagnostics(negativeResult.getCommon().intValue());
-		} else {
-			return "SPECIFIC - " + getGetParameterSpecificDiagnostic(negativeResult.getSpecific().intValue());
-		}
-	}
+    private static String getStartSpecificDiagnostic(int intValue) {
+        switch (intValue) {
+            case 0:
+                return "outOfService";
+            case 1:
+                return "unableToComply";
+            case 2:
+                return "productionTimeExpired";
+            case 3:
+                return "invalidCltu";
+			default:
+				return "<unknown value> " + intValue;
+        }
+    }
 
-	private static String getGetParameterSpecificDiagnostic(int intValue) {
-		switch (intValue) {
-		case 0:
+    public static String getGetParameterDiagnostic(DiagnosticCltuGetParameter negativeResult) {
+        if (negativeResult.getCommon() != null) {
+            return "COMMON - " + getCommonDiagnostics(negativeResult.getCommon().intValue());
+        } else {
+            return "SPECIFIC - " + getGetParameterSpecificDiagnostic(negativeResult.getSpecific().intValue());
+        }
+    }
+
+    private static String getGetParameterSpecificDiagnostic(int intValue) {
+		if (intValue == 0) {
 			return "unknownParameter";
-		}
-		return "<unknown value> " + intValue;
-	}
-
-	public static String getThrowEventDiagnostic(DiagnosticCltuThrowEvent negativeResult) {
-		if (negativeResult.getCommon() != null) {
-			return "COMMON - " + getCommonDiagnostics(negativeResult.getCommon().intValue());
 		} else {
-			return "SPECIFIC - " + getThrowEventSpecificDiagnostic(negativeResult.getSpecific().intValue());
+			return "<unknown value> " + intValue;
 		}
-	}
+    }
 
-	private static String getThrowEventSpecificDiagnostic(int intValue) {
-		switch (intValue) {
-		case 0:
-			return "operationNotSupported";
-		case 1:
-			return "eventInvocIdOutOfSequence";
-		case 2:
-			return "noSuchEvent";
-		}
-		return "<unknown value> " + intValue;
-	}
+    public static String getThrowEventDiagnostic(DiagnosticCltuThrowEvent negativeResult) {
+        if (negativeResult.getCommon() != null) {
+            return "COMMON - " + getCommonDiagnostics(negativeResult.getCommon().intValue());
+        } else {
+            return "SPECIFIC - " + getThrowEventSpecificDiagnostic(negativeResult.getSpecific().intValue());
+        }
+    }
 
-	public static String getTransferDataDiagnostic(DiagnosticCltuTransferData negativeResult) {
-		if (negativeResult.getCommon() != null) {
-			return "COMMON - " + getCommonDiagnostics(negativeResult.getCommon().intValue());
-		} else {
-			return "SPECIFIC - " + getTransferDataSpecificDiagnostic(negativeResult.getSpecific().intValue());
-		}
-	}
+    private static String getThrowEventSpecificDiagnostic(int intValue) {
+        switch (intValue) {
+            case 0:
+                return "operationNotSupported";
+            case 1:
+                return "eventInvocIdOutOfSequence";
+            case 2:
+                return "noSuchEvent";
+			default:
+				return "<unknown value> " + intValue;
+        }
+    }
 
-	private static String getTransferDataSpecificDiagnostic(int intValue) {
-		switch (intValue) {
-		case 0:
-			return "unableToProcess";
-		case 1:
-			return "unableToStore";
-		case 2:
-			return "outOfSequence";
-		case 3:
-			return "inconsistentTimeRange";
-		case 4:
-			return "invalidTime";
-		case 5:
-			return "lateSldu";
-		case 6:
-			return "invalidDelayTime";
-		case 7:
-			return "cltuError";
-		}
-		return "<unknown value> " + intValue;
-	}
+    public static String getTransferDataDiagnostic(DiagnosticCltuTransferData negativeResult) {
+        if (negativeResult.getCommon() != null) {
+            return "COMMON - " + getCommonDiagnostics(negativeResult.getCommon().intValue());
+        } else {
+            return "SPECIFIC - " + getTransferDataSpecificDiagnostic(negativeResult.getSpecific().intValue());
+        }
+    }
+
+    private static String getTransferDataSpecificDiagnostic(int intValue) {
+        switch (intValue) {
+            case 0:
+                return "unableToProcess";
+            case 1:
+                return "unableToStore";
+            case 2:
+                return "outOfSequence";
+            case 3:
+                return "inconsistentTimeRange";
+            case 4:
+                return "invalidTime";
+            case 5:
+                return "lateSldu";
+            case 6:
+                return "invalidDelayTime";
+            case 7:
+                return "cltuError";
+			default:
+				return "<unknown value> " + intValue;
+        }
+    }
 }

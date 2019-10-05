@@ -54,10 +54,14 @@ public class PduFactoryUtil {
 
     private static final Logger LOG = Logger.getLogger(PduFactoryUtil.class.getName());
 
+    private PduFactoryUtil() {
+        // Private constructor
+    }
+
     /**
      * Number of days from 1st Jan 1958 to 1st Jan 1970
      */
-    private static final int DAYS_FROM_1958_to_1970;
+    private static final int DAYS_FROM_1958_TO_1970;
 
     static {
         GregorianCalendar d1958 = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
@@ -68,7 +72,7 @@ public class PduFactoryUtil {
         Instant i1958 = d1958.toInstant();
         Instant i1970 = d1970.toInstant();
         Duration d = Duration.between(i1958, i1970);
-        DAYS_FROM_1958_to_1970 = (int) d.toDays();
+        DAYS_FROM_1958_TO_1970 = (int) d.toDays();
     }
 
     /**
@@ -86,51 +90,48 @@ public class PduFactoryUtil {
         String[] dotSplit = serviceInstanceIdentifier.split("\\.", -1);
         // Assume 4 entries
         ServiceInstanceIdentifier toReturn = new ServiceInstanceIdentifier();
-        {
-            String sagr = dotSplit[0].split("=", -1)[1];
-            addSiAttribute(toReturn, OidValues.sagr, sagr);
+
+        String sagr = dotSplit[0].split("=", -1)[1];
+        addSiAttribute(toReturn, OidValues.sagr, sagr);
+
+
+        String spack = dotSplit[1].split("=", -1)[1];
+        addSiAttribute(toReturn, OidValues.spack, spack);
+
+        String svtt = dotSplit[2].split("=", -1)[1];
+        switch (type) {
+            case RAF:
+            case RCF:
+            case ROCF:
+                addSiAttribute(toReturn, OidValues.rslFg, svtt);
+                break;
+            case FSP:
+            case CLTU:
+                addSiAttribute(toReturn, OidValues.fslFg, svtt);
+                break;
+            default:
+                throw new IllegalArgumentException("Service type " + type + " unknown");
         }
-        {
-            String spack = dotSplit[1].split("=", -1)[1];
-            addSiAttribute(toReturn, OidValues.spack, spack);
-        }
-        {
-            String fs = dotSplit[2].split("=", -1)[1];
-            switch (type) {
-                case RAF:
-                case RCF:
-                case ROCF:
-                    addSiAttribute(toReturn, OidValues.rslFg, fs);
-                    break;
-                case FSP:
-                case CLTU:
-                    addSiAttribute(toReturn, OidValues.fslFg, fs);
-                    break;
-                default:
-                    throw new RuntimeException("Service type " + type + " unknown");
-            }
-        }
-        {
-            String fs = dotSplit[3].split("=", -1)[1];
-            switch (type) {
-                case RAF:
-                    addSiAttribute(toReturn, OidValues.raf, fs);
-                    break;
-                case RCF:
-                    addSiAttribute(toReturn, OidValues.rcf, fs);
-                    break;
-                case ROCF:
-                    addSiAttribute(toReturn, OidValues.rocf, fs);
-                    break;
-                case FSP:
-                    addSiAttribute(toReturn, OidValues.fsp, fs);
-                    break;
-                case CLTU:
-                    addSiAttribute(toReturn, OidValues.cltu, fs);
-                    break;
-                default:
-                    throw new RuntimeException("Service type " + type + " unknown");
-            }
+
+        String fs = dotSplit[3].split("=", -1)[1];
+        switch (type) {
+            case RAF:
+                addSiAttribute(toReturn, OidValues.raf, fs);
+                break;
+            case RCF:
+                addSiAttribute(toReturn, OidValues.rcf, fs);
+                break;
+            case ROCF:
+                addSiAttribute(toReturn, OidValues.rocf, fs);
+                break;
+            case FSP:
+                addSiAttribute(toReturn, OidValues.fsp, fs);
+                break;
+            case CLTU:
+                addSiAttribute(toReturn, OidValues.cltu, fs);
+                break;
+            default:
+                throw new IllegalArgumentException("Service type " + type + " unknown");
         }
 
         return toReturn;
@@ -183,7 +184,7 @@ public class PduFactoryUtil {
                 md.update(buffer);
                 hashSignature = md.digest();
             } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException("Hash function not defined: " + hashToUse.getHashFunction(), e);
             }
 
             // Build the ISP1 Credentials object
@@ -206,7 +207,7 @@ public class PduFactoryUtil {
                 byte[] encoded = encoding.toByteArray();
                 c.setUsed(new BerOctetString(encoded));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException("Credential encoding failed", e);
             }
         } else {
             c.setUnused(new BerNull());
@@ -248,7 +249,7 @@ public class PduFactoryUtil {
             os.close();
             return os.getArray();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("HashInput creation failed", e);
         }
     }
 
@@ -278,7 +279,7 @@ public class PduFactoryUtil {
         // Compute the number of days from Java epoch and, to be compliant with the CCSDS epoch (1st Jan 1958)
         // add DAYS_FROM_1958_to_1970 days. DAYS_FROM_1958_to_1970 is the difference from the two epochs dates
         // (1st Jan 1970 - 1st Jan 1958)
-        long daysFromEpoch = secs / 86400 + DAYS_FROM_1958_to_1970;
+        long daysFromEpoch = secs / 86400 + DAYS_FROM_1958_TO_1970;
         // Now compute the milliseconds within the day: number of seconds in the day (remainder) times 1000 plus the
         // remainder of the milliseconds
         long millisecsInDay = (secs % 86400) * 1000 + timeMillisSinceEpoch % 1000;
@@ -317,18 +318,14 @@ public class PduFactoryUtil {
         // From the Credentials time, we extract the time
         long[] timeMillis = buildTimeMillis(isp1Credentials.getTime().value);
         if (timeMillis == null) {
-            LOG.log(Level.WARNING, "Cannot read time from credentials of remote peer " + remotePeer.getId()
-                    + ", CDS time is " + DatatypeConverter.printHexBinary(isp1Credentials.getTime().value));
+            LOG.warning(String.format("Cannot read time from credentials of remote peer %s, CDS time is %s", remotePeer.getId(), DatatypeConverter.printHexBinary(isp1Credentials.getTime().value)));
             return false;
         }
         // We get the current time, that we use to compute the delay. If above the configured threshold we reject the
         // invocation.
         long now = System.currentTimeMillis();
         if (now - timeMillis[0] > authDelayInSeconds * 1000) {
-            LOG.log(Level.WARNING,
-                    "Cannot verify credentials of remote peer " + remotePeer.getId() + ", acceptable delay exceeded"
-                            + ", now=" + now + ", time=" + timeMillis[0] + ", acceptable delay in ms="
-                            + authDelayInSeconds * 1000);
+            LOG.warning(String.format("Cannot verify credentials of remote peer %s, acceptable delay exceeded, now=%d, time=%d, acceptable delay in ms=%d", remotePeer.getId(), now, timeMillis[0], authDelayInSeconds * 1000));
             return false;
         }
         // Now we check the hash of the credentials data: we compare the provided protected with the one
@@ -347,6 +344,7 @@ public class PduFactoryUtil {
      *
      * @param cdsTime the time in CDS format, implicit P-field, 8 bytes
      * @return the result
+     * @throws IllegalArgumentException if the number of days is fewer than 1958-1970 difference
      */
     public static long[] buildTimeMillis(byte[] cdsTime) {
         ByteBuffer bb = ByteBuffer.wrap(cdsTime);
@@ -354,10 +352,10 @@ public class PduFactoryUtil {
         long millisec = Integer.toUnsignedLong(bb.getInt());
         int microsec = Short.toUnsignedInt(bb.getShort());
         // To move to the Java epoch, remove DAYS_FROM_1958_to_1970 days
-        if (days < DAYS_FROM_1958_to_1970) {
-            return null;
+        if (days < DAYS_FROM_1958_TO_1970) {
+            throw new IllegalArgumentException("Provided CDS time returns a number of days fewer than 1958-1970 difference: " + PduStringUtil.instance().toHexDump(cdsTime));
         }
-        days -= DAYS_FROM_1958_to_1970;
+        days -= DAYS_FROM_1958_TO_1970;
         return new long[]{days * 86400L * 1000L + millisec, microsec};
     }
 
@@ -367,6 +365,7 @@ public class PduFactoryUtil {
      *
      * @param cdsTime the time in CDS format, implicit P-field, 10 bytes
      * @return the result
+     * @throws IllegalArgumentException if the number of days is fewer than 1958-1970 difference
      */
     public static long[] buildTimeMillisPico(byte[] cdsTime) {
         ByteBuffer bb = ByteBuffer.wrap(cdsTime);
@@ -374,10 +373,10 @@ public class PduFactoryUtil {
         long millisec = Integer.toUnsignedLong(bb.getInt());
         long picosec = Integer.toUnsignedLong(bb.getInt());
 
-        if (days < DAYS_FROM_1958_to_1970) {
-            return null;
+        if (days < DAYS_FROM_1958_TO_1970) {
+            throw new IllegalArgumentException("Provided CDS pico-time returns a number of days fewer than 1958-1970 difference: " + PduStringUtil.instance().toHexDump(cdsTime));
         }
-        days -= DAYS_FROM_1958_to_1970;
+        days -= DAYS_FROM_1958_TO_1970;
         return new long[]{days * 86400L * 1000L + millisec, picosec};
     }
 

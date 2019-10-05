@@ -17,39 +17,43 @@
 package eu.dariolucia.ccsds.sle.utl.si.raf;
 
 public enum RafRequestedFrameQualityEnum {
-	GOOD_FRAMES_ONLY(0),
-	BAD_FRAMES_ONLY(1),
-	ALL_FRAMES(2);
-	
-	private final int code;
-	
-	RafRequestedFrameQualityEnum(int code) {
-		this.code = code;
-	}
-	
-	public int getCode() {
-		return this.code;
-	}
+    GOOD_FRAMES_ONLY(0),
+    BAD_FRAMES_ONLY(1),
+    ALL_FRAMES(2);
 
-	public static RafRequestedFrameQualityEnum fromCode(int c) {
-		switch(c) {
-		case 0: return RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY;
-		case 1: return RafRequestedFrameQualityEnum.BAD_FRAMES_ONLY;
-		case 2: return RafRequestedFrameQualityEnum.ALL_FRAMES;
-		}
-		throw new IllegalArgumentException("Cannot recognize code for RAF RequestedFrameQuality: " + c);
-	}
-	
-	public static RafRequestedFrameQualityEnum fromConfigurationString(String c) {
-		if(c.equals("goodFramesOnly")) {
-			return RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY;
-		}
-		if(c.equals("badFramesOnly")) {
-			return RafRequestedFrameQualityEnum.BAD_FRAMES_ONLY;
-		}
-		if(c.equals("allFrames")) {
-			return RafRequestedFrameQualityEnum.ALL_FRAMES;
-		}
-		throw new IllegalArgumentException("Cannot recognize code for RAF RequestedFrameQuality: " + c);
-	}
+    private final int code;
+
+    RafRequestedFrameQualityEnum(int code) {
+        this.code = code;
+    }
+
+    public int getCode() {
+        return this.code;
+    }
+
+    public static RafRequestedFrameQualityEnum fromCode(int c) {
+        switch (c) {
+            case 0:
+                return RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY;
+            case 1:
+                return RafRequestedFrameQualityEnum.BAD_FRAMES_ONLY;
+            case 2:
+                return RafRequestedFrameQualityEnum.ALL_FRAMES;
+			default:
+				throw new IllegalArgumentException("Cannot recognize code for RAF RequestedFrameQuality: " + c);
+        }
+    }
+
+    public static RafRequestedFrameQualityEnum fromConfigurationString(String c) {
+        if (c.equals("goodFramesOnly")) {
+            return RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY;
+        }
+        if (c.equals("badFramesOnly")) {
+            return RafRequestedFrameQualityEnum.BAD_FRAMES_ONLY;
+        }
+        if (c.equals("allFrames")) {
+            return RafRequestedFrameQualityEnum.ALL_FRAMES;
+        }
+        throw new IllegalArgumentException("Cannot recognize code for RAF RequestedFrameQuality: " + c);
+    }
 }

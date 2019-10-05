@@ -149,23 +149,23 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
         long initialPosition = this.bitHandler.getCurrentBitIndex();
         // Now that you have the final PTC and PFC codes, you can invoke the correct operation on the bit handler
         switch (dataType) {
-            case Boolean: {
+            case BOOLEAN: {
                 value = this.bitHandler.getNextBoolean();
             }
             break;
-            case Enumerated: {
+            case ENUMERATED: {
                 value = this.bitHandler.getNextIntegerSigned(dataLength);
             }
             break;
-            case UnsignedInteger: {
+            case UNSIGNED_INTEGER: {
                 value = this.bitHandler.getNextLongUnsigned(dataLength);
             }
             break;
-            case SignedInteger: {
+            case SIGNED_INTEGER: {
                 value = this.bitHandler.getNextLongSigned(dataLength);
             }
             break;
-            case Real: {
+            case REAL: {
                 switch (dataLength) {
                     case 1:
                         value = (double) this.bitHandler.getNextFloat();
@@ -184,20 +184,20 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
                 }
             }
             break;
-            case BitString: {
+            case BIT_STRING: {
                 byte[] val = this.bitHandler.getNextByte(dataLength);
                 value = new BitString(val, dataLength);
             }
             break;
-            case OctetString: {
+            case OCTET_STRING: {
                 value = this.bitHandler.getNextByte(dataLength * Byte.SIZE);
             }
             break;
-            case CharacterString: {
+            case CHARACTER_STRING: {
                 value = this.bitHandler.getNextString(dataLength * Byte.SIZE);
             }
             break;
-            case AbsoluteTime: {
+            case ABSOLUTE_TIME: {
                 Instant t;
                 if (dataLength == 0) {
                     // Explicit definition of time format (CUC or CDS), i.e. including the Pfield
@@ -226,7 +226,7 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
                 value = t;
             }
             break;
-            case RelativeTime: {
+            case RELATIVE_TIME: {
                 Duration t;
                 if (dataLength == 0) {
                     // Explicit definition of time format (CUC), i.e. including the Pfield
@@ -242,7 +242,7 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
                 value = t;
             }
             break;
-            case Deduced:
+            case DEDUCED:
                 throw new RuntimeException("Deduced type for encoded parameter " + ei.getId() + " at this stage is not allowed");
             default:
                 throw new IllegalArgumentException("Type " + dataType + " not supported");

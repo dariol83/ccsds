@@ -76,9 +76,9 @@ class TmSenderVirtualChannelTest {
             }
         };
         // Setup the VCs (0, 1 and 7 for idle frames)
-        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier, dataProvider);
-        TmSenderVirtualChannel vc1 = new TmSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier, dataProvider);
-        TmSenderVirtualChannel vc7 = new TmSenderVirtualChannel(123, 7, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, 1115, mux::getNextCounter, this::ocfSupplier, dataProvider);
+        TmSenderVirtualChannel vc1 = new TmSenderVirtualChannel(123, 1, VirtualChannelAccessMode.PACKET, false, 1115, mux::getNextCounter, this::ocfSupplier, dataProvider);
+        TmSenderVirtualChannel vc7 = new TmSenderVirtualChannel(123, 7, VirtualChannelAccessMode.PACKET, false, 1115, mux::getNextCounter, this::ocfSupplier);
 
         assertNotNull(vc0.getOcfSupplier());
         assertNull(vc0.getSecondaryHeaderSupplier());
@@ -214,9 +214,9 @@ class TmSenderVirtualChannelTest {
             }
         };
         // Setup the VCs (0, 1 and 7 for idle frames)
-        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Data, false, 1115, mux::getNextCounter, this::ocfSupplier, dataProvider);
-        TmSenderVirtualChannel vc1 = new TmSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Data, false, 1115, mux::getNextCounter, this::ocfSupplier, dataProvider);
-        TmSenderVirtualChannel vc7 = new TmSenderVirtualChannel(123, 7, VirtualChannelAccessMode.Data, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, false, 1115, mux::getNextCounter, this::ocfSupplier, dataProvider);
+        TmSenderVirtualChannel vc1 = new TmSenderVirtualChannel(123, 1, VirtualChannelAccessMode.DATA, false, 1115, mux::getNextCounter, this::ocfSupplier, dataProvider);
+        TmSenderVirtualChannel vc7 = new TmSenderVirtualChannel(123, 7, VirtualChannelAccessMode.DATA, false, 1115, mux::getNextCounter, this::ocfSupplier);
         //
         vc0.register(mux);
         vc1.register(mux);
@@ -263,9 +263,9 @@ class TmSenderVirtualChannelTest {
         TmMasterChannelMuxer mux = new TmMasterChannelMuxer(sink);
 
         // Setup the VCs (0, 1 and 7 for idle frames)
-        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Data, false, 1115, mux::getNextCounter, this::ocfSupplier);
-        TmSenderVirtualChannel vc1 = new TmSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Data, false, 1115, mux::getNextCounter, this::ocfSupplier);
-        TmSenderVirtualChannel vc7 = new TmSenderVirtualChannel(123, 7, VirtualChannelAccessMode.Data, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc1 = new TmSenderVirtualChannel(123, 1, VirtualChannelAccessMode.DATA, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc7 = new TmSenderVirtualChannel(123, 7, VirtualChannelAccessMode.DATA, false, 1115, mux::getNextCounter, this::ocfSupplier);
         //
         vc0.register(mux);
         vc1.register(mux);
@@ -308,7 +308,7 @@ class TmSenderVirtualChannelTest {
         // Setup the muxer
         TmMasterChannelMuxer mux = new TmMasterChannelMuxer(sink);
         // Setup the VCs
-        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Data, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, false, 1115, mux::getNextCounter, this::ocfSupplier);
         //
         vc0.register(mux);
         //
@@ -341,7 +341,7 @@ class TmSenderVirtualChannelTest {
         // Setup the muxer
         TmMasterChannelMuxer mux = new TmMasterChannelMuxer(sink);
         // Setup the VCs (0)
-        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, 1115, mux::getNextCounter, this::ocfSupplier);
         //
         vc0.register(mux);
 

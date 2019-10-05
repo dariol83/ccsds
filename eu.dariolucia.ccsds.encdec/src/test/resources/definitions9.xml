@@ -21,13 +21,13 @@
             <structure>
                 <!-- Signed integer -->
                 <parameter id="PARAM1">
-                    <type_fixed type="SignedInteger" length="8" />
+                    <type_fixed type="SIGNED_INTEGER" length="8" />
                 </parameter>
                 <!-- Array: PARAM1 records, each record 2 values: onboard ID, value of the ID, type and length depending on the onboard ID -->
                 <array id="ARRAY1">
                     <size_ref ref="PARAM1" />
                     <parameter id="PARAM_A1">
-                        <type_fixed type="SignedInteger" length="16" />
+                        <type_fixed type="SIGNED_INTEGER" length="16" />
                     </parameter>
                     <parameter id="PARAM_A2">
                         <type_param ref="PARAM_A1" />
@@ -36,7 +36,7 @@
                 </array>
                 <!-- Signed integer -->
                 <parameter id="PARAM3">
-                    <type_fixed type="SignedInteger" length="16" />
+                    <type_fixed type="SIGNED_INTEGER" length="16" />
                 </parameter>
                 <parameter id="PARAM4">
                     <type_param ref="PARAM3" />
@@ -49,37 +49,37 @@
     <parameters>
         <parameter id="PP1" external_id="1" description="Sample Parameter 1">
             <!-- length can be different for decoding but good enough to keep the value -->
-            <type type="SignedInteger" length="32" />
+            <type type="SIGNED_INTEGER" length="32" />
         </parameter>
         <parameter id="PP2" external_id="2" description="Sample Parameter 2">
-            <type type="Real" length="1" />
+            <type type="REAL" length="1" />
         </parameter>
         <parameter id="PP3" external_id="3" description="Sample Parameter 3">
-            <type type="UnsignedInteger" length="8" />
+            <type type="UNSIGNED_INTEGER" length="8" />
         </parameter>
         <parameter id="PP4" external_id="4" description="Sample Parameter 4">
-            <type type="Boolean" length="0" />
+            <type type="BOOLEAN" length="0" />
         </parameter>
         <parameter id="PP5" external_id="5" description="Sample Parameter 5">
-            <type type="Boolean" length="0" />
+            <type type="BOOLEAN" length="0" />
         </parameter>
         <parameter id="PP6" external_id="6" description="Sample Parameter 6">
-            <type type="BitString" length="13" />
+            <type type="BIT_STRING" length="13" />
         </parameter>
         <parameter id="PP7" external_id="7" description="Sample Parameter 7">
-            <type type="OctetString" length="3" />
+            <type type="OCTET_STRING" length="3" />
         </parameter>
         <parameter id="PP8" external_id="8" description="Sample Parameter 8">
-            <type type="CharacterString" length="7" />
+            <type type="CHARACTER_STRING" length="7" />
         </parameter>
         <parameter id="PP10" external_id="10" description="Sample Parameter 10">
-            <type type="AbsoluteTime" length="1" />
+            <type type="ABSOLUTE_TIME" length="1" />
         </parameter>
         <parameter id="PP11" external_id="11" description="Sample Parameter 11">
-            <type type="RelativeTime" length="2" />
+            <type type="RELATIVE_TIME" length="2" />
         </parameter>
         <parameter id="PP12" external_id="12" description="Sample Parameter 12">
-            <type type="SignedInteger" length="6" />
+            <type type="SIGNED_INTEGER" length="6" />
         </parameter>
     </parameters>
 

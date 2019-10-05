@@ -76,9 +76,9 @@ class AosSenderVirtualChannelTest {
             }
         };
         // Setup the VCs (0, 1 and 63 for idle frames)
-        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 892, this::ocfSupplier, dataProvider);
-        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Packet, false, 892, this::ocfSupplier, dataProvider);
-        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.Packet, false, 892, this::ocfSupplier, null);
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.PACKET, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.PACKET, false, 892, this::ocfSupplier, null);
         //
         vc0.register(mux);
         vc1.register(mux);
@@ -196,9 +196,9 @@ class AosSenderVirtualChannelTest {
             }
         };
         // Setup the VCs (0, 1 and 63 for idle frames)
-        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Data, false, 892, this::ocfSupplier, dataProvider);
-        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Data, false, 892, this::ocfSupplier, dataProvider);
-        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.Data, false, 892, this::ocfSupplier, null);
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.DATA, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.DATA, false, 892, this::ocfSupplier, null);
         //
         vc0.register(mux);
         vc1.register(mux);
@@ -240,9 +240,9 @@ class AosSenderVirtualChannelTest {
         SimpleMuxer<AosTransferFrame> mux = new SimpleMuxer<>(sink);
 
         // Setup the VCs (0, 1 and 63 for idle frames)
-        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier);
-        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier);
-        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier);
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.BITSTREAM, false, 892, this::ocfSupplier);
+        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.BITSTREAM, false, 892, this::ocfSupplier);
+        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.BITSTREAM, false, 892, this::ocfSupplier);
         //
         vc0.register(mux);
         vc1.register(mux);
@@ -304,9 +304,9 @@ class AosSenderVirtualChannelTest {
             }
         };
         // Setup the VCs (0, 1 and 63 for idle frames)
-        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier, dataProvider);
-        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier, dataProvider);
-        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.Bitstream, false, 892, this::ocfSupplier, null);
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.BITSTREAM, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.BITSTREAM, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.BITSTREAM, false, 892, this::ocfSupplier, null);
         //
         vc0.register(mux);
         vc1.register(mux);
@@ -363,7 +363,7 @@ class AosSenderVirtualChannelTest {
         Consumer<AosTransferFrame> sink = list::add;
 
         // Setup the VCs (0, 1 and 7 for idle frames)
-        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 1115, this::ocfSupplier, true, false, 0, null);
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, 1115, this::ocfSupplier, true, false, 0, null);
 
         //
         vc0.register(new IVirtualChannelSenderOutput() {
@@ -409,7 +409,7 @@ class AosSenderVirtualChannelTest {
         Consumer<AosTransferFrame> sink = list::add;
 
         // Setup the VCs (0, 1 and 7 for idle frames)
-        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 1115, this::ocfSupplier, true, false, 0, null);
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, 1115, this::ocfSupplier, true, false, 0, null);
 
         //
         vc0.register(new IVirtualChannelSenderOutput() {

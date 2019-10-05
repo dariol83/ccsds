@@ -42,26 +42,35 @@ import java.util.Arrays;
  * https://github.com/devnied/Bit-lib4j
  */
 public final class BitEncoderDecoder {
+    // The next constants are message constants, used when throwing exceptions
+    private static final String LONG_OVERFLOW_WITH_LENGTH_64 = "Long overflow with length > 64";
+    private static final String INTEGER_OVERFLOW_WITH_LENGTH_32 = "Integer overflow with length > 32";
+
     /**
      * Constant for byte size
      */
     private static final int BYTE_SIZE = Byte.SIZE;
+
     /**
      * Constant for byte size (float)
      */
     private static final float BYTE_SIZE_F = Byte.SIZE;
+
     /**
      * 255 init value
      */
     private static final int DEFAULT_VALUE = 0xFF;
+
     /**
      * Constant for the default charset
      */
     private static final Charset DEFAULT_CHARSET = Charset.forName("ASCII");
+
     /**
      * Lookup table for masks
      */
     private static final byte[][] maskTable = new byte[8][65];
+
     /**
      * Marker for table initialisation
      */
@@ -307,6 +316,7 @@ public final class BitEncoderDecoder {
         byte[] tab = new byte[(int) Math.ceil(pSize / BYTE_SIZE_F)];
 
         if (currentBitIndex % BYTE_SIZE != 0) {
+            // In the middle of a byte
             int index = 0;
             int max = currentBitIndex + pSize;
             while (currentBitIndex < max) {
@@ -329,6 +339,7 @@ public final class BitEncoderDecoder {
                 tab[tab.length - 1] = (byte) (tab[tab.length - 1] & getMask((max - pSize - 1) % BYTE_SIZE, BYTE_SIZE));
             }
         } else {
+            // Fully aligned
             System.arraycopy(byteTab, offset + currentBitIndex / BYTE_SIZE, tab, 0, tab.length);
             int val = pSize % BYTE_SIZE;
             if (val == 0) {
@@ -356,7 +367,7 @@ public final class BitEncoderDecoder {
      */
     public long getNextLongSigned(final int pLength) {
         if (pLength > Long.SIZE) {
-            throw new IllegalArgumentException("Long overflow with length > 64");
+            throw new IllegalArgumentException(LONG_OVERFLOW_WITH_LENGTH_64);
         }
         long decimal = getNextLongUnsigned(pLength);
         long signMask = 1 << pLength - 1;
@@ -375,7 +386,7 @@ public final class BitEncoderDecoder {
      */
     public int getNextIntegerSigned(final int pLength) {
         if (pLength > Integer.SIZE) {
-            throw new IllegalArgumentException("Integer overflow with length > 32");
+            throw new IllegalArgumentException(INTEGER_OVERFLOW_WITH_LENGTH_32);
         }
         return (int) getNextLongSigned(pLength);
     }
@@ -608,7 +619,7 @@ public final class BitEncoderDecoder {
      */
     public void setNextLongUnsigned(final long pValue, final int pLength) {
         if (pLength > Long.SIZE) {
-            throw new IllegalArgumentException("Long overflow with length > 64");
+            throw new IllegalArgumentException(LONG_OVERFLOW_WITH_LENGTH_64);
         }
         setNextValue(pValue, pLength, Long.SIZE - 1);
     }
@@ -660,7 +671,7 @@ public final class BitEncoderDecoder {
     public void setNextIntegerUnsigned(final int pValue, final int pLength) {
 
         if (pLength > Integer.SIZE) {
-            throw new IllegalArgumentException("Integer overflow with length > 32");
+            throw new IllegalArgumentException(INTEGER_OVERFLOW_WITH_LENGTH_32);
         }
 
         setNextValue(pValue, pLength, Integer.SIZE - 1);
@@ -675,7 +686,7 @@ public final class BitEncoderDecoder {
     public void setNextIntegerSigned(final int pValue, final int pLength) {
 
         if (pLength > Integer.SIZE) {
-            throw new IllegalArgumentException("Integer overflow with length > 32");
+            throw new IllegalArgumentException(INTEGER_OVERFLOW_WITH_LENGTH_32);
         }
         // Move the sign bit to fit in pLength
         int mask = -1;
@@ -700,7 +711,7 @@ public final class BitEncoderDecoder {
     public void setNextLongSigned(final long pValue, final int pLength) {
 
         if (pLength > Long.SIZE) {
-            throw new IllegalArgumentException("Long overflow with length > 64");
+            throw new IllegalArgumentException(LONG_OVERFLOW_WITH_LENGTH_64);
         }
         // Move the sign bit to fit in pLength
         long mask = -1;

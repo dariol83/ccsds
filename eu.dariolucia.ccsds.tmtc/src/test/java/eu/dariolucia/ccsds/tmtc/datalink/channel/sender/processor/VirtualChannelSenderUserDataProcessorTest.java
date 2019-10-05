@@ -56,7 +56,7 @@ class VirtualChannelSenderUserDataProcessorTest {
 		// First, create a master channel counter
 		AtomicInteger mcCounter = new AtomicInteger(0);
 		// Create the VC sender: capable to process user data blocks and build TM frames
-		TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(151, 0, VirtualChannelAccessMode.Data, false, 1115, () -> mcCounter.getAndIncrement() % 256, this::ocfSupplier);
+		TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(151, 0, VirtualChannelAccessMode.DATA, false, 1115, () -> mcCounter.getAndIncrement() % 256, this::ocfSupplier);
 		// Create the mapping function
 		VirtualChannelSenderUserDataFlatMapper<TmTransferFrame> vc0mapper = new VirtualChannelSenderUserDataFlatMapper<>(vc0);
 		// Create the VC processor

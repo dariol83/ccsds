@@ -175,7 +175,7 @@ public class TmProcessor {
         // Then the virtual channel objects (from 0 to 7)
         TmReceiverVirtualChannel[] virtualChannels = new TmReceiverVirtualChannel[8];
         for(int i = 0; i < virtualChannels.length; ++i) {
-            virtualChannels[i] = new TmReceiverVirtualChannel(i, VirtualChannelAccessMode.Packet, true);
+            virtualChannels[i] = new TmReceiverVirtualChannel(i, VirtualChannelAccessMode.PACKET, true);
         }
         VirtualChannelReceiverDemux masterChannelDemuxer = new VirtualChannelReceiverDemux(virtualChannels);
         // Then the packet identifier and decoder: for identification use only the type 'TM'

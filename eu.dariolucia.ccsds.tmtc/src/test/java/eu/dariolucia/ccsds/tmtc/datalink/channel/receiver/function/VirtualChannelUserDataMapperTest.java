@@ -36,7 +36,7 @@ class VirtualChannelUserDataMapperTest {
 	@Test
 	public void testTmVc0Data() {
 		// Create a virtual channel for VC0
-		TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Data, true);
+		TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.DATA, true);
 		// Create a space packet extractor function on the virtual channel (frame -> list of space packets)
 		VirtualChannelReceiverUserDataMapper<TmTransferFrame> dataMapper = new VirtualChannelReceiverUserDataMapper<>(vc0);
 		// Build the reader

@@ -86,27 +86,10 @@ public enum BindDiagnosticsEnum {
 	}
 	
 	public static BindDiagnosticsEnum getBindDiagnostics(int intValue) {
-		switch (intValue) {
-		case 0:
-			return BindDiagnosticsEnum.ACCESS_DENIED;
-		case 1:
-			return BindDiagnosticsEnum.SERVICE_TYPE_NOT_SUPPORTED;
-		case 2:
-			return BindDiagnosticsEnum.VERSION_NOT_SUPPORTED;
-		case 3:
-			return BindDiagnosticsEnum.NO_SUCH_SERVICE_INSTANCE;
-		case 4:
-			return BindDiagnosticsEnum.ALREADY_BOUND;
-		case 5:    
-			return BindDiagnosticsEnum.SI_NOT_ACCESSIBLE_TO_THIS_INITIATOR;
-		case 6:    
-			return BindDiagnosticsEnum.INCONSISTENT_SERVICE_TYPE;
-		case 7:    
-			return BindDiagnosticsEnum.INVALID_TIME;
-		case 8:    
-			return BindDiagnosticsEnum.OUT_OF_SERVICE;
-		case 127:  
-			return BindDiagnosticsEnum.OTHER_REASON;
+		for(BindDiagnosticsEnum b : BindDiagnosticsEnum.values()) {
+			if(b.getCode() == intValue) {
+				return b;
+			}
 		}
 		throw new IllegalArgumentException("Cannot decode value: " + intValue);
 	}

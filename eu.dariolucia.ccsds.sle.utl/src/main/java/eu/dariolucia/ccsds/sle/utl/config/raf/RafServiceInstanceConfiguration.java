@@ -103,6 +103,7 @@ public class RafServiceInstanceConfiguration extends ServiceInstanceConfiguratio
     private Date endTime;
 
     public RafServiceInstanceConfiguration() {
+        super();
     }
 
     private List<RafRequestedFrameQualityEnum> parsePermittedFrameQuality(String string) {

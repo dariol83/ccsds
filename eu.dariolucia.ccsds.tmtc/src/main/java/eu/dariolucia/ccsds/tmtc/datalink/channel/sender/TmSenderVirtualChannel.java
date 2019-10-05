@@ -70,7 +70,7 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
         this.secondaryHeaderSupplier = secondaryHeaderSupplier;
         this.secondaryHeaderLength = secondaryHeaderLength;
         this.masterChannelFrameCounterSupplier = masterChannelFrameCounterSupplier;
-        if(mode == VirtualChannelAccessMode.Bitstream) {
+        if(mode == VirtualChannelAccessMode.BITSTREAM) {
             throw new IllegalArgumentException("Virtual channel " + virtualChannelId + " does not support access mode " + mode);
         }
 
@@ -135,7 +135,7 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
 
     @Override
     public int dispatch(byte[] userData) {
-        if (getMode() != VirtualChannelAccessMode.Data) {
+        if (getMode() != VirtualChannelAccessMode.DATA) {
             throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested User Data access");
         }
         int notWrittenData = userData.length;
@@ -160,7 +160,7 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
 
     @Override
     public int dispatch(Collection<SpacePacket> pkts) {
-        if (getMode() != VirtualChannelAccessMode.Packet) {
+        if (getMode() != VirtualChannelAccessMode.PACKET) {
             throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested Packet access");
         }
         List<SpacePacket> packets = new ArrayList<>(pkts);

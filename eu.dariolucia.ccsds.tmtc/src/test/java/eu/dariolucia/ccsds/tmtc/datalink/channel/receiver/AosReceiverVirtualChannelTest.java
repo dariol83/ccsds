@@ -42,7 +42,7 @@ class AosReceiverVirtualChannelTest {
     @Test
     public void testAosVc0SpacePacket() {
         // Create a virtual channel for VC0
-        AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
         List<byte[]> badPackets = new CopyOnWriteArrayList<>();
@@ -96,7 +96,7 @@ class AosReceiverVirtualChannelTest {
     @Test
     public void testAosVc0Gap() {
         // Create a virtual channel for VC0
-        AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
         List<byte[]> badPackets = new CopyOnWriteArrayList<>();
@@ -152,9 +152,9 @@ class AosReceiverVirtualChannelTest {
     @Test
     public void testAosBitstream() {
         // Create a virtual channel for VC0
-        AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.Bitstream, true);
-        AosReceiverVirtualChannel vc1 = new AosReceiverVirtualChannel(1, VirtualChannelAccessMode.Bitstream, true);
-        AosReceiverVirtualChannel vc63 = new AosReceiverVirtualChannel(63, VirtualChannelAccessMode.Bitstream, true);
+        AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.BITSTREAM, true);
+        AosReceiverVirtualChannel vc1 = new AosReceiverVirtualChannel(1, VirtualChannelAccessMode.BITSTREAM, true);
+        AosReceiverVirtualChannel vc63 = new AosReceiverVirtualChannel(63, VirtualChannelAccessMode.BITSTREAM, true);
         // Subscribe a collector
         final AtomicInteger frameCounter = new AtomicInteger(0);
         IVirtualChannelReceiverOutput output = new IVirtualChannelReceiverOutput() {

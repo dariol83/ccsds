@@ -142,13 +142,13 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
         this.currentVcSequenceCounter = frame.getVirtualChannelFrameCount();
 
         switch (this.mode) {
-            case Packet:
+            case PACKET:
                 extractPacket(frame, gapDetected);
                 return;
-            case Data:
+            case DATA:
                 extractData(frame, gapDetected);
                 return;
-            case Bitstream:
+            case BITSTREAM:
                 extractBitstream(frame, gapDetected);
                 return;
         }

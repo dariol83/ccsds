@@ -90,8 +90,9 @@ public class GVCID {
 		if (virtualChannelId == null) {
 			if (other.virtualChannelId != null)
 				return false;
-		} else if (!virtualChannelId.equals(other.virtualChannelId))
+		} else if (!virtualChannelId.equals(other.virtualChannelId)) {
 			return false;
+		}
 		return true;
 	}
 

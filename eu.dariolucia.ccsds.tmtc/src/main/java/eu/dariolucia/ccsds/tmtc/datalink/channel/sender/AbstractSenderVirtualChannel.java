@@ -120,7 +120,7 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
         // Calculate how much free space we have to fill up the frame, and the maximum amount of data that this
         // channel can handle to avoid violating the constraint on the generation of at most one frame
         int availableSpaceInCurrentFrame = getRemainingFreeSpace();
-        if(mode == VirtualChannelAccessMode.Packet) {
+        if(mode == VirtualChannelAccessMode.PACKET) {
             List<SpacePacket> packets = this.dataProvider.generateSpacePackets(getVirtualChannelId(), availableSpaceInCurrentFrame, availableSpaceInCurrentFrame + getMaxUserDataLength() - 1);
             // Compute if a frame will be emitted or not
             int newDataSize = packets == null ? 0 : packets.stream().map(SpacePacket::getLength).reduce(0, Integer::sum);
@@ -142,7 +142,7 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
                     return true;
                 }
             }
-        } else if(mode == VirtualChannelAccessMode.Bitstream) {
+        } else if(mode == VirtualChannelAccessMode.BITSTREAM) {
             BitstreamData data = this.dataProvider.generateBitstreamData(getVirtualChannelId(), availableSpaceInCurrentFrame);
             // Compute if a frame will be emitted or not
             int newDataSize = data == null ? 0 : data.getNumBits()/8 + (data.getNumBits() % 8 == 0 ? 0 : 1);
@@ -160,7 +160,7 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
                 // The above is true only if there was meaningful data.
                 return newDataSize > 0 && remainingData == getMaxUserDataLength();
             }
-        } else if(mode == VirtualChannelAccessMode.Data) {
+        } else if(mode == VirtualChannelAccessMode.DATA) {
             byte[] data = this.dataProvider.generateData(getVirtualChannelId(), availableSpaceInCurrentFrame);
             // Compute if a frame will be emitted or not
             int newDataSize = data == null ? 0 : data.length;

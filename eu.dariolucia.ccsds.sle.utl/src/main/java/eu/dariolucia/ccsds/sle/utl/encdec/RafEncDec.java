@@ -93,7 +93,7 @@ public class RafEncDec extends CommonEncDec {
 	}
 
 	@Override
-	protected Supplier<? extends BerType> getDefaultDecodingProvider() {
+	protected Supplier<BerType> getDefaultDecodingProvider() {
 		return RafProviderToUserPdu::new;
 	}
 

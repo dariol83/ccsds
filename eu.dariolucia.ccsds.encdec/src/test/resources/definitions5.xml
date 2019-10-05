@@ -21,13 +21,13 @@
             <structure>
                 <!-- Generation time -->
                 <parameter id="PARAM1">
-                    <type_fixed type="AbsoluteTime" length="1" />
+                    <type_fixed type="ABSOLUTE_TIME" length="1" />
                 </parameter>
                 <parameter id="PARAM2">
                     <type_ext external="__java_serialization" />
                 </parameter>
                 <parameter id="PARAM3">
-                    <type_fixed type="SignedInteger" length="16" />
+                    <type_fixed type="SIGNED_INTEGER" length="16" />
                 </parameter>
             </structure>
         </packet>

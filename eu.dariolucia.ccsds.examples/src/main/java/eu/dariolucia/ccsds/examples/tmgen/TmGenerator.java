@@ -226,7 +226,7 @@ public class TmGenerator {
         Map<Integer, TmSenderVirtualChannel> vc2sender = new HashMap<>();
         for(int i : vcIds) {
             // Create the VC, use the muxer as master channel frame count supplier
-            TmSenderVirtualChannel vc = new TmSenderVirtualChannel(this.scId, i, VirtualChannelAccessMode.Packet, this.useFecf, this.frameLength, mux::getNextCounter, this.useClcw ? this::ocfSupplier : null);
+            TmSenderVirtualChannel vc = new TmSenderVirtualChannel(this.scId, i, VirtualChannelAccessMode.PACKET, this.useFecf, this.frameLength, mux::getNextCounter, this.useClcw ? this::ocfSupplier : null);
             // Register the muxer
             vc.register(mux);
             vc2sender.put(i, vc);

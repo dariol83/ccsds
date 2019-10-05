@@ -22,11 +22,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.S
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleUnbindInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleUnbindReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleAcknowledgement;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportReturn;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleStopInvocation;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafGetParameterInvocation;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafStartInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafUserToProviderPdu;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.*;
 import eu.dariolucia.ccsds.sle.utl.encdec.CommonEncDec;
@@ -69,7 +65,7 @@ public class RafProviderEncDec extends CommonEncDec {
 	}
 
 	@Override
-	protected Supplier<? extends BerType> getDefaultDecodingProvider() {
+	protected Supplier<BerType> getDefaultDecodingProvider() {
 		return RafUserToProviderPdu::new;
 	}
 

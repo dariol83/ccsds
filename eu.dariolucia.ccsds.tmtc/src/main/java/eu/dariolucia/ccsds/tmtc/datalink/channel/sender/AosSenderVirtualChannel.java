@@ -177,7 +177,7 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 	}
 
 	public int dispatch(boolean replay, byte[] userData) {
-		if (getMode() != VirtualChannelAccessMode.Data) {
+		if (getMode() != VirtualChannelAccessMode.DATA) {
 			throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested User Data access");
 		}
 		int notWrittenData = userData.length;
@@ -213,7 +213,7 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 	}
 
 	public int dispatch(boolean replay, Collection<SpacePacket> pkts) {
-		if (getMode() != VirtualChannelAccessMode.Packet) {
+		if (getMode() != VirtualChannelAccessMode.PACKET) {
 			throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested Packet access");
 		}
 		List<SpacePacket> packets = new ArrayList<>(pkts);
@@ -251,7 +251,7 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 	}
 
 	public int dispatch(boolean replayFlag, BitstreamData data) {
-		if (getMode() != VirtualChannelAccessMode.Bitstream) {
+		if (getMode() != VirtualChannelAccessMode.BITSTREAM) {
 			throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested Bitstream access");
 		}
 		// No pending frame allowed
@@ -288,11 +288,11 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 			return AosTransferFrame.UserDataType.IDLE;
 		} else {
 			switch (getMode()) {
-				case Packet:
+				case PACKET:
 					return AosTransferFrame.UserDataType.M_PDU;
-				case Data:
+				case DATA:
 					return AosTransferFrame.UserDataType.VCA;
-				case Bitstream:
+				case BITSTREAM:
 					return AosTransferFrame.UserDataType.B_PDU;
 			}
 		}

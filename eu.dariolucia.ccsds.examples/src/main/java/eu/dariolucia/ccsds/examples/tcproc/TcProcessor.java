@@ -40,7 +40,6 @@ import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -166,7 +165,7 @@ public class TcProcessor {
         // Create the 8 VCs (0..7) for TC reception (assuming CLTU or frame transmission)
         TcReceiverVirtualChannel[] tcVcs = new TcReceiverVirtualChannel[8];
         for(int i = 0; i < 8; ++i) {
-            tcVcs[i] = new TcReceiverVirtualChannel(i, VirtualChannelAccessMode.Packet, true);
+            tcVcs[i] = new TcReceiverVirtualChannel(i, VirtualChannelAccessMode.PACKET, true);
         }
 
         // Create the demuxer

@@ -66,7 +66,12 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	private static final int SI_INIT_MODE_UIB = 1;
 	private static final int SI_INIT_MODE_PIB = 2;
 
+	private static final String BIND_RETURN_NAME = "BIND-RETURN";
+	private static final String UNBIND_NAME = "UNBIND";
+	private static final String BIND_NAME = "BIND";
+
 	private static final Logger LOG = Logger.getLogger(ServiceInstance.class.getName());
+	public static final String UNBIND_RETURN_NAME = "UNBIND-RETURN";
 
 	private final ExecutorService dispatcher;
 	private final ExecutorService notifier;
@@ -223,7 +228,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 						l.onStateUpdated(this, state);
 					} catch (Exception e) {
 						LOG.log(Level.SEVERE,
-								getServiceInstanceIdentifier() + ": Service instance cannot notify listener " + l, e);
+								getServiceInstanceIdentifier() + ": Service instance cannot notify (state update) listener " + l, e);
 					}
 				}
 			});
@@ -237,7 +242,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 					l.onPduSent(this, pdu, name, encodedOperation);
 				} catch (Exception e) {
 					LOG.log(Level.SEVERE,
-							getServiceInstanceIdentifier() + ": Service instance cannot notify listener " + l, e);
+							getServiceInstanceIdentifier() + ": Service instance cannot notify (PDU sent) listener " + l, e);
 				}
 			}
 		});
@@ -250,7 +255,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 					l.onPduSentError(this, pdu, name, encodedOperation, getErrorMessage(), getErrorException());
 				} catch (Exception e) {
 					LOG.log(Level.SEVERE,
-							getServiceInstanceIdentifier() + ": Service instance cannot notify listener " + l, e);
+							getServiceInstanceIdentifier() + ": Service instance cannot notify (PDU sent error) listener " + l, e);
 				}
 			}
 		});
@@ -263,7 +268,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 					l.onPduReceived(this, pdu, name, encodedOperation);
 				} catch (Exception e) {
 					LOG.log(Level.SEVERE,
-							getServiceInstanceIdentifier() + ": Service instance cannot notify listener " + l, e);
+							getServiceInstanceIdentifier() + ": Service instance cannot notify (PDU received) listener " + l, e);
 				}
 			}
 		});
@@ -276,7 +281,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 					l.onPduDecodingError(this, encodedOperation);
 				} catch (Exception e) {
 					LOG.log(Level.SEVERE,
-							getServiceInstanceIdentifier() + ": Service instance cannot notify listener " + l, e);
+							getServiceInstanceIdentifier() + ": Service instance cannot notify (PDU decoding error) listener " + l, e);
 				}
 			}
 		});
@@ -289,7 +294,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 					l.onPduHandlingError(this, pdu, encodedOperation);
 				} catch (Exception e) {
 					LOG.log(Level.SEVERE,
-							getServiceInstanceIdentifier() + ": Service instance cannot notify listener " + l, e);
+							getServiceInstanceIdentifier() + ": Service instance cannot notify (PDU handling error) listener " + l, e);
 				}
 			}
 		});
@@ -421,7 +426,8 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 				return;
 			}
 		} else {
-			setError("Foreign local port " + getResponderPortIdentifier()
+			setError(getServiceInstanceIdentifier()
+					+ ": Foreign local port " + getResponderPortIdentifier()
 					+ " not found in the SLE configuration file for service instance "
 					+ getServiceInstanceIdentifier());
 			notifyStateUpdate();
@@ -505,7 +511,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 				AuthenticationModeEnum.BIND);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "BIND", null);
+			notifyPduSentError(pdu, BIND_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
@@ -518,7 +524,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		// From the responder port of the bind, go to API configuration and check the
 		// foreign local port and the related IP address.
 		Optional<PortMapping> port = this.peerConfiguration.getPortMappings().stream()
-				.filter((flp) -> flp.getPortName().equals(getResponderPortIdentifier())).findFirst();
+				.filter(flp -> flp.getPortName().equals(getResponderPortIdentifier())).findFirst();
 		if (port.isPresent()) {
 			// Create a new TML channel
 			this.tmlChannel = TmlChannel.createClientTmlChannel(port.get().getRemoteHost(),
@@ -528,7 +534,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			setError("Foreign local port " + getResponderPortIdentifier()
 					+ " not found in the SLE configuration file for service instance "
 					+ getServiceInstanceIdentifier());
-			notifyPduSentError(pdu, "BIND", null);
+			notifyPduSentError(pdu, BIND_NAME, null);
 			notifyStateUpdate();
 			return;
 		}
@@ -538,17 +544,17 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			this.tmlChannel.connect();
 		} catch (TmlChannelException e) {
 			disconnect("Cannot connect", e, null);
-			notifyPduSentError(pdu, "BIND", null);
+			notifyPduSentError(pdu, BIND_NAME, null);
 			notifyStateUpdate();
 			return;
 		}
 
-		boolean resultOk = encodeAndSend(BIND_INTERNAL_INVOKE_ID, pdu, "BIND");
+		boolean resultOk = encodeAndSend(BIND_INTERNAL_INVOKE_ID, pdu, BIND_NAME);
 
 		if (resultOk) {
 			// If all fine, transition to new state: BIND_PENDING and notify PDU sent
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.BIND_PENDING);
-			notifyPduSent(pdu, "BIND", getLastPduSent());
+			notifyPduSent(pdu, BIND_NAME, getLastPduSent());
 
 			// Init mode to be set
 			this.initMode = SI_INIT_MODE_UIB;
@@ -578,7 +584,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	}
 
 	private void returnTimeoutExpired(long opInvokeId) {
-		LOG.warning(getServiceInstanceIdentifier() + ": Return timeout expired for invokeId=" + opInvokeId);
+		LOG.warning(String.format("%s: Return timeout expired for invokeId=%d", getServiceInstanceIdentifier(), opInvokeId));
 		TimerTask tt = this.invokeId2timeout.remove(opInvokeId);
 		if (tt != null) {
 			disconnect("Return timeout expired for operation with invokeId=" + opInvokeId);
@@ -588,7 +594,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	}
 
 	protected void cancelReturnTimeout(long opInvokeId) {
-		LOG.fine(getServiceInstanceIdentifier() + ": Return timeout cancelled for invokeId=" + opInvokeId);
+		if(LOG.isLoggable(Level.FINE)) {
+			LOG.fine(getServiceInstanceIdentifier() + ": Return timeout cancelled for invokeId=" + opInvokeId);
+		}
 		TimerTask tt = this.invokeId2timeout.remove(opInvokeId);
 		if (tt != null) {
 			tt.cancel();
@@ -603,8 +611,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		try {
 			encodedPdu = encodePdu(pdu);
 			String invokeStr = invokeId != null && invokeId >= 0 ? "(" + invokeId + ") " : "(<no invoke ID>) ";
-			LOG.info(getServiceInstanceIdentifier() + ": PDU " + invokeStr + name + " encoded: "
-					+ PduStringUtil.instance().toHexDump(encodedPdu));
+			LOG.info(String.format("%s: PDU %s%s encoded: %s", getServiceInstanceIdentifier(), invokeStr, name, PduStringUtil.instance().toHexDump(encodedPdu)));
 		} catch (IOException e1) {
 			disconnect("Cannot encode PDU", e1, null);
 			notifyPduSentError(pdu, name, null);
@@ -660,7 +667,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
 	protected void setServiceInstanceState(ServiceInstanceBindingStateEnum newState) {
 		if(newState != this.currentState) {
-			LOG.log(Level.INFO, getServiceInstanceIdentifier() + ": State transition from " + this.currentState + " to " + newState);
+			LOG.log(Level.INFO, String.format("%s: State transition from %s to %s", getServiceInstanceIdentifier(), this.currentState, newState));
 			this.currentState = newState;
 		}
 	}
@@ -704,19 +711,19 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 				AuthenticationModeEnum.BIND);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "UNBIND", null);
+			notifyPduSentError(pdu, UNBIND_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(UNBIND_INTERNAL_INVOKE_ID, pdu, "UNBIND");
+		boolean resultOk = encodeAndSend(UNBIND_INTERNAL_INVOKE_ID, pdu, UNBIND_NAME);
 
 		if (resultOk) {
 			// If all fine, transition to new state: UNBIND_PENDING and notify PDU sent
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBIND_PENDING);
-			notifyPduSent(pdu, "UNBIND", getLastPduSent());
+			notifyPduSent(pdu, UNBIND_NAME, getLastPduSent());
 
 			// Generate state and notify update
 			notifyStateUpdate();
@@ -758,7 +765,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
 			disconnect("Unbind return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "UNBIND-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, UNBIND_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -769,7 +776,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getResponderCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Unbind return received, but wrong credentials");
-			notifyPduReceived(pdu, "UNBIND-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, UNBIND_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -787,7 +794,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			disconnect("Unbind return received, null result");
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "UNBIND-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, UNBIND_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -837,7 +844,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		clearError();
 
 		// Notify the reception on the PDU
-		notifyPduReceived(pdu, "BIND", getLastPduReceived());
+		notifyPduReceived(pdu, BIND_NAME, getLastPduReceived());
 
 		// Validate state (this implies that the service instance is in PIB mode)
 		if (this.currentState != ServiceInstanceBindingStateEnum.UNBOUND_WAIT) {
@@ -860,7 +867,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 				AuthenticationModeEnum.BIND);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "BIND-RETURN", null);
+			notifyPduSentError(pdu, BIND_RETURN_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
@@ -872,7 +879,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			// Send response
 			resp.getResult()
 					.setNegative(new BindDiagnostic(BindDiagnosticsEnum.SI_NOT_ACCESSIBLE_TO_THIS_INITIATOR.getCode()));
-			encodeAndSend(null, resp, "BIND-RETURN");
+			encodeAndSend(null, resp, BIND_RETURN_NAME);
 			// Then disconnect
 			disconnect("Bind invocation received, but no initiator identifier set");
 			notifyStateUpdate();
@@ -883,7 +890,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			// Send response
 			resp.getResult()
 					.setNegative(new BindDiagnostic(BindDiagnosticsEnum.SI_NOT_ACCESSIBLE_TO_THIS_INITIATOR.getCode()));
-			encodeAndSend(null, resp, "BIND-RETURN");
+			encodeAndSend(null, resp, BIND_RETURN_NAME);
 			// Then disconnect
 			disconnect("Bind invocation received, but initiator identifier does not match: expected "
 					+ this.serviceInstanceConfiguration.getInitiatorIdentifier() + ", got " + initiatorId);
@@ -898,7 +905,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		if (!authenticate(pdu.getInvokerCredentials(), AuthenticationModeEnum.ALL, AuthenticationModeEnum.BIND)) {
 			// Send response
 			resp.getResult().setNegative(new BindDiagnostic(BindDiagnosticsEnum.ACCESS_DENIED.getCode()));
-			encodeAndSend(null, resp, "BIND-RETURN");
+			encodeAndSend(null, resp, BIND_RETURN_NAME);
 			// Then disconnect
 			disconnect("Bind invocation received, but wrong credentials for initiator " + initiatorId);
 			notifyStateUpdate();
@@ -912,13 +919,13 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			updateHandlersForVersion(this.sleVersion);
 			// Send response
 			resp.getResult().setPositive(new VersionNumber(pdu.getVersionNumber().intValue()));
-			encodeAndSend(null, resp, "BIND-RETURN");
+			encodeAndSend(null, resp, BIND_RETURN_NAME);
 			// Update state
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
 		} else {
 			// Send response
 			resp.getResult().setNegative(new BindDiagnostic(this.negativeBindReturnDiagnostics.getCode()));
-			encodeAndSend(null, resp, "BIND-RETURN");
+			encodeAndSend(null, resp, BIND_RETURN_NAME);
 			// Then disconnect
 			disconnect("Bind invocation received, but rejected by user configuration with diagnostics "
 					+ this.negativeBindReturnDiagnostics);
@@ -932,7 +939,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		clearError();
 
 		// Notify the reception on the PDU
-		notifyPduReceived(pdu, "UNBIND", getLastPduReceived());
+		notifyPduReceived(pdu, UNBIND_NAME, getLastPduReceived());
 
 		// Validate mode
 		if (this.initMode != SI_INIT_MODE_PIB) {
@@ -959,7 +966,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "UNBIND-RETURN", null);
+			notifyPduSentError(pdu, UNBIND_RETURN_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
@@ -979,7 +986,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		if (this.sendPositiveUnbindReturn) {
 			// Send response
 			resp.getResult().setPositive(new BerNull());
-			encodeAndSend(null, resp, "UNBIND-RETURN");
+			encodeAndSend(null, resp, UNBIND_RETURN_NAME);
 			// Update state
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBOUND);
 			// We do not remove the TML channel by calling disconnect, so that it is possible to rebind again, unless
@@ -1003,14 +1010,14 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.BIND_PENDING) {
 			disconnect("Bind return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "BIND-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, BIND_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
 		// Validate operation attributes
 		if (pdu.getResponderIdentifier() == null || pdu.getResponderIdentifier().value == null) {
 			disconnect("Bind return received, but no responder identifier set");
-			notifyPduReceived(pdu, "BIND-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, BIND_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -1018,7 +1025,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		if (!responderId.equals(this.serviceInstanceConfiguration.getResponderIdentifier())) {
 			disconnect("Bind return received, but responder identifier does not match: expected "
 					+ this.serviceInstanceConfiguration.getResponderIdentifier() + ", got " + responderId);
-			notifyPduReceived(pdu, "BIND-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, BIND_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -1029,7 +1036,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL, AuthenticationModeEnum.BIND)) {
 			disconnect("Bind return received, but wrong credentials");
-			notifyPduReceived(pdu, "BIND-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, BIND_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -1047,13 +1054,13 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 					+ BindDiagnosticsEnum.getBindDiagnostics(pdu.getResult().getNegative().intValue()));
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "BIND-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, BIND_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
 
 	public void dispose() {
-		dispatchFromUser(() -> doDispose());
+		dispatchFromUser(this::doDispose);
 	}
 
 	private void doDispose() {
@@ -1097,7 +1104,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
 	@Override
 	public void onChannelConnected(TmlChannel channel) {
-		LOG.info(getServiceInstanceIdentifier() + ": TML channel " + channel + " connected");
+		LOG.info(String.format("%s: TML channel %s connected", getServiceInstanceIdentifier(), channel));
 	}
 
 	@Override
@@ -1320,6 +1327,21 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			} else {
 				return this.task.hashCode() - o.task.hashCode();
 			}
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			SleTask sleTask = (SleTask) o;
+			return creation == sleTask.creation &&
+					type == sleTask.type &&
+					task.equals(sleTask.task);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(creation, type, task);
 		}
 	}
 }

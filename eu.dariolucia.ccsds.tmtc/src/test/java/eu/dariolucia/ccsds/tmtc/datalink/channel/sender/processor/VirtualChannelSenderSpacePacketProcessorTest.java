@@ -56,7 +56,7 @@ class VirtualChannelSenderSpacePacketProcessorTest {
 		// First, create a master channel counter
 		AtomicInteger mcCounter = new AtomicInteger(0);
 		// Create the VC sender: capable to process space packets and build TM frames
-		TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(151, 0, VirtualChannelAccessMode.Packet, false, 1115, () -> mcCounter.getAndIncrement() % 256, this::ocfSupplier);
+		TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(151, 0, VirtualChannelAccessMode.PACKET, false, 1115, () -> mcCounter.getAndIncrement() % 256, this::ocfSupplier);
 		// Create the mapping function
 		VirtualChannelSenderSpacePacketFlatMapper<TmTransferFrame> vc0mapper = new VirtualChannelSenderSpacePacketFlatMapper<>(vc0);
 		// Check VC equality

@@ -60,7 +60,7 @@ class VirtualChannelSenderSpacePacketMapperTest {
         rawFramePublisher.subscribe(frameDecoderProcessor);
 
         // Create a virtual channel for VC0, ignore other VCs (no exception on VC violation)
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, false);
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, false);
         // Create a space packet extractor function on the virtual channel (frame -> list of space packets)
         VirtualChannelReceiverSpacePacketMapper<TmTransferFrame> packetMapper = new VirtualChannelReceiverSpacePacketMapper<>(vc0);
         // Create the space packet extraction processor
@@ -111,7 +111,7 @@ class VirtualChannelSenderSpacePacketMapperTest {
         frameDecoderProcessor.subscribe(vc0filter);
 
         // Create a virtual channel for VC0, do not ignore other VCs (exception on VC violation)
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         // Create a space packet extractor function on the virtual channel (frame -> list of space packets)
         VirtualChannelReceiverSpacePacketMapper<TmTransferFrame> packetMapper = new VirtualChannelReceiverSpacePacketMapper<>(vc0);
         // Create the space packet extraction processor

@@ -27,10 +27,8 @@ import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import eu.dariolucia.ccsds.tmtc.util.StreamUtil;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -47,8 +45,8 @@ class TmReceiverVirtualChannelTest {
     @Test
     public void testTmVc0SpacePacket() {
         // Create a virtual channel for VC0
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
-        assertEquals(VirtualChannelAccessMode.Packet, vc0.getReceiverMode());
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
+        assertEquals(VirtualChannelAccessMode.PACKET, vc0.getReceiverMode());
         assertEquals(-1, vc0.getCurrentVcSequenceCounter());
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
@@ -105,7 +103,7 @@ class TmReceiverVirtualChannelTest {
     @Test
     public void testTmVc7SpacePacket() {
         // Create a virtual channel for VC0
-        TmReceiverVirtualChannel vc7 = new TmReceiverVirtualChannel(7, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc7 = new TmReceiverVirtualChannel(7, VirtualChannelAccessMode.PACKET, true);
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
         List<byte[]> badPackets = new CopyOnWriteArrayList<>();
@@ -166,7 +164,7 @@ class TmReceiverVirtualChannelTest {
     @Test
     public void testTmSegmentationSpacePacket() {
         // Create a virtual channel for VC1
-        TmReceiverVirtualChannel vc1 = new TmReceiverVirtualChannel(1, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc1 = new TmReceiverVirtualChannel(1, VirtualChannelAccessMode.PACKET, true);
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
         vc1.register(new IVirtualChannelReceiverOutput() {
@@ -210,9 +208,9 @@ class TmReceiverVirtualChannelTest {
     @Test
     public void testTmUserData() {
         // Create a virtual channel for VC0, 1, 7
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Data, true);
-        TmReceiverVirtualChannel vc1 = new TmReceiverVirtualChannel(1, VirtualChannelAccessMode.Data, true);
-        TmReceiverVirtualChannel vc7 = new TmReceiverVirtualChannel(7, VirtualChannelAccessMode.Data, true);
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.DATA, true);
+        TmReceiverVirtualChannel vc1 = new TmReceiverVirtualChannel(1, VirtualChannelAccessMode.DATA, true);
+        TmReceiverVirtualChannel vc7 = new TmReceiverVirtualChannel(7, VirtualChannelAccessMode.DATA, true);
         // Subscribe a collector
         final AtomicInteger frameCounter = new AtomicInteger(0);
         IVirtualChannelReceiverOutput output = new IVirtualChannelReceiverOutput() {
@@ -279,7 +277,7 @@ class TmReceiverVirtualChannelTest {
     @Test
     public void testTmSegmentationMixedSpacePacket() {
         // Create a virtual channel for VC0
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
         vc0.register(new IVirtualChannelReceiverOutput() {
@@ -323,7 +321,7 @@ class TmReceiverVirtualChannelTest {
     @Test
     public void testTmSegmentationMissingOneFrame() {
         // Create a virtual channel for VC0
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
         List<byte[]> badPackets = new CopyOnWriteArrayList<>();
@@ -379,7 +377,7 @@ class TmReceiverVirtualChannelTest {
     @Test
     public void testTmSegmentationSilentDrop() {
         // Create a virtual channel for VC0
-        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.Packet, true);
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
         // Subscribe a packet collector
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
         List<byte[]> badPackets = new CopyOnWriteArrayList<>();

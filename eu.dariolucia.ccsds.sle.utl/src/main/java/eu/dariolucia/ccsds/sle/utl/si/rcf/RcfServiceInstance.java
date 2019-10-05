@@ -45,6 +45,19 @@ public class RcfServiceInstance extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(RcfServiceInstance.class.getName());
 
+	private static final String START_NAME = "START";
+	private static final String STOP_NAME = "STOP";
+	private static final String SCHEDULE_STATUS_REPORT_NAME = "SCHEDULE-STATUS-REPORT";
+	private static final String GET_PARAMETER_NAME = "GET-PARAMETER";
+	private static final String GET_PARAMETER_RETURN_NAME = "GET-PARAMETER-RETURN";
+	private static final String START_RETURN_NAME = "START-RETURN";
+	private static final String STOP_RETURN_NAME = "STOP-RETURN";
+	private static final String STATUS_REPORT_NAME = "STATUS-REPORT";
+	private static final String TRANSFER_BUFFER_NAME = "TRANSFER-BUFFER";
+	private static final String TRANSFER_DATA_NAME = "TRANSFER-DATA";
+	private static final String NOTIFY_NAME = "NOTIFY";
+	private static final String SCHEDULE_STATUS_REPORT_RETURN_NAME = "SCHEDULE-STATUS-REPORT-RETURN";
+
 	// Read from configuration, updated via GET_PARAMETER
 	private Integer latencyLimit; // NULL if offline, otherwise a value
 	private List<GVCID> permittedGvcid;
@@ -154,14 +167,14 @@ public class RcfServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "START", null);
+			notifyPduSentError(pdu, START_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(invokeId, pdu, "START");
+		boolean resultOk = encodeAndSend(invokeId, pdu, START_NAME);
 
 		if (resultOk) {
 			// If all fine, transition to new state: START_PENDING and notify PDU sent
@@ -172,7 +185,7 @@ public class RcfServiceInstance extends ServiceInstance {
 			this.startTime = start;
 			this.endTime = end;
 			// Notify PDU
-			notifyPduSent(pdu, "START", getLastPduSent());
+			notifyPduSent(pdu, START_NAME, getLastPduSent());
 
 			// Generate state and notify update
 			notifyStateUpdate();
@@ -183,7 +196,7 @@ public class RcfServiceInstance extends ServiceInstance {
 	 * This method requests the transmission of a STOP operation.
 	 */
 	public void stop() {
-		dispatchFromUser(() -> doStop());
+		dispatchFromUser(this::doStop);
 	}
 
 	private void doStop() {
@@ -209,19 +222,19 @@ public class RcfServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "STOP", null);
+			notifyPduSentError(pdu, STOP_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(invokeId, pdu, "STOP");
+		boolean resultOk = encodeAndSend(invokeId, pdu, STOP_NAME);
 		
 		if (resultOk) {
 			// If all fine, transition to new state: STOP_PENDING and notify PDU sent
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.STOP_PENDING);
-			notifyPduSent(pdu, "STOP", getLastPduSent());
+			notifyPduSent(pdu, STOP_NAME, getLastPduSent());
 			// Generate state and notify update
 			notifyStateUpdate();
 		}
@@ -270,18 +283,18 @@ public class RcfServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "SCHEDULE-STATUS-REPORT", null);
+			notifyPduSentError(pdu, SCHEDULE_STATUS_REPORT_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(invokeId, pdu, "SCHEDULE-STATUS-REPORT");
+		boolean resultOk = encodeAndSend(invokeId, pdu, SCHEDULE_STATUS_REPORT_NAME);
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, "SCHEDULE-STATUS-REPORT", getLastPduSent());
+			notifyPduSent(pdu, SCHEDULE_STATUS_REPORT_NAME, getLastPduSent());
 
 			// Generate state and notify update
 			notifyStateUpdate();
@@ -324,18 +337,18 @@ public class RcfServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "GET-PARAMETER", null);
+			notifyPduSentError(pdu, GET_PARAMETER_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(invokeId, pdu, "GET-PARAMETER");
+		boolean resultOk = encodeAndSend(invokeId, pdu, GET_PARAMETER_NAME);
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, "GET-PARAMETER", getLastPduSent());
+			notifyPduSent(pdu, GET_PARAMETER_NAME, getLastPduSent());
 
 			// Generate state and notify update
 			notifyStateUpdate();
@@ -350,7 +363,7 @@ public class RcfServiceInstance extends ServiceInstance {
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
 			disconnect("Get parameter return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -361,7 +374,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Get parameter return received, but wrong credentials");
-			notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -374,31 +387,26 @@ public class RcfServiceInstance extends ServiceInstance {
 		// PDU received
 		if (pdu.getResult().getPositiveResult() != null) {
 			if (pdu.getResult().getPositiveResult().getParBufferSize() != null) {
-				int val = pdu.getResult().getPositiveResult().getParBufferSize().getParameterValue().intValue();
-				this.transferBufferSize = val;
+				this.transferBufferSize = pdu.getResult().getPositiveResult().getParBufferSize().getParameterValue().intValue();
 			} else if (pdu.getResult().getPositiveResult().getParDeliveryMode() != null) {
-				DeliveryModeEnum val = DeliveryModeEnum.values()[pdu.getResult().getPositiveResult()
+				this.deliveryMode = DeliveryModeEnum.values()[pdu.getResult().getPositiveResult()
 						.getParDeliveryMode().getParameterValue().intValue()];
-				this.deliveryMode = val;
 			} else if (pdu.getResult().getPositiveResult().getParReturnTimeout() != null) {
-				int val = pdu.getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue();
-				this.returnTimeoutPeriod = val;
+				this.returnTimeoutPeriod = pdu.getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue();
 			} else if (pdu.getResult().getPositiveResult().getParLatencyLimit() != null) {
 				if (pdu.getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOffline() != null) {
 					this.latencyLimit = null;
 				} else {
-					int val = pdu.getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOnline()
+					this.latencyLimit = pdu.getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOnline()
 							.intValue();
-					this.latencyLimit = val;
 				}
 			} else if (pdu.getResult().getPositiveResult().getParReportingCycle() != null) {
 				if (pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
 						.getPeriodicReportingOff() != null) {
 					this.reportingCycle = null; 
 				} else {
-					int val = pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
+					this.reportingCycle = pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue()
 							.getPeriodicReportingOn().intValue();
-					this.reportingCycle = val;
 				}
 			} else if (pdu.getResult().getPositiveResult().getParMinReportingCycle() != null) {
 				if (pdu.getResult().getPositiveResult().getParMinReportingCycle().getParameterValue()
@@ -439,7 +447,7 @@ public class RcfServiceInstance extends ServiceInstance {
 
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -452,7 +460,7 @@ public class RcfServiceInstance extends ServiceInstance {
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
 			disconnect("Get parameter return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -463,7 +471,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Get parameter return received, but wrong credentials");
-			notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -532,7 +540,7 @@ public class RcfServiceInstance extends ServiceInstance {
 
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "GET-PARAMETER-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -543,7 +551,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.START_PENDING) {
 			disconnect("Start return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "START-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -554,7 +562,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Start return received, but wrong credentials");
-			notifyPduReceived(pdu, "START-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -580,7 +588,7 @@ public class RcfServiceInstance extends ServiceInstance {
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "START-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -591,7 +599,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.STOP_PENDING) {
 			disconnect("Stop return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "STOP-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -602,7 +610,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(pdu.getCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Stop return received, but wrong credentials");
-			notifyPduReceived(pdu, "STOP-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -626,7 +634,7 @@ public class RcfServiceInstance extends ServiceInstance {
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "STOP-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -637,7 +645,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
 			disconnect("Status report received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "STATUS-REPORT", getLastPduReceived());
+			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -648,7 +656,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(pdu.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Status report received, but wrong credentials");
-			notifyPduReceived(pdu, "STATUS-REPORT", getLastPduReceived());
+			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -662,7 +670,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		this.numFramesDelivered = pdu.getDeliveredFrameNumber().intValue();
 
 		// Notify PDU
-		notifyPduReceived(pdu, "STATUS-REPORT", getLastPduReceived());
+		notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -673,7 +681,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
 			disconnect("Transfer buffer received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "TRANSFER-BUFFER", getLastPduReceived());
+			notifyPduReceived(pdu, TRANSFER_BUFFER_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -688,13 +696,13 @@ public class RcfServiceInstance extends ServiceInstance {
 				// If so, verify credentials.
 				if(!authenticate(tf.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 					disconnect("Transfer data received, but wrong credentials");
-					notifyPduReceived(pdu, "TRANSFER-DATA", getLastPduReceived());
+					notifyPduReceived(pdu, TRANSFER_DATA_NAME, getLastPduReceived());
 					notifyStateUpdate();
 					return;
 				}
 
 				// Notify PDU
-				notifyPduReceived(tf, "TRANSFER-DATA", null);
+				notifyPduReceived(tf, TRANSFER_DATA_NAME, null);
 			} else {
 				RcfSyncNotifyInvocation sn = fon.getSyncNotification();
 
@@ -704,7 +712,7 @@ public class RcfServiceInstance extends ServiceInstance {
 				// If so, verify credentials.
 				if(!authenticate(sn.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 					disconnect("Notify received, but wrong credentials");
-					notifyPduReceived(pdu, "NOTIFY", getLastPduReceived());
+					notifyPduReceived(pdu, NOTIFY_NAME, getLastPduReceived());
 					notifyStateUpdate();
 					return;
 				}
@@ -724,11 +732,10 @@ public class RcfServiceInstance extends ServiceInstance {
 				} else if (sn.getNotification().getProductionStatusChange() != null) {
 					this.productionStatus = mapProductionStatus(
 							sn.getNotification().getProductionStatusChange().intValue());
-					LOG.info(
-							getServiceInstanceIdentifier() + ": Production status changed to " + this.productionStatus);
+					LOG.info(String.format("%s: Production status changed to %s", getServiceInstanceIdentifier(), this.productionStatus));
 				}
 				// Notify PDU
-				notifyPduReceived(sn, "NOTIFY", null);
+				notifyPduReceived(sn, NOTIFY_NAME, null);
 			}
 		}
 		// Generate state and notify update
@@ -741,7 +748,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
 			disconnect("Status report received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "STATUS-REPORT", getLastPduReceived());
+			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -752,7 +759,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(pdu.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Status report received, but wrong credentials");
-			notifyPduReceived(pdu, "STATUS-REPORT", getLastPduReceived());
+			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -766,7 +773,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		this.numFramesDelivered = pdu.getDeliveredFrameNumber().intValue();
 
 		// Notify PDU
-		notifyPduReceived(pdu, "STATUS-REPORT", getLastPduReceived());
+		notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -777,7 +784,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
 			disconnect("Schedule status report return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, "SCHEDULE-STATUS-REPORT-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -788,7 +795,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Schedule status report return received, but wrong credentials");
-			notifyPduReceived(pdu, "SCHEDULE-STATUS-REPORT-RETURN", getLastPduReceived());
+			notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -807,7 +814,7 @@ public class RcfServiceInstance extends ServiceInstance {
 					+ RcfDiagnosticsStrings.getScheduleStatusReportDiagnostic(pdu.getResult().getNegativeResult()));
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, "SCHEDULE-STATUS-REPORT-RETURN", getLastPduReceived());
+		notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
@@ -942,5 +949,4 @@ public class RcfServiceInstance extends ServiceInstance {
 	private RcfServiceInstanceConfiguration getRcfConfiguration() {
 		return (RcfServiceInstanceConfiguration) this.serviceInstanceConfiguration;
 	}
-
 }

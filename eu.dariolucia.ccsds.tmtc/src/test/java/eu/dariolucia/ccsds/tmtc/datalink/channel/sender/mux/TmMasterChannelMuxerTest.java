@@ -40,9 +40,9 @@ class TmMasterChannelMuxerTest {
         // Setup the muxer
         TmMasterChannelMuxer mux = new TmMasterChannelMuxer(sink);
         // Setup 3 VCs
-        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier);
-        TmSenderVirtualChannel vc1 = new TmSenderVirtualChannel(123, 1, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier);
-        TmSenderVirtualChannel vc4 = new TmSenderVirtualChannel(123, 4, VirtualChannelAccessMode.Packet, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc0 = new TmSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc1 = new TmSenderVirtualChannel(123, 1, VirtualChannelAccessMode.PACKET, false, 1115, mux::getNextCounter, this::ocfSupplier);
+        TmSenderVirtualChannel vc4 = new TmSenderVirtualChannel(123, 4, VirtualChannelAccessMode.PACKET, false, 1115, mux::getNextCounter, this::ocfSupplier);
         // Link the muxer with the 3 VCs
         vc0.register(mux);
         vc1.register(mux);

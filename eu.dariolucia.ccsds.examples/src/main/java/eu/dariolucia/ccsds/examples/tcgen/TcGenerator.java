@@ -37,12 +37,10 @@ import eu.dariolucia.ccsds.tmtc.transport.builder.SpacePacketBuilder;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.*;
 import java.net.Socket;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -214,7 +212,7 @@ public class TcGenerator {
             // Freeze the encoder configuration
             channelEncoder.configure();
             // Create the VC object to generate frames
-            vc = new TcSenderVirtualChannel(this.scId, this.vcId, VirtualChannelAccessMode.Packet, this.useFecf, this.useSegmentation);
+            vc = new TcSenderVirtualChannel(this.scId, this.vcId, VirtualChannelAccessMode.PACKET, this.useFecf, this.useSegmentation);
             // Link
             final ChannelEncoder<TcTransferFrame> finalChannelEncoder = channelEncoder;
             IVirtualChannelSenderOutput<TcTransferFrame> vcOut = (vc1, generatedFrame, bufferedBytes) -> {

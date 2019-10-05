@@ -97,6 +97,7 @@ public class RcfServiceInstanceConfiguration extends ServiceInstanceConfiguratio
     private Date endTime;
 
     public RcfServiceInstanceConfiguration() {
+        super();
     }
 
     public GVCID getRequestedGvcid() {

@@ -73,13 +73,13 @@ public class SpacePacketExtractor {
     private AbstractReceiverVirtualChannel buildChannel(AbstractTransferFrame atf) {
         if (atf instanceof TmTransferFrame) {
             TmTransferFrame ttf = (TmTransferFrame) atf;
-            return new TmReceiverVirtualChannel(ttf.getVirtualChannelId(), VirtualChannelAccessMode.Packet, true);
+            return new TmReceiverVirtualChannel(ttf.getVirtualChannelId(), VirtualChannelAccessMode.PACKET, true);
         } else if (atf instanceof AosTransferFrame) {
             AosTransferFrame ttf = (AosTransferFrame) atf;
-            return new AosReceiverVirtualChannel(ttf.getVirtualChannelId(), VirtualChannelAccessMode.Packet, true);
+            return new AosReceiverVirtualChannel(ttf.getVirtualChannelId(), VirtualChannelAccessMode.PACKET, true);
         } else if (atf instanceof TcTransferFrame) {
             TcTransferFrame ttf = (TcTransferFrame) atf;
-            return new TcReceiverVirtualChannel(ttf.getVirtualChannelId(), VirtualChannelAccessMode.Packet, true);
+            return new TcReceiverVirtualChannel(ttf.getVirtualChannelId(), VirtualChannelAccessMode.PACKET, true);
         }
         throw new IllegalArgumentException("Frame type " + atf.getClass() + " not supported");
     }

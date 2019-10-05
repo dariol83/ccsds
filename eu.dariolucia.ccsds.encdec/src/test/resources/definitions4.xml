@@ -21,42 +21,42 @@
             <structure>
                 <!-- Generation time -->
                 <parameter id="PARAM1">
-                    <type_fixed type="AbsoluteTime" length="1" />
+                    <type_fixed type="ABSOLUTE_TIME" length="1" />
                 </parameter>
                 <!-- Signed integer 3 bits: 3 -->
                 <parameter id="PARAM2">
-                    <type_fixed type="SignedInteger" length="3" />
+                    <type_fixed type="SIGNED_INTEGER" length="3" />
                     <time absolute_ref="PARAM1" />
                 </parameter>
                 <!-- Float 32 bits: 35 -->
                 <parameter id="PARAM3">
-                    <type_fixed type="Real" length="1" />
+                    <type_fixed type="REAL" length="1" />
                     <time absolute_ref="PARAM1" />
                 </parameter>
                 <!-- Unsigned integer 6 bits: 41 -->
                 <parameter id="PARAM4">
-                    <type_fixed type="UnsignedInteger" length="6" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="6" />
                     <time absolute_ref="PARAM1" offset="10" />
                 </parameter>
                 <parameter id="PARAM5">
-                    <type_fixed type="UnsignedInteger" length="6" />
+                    <type_fixed type="UNSIGNED_INTEGER" length="6" />
                     <time absolute_ref="PARAM1" offset="-50" />
                 </parameter>
                 <parameter id="PARAM6">
-                    <type_fixed type="RelativeTime" length="2" />
+                    <type_fixed type="RELATIVE_TIME" length="2" />
                 </parameter>
                 <!-- Boolean 1 bit: 42 -->
                 <parameter id="PARAM7">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                     <time absolute_ref="PARAM1" offset_ref="PARAM6" offset="10" />
                 </parameter>
                 <!-- Boolean 1 bit: 43 -->
                 <parameter id="PARAM8">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                     <time absolute_ref="PARAM1" offset_ref="PARAM6" />
                 </parameter>
                 <parameter id="PARAM9">
-                    <type_fixed type="Boolean" length="0" />
+                    <type_fixed type="BOOLEAN" length="0" />
                     <time offset_ref="PARAM6" />
                 </parameter>
             </structure>
@@ -65,13 +65,13 @@
 
     <parameters>
         <parameter id="PARAM001" external_id="1234" description="Sample Parameter 1">
-            <type type="UnsignedInteger" length="7" />
+            <type type="UNSIGNED_INTEGER" length="7" />
         </parameter>
         <parameter id="PARAM002" external_id="1235" description="Sample Parameter 2">
-            <type type="SignedInteger" length="3" />
+            <type type="SIGNED_INTEGER" length="3" />
         </parameter>
         <parameter id="PARAM002" external_id="1236" description="Sample Parameter 3">
-            <type type="Real" length="1" />
+            <type type="REAL" length="1" />
         </parameter>
     </parameters>
 

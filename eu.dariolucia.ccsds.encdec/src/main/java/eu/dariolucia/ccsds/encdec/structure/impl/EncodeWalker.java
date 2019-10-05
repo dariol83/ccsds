@@ -90,31 +90,31 @@ public class EncodeWalker extends StructureWalker<byte[]> {
 
         // Now that you have the final type and length, you can invoke the resolver to get the value and encode it
         switch (dataType) {
-            case Boolean: {
+            case BOOLEAN: {
                 boolean v = this.resolver.getBooleanValue(ei, this.currentLocation);
                 this.bitHandler.setNextBoolean(v);
                 value = v;
             }
             break;
-            case Enumerated: {
+            case ENUMERATED: {
                 int v = this.resolver.getEnumerationValue(ei, this.currentLocation);
                 this.bitHandler.setNextIntegerSigned(v, dataLength);
                 value = v;
             }
             break;
-            case UnsignedInteger: {
+            case UNSIGNED_INTEGER: {
                 long v = this.resolver.getUnsignedIntegerValue(ei, this.currentLocation);
                 this.bitHandler.setNextLongUnsigned(v, dataLength);
                 value = v;
             }
             break;
-            case SignedInteger: {
+            case SIGNED_INTEGER: {
                 long v = this.resolver.getSignedIntegerValue(ei, this.currentLocation);
                 this.bitHandler.setNextLongSigned(v, dataLength);
                 value = v;
             }
             break;
-            case Real: {
+            case REAL: {
                 double v = this.resolver.getRealValue(ei, this.currentLocation);
                 switch (dataLength) {
                     case 1:
@@ -135,7 +135,7 @@ public class EncodeWalker extends StructureWalker<byte[]> {
                 value = v;
             }
             break;
-            case BitString: {
+            case BIT_STRING: {
                 BitString bs = this.resolver.getBitStringValue(ei, this.currentLocation, dataLength);
                 if (dataLength != 0 && bs.getLength() != dataLength) {
                     throw new IllegalStateException("Resolved bitstring length value " + bs.getLength() + " and PFC code " + dataLength + " for bit string do not match for encoded parameter " + ei.getId() + ", cannot encode");
@@ -144,7 +144,7 @@ public class EncodeWalker extends StructureWalker<byte[]> {
                 value = bs;
             }
             break;
-            case OctetString: {
+            case OCTET_STRING: {
                 byte[] bs = this.resolver.getOctetStringValue(ei, this.currentLocation, dataLength);
                 if (dataLength != 0 && bs.length != dataLength) {
                     throw new IllegalStateException("Resolved octet string length value " + bs.length + " and PFC code " + dataLength + " for octet string do not match for encoded parameter " + ei.getId() + ", cannot encode");
@@ -153,7 +153,7 @@ public class EncodeWalker extends StructureWalker<byte[]> {
                 value = bs;
             }
             break;
-            case CharacterString: {
+            case CHARACTER_STRING: {
                 String bs = this.resolver.getCharacterStringValue(ei, this.currentLocation, dataLength);
                 if (dataLength != 0 && bs.length() != dataLength) {
                     throw new IllegalStateException("Resolved char string length value " + bs.length() + " and PFC code " + dataLength + " for char string do not match for encoded parameter " + ei.getId() + ", cannot encode");
@@ -162,7 +162,7 @@ public class EncodeWalker extends StructureWalker<byte[]> {
                 value = bs;
             }
             break;
-            case AbsoluteTime: {
+            case ABSOLUTE_TIME: {
                 Instant t = this.resolver.getAbsoluteTimeValue(ei, this.currentLocation);
                 if (dataLength == 0) {
                     // Explicit definition of time format (CUC or CDS), i.e. including the Pfield
@@ -191,7 +191,7 @@ public class EncodeWalker extends StructureWalker<byte[]> {
                 value = t;
             }
             break;
-            case RelativeTime: {
+            case RELATIVE_TIME: {
                 Duration t = this.resolver.getRelativeTimeValue(ei, this.currentLocation);
                 if (dataLength == 0) {
                     // Explicit definition of time format (CUC), i.e. including the Pfield
@@ -209,7 +209,7 @@ public class EncodeWalker extends StructureWalker<byte[]> {
                 value = t;
             }
             break;
-            case Deduced:
+            case DEDUCED:
                 throw new RuntimeException("Deduced type for encoded parameter " + ei.getId() + " at this stage is not allowed, cannot encode");
             default:
                 throw new IllegalArgumentException("Type " + dataType + " not supported");

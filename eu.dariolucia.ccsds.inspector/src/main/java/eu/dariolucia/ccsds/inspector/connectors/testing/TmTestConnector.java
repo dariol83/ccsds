@@ -116,9 +116,9 @@ public class TmTestConnector extends AbstractConnector implements IVirtualChanne
         int frameLength = getConfiguration().getIntProperty(TmTestConnectorFactory.LENGTH_ID);
         AbstractSenderVirtualChannel vc;
         if(tfs == TmFrameSelection.TM) {
-            vc = new TmSenderVirtualChannel(scid, i, VirtualChannelAccessMode.Packet, fecfPresent, frameLength, this::masterChannelSource, ocfPresent ? this::ocfSource : null);
+            vc = new TmSenderVirtualChannel(scid, i, VirtualChannelAccessMode.PACKET, fecfPresent, frameLength, this::masterChannelSource, ocfPresent ? this::ocfSource : null);
         } else {
-            vc = new AosSenderVirtualChannel(scid, i, VirtualChannelAccessMode.Packet, fecfPresent, frameLength, ocfPresent ? this::ocfSource : null);
+            vc = new AosSenderVirtualChannel(scid, i, VirtualChannelAccessMode.PACKET, fecfPresent, frameLength, ocfPresent ? this::ocfSource : null);
         }
         vc.register(this);
         this.vcid2sender.put(i, vc);

@@ -23,13 +23,13 @@ public enum VirtualChannelAccessMode {
 	/**
 	 * The virtual channel delivers space packets
 	 */
-	Packet,
+	PACKET,
 	/**
 	 * The virtual channel delivers bitstream data (AOS only)
 	 */
-	Bitstream,
+	BITSTREAM,
 	/**
 	 * The virtual channel delivers raw data (direct access, or VCA)
 	 */
-	Data
+	DATA
 }
