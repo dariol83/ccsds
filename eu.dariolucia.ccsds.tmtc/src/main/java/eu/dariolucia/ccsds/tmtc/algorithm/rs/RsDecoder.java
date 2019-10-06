@@ -61,12 +61,10 @@ public class RsDecoder {
                 }
             }
             byte[] decoded = conventionalDecoder.check(copied, true);
-            if (decoded != null) {
-                if (dualBasis) {
-                    // Apply straightT to the decoded message
-                    for (int i = 0; i < decoded.length; ++i) {
-                        decoded[i] = (byte) RsCcsdsUtil.multiplyStraight(Byte.toUnsignedInt(decoded[i]));
-                    }
+            if (decoded != null && dualBasis) {
+                // Apply straightT to the decoded message
+                for (int i = 0; i < decoded.length; ++i) {
+                    decoded[i] = (byte) RsCcsdsUtil.multiplyStraight(Byte.toUnsignedInt(decoded[i]));
                 }
             }
             return decoded;

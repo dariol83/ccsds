@@ -127,8 +127,8 @@ public class TmTransferFrame extends AbstractTransferFrame {
         twoOctets = in.getShort();
 
         secondaryHeaderPresent = twoOctets < 0; // if first bit is 1, then the short is negative
-        synchronisationFlag = (short) ((twoOctets & (short) 0x4000)) != 0;
-        packetOrderFlag = (short) ((twoOctets & (short) 0x2000)) != 0;
+        synchronisationFlag = (short) (twoOctets & (short) 0x4000) != 0;
+        packetOrderFlag = (short) (twoOctets & (short) 0x2000) != 0;
 
         if (!synchronisationFlag && packetOrderFlag) {
             throw new IllegalArgumentException("Synchronisation Flag not set, Packet Order Flag: expected false, actual " + packetOrderFlag);
@@ -141,7 +141,7 @@ public class TmTransferFrame extends AbstractTransferFrame {
             throw new IllegalArgumentException("Synchronisation Flag not set, Segment Length Identifier: expected 3, actual " + segmentLengthIdentifier);
         }
 
-        firstHeaderPointer = (short) ((twoOctets & (short) 0x07FF));
+        firstHeaderPointer = (short) (twoOctets & (short) 0x07FF);
 
         noStartPacket = firstHeaderPointer == TM_FIRST_HEADER_POINTER_NO_PACKET;
         idleFrame = firstHeaderPointer == TM_FIRST_HEADER_POINTER_IDLE;

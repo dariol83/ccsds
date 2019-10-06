@@ -22,6 +22,10 @@ package eu.dariolucia.ccsds.tmtc.algorithm.rs;
  */
 public class RsCcsdsUtil {
 
+    private RsCcsdsUtil() {
+        // Private constructor
+    }
+
     // Stored per column, see CCSDS 131.0-B-3, Annex F2
     private static final int[] STRAIGHT_T = new int[] {
             0b11111110,

@@ -155,20 +155,21 @@ public class TcTransferFrameBuilder implements ITransferFrameBuilder<TcTransferF
         if(isFull()) {
             throw new IllegalArgumentException("TC Frame already full");
         }
-        if(getFreeUserDataLength() < header.length + trailer.length) {
+        int securityDataSize = (header == null ? 0 : header.length) + (trailer == null ? 0 : trailer.length);
+        if(getFreeUserDataLength() < securityDataSize) {
             throw new IllegalArgumentException("TC Frame cannot accomodate additional "
-                    + (header.length + trailer.length) + " bytes, remaining space is " + getFreeUserDataLength() + " bytes");
+                    + securityDataSize + " bytes, remaining space is " + getFreeUserDataLength() + " bytes");
         }
         this.securityHeader = header;
         this.securityTrailer = trailer;
-        this.freeUserDataLength -= (header.length + trailer.length);
+        this.freeUserDataLength -= securityDataSize;
 
         return this;
     }
 
     public int addData(byte[] b, int offset, int length) {
         // Compute if you can add the requested amount
-        int dataToBeWritten = freeUserDataLength >= length ? length : freeUserDataLength;
+        int dataToBeWritten = Math.min(freeUserDataLength, length);
         int notWrittenData = freeUserDataLength < length ? length - freeUserDataLength : 0;
         if(dataToBeWritten > 0) {
             this.payloadUnits.add(Arrays.copyOfRange(b, offset, offset + dataToBeWritten));

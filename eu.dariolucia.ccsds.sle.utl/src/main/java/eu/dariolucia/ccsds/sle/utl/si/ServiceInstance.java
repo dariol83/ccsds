@@ -415,7 +415,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		// From the responder port, go to API configuration and check the
 		// foreign local port and the related IP address.
 		Optional<PortMapping> port = this.peerConfiguration.getPortMappings().stream()
-				.filter((flp) -> flp.getPortName().equals(getResponderPortIdentifier())).findFirst();
+				.filter(flp -> flp.getPortName().equals(getResponderPortIdentifier())).findFirst();
 		if (port.isPresent()) {
 			// Create a new TML channel
 			try {
@@ -574,17 +574,18 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 				try {
 					dispatchFromUser(() -> returnTimeoutExpired(opInvokeId));
 				} catch (Exception e) {
-					LOG.log(Level.WARNING, getServiceInstanceIdentifier()
-							+ ": Cannot run return timeout expire task for operation with invokeId=" + opInvokeId, e);
+					LOG.log(Level.WARNING, String.format("%s: Cannot run return timeout expire task for operation with invokeId=%d", getServiceInstanceIdentifier(), opInvokeId), e);
 				}
 			}
 		};
 		this.invokeId2timeout.put(opInvokeId, tt);
-		this.returnTimeoutTimer.schedule(tt, this.serviceInstanceConfiguration.getReturnTimeoutPeriod() * 1000);
+		this.returnTimeoutTimer.schedule(tt, this.serviceInstanceConfiguration.getReturnTimeoutPeriod() * 1000L);
 	}
 
 	private void returnTimeoutExpired(long opInvokeId) {
-		LOG.warning(String.format("%s: Return timeout expired for invokeId=%d", getServiceInstanceIdentifier(), opInvokeId));
+		if(LOG.isLoggable(Level.WARNING)) {
+			LOG.warning(String.format("%s: Return timeout expired for invokeId=%d", getServiceInstanceIdentifier(), opInvokeId));
+		}
 		TimerTask tt = this.invokeId2timeout.remove(opInvokeId);
 		if (tt != null) {
 			disconnect("Return timeout expired for operation with invokeId=" + opInvokeId);
@@ -595,7 +596,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
 	protected void cancelReturnTimeout(long opInvokeId) {
 		if(LOG.isLoggable(Level.FINE)) {
-			LOG.fine(getServiceInstanceIdentifier() + ": Return timeout cancelled for invokeId=" + opInvokeId);
+			LOG.fine(String.format("%s: Return timeout cancelled for invokeId=%d", getServiceInstanceIdentifier(), opInvokeId));
 		}
 		TimerTask tt = this.invokeId2timeout.remove(opInvokeId);
 		if (tt != null) {
@@ -611,7 +612,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		try {
 			encodedPdu = encodePdu(pdu);
 			String invokeStr = invokeId != null && invokeId >= 0 ? "(" + invokeId + ") " : "(<no invoke ID>) ";
-			LOG.info(String.format("%s: PDU %s%s encoded: %s", getServiceInstanceIdentifier(), invokeStr, name, PduStringUtil.instance().toHexDump(encodedPdu)));
+			if(LOG.isLoggable(Level.INFO)) {
+				LOG.info(String.format("%s: PDU %s%s encoded: %s", getServiceInstanceIdentifier(), invokeStr, name, PduStringUtil.instance().toHexDump(encodedPdu)));
+			}
 		} catch (IOException e1) {
 			disconnect("Cannot encode PDU", e1, null);
 			notifyPduSentError(pdu, name, null);
@@ -646,7 +649,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	protected final Credentials generateCredentials(String responderIdentifier,
 			AuthenticationModeEnum... requiredAuthModes) {
 		Optional<RemotePeer> remotePeer = this.peerConfiguration.getRemotePeers().stream()
-				.filter((rp) -> rp.getId().equals(responderIdentifier)).findFirst();
+				.filter(rp -> rp.getId().equals(responderIdentifier)).findFirst();
 		if (remotePeer.isPresent()) {
 			Credentials credentials;
 			// If so, build and add credentials.
@@ -667,7 +670,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
 	protected void setServiceInstanceState(ServiceInstanceBindingStateEnum newState) {
 		if(newState != this.currentState) {
-			LOG.log(Level.INFO, String.format("%s: State transition from %s to %s", getServiceInstanceIdentifier(), this.currentState, newState));
+			if(LOG.isLoggable(Level.INFO)) {
+				LOG.log(Level.INFO, String.format("%s: State transition from %s to %s", getServiceInstanceIdentifier(), this.currentState, newState));
+			}
 			this.currentState = newState;
 		}
 	}
@@ -803,7 +808,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		String remoteId = getRemotePeer();
 		int authDelay = this.peerConfiguration.getAuthenticationDelay();
 		Optional<RemotePeer> remotePeer = this.peerConfiguration.getRemotePeers().stream()
-				.filter((a) -> a.getId().equals(remoteId)).findFirst();
+				.filter(a -> a.getId().equals(remoteId)).findFirst();
 		if (remotePeer.isPresent()) {
 			AuthenticationModeEnum requiredAuthMode = remotePeer.get().getAuthenticationMode();
 			boolean credentialsRequired = requiredAuthMode == AuthenticationModeEnum.ALL
@@ -811,31 +816,26 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 							&& Arrays.asList(authModeEnums).contains(AuthenticationModeEnum.BIND));
 			if (credentialsRequired && remoteCredentials.getUnused() != null) {
 				// Credential required, but they are set as unused
-				LOG.severe(() -> getServiceInstanceIdentifier()
-						+ ": Credential required but the received operation does not provide them");
+				LOG.severe(() -> String.format("%s: Credential required but the received operation does not provide them", getServiceInstanceIdentifier()));
 				return false;
 			} else if (!credentialsRequired && remoteCredentials.getUsed() != null) {
 				// No credentials required, but they are present
-				LOG.severe(() -> getServiceInstanceIdentifier()
-						+ ": Credential not required but the received operation provides them");
+				LOG.severe(() -> String.format("%s: Credential not required but the received operation provides them", getServiceInstanceIdentifier()));
 				return false;
 			} else if (!credentialsRequired) {
 				// No credentials required
-				LOG.fine(() -> getServiceInstanceIdentifier()
-						+ ": Credential not required, operation credentials empty, ok");
+				LOG.fine(() -> String.format("%s: Credential not required, operation credentials empty, ok", getServiceInstanceIdentifier()));
 				return true;
 			} else {
 				byte[] encodedCredentials = remoteCredentials.getUsed().value;
 				boolean result = PduFactoryUtil.performAuthentication(remotePeer.get(), encodedCredentials, authDelay);
 				if (!result) {
-					LOG.severe(
-							() -> getServiceInstanceIdentifier() + ": Credential check failed on provided credentials");
+					LOG.severe(() -> String.format("%s: Credential check failed on provided credentials", getServiceInstanceIdentifier()));
 				}
 				return result;
 			}
 		} else {
-			LOG.severe(() -> getServiceInstanceIdentifier() + ": Credentials for remote peer "
-					+ remoteId + " not present");
+			LOG.severe(() -> String.format("%s: Credentials for remote peer %s not present", getServiceInstanceIdentifier(), remoteId));
 			return false;
 		}
 	}
@@ -996,8 +996,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			}
 		} else {
 			// Do nothing
-			LOG.log(Level.WARNING, getServiceInstanceIdentifier()
-					+ ": Received UNBIND but service instance not configured to respond");
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.log(Level.WARNING, String.format("%s: Received UNBIND but service instance not configured to respond", getServiceInstanceIdentifier()));
+			}
 		}
 
 		// Generate state and notify update
@@ -1077,7 +1078,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	}
 
 	private void disconnect(String reason, Exception e, PeerAbortReasonEnum peerAbortReason) {
-		if (reason != null) {
+		if (reason != null && LOG.isLoggable(Level.FINER)) {
 			LOG.log(Level.FINER, getServiceInstanceIdentifier() + ": Disconnection with reason detected: " + reason, e);
 		}
 		setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBOUND);
@@ -1104,7 +1105,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
 	@Override
 	public void onChannelConnected(TmlChannel channel) {
-		LOG.info(String.format("%s: TML channel %s connected", getServiceInstanceIdentifier(), channel));
+		if(LOG.isLoggable(Level.INFO)) {
+			LOG.info(String.format("%s: TML channel %s connected", getServiceInstanceIdentifier(), channel));
+		}
 	}
 
 	@Override

@@ -21,6 +21,10 @@ package eu.dariolucia.ccsds.tmtc.util;
  */
 public class StringUtil {
 
+    private StringUtil() {
+        // Private constructor
+    }
+
     /**
      * Convert an hex dump string into a byte array.
      *
@@ -38,7 +42,7 @@ public class StringUtil {
 
     // Stackoverflow snippet (Creative Common License):
     // https://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
-    private final static char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
+    private static final char[] HEX_ARRAY = "0123456789ABCDEF".toCharArray();
 
     /**
      * Convert a byte array into an hex dump string.

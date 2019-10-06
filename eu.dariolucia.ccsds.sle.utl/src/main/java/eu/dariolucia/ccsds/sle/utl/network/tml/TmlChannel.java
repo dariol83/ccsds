@@ -235,11 +235,7 @@ public class TmlChannel {
 				// start read thread
 				startReadingThread();
 				// notify
-				try {
-					this.observer.onChannelConnected(this);
-				} catch (Exception e) {
-					LOG.log(Level.WARNING, "Notification of connection on channel " + toString() + " threw exception on observer", e);
-				}
+				notifyChannelConnected();
 				// return
 			} catch (UnknownHostException e) {
 				cleanup();
@@ -250,6 +246,14 @@ public class TmlChannel {
 			}
 		} finally {
 			this.lock.unlock();
+		}
+	}
+
+	private void notifyChannelConnected() {
+		try {
+			this.observer.onChannelConnected(this);
+		} catch (Exception e) {
+			LOG.log(Level.WARNING, String.format("Notification of connection on channel %s threw exception on observer", toString()), e);
 		}
 	}
 
@@ -347,7 +351,9 @@ public class TmlChannel {
 					return;
 				}
 				if(!this.running) {
-					LOG.warning("Reading thread on channel " + toString() + " stopped");
+					if(LOG.isLoggable(Level.WARNING)) {
+						LOG.warning(String.format("Reading thread on channel %s stopped", toString()));
+					}
 					return;
 				}
 
@@ -373,18 +379,18 @@ public class TmlChannel {
 						ByteBuffer reader = ByteBuffer.wrap(msg, 8, 4);
 						this.heartbeatTimer.set(reader.getShort());
 						this.deadFactor.set(reader.getShort());
-						LOG.info("HB interval set to " + this.heartbeatTimer.get() + ", dead factor set to " + this.deadFactor);
+						if(LOG.isLoggable(Level.INFO)) {
+							LOG.info(String.format("HB interval set to %d, dead factor set to %s", this.heartbeatTimer.get(), this.deadFactor));
+						}
 						// start HBT timers, if needed
 						startHbtTimers();
 						// notify
-						try {
-							this.observer.onChannelConnected(this);
-						} catch (Exception e) {
-							LOG.log(Level.WARNING, "Notification of connection on channel " + toString() + " threw exception on observer", e);
-						}
+						notifyChannelConnected();
 						tmlContextMsgReceived = true;
 					} else {
-						LOG.warning("Expecting TML context message on channel " + toString() + " but received " + Arrays.toString(headerBuffer));
+						if(LOG.isLoggable(Level.WARNING)) {
+							LOG.warning(String.format("Expecting TML context message on channel %s but received %s", toString(), Arrays.toString(headerBuffer)));
+						}
 						protocolErrorDetected(headerBuffer, TmlDisconnectionReasonEnum.PROTOCOL_ERROR);
 						return;
 					}
@@ -419,7 +425,9 @@ public class TmlChannel {
 				}
 				is = getRxStream();
 			}
-			LOG.warning("Reading thread on channel " + toString() + " has null inputstream, thread returns");
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("Reading thread on channel %s has null inputstream, thread returns", toString()));
+			}
 		});
 		this.readingThread.setName("TML Channel Reader - " + this.host + ":" + this.port);
 		this.readingThread.start();
@@ -438,7 +446,9 @@ public class TmlChannel {
 	}
 
 	private void protocolErrorDetected(byte[] headerBuffer, TmlDisconnectionReasonEnum reason) {
-		LOG.log(Level.SEVERE, "Protocol error detected on channel " + toString() + " with reason " + reason + ", header=" + Arrays.toString(headerBuffer));
+		if(LOG.isLoggable(Level.SEVERE)) {
+			LOG.log(Level.SEVERE, String.format("Protocol error detected on channel %s with reason %s, header=%s", toString(), reason, Arrays.toString(headerBuffer)));
+		}
 		this.lock.lock();
 		try {
 			// stop HBT timers, if needed
@@ -448,7 +458,9 @@ public class TmlChannel {
 			// cleanup
 			cleanup();
 			// return
-			LOG.fine("Channel disconnected: " + toString() + " via protocolErrorDetected()");
+			if(LOG.isLoggable(Level.FINE)) {
+				LOG.fine(String.format("Channel disconnected: %s via protocolErrorDetected()", toString()));
+			}
 		} finally {
 			this.lock.unlock();
 		}
@@ -472,7 +484,7 @@ public class TmlChannel {
 						hbtRxTimerExpired();
 					}
 				};
-				this.hbtScheduler.schedule(this.hbtRxTimer, this.heartbeatTimer.get() * 1000 * this.deadFactor.get());
+				this.hbtScheduler.schedule(this.hbtRxTimer, this.heartbeatTimer.get() * 1000L * this.deadFactor.get());
 			}
 		} finally {
 			this.lock.unlock();
@@ -480,7 +492,9 @@ public class TmlChannel {
 	}
 	
 	private void hbtRxTimerExpired() {
-		LOG.log(Level.SEVERE, "HBT Rx expired detected on channel " + toString());
+		if(LOG.isLoggable(Level.SEVERE)) {
+			LOG.log(Level.SEVERE, String.format("HBT Rx expired detected on channel %s", toString()));
+		}
 		this.lock.lock();
 		try {
 			// stop read thread
@@ -492,7 +506,9 @@ public class TmlChannel {
 			// cleanup
 			cleanup();
 			// return
-			LOG.fine("Channel disconnected: " + toString() + " via hbtRxTimerExpired()");
+			if(LOG.isLoggable(Level.FINE)) {
+				LOG.fine(String.format("Channel disconnected: %s via hbtRxTimerExpired()", toString()));
+			}
 		} finally {
 			this.lock.unlock();
 		}
@@ -512,7 +528,7 @@ public class TmlChannel {
 						sendHbtMessage();
 					}
 				};
-				this.hbtScheduler.schedule(this.hbtTxTimer, this.heartbeatTimer.get() * 1000);
+				this.hbtScheduler.schedule(this.hbtTxTimer, this.heartbeatTimer.get() * 1000L);
 			}
 		} finally {
 			this.lock.unlock();
@@ -524,7 +540,7 @@ public class TmlChannel {
 	}
 
 	private void remotePeerAbortDetected(IOException e, byte code) {
-		LOG.log(Level.SEVERE, "Remote peer abort detected on channel " + toString() + ", code " + PeerAbortReasonEnum.fromCode(code), e);
+		LOG.log(Level.SEVERE, String.format("Remote peer abort detected on channel %s, code %s", toString(), PeerAbortReasonEnum.fromCode(code)), e);
 		this.lock.lock();
 		try {
 			// stop HBT timers, if needed
@@ -534,14 +550,16 @@ public class TmlChannel {
 			// cleanup
 			cleanup();
 			// return
-			LOG.fine("Channel disconnected: " + toString() + " via remotePeerAbortDetected()");
+			if(LOG.isLoggable(Level.FINE)) {
+				LOG.fine(String.format("Channel disconnected: %s via remotePeerAbortDetected()", toString()));
+			}
 		} finally {
 			this.lock.unlock();
 		}
 	}
 
 	private void remoteDisconnectionDetected(IOException e) {
-		LOG.log(Level.SEVERE, "Remote disconnection detected on channel " + toString(), e);
+		LOG.log(Level.SEVERE, String.format("Remote disconnection detected on channel %s", toString()), e);
 		this.lock.lock();
 		try {
 			// stop HBT timers, if needed
@@ -551,7 +569,9 @@ public class TmlChannel {
 			// cleanup
 			cleanup();
 			// return
-			LOG.fine("Channel disconnected: " + toString() + " via remoteDisconnectionDetected()");
+			if(LOG.isLoggable(Level.FINE)) {
+				LOG.fine(String.format("Channel disconnected: %s via remoteDisconnectionDetected()", toString()));
+			}
 		} finally {
 			this.lock.unlock();
 		}
@@ -588,14 +608,16 @@ public class TmlChannel {
 	private void sendHbtMessage() {
 		OutputStream os = getTxStream();
 		if(os == null) {
-			LOG.warning("Cannot send HBT on channel " + toString() + ", disconnected");
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("Cannot send HBT on channel %s, disconnected", toString()));
+			}
 			return;
 		}
 		try {
 			os.write(HBT_MESSAGE);
 			this.statsCounter.addOut(HBT_MESSAGE.length);
 		} catch (IOException e) {
-			LOG.log(Level.SEVERE, "Exception while sending HBT on channel " + toString(), e);
+			LOG.log(Level.SEVERE, String.format("Exception while sending HBT on channel %s", toString()), e);
 			this.lock.lock();
 			try {
 				// stop read thread
@@ -607,7 +629,9 @@ public class TmlChannel {
 				// cleanup
 				cleanup();
 				// return
-				LOG.fine("Channel disconnected: " + toString() + " via sendHbtMessage()");
+				if(LOG.isLoggable(Level.FINE)) {
+					LOG.fine(String.format("Channel disconnected: %s via sendHbtMessage()", toString()));
+				}
 			} finally {
 				this.lock.unlock();
 			}
@@ -635,10 +659,12 @@ public class TmlChannel {
 				if (this.sock != null) {
 					this.sock.sendUrgentData(reason);
 				} else {
-					LOG.info("Aborting channel " + toString() + " but no connection is established, urgent data " + PeerAbortReasonEnum.fromCode(reason) + " not sent");
+					if(LOG.isLoggable(Level.INFO)) {
+						LOG.info(String.format("Aborting channel %s but no connection is established, urgent data %s not sent", toString(), PeerAbortReasonEnum.fromCode(reason)));
+					}
 				}
 			} catch (IOException e) {
-				LOG.log(Level.WARNING, "Exception while aborting channel " + toString() + " with reason " + PeerAbortReasonEnum.fromCode(reason), e);
+				LOG.log(Level.WARNING, String.format("Exception while aborting channel %s with reason %s", toString(), PeerAbortReasonEnum.fromCode(reason)), e);
 			}
 			// stop read thread
 			stopReadingThread();
@@ -649,7 +675,9 @@ public class TmlChannel {
 			// cleanup
 			cleanup();
 			// return
-			LOG.fine("Channel disconnected: " + toString() + " via abort()");
+			if(LOG.isLoggable(Level.FINE)) {
+				LOG.fine(String.format("Channel disconnected: %s via abort()", toString()));
+			}
 		} finally {
 			this.lock.unlock();
 		}
@@ -662,7 +690,9 @@ public class TmlChannel {
 		this.lock.lock();
 		try {
 			if (this.sock == null) {
-				LOG.info("Disconnecting channel " + toString() + " but it is already disconnected");
+				if(LOG.isLoggable(Level.INFO)) {
+					LOG.info(String.format("Disconnecting channel %s but it is already disconnected", toString()));
+				}
 				return;
 			}
 			// stop read thread
@@ -674,7 +704,9 @@ public class TmlChannel {
 			// cleanup
 			cleanup();
 			// return
-			LOG.fine("Channel disconnected: " + toString() + " via disconnect()");
+			if(LOG.isLoggable(Level.FINE)) {
+				LOG.fine(String.format("Channel disconnected: %s via disconnect()", toString()));
+			}
 		} finally {
 			this.lock.unlock();
 		}
@@ -696,12 +728,12 @@ public class TmlChannel {
 				this.serverSocket.close();
 			}
 		} catch (IOException e) {
-			LOG.log(Level.FINE, "Socket/stream on channel " + toString() + " threw exception on close()", e);
+			LOG.log(Level.FINE, String.format("Socket/stream on channel %s threw exception on close()", toString()), e);
 		}
 		try {
 			this.observer.onChannelDisconnected(this, reason, peerAbortReason);
 		} catch (Exception e) {
-			LOG.log(Level.WARNING, "Notification of disconnection on channel " + toString() + " threw exception on observer", e);
+			LOG.log(Level.WARNING, String.format("Notification of disconnection on channel %s threw exception on observer", toString()), e);
 		}
 	}
 

@@ -23,7 +23,6 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * This class allows to build a CCSDS AOS frame using a typical Builder pattern. Once a frame is built, the builder should
@@ -207,7 +206,7 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
 
     private int addData(byte[] b, int offset, int length, int type, int validDataBits) {
         // Compute if you can add the requested amount
-        int dataToBeWritten = freeUserDataLength >= length ? length : freeUserDataLength;
+        int dataToBeWritten = Math.min(freeUserDataLength, length);
         int notWrittenData = freeUserDataLength < length ? length - freeUserDataLength : 0;
         if(dataToBeWritten > 0) {
             this.payloadUnits.add(new AosTransferFrameBuilder.PayloadUnit(type, Arrays.copyOfRange(b, offset, offset + dataToBeWritten), validDataBits));

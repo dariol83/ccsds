@@ -54,12 +54,10 @@ public class SyncMarkerFixedLengthChannelReader extends AbstractChannelReader {
         }
         int smCurrIdx = 0;
         boolean smFound = false;
-        int countedBytes = 0;
         // Seeking the sync marker (byte after byte)
         while(!smFound) {
             // Read one byte
             int readByte = stream.read();
-            ++countedBytes;
             if(readByte == -1) {
                 if(smCurrIdx != 0) {
                     throw new IOException("Stream unexpectedly closed (-1)");

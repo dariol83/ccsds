@@ -42,9 +42,9 @@ public abstract class CommonEncDec {
 	private final Map<Integer, Supplier<BerType>> decodingTemplateProvider = new HashMap<>();
 	private final Supplier<BerType> defaultDecodingProvider;
 
-	private volatile Supplier<BerType> currentDecodingProvider;
+	private Supplier<BerType> currentDecodingProvider;
 
-	private volatile int version;
+	private int version;
 
 	protected CommonEncDec() {
 		defaultDecodingProvider = getDefaultDecodingProvider();

@@ -169,12 +169,10 @@ public class PduFactoryUtil {
         if (fillCredentials) {
             // Current time, as per CCSDS 913.1-B-2, 3.1.2.1.1
             long time = System.currentTimeMillis();
-            // Random number, as per CCSDS 913.1-B-2, 3.1.2.1.1
-            long randomNumber = (int) (Math.abs(new Random(time).nextLong()));
-
+            // Random number (positive), as per CCSDS 913.1-B-2, 3.1.2.1.1
+            long randomNumber = (new Random(time).nextLong()) & 0x7FFFFFFFFFFFFFFFL;
             // No support for microsecond resolution
             byte[] buffer = hashCredentialsData(time, 0, randomNumber, username, password);
-
             // The next variable is what the standard calls 'the protected'
             byte[] hashSignature;
             // Compute the hash signature of the credentials data, ref. CCSDS 913.1-B-2 3.1.2.1.3
@@ -316,16 +314,22 @@ public class PduFactoryUtil {
             return false;
         }
         // From the Credentials time, we extract the time
-        long[] timeMillis = buildTimeMillis(isp1Credentials.getTime().value);
-        if (timeMillis == null) {
-            LOG.warning(String.format("Cannot read time from credentials of remote peer %s, CDS time is %s", remotePeer.getId(), DatatypeConverter.printHexBinary(isp1Credentials.getTime().value)));
+        long[] timeMillis;
+        try {
+            timeMillis = buildTimeMillis(isp1Credentials.getTime().value);
+        } catch (IllegalArgumentException e) {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.warning(String.format("Cannot read time from credentials of remote peer %s, CDS time is %s", remotePeer.getId(), DatatypeConverter.printHexBinary(isp1Credentials.getTime().value)));
+            }
             return false;
         }
         // We get the current time, that we use to compute the delay. If above the configured threshold we reject the
         // invocation.
         long now = System.currentTimeMillis();
         if (now - timeMillis[0] > authDelayInSeconds * 1000) {
-            LOG.warning(String.format("Cannot verify credentials of remote peer %s, acceptable delay exceeded, now=%d, time=%d, acceptable delay in ms=%d", remotePeer.getId(), now, timeMillis[0], authDelayInSeconds * 1000));
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.warning(String.format("Cannot verify credentials of remote peer %s, acceptable delay exceeded, now=%d, time=%d, acceptable delay in ms=%d", remotePeer.getId(), now, timeMillis[0], authDelayInSeconds * 1000));
+            }
             return false;
         }
         // Now we check the hash of the credentials data: we compare the provided protected with the one

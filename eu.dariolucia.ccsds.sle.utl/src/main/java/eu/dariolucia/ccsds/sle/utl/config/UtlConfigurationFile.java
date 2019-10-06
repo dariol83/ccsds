@@ -59,8 +59,7 @@ public class UtlConfigurationFile {
         try {
             JAXBContext jc = JAXBContext.newInstance(UtlConfigurationFile.class);
             Unmarshaller u = jc.createUnmarshaller();
-            UtlConfigurationFile o = (UtlConfigurationFile) u.unmarshal(is);
-            return o;
+            return (UtlConfigurationFile) u.unmarshal(is);
         } catch (JAXBException e) {
             throw new IOException(e);
         }

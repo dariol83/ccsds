@@ -68,9 +68,6 @@ public class ReedSolomonAlgorithm {
 
     private final int messageLength;
     private final int codewordLength;
-    private final int galoisFieldModulus;
-    private final int generator;
-    private final int initialRoot;
     private final boolean dualbasis;
     private final int eccLength;
     private final ReedSolomon reedSolomon;
@@ -88,9 +85,6 @@ public class ReedSolomonAlgorithm {
     public ReedSolomonAlgorithm(int messageLength, int codewordLength, int galoisFieldModulus, int generator, int initialRoot, boolean dualbasis) {
         this.messageLength = messageLength;
         this.codewordLength = codewordLength;
-        this.galoisFieldModulus = galoisFieldModulus;
-        this.generator = generator;
-        this.initialRoot = initialRoot;
         this.eccLength = this.codewordLength - this.messageLength;
         this.dualbasis = dualbasis;
         this.reedSolomon = new ReedSolomon(galoisFieldModulus, generator, messageLength, eccLength, initialRoot);

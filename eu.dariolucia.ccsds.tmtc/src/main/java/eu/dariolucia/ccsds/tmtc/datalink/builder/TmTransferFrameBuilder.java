@@ -182,22 +182,23 @@ public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferF
             return this;
         }
         if(isFull()) {
-            throw new IllegalArgumentException("TM Frame already full");
+            throw new IllegalArgumentException("TC Frame already full");
         }
-        if(getFreeUserDataLength() < header.length + trailer.length) {
+        int securityDataSize = (header == null ? 0 : header.length) + (trailer == null ? 0 : trailer.length);
+        if(getFreeUserDataLength() < securityDataSize) {
             throw new IllegalArgumentException("TM Frame cannot accomodate additional "
-                    + (header.length + trailer.length) + " bytes, remaining space is " + getFreeUserDataLength() + " bytes");
+                    + securityDataSize + " bytes, remaining space is " + getFreeUserDataLength() + " bytes");
         }
         this.securityHeader = header;
         this.securityTrailer = trailer;
-        this.freeUserDataLength -= (header.length + trailer.length);
+        this.freeUserDataLength -= securityDataSize;
 
         return this;
     }
 
     private int addData(byte[] b, int offset, int length, boolean isPacket) {
         // Compute if you can add the requested amount
-        int dataToBeWritten = freeUserDataLength >= length ? length : freeUserDataLength;
+        int dataToBeWritten = Math.min(freeUserDataLength, length);
         int notWrittenData = freeUserDataLength < length ? length - freeUserDataLength : 0;
         if(dataToBeWritten > 0) {
             this.payloadUnits.add(new PayloadUnit(isPacket, Arrays.copyOfRange(b, offset, offset + dataToBeWritten)));
@@ -285,11 +286,11 @@ public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferF
                 lastTwoOctets |= (short) (0x1800);
                 break;
             default:
-                throw new RuntimeException("Segment Length ID cannot be " + segmentLengthIdentifier + ", software bug");
+                throw new IllegalStateException("Segment Length ID cannot be " + segmentLengthIdentifier + ", software bug");
         }
 
         short firstHeaderPointer = computeFirstHeaderPointer();
-        lastTwoOctets |= (short) firstHeaderPointer;
+        lastTwoOctets |= firstHeaderPointer;
 
         bb.putShort(lastTwoOctets);
 
@@ -340,7 +341,7 @@ public class TmTransferFrameBuilder implements ITransferFrameBuilder<TmTransferF
     private short computeFirstHeaderPointer() {
         if(this.idle) {
             return TmTransferFrame.TM_FIRST_HEADER_POINTER_IDLE;
-        } else if(this.payloadUnits.stream().noneMatch((o) -> o.packet)) {
+        } else if(this.payloadUnits.stream().noneMatch(o -> o.packet)) {
             return TmTransferFrame.TM_FIRST_HEADER_POINTER_NO_PACKET;
         } else {
             short firstPacket = (short) 0;

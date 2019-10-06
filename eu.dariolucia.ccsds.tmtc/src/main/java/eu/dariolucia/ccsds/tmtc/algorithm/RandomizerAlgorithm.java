@@ -20,6 +20,11 @@ package eu.dariolucia.ccsds.tmtc.algorithm;
  * This class contains the algorithm to compute randomization using different algorithms.
  */
 public class RandomizerAlgorithm {
+
+    private RandomizerAlgorithm() {
+        // Private constructor
+    }
+
     /**
      * Definition of the CLTU pseudo random pattern, up to 65536 bytes, which is good enough for TC frames (max 1024),
      * Proximity-1 (max 2048), USLP (max 65536) and for AOS frames with reasonable size.

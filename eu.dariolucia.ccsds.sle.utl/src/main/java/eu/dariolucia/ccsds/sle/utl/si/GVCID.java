@@ -19,8 +19,6 @@ package eu.dariolucia.ccsds.sle.utl.si;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * This class contains the information related to a permitted, requested or selected Global Virtual Channel Identifier,

@@ -113,8 +113,6 @@ class FieldGroupBasedPacketIdentifierTest {
         // Lets start: create the identifier
         IPacketIdentifier identifier = new FieldGroupBasedPacketIdentifier(d);
         Runtime.getRuntime().gc();
-        Thread.sleep(100);
-        Runtime.getRuntime().gc();
         System.out.println("Identifier memory size: " + (freeMem - Runtime.getRuntime().freeMemory()) + " bytes");
         System.out.println("Identifier loading time: " + (System.currentTimeMillis() - snap) + " ms");
 
@@ -140,8 +138,6 @@ class FieldGroupBasedPacketIdentifierTest {
 
         snap = System.currentTimeMillis();
         Runtime.getRuntime().gc();
-        Thread.sleep(100);
-        Runtime.getRuntime().gc();
         freeMem = Runtime.getRuntime().freeMemory();
 
         boolean goOn = true;
@@ -161,8 +157,6 @@ class FieldGroupBasedPacketIdentifierTest {
         }
 
         long runningTime = System.currentTimeMillis() - snap;
-        Runtime.getRuntime().gc();
-        Thread.sleep(100);
         Runtime.getRuntime().gc();
         long occupiedMem = freeMem - Runtime.getRuntime().freeMemory();
         System.out.println("Identifier running time for " + recognized + " packet identifications: " + runningTime + " ms");

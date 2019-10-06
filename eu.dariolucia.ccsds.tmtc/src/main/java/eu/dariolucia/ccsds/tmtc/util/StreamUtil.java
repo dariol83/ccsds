@@ -28,6 +28,10 @@ import java.util.stream.StreamSupport;
  */
 public class StreamUtil {
 
+    private StreamUtil() {
+        // Private constructor
+    }
+
     /**
      * Utility function to convert a {@link Supplier} function into a {@link Stream}.
      * When the supplier returns null, the stream stops.

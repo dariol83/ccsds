@@ -17,7 +17,6 @@
 package eu.dariolucia.ccsds.tmtc.coding.encoder;
 
 import eu.dariolucia.ccsds.tmtc.algorithm.RandomizerAlgorithm;
-import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
 import eu.dariolucia.ccsds.tmtc.coding.IEncodingFunction;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 

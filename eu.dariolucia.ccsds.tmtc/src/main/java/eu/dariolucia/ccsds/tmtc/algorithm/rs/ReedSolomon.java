@@ -19,7 +19,7 @@ import java.util.Objects;
  * <p>This class is immutable and thread-safe, but the argument arrays passed into methods are not thread-safe.</p>
  */
 public final class ReedSolomon {
-	
+
 	/*---- Fields ----*/
 	
 	/** The number of values in each message. Always at least 1. */
@@ -93,11 +93,11 @@ public final class ReedSolomon {
 		// Compute the remainder ((message(x) * x^eccLen) mod genPoly(x)) by performing polynomial division.
 		// Process message bytes (polynomial coefficients) from the highest monomial power to the lowest power
 		byte[] eccPoly = new byte[eccLen];
-		Arrays.fill(eccPoly, (byte) f.zero());
+		Arrays.fill(eccPoly, (byte) BinaryField.ZERO);
 		for (int i = messageLen - 1; i >= 0; i--) {
 			int factor = f.fadd(Byte.toUnsignedInt(message[i]), Byte.toUnsignedInt(eccPoly[eccLen - 1]));
 			System.arraycopy(eccPoly, 0, eccPoly, 1, eccLen - 1);
-			eccPoly[0] = (byte) f.zero();
+			eccPoly[0] = (byte) BinaryField.ZERO;
 			for (int j = 0; j < eccLen; j++)
 				eccPoly[j] = (byte) f.fadd(Byte.toUnsignedInt(eccPoly[j]), f.fmultiply(genPoly[j], factor)); // outer fsubtract replaced with fadd
 		}
@@ -124,10 +124,10 @@ public final class ReedSolomon {
 	private int[] makeGeneratorPolynomial() {
 		// Start with the polynomial of 1*x^0, which is the multiplicative identity
 		int[] result = new int[eccLen];
-		Arrays.fill(result, f.zero());
-		result[0] = f.one();
+		Arrays.fill(result, BinaryField.ZERO);
+		result[0] = BinaryField.ONE;
 
-		int genPow = pow(generator, initialRoot); // Original: (2, initialRoot);
+		int genPow = pow(generator, initialRoot); // Original: (2, initialRoot)
 		for (int i = 0; i < eccLen; i++) {
 			// At this point, genPow == generator^i.
 			// Multiply the current genPoly by (x - generator^i)
@@ -179,7 +179,7 @@ public final class ReedSolomon {
 
 		// Evaluate the codeword polynomial at generator powers
 		int[] result = new int[eccLen];
-		int genPow = pow(generator, initialRoot); // f.one();
+		int genPow = pow(generator, initialRoot); // Original: f.one()
 		for (int i = 0; i < result.length; i++) {
 			result[i] = evaluatePolynomial(codeword, genPow);
 			genPow = f.multiply(generator, genPow);
@@ -194,7 +194,7 @@ public final class ReedSolomon {
 	// = polynomial[0]*point^0 + polynomial[1]*point^1 + ... + ponylomial[len-1]*point^(len-1).
 	private int evaluatePolynomial(byte[] polynomial, int point) {
 		// Horner's method
-		int result = f.zero();
+		int result = BinaryField.ZERO;
 		for (int i = polynomial.length - 1; i >= 0; i--) {
 			result = f.fmultiply(point, result);
 			result = f.fadd(Byte.toUnsignedInt(polynomial[i]), result);
@@ -205,7 +205,7 @@ public final class ReedSolomon {
 	// Tests whether all elements of the given array are equal to the field's zero element.
 	private boolean areAllZero(int[] array) {
 		for (int val : array) {
-			if (!f.equals(val, f.zero())) {
+			if (!f.equals(val, BinaryField.ZERO)) {
 				return false;
 			}
 		}
@@ -217,7 +217,7 @@ public final class ReedSolomon {
 		if (exp < 0) {
 			throw new IllegalArgumentException("Power " + exp + " is negative");
 		}
-		int result = f.one();
+		int result = BinaryField.ONE;
 		for (int i = 0; i < exp; i++) {
 			result = f.multiply(base, result);
 		}
@@ -230,6 +230,9 @@ public final class ReedSolomon {
 	 * Both the field and the elements are immutable and thread-safe.
 	 */
 	public static final class BinaryField {
+
+		public static final int ZERO = 0;
+		public static final int ONE = 1;
 
 		/*---- Fields ----*/
 
@@ -296,26 +299,13 @@ public final class ReedSolomon {
 			return y;
 		}
 
-
 		public boolean equals(int x, int y) {
 			return check(x) == check(y);
 		}
 
-
-		public int zero() {
-			return 0;
-		}
-
-
-		public int one() {
-			return 1;
-		}
-
-
 		public int negate(int x) {
 			return check(x);
 		}
-
 
 		public int fadd(int x, int y) {
 			return precomputedAddTable[x][y];

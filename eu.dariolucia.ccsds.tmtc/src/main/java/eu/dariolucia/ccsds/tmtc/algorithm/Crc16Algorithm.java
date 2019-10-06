@@ -21,6 +21,10 @@ package eu.dariolucia.ccsds.tmtc.algorithm;
  */
 public class Crc16Algorithm {
 
+	private Crc16Algorithm() {
+		// Private constructor
+	}
+
 	/**
 	 * This method computs the CRC16 of the provided byte array, using the algorithm described in
 	 * CCSDS 132.0-B-2, 4.1.6.2.

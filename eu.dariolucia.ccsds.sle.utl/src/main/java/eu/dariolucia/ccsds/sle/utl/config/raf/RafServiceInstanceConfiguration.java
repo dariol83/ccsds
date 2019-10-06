@@ -26,7 +26,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
@@ -104,26 +103,6 @@ public class RafServiceInstanceConfiguration extends ServiceInstanceConfiguratio
 
     public RafServiceInstanceConfiguration() {
         super();
-    }
-
-    private List<RafRequestedFrameQualityEnum> parsePermittedFrameQuality(String string) {
-        List<RafRequestedFrameQualityEnum> theList = new LinkedList<>();
-        fillFrameQuality(theList, string.trim());
-        return theList;
-    }
-
-    private void fillFrameQuality(List<RafRequestedFrameQualityEnum> theList, String trim) {
-        if (trim.isEmpty()) {
-            return;
-        }
-        String[] spl = trim.split("\\.", -1);
-        for (String ss : spl) {
-            RafRequestedFrameQualityEnum q = RafRequestedFrameQualityEnum.fromConfigurationString(ss);
-            if (q == null) {
-                throw new IllegalArgumentException(trim + " is not a valid frame quality string: block '" + trim + "' is invalid");
-            }
-            theList.add(q);
-        }
     }
 
     public Integer getLatencyLimit() {

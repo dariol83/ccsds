@@ -39,6 +39,7 @@ import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuNotification.CltuNotificationType
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -967,9 +968,13 @@ public class CltuServiceInstance extends ServiceInstance {
 		// PDU received
 		if (pdu.getResult().getPositiveResult() != null) {
 			//
-			LOG.info(String.format("%s: Transfer data return (%d) received, positive result", getServiceInstanceIdentifier(), this.cltuIdentification));
+			if(LOG.isLoggable(Level.INFO)) {
+				LOG.info(String.format("%s: Transfer data return (%d) received, positive result", getServiceInstanceIdentifier(), this.cltuIdentification));
+			}
 		} else {
-			LOG.warning(String.format("%s: Transfer data return (%d) received, negative result: %s", getServiceInstanceIdentifier(), this.cltuIdentification, CltuDiagnosticsStrings.getTransferDataDiagnostic(pdu.getResult().getNegativeResult())));
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Transfer data return (%d) received, negative result: %s", getServiceInstanceIdentifier(), this.cltuIdentification, CltuDiagnosticsStrings.getTransferDataDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 		}
 		// Notify PDU
 		notifyPduReceived(pdu, TRANSFER_DATA_RETURN_NAME, getLastPduReceived());
@@ -1043,9 +1048,13 @@ public class CltuServiceInstance extends ServiceInstance {
 		// PDU received
 		if (pdu.getResult().getPositiveResult() != null) {
 			//
-			LOG.info(String.format("Throw event return (%d) received, positive result", this.eventInvocationIdentification));
+			if(LOG.isLoggable(Level.INFO)) {
+				LOG.info(String.format("Throw event return (%d) received, positive result", this.eventInvocationIdentification));
+			}
 		} else {
-			LOG.warning(String.format("Throw event return (%d) received, negative result: %s", this.eventInvocationIdentification, CltuDiagnosticsStrings.getThrowEventDiagnostic(pdu.getResult().getNegativeResult())));
+			if(LOG.isLoggable(Level.INFO)) {
+				LOG.warning(String.format("Throw event return (%d) received, negative result: %s", this.eventInvocationIdentification, CltuDiagnosticsStrings.getThrowEventDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 		}
 		// Notify PDU
 		notifyPduReceived(pdu, THROW_EVENT_RETURN_NAME, getLastPduReceived());
@@ -1125,18 +1134,15 @@ public class CltuServiceInstance extends ServiceInstance {
 			return null;
 		} else {
 			Date startTime = null;
-			if (obj.getStartRadiationTime() != null) {
-				if (obj.getStartRadiationTime().getKnown() != null) {
-					if (obj.getStartRadiationTime().getKnown().getCcsdsFormat() != null) {
-						byte[] time = obj.getStartRadiationTime().getKnown().getCcsdsFormat().value;
-						startTime = new Date(PduFactoryUtil.buildTimeMillis(time)[0]);
-					} else {
-						byte[] time = obj.getStartRadiationTime().getKnown().getCcsdsPicoFormat().value;
-						startTime = new Date(PduFactoryUtil.buildTimeMillisPico(time)[0]);
-					}
+			if (obj.getStartRadiationTime() != null && obj.getStartRadiationTime().getKnown() != null) {
+				if (obj.getStartRadiationTime().getKnown().getCcsdsFormat() != null) {
+					byte[] time = obj.getStartRadiationTime().getKnown().getCcsdsFormat().value;
+					startTime = new Date(PduFactoryUtil.buildTimeMillis(time)[0]);
+				} else {
+					byte[] time = obj.getStartRadiationTime().getKnown().getCcsdsPicoFormat().value;
+					startTime = new Date(PduFactoryUtil.buildTimeMillisPico(time)[0]);
 				}
 			}
-			;
 			return new CltuLastProcessed(obj.getCltuIdentification().longValue(), startTime,
 					CltuStatusEnum.values()[obj.getCltuStatus().intValue()]);
 		}

@@ -60,7 +60,7 @@ public class SpacePacket extends AnnotatedObject {
      */
     public static Function<byte[], SpacePacket> decodingFunction() {
         // Default quality indicator is set to true
-        return (input) -> new SpacePacket(input, true);
+        return input -> new SpacePacket(input, true);
     }
 
     /**

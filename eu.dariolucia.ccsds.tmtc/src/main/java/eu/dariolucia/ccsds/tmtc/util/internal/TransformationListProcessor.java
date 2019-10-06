@@ -17,12 +17,7 @@
 package eu.dariolucia.ccsds.tmtc.util.internal;
 
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Flow;
 import java.util.function.Function;
 
 /**

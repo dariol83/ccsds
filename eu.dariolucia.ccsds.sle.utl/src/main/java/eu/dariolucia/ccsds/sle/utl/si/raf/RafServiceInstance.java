@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -690,7 +691,9 @@ public class RafServiceInstance extends ServiceInstance {
 				} else if (sn.getNotification().getProductionStatusChange() != null) {
 					this.productionStatus = mapProductionStatus(
 							sn.getNotification().getProductionStatusChange().intValue());
-					LOG.info(String.format("%s: Production status changed to %s", getServiceInstanceIdentifier(), this.productionStatus));
+					if(LOG.isLoggable(Level.INFO)) {
+						LOG.info(String.format("%s: Production status changed to %s", getServiceInstanceIdentifier(), this.productionStatus));
+					}
 				}
 				// Notify PDU
 				notifyPduReceived(sn, NOTIFY_NAME, null);
