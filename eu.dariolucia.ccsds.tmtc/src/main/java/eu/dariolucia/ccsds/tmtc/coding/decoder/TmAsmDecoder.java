@@ -19,7 +19,7 @@ package eu.dariolucia.ccsds.tmtc.coding.decoder;
 import eu.dariolucia.ccsds.tmtc.coding.encoder.TmAsmEncoder;
 
 import java.util.Arrays;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * This functional class transforms the provided frame by returning a copy having the specified sync marker removed.
@@ -27,7 +27,7 @@ import java.util.function.Function;
  * This class actually checks whether the sync marker is present. If it is not detected, the apply method throws an
  * {@link IllegalArgumentException}.
  */
-public class TmAsmDecoder implements Function<byte[], byte[]> {
+public class TmAsmDecoder implements UnaryOperator<byte[]> {
 
     public static final byte[] DEFAULT_ATTACHED_SYNC_MARKER = TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER;
 

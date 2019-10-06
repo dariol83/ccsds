@@ -41,6 +41,6 @@ public class VirtualChannelReceiverSpacePacketMapper<T extends AbstractTransferF
 
     @Override
     public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
-        this.data.add(new SpacePacket(packet, qualityIndicator));
+        this.data.get().add(new SpacePacket(packet, qualityIndicator));
     }
 }

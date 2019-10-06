@@ -81,13 +81,12 @@ public abstract class AbstractTransformationProcessor<T,K> implements Flow.Proce
         if(subscriber == null) {
             throw new NullPointerException("Subscriber shall not be null");
         }
-        if(this.sink.contains(subscriber)) {
+        // Make subscription
+        TransformationSubscription ces = new TransformationSubscription(subscriber);
+        if(this.sink.contains(ces)) {
             subscriber.onError(new IllegalStateException("Already subscribed"));
             return;
         }
-
-        // Make subscription
-        TransformationSubscription ces = new TransformationSubscription(subscriber);
         // Add to the list of subscribers
         this.sink.add(ces);
         // Inform the subscriber that it was correctly registered
@@ -112,7 +111,7 @@ public abstract class AbstractTransformationProcessor<T,K> implements Flow.Proce
     @Override
     public void onComplete() {
         if(this.running) {
-            this.sink.forEach(o -> o.forwardComplete());
+            this.sink.forEach(TransformationSubscription::forwardComplete);
         }
         this.running = false;
     }
@@ -144,7 +143,7 @@ public abstract class AbstractTransformationProcessor<T,K> implements Flow.Proce
             if(executor == null) {
                 doForwardItems();
             } else {
-                executor.submit(() -> doForwardItems());
+                executor.submit(this::doForwardItems);
             }
         }
 
@@ -187,7 +186,7 @@ public abstract class AbstractTransformationProcessor<T,K> implements Flow.Proce
             if(executor == null) {
                 doForwardComplete();
             } else {
-                executor.submit(() -> doForwardComplete());
+                executor.submit(this::doForwardComplete);
             }
         }
 
@@ -217,7 +216,7 @@ public abstract class AbstractTransformationProcessor<T,K> implements Flow.Proce
                 if(executor == null) {
                     doForwardItems();
                 } else {
-                    executor.submit(() -> doForwardItems());
+                    executor.submit(this::doForwardItems);
                 }
             }
         }

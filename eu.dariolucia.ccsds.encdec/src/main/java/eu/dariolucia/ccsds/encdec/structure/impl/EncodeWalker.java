@@ -127,14 +127,14 @@ public class EncodeWalker extends StructureWalker<byte[], EncodingException> {
                         this.bitHandler.setNextMil48Real(realValue);
                         break;
                     default:
-                        throw new EncodingException("Length code " + dataLength + " for encoded parameter " + ei.getId() + " for real values not recognized, cannot encode");
+                        throw new EncodingException(String.format("Length code %d for encoded parameter %s for real values not recognized, cannot encode", dataLength, ei.getId()));
                 }
                 value = realValue;
             break;
             case BIT_STRING:
                 BitString bs = this.resolver.getBitStringValue(ei, this.currentLocation, dataLength);
                 if (dataLength != 0 && bs.getLength() != dataLength) {
-                    throw new EncodingException("Resolved bitstring length value " + bs.getLength() + " and PFC code " + dataLength + " for bit string do not match for encoded parameter " + ei.getId() + ", cannot encode");
+                    throw new EncodingException(String.format("Resolved bitstring length value %d and PFC code %d for bit string do not match for encoded parameter %s, cannot encode", bs.getLength(), dataLength, ei.getId()));
                 }
                 this.bitHandler.setNextByte(bs.getData(), bs.getLength());
                 value = bs;
@@ -142,7 +142,7 @@ public class EncodeWalker extends StructureWalker<byte[], EncodingException> {
             case OCTET_STRING:
                 byte[] os = this.resolver.getOctetStringValue(ei, this.currentLocation, dataLength);
                 if (dataLength != 0 && os.length != dataLength) {
-                    throw new EncodingException("Resolved octet string length value " + os.length + " and PFC code " + dataLength + " for octet string do not match for encoded parameter " + ei.getId() + ", cannot encode");
+                    throw new EncodingException(String.format("Resolved octet string length value %d and PFC code %d for octet string do not match for encoded parameter %s, cannot encode", os.length, dataLength, ei.getId()));
                 }
                 this.bitHandler.setNextByte(os, os.length * Byte.SIZE);
                 value = os;
@@ -150,7 +150,7 @@ public class EncodeWalker extends StructureWalker<byte[], EncodingException> {
             case CHARACTER_STRING:
                 String cs = this.resolver.getCharacterStringValue(ei, this.currentLocation, dataLength);
                 if (dataLength != 0 && cs.length() != dataLength) {
-                    throw new EncodingException("Resolved char string length value " + cs.length() + " and PFC code " + dataLength + " for char string do not match for encoded parameter " + ei.getId() + ", cannot encode");
+                    throw new EncodingException(String.format("Resolved char string length value %d and PFC code %d for char string do not match for encoded parameter %s, cannot encode", cs.length(), dataLength, ei.getId()));
                 }
                 this.bitHandler.setNextString(cs, cs.length() * Byte.SIZE);
                 value = cs;
@@ -179,7 +179,7 @@ public class EncodeWalker extends StructureWalker<byte[], EncodingException> {
                     byte[] encoded = TimeUtil.toCUC(t, this.agencyEpoch, coarse, fine, false);
                     this.bitHandler.setNextByte(encoded, encoded.length * Byte.SIZE);
                 } else {
-                    throw new EncodingException("PFC value " + dataLength + " for PTC of type Absolute Time is not valid for encoded parameter " + ei.getId() + ", cannot encode");
+                    throw new EncodingException(String.format("PFC value %d for PTC of type Absolute Time is not valid for encoded parameter %s, cannot encode", dataLength, ei.getId()));
                 }
                 value = t;
             break;
@@ -196,14 +196,14 @@ public class EncodeWalker extends StructureWalker<byte[], EncodingException> {
                     byte[] encoded = TimeUtil.toCUCduration(duration, coarse, fine, false);
                     this.bitHandler.setNextByte(encoded, encoded.length * Byte.SIZE);
                 } else {
-                    throw new EncodingException("PFC value " + dataLength + " for PTC of type Relative Time is not valid for encoded parameter " + ei.getId() + ", cannot encode");
+                    throw new EncodingException(String.format("PFC value %d for PTC of type Relative Time is not valid for encoded parameter %s, cannot encode", dataLength, ei.getId()));
                 }
                 value = duration;
             break;
             case DEDUCED:
-                throw new EncodingException("Deduced type for encoded parameter " + ei.getId() + " at this stage is not allowed, cannot encode");
+                throw new EncodingException(String.format("Deduced type for encoded parameter %s at this stage is not allowed, cannot encode", ei.getId()));
             default:
-                throw new EncodingException("Type " + dataType + " not supported");
+                throw new EncodingException(String.format("Type %s not supported", dataType));
         }
         // Check padding
         if(paddedWidth != null) {

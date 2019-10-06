@@ -21,6 +21,7 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * An object capable to decode a {@link AbstractTransferFrame} objects from a byte[]. An instance of
@@ -61,7 +62,7 @@ public class ChannelDecoder<T extends AbstractTransferFrame> implements Function
 
     private final IDecodingFunction<T> frameDecoder;
 
-    private final List<Function<byte[], byte[]>> sequentialDecoders = new LinkedList<>();
+    private final List<UnaryOperator<byte[]>> sequentialDecoders = new LinkedList<>();
 
     private boolean configured = false;
 
@@ -76,10 +77,10 @@ public class ChannelDecoder<T extends AbstractTransferFrame> implements Function
      * This method adds a function byte[] to byte[] to the decoding chain. Functions are applied in the
      * order used to add them to the channel decoder.
      *
-     * @param function the {@link Function} to add
+     * @param function the {@link UnaryOperator} to add
      * @return this object instance
      */
-    public ChannelDecoder<T> addDecodingFunction(Function<byte[], byte[]> function) {
+    public ChannelDecoder<T> addDecodingFunction(UnaryOperator<byte[]> function) {
         if(this.configured) {
             throw new IllegalStateException("Channel decoder already configured");
         }
@@ -111,7 +112,7 @@ public class ChannelDecoder<T extends AbstractTransferFrame> implements Function
             throw new IllegalStateException("Channel decoder not configured yet");
         }
         byte[] toDecode = item;
-        for(Function<byte[], byte[]> f : sequentialDecoders) {
+        for(UnaryOperator<byte[]> f : sequentialDecoders) {
             toDecode = f.apply(toDecode);
         }
         return this.frameDecoder.apply(toDecode);

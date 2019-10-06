@@ -17,11 +17,8 @@
 package eu.dariolucia.ccsds.tmtc.coding.encoder;
 
 import eu.dariolucia.ccsds.tmtc.algorithm.BchCltuAlgorithm;
-import eu.dariolucia.ccsds.tmtc.algorithm.RandomizerAlgorithm;
 import eu.dariolucia.ccsds.tmtc.coding.IEncodingFunction;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
-
-import java.util.function.Function;
 
 /**
  * This class wraps a {@link BchCltuAlgorithm} instance to allow its usage in expression using {@link java.util.stream.Stream}
@@ -31,10 +28,10 @@ import java.util.function.Function;
  */
 public class CltuEncoder<T extends AbstractTransferFrame> implements IEncodingFunction<T> {
 
-    private final BchCltuAlgorithm cltuEncoder;
+    private final BchCltuAlgorithm cltuEncoderAlgorithm;
 
-    public CltuEncoder(BchCltuAlgorithm cltuEncoder) {
-        this.cltuEncoder = cltuEncoder;
+    public CltuEncoder(BchCltuAlgorithm cltuEncoderAlgorithm) {
+        this.cltuEncoderAlgorithm = cltuEncoderAlgorithm;
     }
 
     public CltuEncoder() {
@@ -46,7 +43,7 @@ public class CltuEncoder<T extends AbstractTransferFrame> implements IEncodingFu
         if(input == null) {
             throw new NullPointerException("Input cannot be null");
         }
-        return cltuEncoder.encodeCltu(input);
+        return this.cltuEncoderAlgorithm.encodeCltu(input);
     }
 
 }

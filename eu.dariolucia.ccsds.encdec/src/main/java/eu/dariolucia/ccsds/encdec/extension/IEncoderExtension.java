@@ -17,12 +17,10 @@
 package eu.dariolucia.ccsds.encdec.extension;
 
 import eu.dariolucia.ccsds.encdec.bit.BitEncoderDecoder;
+import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
 import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
-import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
-
-import java.io.IOException;
 
 /**
  * This extension interface allows to encode a parameter value within a packet, when the parameter type does not map to

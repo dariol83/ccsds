@@ -18,7 +18,7 @@ package eu.dariolucia.ccsds.tmtc.coding.decoder;
 
 import eu.dariolucia.ccsds.tmtc.algorithm.RandomizerAlgorithm;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * This functional class allows the usage of the {@link RandomizerAlgorithm}.randomizeFrameCltu in expression using {@link java.util.stream.Stream}
@@ -26,7 +26,7 @@ import java.util.function.Function;
  *
  * XXX: It could be considered redundant, since the randomizeFrameCltu method can be addressed by using method references.
  */
-public class CltuRandomizerDecoder implements Function<byte[], byte[]> {
+public class CltuRandomizerDecoder implements UnaryOperator<byte[]> {
 
     @Override
     public byte[] apply(byte[] input) {

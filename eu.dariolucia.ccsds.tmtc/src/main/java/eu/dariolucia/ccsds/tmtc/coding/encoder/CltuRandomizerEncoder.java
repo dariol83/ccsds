@@ -20,8 +20,6 @@ import eu.dariolucia.ccsds.tmtc.algorithm.RandomizerAlgorithm;
 import eu.dariolucia.ccsds.tmtc.coding.IEncodingFunction;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
-import java.util.function.Function;
-
 /**
  * This functional class allows the usage of the {@link RandomizerAlgorithm}.randomizeFrameCltu in expression using {@link java.util.stream.Stream}
  * objects or in {@link eu.dariolucia.ccsds.tmtc.coding.ChannelEncoder} instances. De-randomization is performed in-place.

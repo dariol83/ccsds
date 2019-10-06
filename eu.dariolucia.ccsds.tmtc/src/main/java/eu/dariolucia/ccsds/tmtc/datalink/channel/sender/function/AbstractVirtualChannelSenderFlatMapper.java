@@ -23,6 +23,7 @@ import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -44,11 +45,12 @@ public abstract class AbstractVirtualChannelSenderFlatMapper<T extends AbstractT
 
     protected final AbstractSenderVirtualChannel<T> sender;
     private volatile boolean disposed = false;
-    protected volatile List<T> data = null;
+    protected AtomicReference<List<T>> data;
 
     public AbstractVirtualChannelSenderFlatMapper(AbstractSenderVirtualChannel<T> sender) {
         this.sender = sender;
         this.sender.register(this);
+        this.data = new AtomicReference<>();
     }
 
     public int getVirtualChannelId() {
@@ -65,14 +67,14 @@ public abstract class AbstractVirtualChannelSenderFlatMapper<T extends AbstractT
         if (this.disposed) {
             throw new IllegalStateException("Virtual channel mapper disposed");
         }
-        this.data = new LinkedList<>();
+        this.data.set(new LinkedList<>());
         doDispatch(sp);
-        return data.stream();
+        return data.get().stream();
     }
 
     @Override
     public void transferFrameGenerated(AbstractSenderVirtualChannel<T> vc, T generatedFrame, int bufferedBytes) {
-        this.data.add(generatedFrame);
+        this.data.get().add(generatedFrame);
     }
 
     protected abstract void doDispatch(K data);

@@ -67,7 +67,7 @@ public abstract class StructureWalker<T,K extends Exception> {
             } else if (ei instanceof EncodedStructure) {
                 visitStructure((EncodedStructure) ei);
             } else {
-                throw newException("Type " + ei.getClass().getSimpleName() + " not supported");
+                throw newException(String.format("Structural type %s not supported", ei.getClass().getSimpleName()));
             }
         }
         packetStructureEnd(definition.getStructure(), currentLocation);
@@ -97,7 +97,7 @@ public abstract class StructureWalker<T,K extends Exception> {
             } else if (ei instanceof EncodedStructure) {
                 visitStructure((EncodedStructure) ei);
             } else {
-                throw newException("Type " + ei.getClass().getSimpleName() + " not supported");
+                throw newException(String.format("Inner structural type %s not supported", ei.getClass().getSimpleName()));
             }
         }
         this.encodedParameter2endPosition.put(es.getId(), this.bitHandler.getCurrentBitIndex());
@@ -129,7 +129,7 @@ public abstract class StructureWalker<T,K extends Exception> {
                 } else if (ei instanceof EncodedStructure) {
                     visitStructure((EncodedStructure) ei);
                 } else {
-                    throw newException("Type " + ei.getClass().getSimpleName() + " not supported");
+                    throw newException(String.format("Array inner type %s not supported", ei.getClass().getSimpleName()));
                 }
                 arrayItemEnd(ea, currentLocation, idx);
                 this.currentLocation = this.currentLocation.parent();
@@ -162,10 +162,10 @@ public abstract class StructureWalker<T,K extends Exception> {
             if(value instanceof Number) {
                 return ((Number) value).intValue();
             } else {
-                throw newException("Cannot map value of encoded parameter " + param + " to an integer for array size of " + ea.getId());
+                throw newException(String.format("Cannot map value of encoded parameter %s to an integer for array size of %s", param, ea.getId()));
             }
         } else {
-            throw newException("No array size type recognized for " + ea.getId() + ": " + size.getClass().getSimpleName());
+            throw newException(String.format("No array size type recognized for %s: %s", ea.getId(), size.getClass().getSimpleName()));
         }
     }
 
@@ -181,7 +181,7 @@ public abstract class StructureWalker<T,K extends Exception> {
             EncodedItemRelativeLocation eirl = (EncodedItemRelativeLocation) location;
             Integer bitIndex = this.encodedParameter2endPosition.get(eirl.getReference());
             if (bitIndex == null) {
-                throw newException("No encoded item " + eirl.getReference() + " used as reference for location");
+                throw newException(String.format("No encoded item %s used as reference for location", eirl.getReference()));
             } else {
                 bitIndex += eirl.getBitOffset();
                 if (eirl.getBitAlignment() > 1) {
@@ -204,7 +204,7 @@ public abstract class StructureWalker<T,K extends Exception> {
             }
             this.bitHandler.setCurrentBitIndex(currBitIndex);
         } else {
-            throw newException("Location class of type " + location.getClass().getSimpleName() + " not supported");
+            throw newException(String.format("Location class of type %s not supported", location.getClass().getSimpleName()));
         }
     }
 
@@ -240,14 +240,14 @@ public abstract class StructureWalker<T,K extends Exception> {
                 return pd;
             }
         }
-        throw newException("Cannot map externalId " + externalId + " to parameter definition");
+        throw newException(String.format("Cannot map externalId %d to parameter definition", externalId));
     }
 
     protected FixedType deriveEffectiveType(EncodedParameter ei) throws K {
         AbstractEncodedType type = ei.getType();
         AbstractEncodedLength length = ei.getLength();
         if (type instanceof ExtensionType) {
-            throw new IllegalArgumentException("Extension type for parameter " + ei.getId() + " cannot be effectively derived");
+            throw newException(String.format("Extension type for parameter %s cannot be effectively derived", ei.getId()));
         }
         DataTypeEnum dataTypeEnum;
         int dataLength;
@@ -263,22 +263,22 @@ public abstract class StructureWalker<T,K extends Exception> {
             String refItem = ((ReferenceType) type).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw newException("No encoded item " + refItem + " used as reference for type of " + ei.getId());
+                throw newException(String.format("No encoded item %s used as reference for type of %s", refItem, ei.getId()));
             }
             if (!(value instanceof Number)) {
-                throw newException("Encoded item " + refItem + " used as reference for type of " + ei.getId() + " is not a number");
+                throw newException(String.format("Encoded item %s used as reference for type of %s is not a number", refItem, ei.getId()));
             }
             dataTypeEnum = DataTypeEnum.fromCode(((Number) value).intValue());
             if (length != null) {
                 dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
             } else {
-                throw newException("Encoded item " + ei.getId() + " use reference for type but there is no indication for length");
+                throw newException(String.format("Encoded item %s use reference for type but there is no indication for length", ei.getId()));
             }
         } else if (type instanceof ParameterType) {
             String refItem = ((ParameterType) type).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw newException("No encoded item " + refItem + " used as parameter reference for type of " + ei.getId());
+                throw newException(String.format("No encoded item %s used as parameter reference for type of %s", refItem, ei.getId()));
             }
             if (value instanceof Number) {
                 int externalId = ((Number) value).intValue();
@@ -289,7 +289,7 @@ public abstract class StructureWalker<T,K extends Exception> {
                     if (length != null) {
                         dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
                     } else {
-                        throw newException("No length specified for encoded parameter " + ei.getId() + " even if type references a parameter that cannot be found via external ID");
+                        throw newException(String.format("No length specified for encoded parameter %s even if type references a parameter that cannot be found via external ID", ei.getId()));
                     }
                 } else {
                     dataTypeEnum = pd.getType().getType();
@@ -306,11 +306,11 @@ public abstract class StructureWalker<T,K extends Exception> {
                 if (length != null) {
                     dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
                 } else {
-                    throw newException("No length specified for encoded parameter " + ei.getId() + " even if type references a parameter, whose referenced value is not an external ID");
+                    throw newException(String.format("No length specified for encoded parameter %s even if type references a parameter, whose referenced value is not an external ID", ei.getId()));
                 }
             }
         } else {
-            throw newException("Type class of type " + type.getClass().getSimpleName() + " not supported");
+            throw newException(String.format("Type class of type %s not supported", type.getClass().getSimpleName()));
         }
         return new FixedType(dataTypeEnum, dataLength);
     }
@@ -322,17 +322,17 @@ public abstract class StructureWalker<T,K extends Exception> {
             String refItem = ((ReferenceLength) length).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw newException("No encoded item " + refItem + " used as reference for length, null value");
+                throw newException(String.format("No encoded item %s used as reference for length, null value", refItem));
             }
             if (!(value instanceof Number)) {
-                throw newException("Encoded item " + refItem + " value used as reference for length is not a number");
+                throw newException(String.format("Encoded item %s value used as reference for length is not a number", refItem));
             }
             return ((Number) value).intValue();
         } else if (length instanceof ParameterLength) {
             String refItem = ((ParameterLength) length).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw newException("No encoded item " + refItem + " used as parameter reference for length, null value");
+                throw newException(String.format("No encoded item %s used as parameter reference for length, null value", refItem));
             }
             if (value instanceof Number) {
                 int externalId = ((Number) value).intValue();
@@ -348,7 +348,7 @@ public abstract class StructureWalker<T,K extends Exception> {
                 return lm.mapLength(ei, location, dataType, value);
             }
         } else {
-            throw newException("Length class of type " + length.getClass().getSimpleName() + " not supported");
+            throw newException(String.format("Length class of type %s not supported", length.getClass().getSimpleName()));
         }
     }
 }

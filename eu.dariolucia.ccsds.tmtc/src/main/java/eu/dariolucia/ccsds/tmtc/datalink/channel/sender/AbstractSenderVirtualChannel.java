@@ -133,19 +133,19 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
                     dispatch(packets);
                 }
                 // If the amount of received data is less than availableSpaceInCurrentFrame, then no frame was emitted
-                // but the data has been stored for the next pull request
-                if(newDataSize < availableSpaceInCurrentFrame) {
-                    return false;
-                } else {
-                    // Received data is equal or more than availableSpaceInCurrentFrame, then one frame was emitted
-                    // and the remaining data has been stored for the next pull request
-                    return true;
-                }
+                // but the data has been stored for the next pull request: return false.
+                // Received data is equal or more than availableSpaceInCurrentFrame, then one frame was emitted
+                // and the remaining data has been stored for the next pull request: return true.
+                return newDataSize >= availableSpaceInCurrentFrame;
             }
         } else if(mode == VirtualChannelAccessMode.BITSTREAM) {
             BitstreamData data = this.dataProvider.generateBitstreamData(getVirtualChannelId(), availableSpaceInCurrentFrame);
             // Compute if a frame will be emitted or not
-            int newDataSize = data == null ? 0 : data.getNumBits()/8 + (data.getNumBits() % 8 == 0 ? 0 : 1);
+            int newDataSize = data == null ? 0 : data.getNumBits()/8;
+            if(data != null) {
+                int reportByte = (data.getNumBits() % 8 == 0 ? 0 : 1);
+                newDataSize += reportByte;
+            }
             // For bitstream data, no segmentation is possible, so data must be less than or equal the requested amount
             if(newDataSize > availableSpaceInCurrentFrame) {
                 // Constraint violation

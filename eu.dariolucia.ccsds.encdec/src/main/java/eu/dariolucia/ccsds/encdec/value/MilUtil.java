@@ -30,6 +30,10 @@ package eu.dariolucia.ccsds.encdec.value;
  */
 public class MilUtil {
 
+    private MilUtil() {
+        // Private constructor
+    }
+
     /**
      * Long conversion table
      */
@@ -62,7 +66,7 @@ public class MilUtil {
      */
     public static double fromMil48Real(long rawBits) {
         long exponent = convertToNative( ( rawBits & 0x000000ff0000L ) >> 16, 8 );
-        long mantissa = convertToNative( ( ( rawBits & 0x00000000ffffL ) ) +
+        long mantissa = convertToNative( ( rawBits & 0x00000000ffffL ) +
                 ( ( rawBits & 0xffffff000000L ) >> 8 ), 40 );
         return (double)mantissa * Math.pow( 2.0, ( exponent - 39.0 ) );
     }

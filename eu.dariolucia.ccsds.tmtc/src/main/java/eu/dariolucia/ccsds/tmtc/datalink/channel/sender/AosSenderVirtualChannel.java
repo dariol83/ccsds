@@ -25,7 +25,7 @@ import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
 
 /**
@@ -35,9 +35,9 @@ import java.util.function.Supplier;
  */
 public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTransferFrame> {
 
-	private final Function<Integer, AbstractOcf> ocfSupplier;
+	private final IntFunction<AbstractOcf> ocfSupplier;
 
-	private final Function<Integer, byte[]> insertZoneSupplier;
+	private final IntFunction<byte[]> insertZoneSupplier;
 
 	private final int insertZoneLength;
 
@@ -57,19 +57,19 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 	private final int secHeaderLength;
 	private final int secTrailerLength;
 
-	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Function<Integer, AbstractOcf> ocfSupplier) {
+	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, IntFunction<AbstractOcf> ocfSupplier) {
 		this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, ocfSupplier, false, false, 0, null);
 	}
 
-	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Function<Integer, AbstractOcf> ocfSupplier, boolean virtualChannelFrameCountCycleInUse, boolean fhecfPresent, int insertZoneLength, Function<Integer, byte[]> insertZoneSupplier) {
+	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, IntFunction<AbstractOcf> ocfSupplier, boolean virtualChannelFrameCountCycleInUse, boolean fhecfPresent, int insertZoneLength, IntFunction<byte[]> insertZoneSupplier) {
 		this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, ocfSupplier, virtualChannelFrameCountCycleInUse, fhecfPresent, insertZoneLength, insertZoneSupplier, null, 0, 0, null, null);
 	}
 
-	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Function<Integer, AbstractOcf> ocfSupplier, IVirtualChannelDataProvider dataProvider) {
+	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, IntFunction<AbstractOcf> ocfSupplier, IVirtualChannelDataProvider dataProvider) {
 		this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, ocfSupplier, false, false, 0, null, dataProvider, 0, 0, null, null);
 	}
 
-	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Function<Integer, AbstractOcf> ocfSupplier, boolean virtualChannelFrameCountCycleInUse, boolean fhecfPresent, int insertZoneLength, Function<Integer, byte[]> insertZoneSupplier, IVirtualChannelDataProvider dataProvider,
+	public AosSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, IntFunction<AbstractOcf> ocfSupplier, boolean virtualChannelFrameCountCycleInUse, boolean fhecfPresent, int insertZoneLength, IntFunction<byte[]> insertZoneSupplier, IVirtualChannelDataProvider dataProvider,
 								   int secHeaderLength, int secTrailerLength, Supplier<byte[]> secHeaderSupplier, Supplier<byte[]> secTrailerSupplier) {
 		super(spacecraftId, virtualChannelId, mode, fecfPresent, dataProvider);
 		this.frameLength = frameLength;
@@ -84,11 +84,11 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 		this.secHeaderLength = Math.max(secHeaderLength, 0);
 		this.secTrailerLength = Math.max(secTrailerLength, 0);
 
-		if(secHeaderLength > 0 && secHeaderSupplier == null) {
+		if(this.secHeaderLength > 0 && secHeaderSupplier == null) {
 			throw new IllegalArgumentException("Security header length specified, but no security header supplier provided");
 		}
 
-		if(secTrailerLength > 0 && secTrailerSupplier == null) {
+		if(this.secTrailerLength > 0 && secTrailerSupplier == null) {
 			throw new IllegalArgumentException("Security trailer length specified, but no security trailer supplier provided");
 		}
 	}
@@ -105,7 +105,7 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 		return virtualChannelFrameCountCycleInUse;
 	}
 
-	public Function<Integer, AbstractOcf> getOcfSupplier() {
+	public IntFunction<AbstractOcf> getOcfSupplier() {
 		return ocfSupplier;
 	}
 
@@ -113,7 +113,7 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 		return ocfSupplier != null;
 	}
 
-	public Function<Integer, byte[]> getInsertZoneSupplier() {
+	public IntFunction<byte[]> getInsertZoneSupplier() {
 		return insertZoneSupplier;
 	}
 
@@ -164,6 +164,7 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 		notifyTransferFrameGenerated(toSend, 0);
 	}
 
+	@Override
 	public int dispatch(SpacePacket isp) {
 		return dispatch(isReplayFlag(), isp);
 	}
@@ -200,6 +201,7 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 		return getRemainingFreeSpace();
 	}
 
+	@Override
 	public int dispatch(SpacePacket... pkts) {
 		return dispatch(isReplayFlag(), pkts);
 	}

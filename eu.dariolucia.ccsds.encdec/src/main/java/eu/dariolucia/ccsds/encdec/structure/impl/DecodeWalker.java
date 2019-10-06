@@ -55,7 +55,7 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
             PathLocation pl = PathLocation.of(definition.getId(), ei.getId());
             DecodingResult.Item item = location2item.get(pl);
             if(item == null) {
-                throw new DecodingException("Expecting to find item at path " + pl);
+                throw new DecodingException(String.format("Expecting to find item at path %s", pl));
             }
             decodedItems.add(item);
         }
@@ -117,15 +117,15 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
                 String refItem = ((ReferenceLinkedParameter) linkedParameter).getReference();
                 Object linkedParamValue = this.encodedParameter2value.get(refItem);
                 if (linkedParamValue == null) {
-                    throw new DecodingException("No encoded item " + refItem + " used as reference for linked parameter for " + ei.getId() + ", null value");
+                    throw new DecodingException(String.format("No encoded item %s used as reference for linked parameter for %s, null value", refItem, ei.getId()));
                 }
                 if (!(linkedParamValue instanceof Number)) {
-                    throw new DecodingException("Encoded item " + refItem + " value used as reference for linked parameter for " + ei.getId() + ", is not a number");
+                    throw new DecodingException(String.format("Encoded item %s value used as reference for linked parameter for %s, is not a number", refItem, ei.getId()));
                 }
                 // Look up the definition using the external ID
                 ParameterDefinition pd = retrieveParameterDefinitionByExternalId(((Number)linkedParamValue).intValue());
                 if(pd == null) {
-                    throw new DecodingException("No parameter with ID " + ((Number)linkedParamValue).intValue() + " found as specified by encoded item " + refItem + " connected to encoded parameter " + ei.getId() + " as linked parameter");
+                    throw new DecodingException(String.format("No parameter with ID %d found as specified by encoded item %s connected to encoded parameter %s as linked parameter", ((Number) linkedParamValue).intValue(), refItem, ei.getId()));
                 } else {
                     decodedParameters.add(new ParameterValue(pd.getId(), value));
                 }
@@ -172,7 +172,7 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
                         value = this.bitHandler.getNextMil48Real();
                         break;
                     default:
-                        throw new DecodingException("Length code " + dataLength + " for encoded parameter " + ei.getId() + " for real values not recognized");
+                        throw new DecodingException(String.format("Length code %d for encoded parameter %s for real values not recognized", dataLength, ei.getId()));
                 }
             break;
             case BIT_STRING:
@@ -209,7 +209,7 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
                     byte[] tField = this.bitHandler.getNextByte(Byte.SIZE * (coarse + fine));
                     t = TimeUtil.fromCUC(tField, this.agencyEpoch, coarse, fine);
                 } else {
-                    throw new DecodingException("PFC value " + dataLength + " for PTC of type Absolute Time is not valid for encoded parameter " + ei.getId());
+                    throw new DecodingException(String.format("PFC value %d for PTC of type Absolute Time is not valid for encoded parameter %s", dataLength, ei.getId()));
                 }
                 value = t;
             break;
@@ -224,14 +224,14 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
                     byte[] tField = this.bitHandler.getNextByte(Byte.SIZE * (coarse + fine));
                     duration = TimeUtil.fromCUCduration(tField, coarse, fine);
                 } else {
-                    throw new DecodingException("PFC value " + dataLength + " for PTC of type Relative Time is not valid for encoded parameter " + ei.getId());
+                    throw new DecodingException(String.format("PFC value %d for PTC of type Relative Time is not valid for encoded parameter %s", dataLength, ei.getId()));
                 }
                 value = duration;
             break;
             case DEDUCED:
-                throw new DecodingException("Deduced type for encoded parameter " + ei.getId() + " at this stage is not allowed");
+                throw new DecodingException(String.format("Deduced type for encoded parameter %s at this stage is not allowed", ei.getId()));
             default:
-                throw new DecodingException("Type " + dataType + " not supported");
+                throw new DecodingException(String.format("Type %s not supported", dataType));
         }
         // Check padding
         if(paddedWidth != null) {
@@ -287,10 +287,10 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
 
     private void stackPop(PathLocation currentLocation) throws DecodingException {
         if (stack.isEmpty()) {
-            throw new DecodingException("Stack empty, not expected when processing end of location " + currentLocation);
+            throw new DecodingException(String.format("Stack empty, not expected when processing end of location %s", currentLocation));
         }
         if (!stack.peek().location.equals(currentLocation)) {
-            throw new DecodingException("Stack head points to " + stack.peek().location + " but expecting " + currentLocation);
+            throw new DecodingException(String.format("Stack head points to %s but expecting %s", stack.peek().location, currentLocation));
         }
         stack.pop();
     }
@@ -301,11 +301,11 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
             return;
         }
         if (stack.isEmpty()) {
-            throw new DecodingException("Stack empty, cannot attach item " + toBeAttached.location);
+            throw new DecodingException(String.format("Stack empty, cannot attach item %s", toBeAttached.location));
         }
         DecodingResult.Item potentialParent = stack.peek();
         if(!potentialParent.location.equals(toBeAttached.location.parent())) {
-            throw new DecodingException("Expected parent " + toBeAttached.location.parent() + " does not match actual parent " + potentialParent.location);
+            throw new DecodingException(String.format("Expected parent %s does not match actual parent %s", toBeAttached.location.parent(), potentialParent.location));
         }
         if(potentialParent instanceof DecodingResult.Structure) {
             ((DecodingResult.Structure) potentialParent).properties.add(toBeAttached);
@@ -313,12 +313,12 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
             if(toBeAttached instanceof DecodingResult.ArrayItem) {
                 ((DecodingResult.Array) potentialParent).arrayItems.add((DecodingResult.ArrayItem) toBeAttached);
             } else {
-                throw new DecodingException("Provided item " + toBeAttached.location + " is not an array item");
+                throw new DecodingException(String.format("Provided item %s is not an array item", toBeAttached.location));
             }
         } else if(potentialParent instanceof DecodingResult.ArrayItem) {
             ((DecodingResult.ArrayItem) potentialParent).array.add(toBeAttached);
         } else {
-            throw new DecodingException("Parent is not of supported type: " + potentialParent.getClass().getName());
+            throw new DecodingException(String.format("Parent is not of supported type: %s", potentialParent.getClass().getName()));
         }
     }
 

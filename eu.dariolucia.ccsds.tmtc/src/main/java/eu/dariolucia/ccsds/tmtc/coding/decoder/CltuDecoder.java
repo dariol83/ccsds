@@ -17,9 +17,8 @@
 package eu.dariolucia.ccsds.tmtc.coding.decoder;
 
 import eu.dariolucia.ccsds.tmtc.algorithm.BchCltuAlgorithm;
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * This functional class wraps a {@link BchCltuAlgorithm} instance to allow its usage in expression using {@link java.util.stream.Stream}
@@ -27,12 +26,12 @@ import java.util.function.Function;
  *
  * XXX: It could be considered redundant, since the decodeCltu method can be addressed by using method references.
  */
-public class CltuDecoder implements Function<byte[], byte[]> {
+public class CltuDecoder implements UnaryOperator<byte[]> {
 
-    private final BchCltuAlgorithm cltuDecoder;
+    private final BchCltuAlgorithm cltuDecoderAlgorithm;
 
-    public CltuDecoder(BchCltuAlgorithm cltuDecoder) {
-        this.cltuDecoder = cltuDecoder;
+    public CltuDecoder(BchCltuAlgorithm cltuDecoderAlgorithm) {
+        this.cltuDecoderAlgorithm = cltuDecoderAlgorithm;
     }
 
     public CltuDecoder() {
@@ -44,6 +43,6 @@ public class CltuDecoder implements Function<byte[], byte[]> {
         if(input == null) {
             throw new NullPointerException("Input cannot be null");
         }
-        return new BchCltuAlgorithm().decodeCltu(input);
+        return this.cltuDecoderAlgorithm.decodeCltu(input);
     }
 }

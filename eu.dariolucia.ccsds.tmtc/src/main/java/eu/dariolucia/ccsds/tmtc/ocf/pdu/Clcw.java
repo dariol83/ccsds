@@ -59,10 +59,10 @@ public class Clcw extends AbstractOcf {
 
         this.statusField = (byte) ((ocf[0] & 0x1C) >> 2);
 
-        int copInEffect = (ocf[0] & 0x03);
+        int copInEffectFlag = (ocf[0] & 0x03);
 
         // 4.2.1.5.2: it should be set to 1, check relaxed
-        this.copInEffect = CopEffectType.values()[copInEffect];
+        this.copInEffect = CopEffectType.values()[copInEffectFlag];
 
         this.virtualChannelId = (short) ((ocf[1] & 0xFC) >> 2);
 

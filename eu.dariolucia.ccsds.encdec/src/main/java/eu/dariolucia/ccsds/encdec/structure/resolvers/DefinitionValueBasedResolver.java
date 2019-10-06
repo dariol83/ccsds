@@ -73,11 +73,11 @@ public class DefinitionValueBasedResolver implements IEncodeResolver {
                     return delegateFunction.apply(parameter, location);
                 }
                 return theObj;
-            } catch (EncodingException e) {
+            } catch (Exception e) {
                 if(delegateCallOnNullOrException) {
                     return delegateFunction.apply(parameter, location);
                 } else {
-                    throw e;
+                    throw new EncodingException("No definition-value retrievable for " + location, e);
                 }
             }
         }
@@ -107,11 +107,11 @@ public class DefinitionValueBasedResolver implements IEncodeResolver {
                     return delegateFunction.apply(parameter, location, length);
                 }
                 return theObj;
-            } catch (EncodingException e) {
+            } catch (Exception e) {
                 if(delegateCallOnNullOrException) {
                     return delegateFunction.apply(parameter, location, length);
                 } else {
-                    throw e;
+                    throw new EncodingException("No definition-value retrievable for " + location, e);
                 }
             }
         }

@@ -21,6 +21,7 @@ import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.IVirtualChannelReceive
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 /**
@@ -38,11 +39,12 @@ public abstract class AbstractVirtualChannelReceiverMapper<T extends AbstractTra
 
     private final AbstractReceiverVirtualChannel<T> virtualChannel;
     private volatile boolean disposed = false;
-    protected volatile K data = null;
+    protected AtomicReference<K> data = null;
 
     public AbstractVirtualChannelReceiverMapper(AbstractReceiverVirtualChannel<T> virtualChannel) {
         this.virtualChannel = virtualChannel;
         this.virtualChannel.register(this);
+        this.data = new AtomicReference<>();
     }
 
     public int getVirtualChannelId() {
@@ -54,9 +56,9 @@ public abstract class AbstractVirtualChannelReceiverMapper<T extends AbstractTra
         if(this.disposed) {
             throw new IllegalStateException("Virtual channel mapper disposed");
         }
-        this.data = createEmptyData();
+        this.data.set(createEmptyData());
         this.virtualChannel.processFrame(t);
-        return data;
+        return data.get();
     }
 
     protected abstract K createEmptyData();

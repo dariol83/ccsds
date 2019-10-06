@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This class allows to build a CCSDS AOS frame using a typical Builder pattern. Once a frame is built, the builder should
@@ -176,13 +177,14 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
         if(isFull()) {
             throw new IllegalArgumentException("AOS Frame already full");
         }
-        if(getFreeUserDataLength() < header.length + trailer.length) {
+        int securityDataSize = (header == null ? 0 : header.length) + (trailer == null ? 0 : trailer.length);
+        if(getFreeUserDataLength() < securityDataSize) {
             throw new IllegalArgumentException("AOS Frame cannot accomodate additional "
-                    + (header.length + trailer.length) + " bytes, remaining space is " + getFreeUserDataLength() + " bytes");
+                    + securityDataSize + " bytes, remaining space is " + getFreeUserDataLength() + " bytes");
         }
         this.securityHeader = header;
         this.securityTrailer = trailer;
-        this.freeUserDataLength -= (header.length + trailer.length);
+        this.freeUserDataLength -= securityDataSize;
 
         return this;
     }
@@ -388,7 +390,7 @@ public class AosTransferFrameBuilder implements ITransferFrameBuilder<AosTransfe
     private short computeMPDUFirstHeaderPointer() {
         if(this.idle) {
             return AosTransferFrame.AOS_M_PDU_FIRST_HEADER_POINTER_IDLE;
-        } else if(this.payloadUnits.stream().noneMatch((o) -> o.type == PayloadUnit.TYPE_PACKET)) {
+        } else if(this.payloadUnits.stream().noneMatch(o -> o.type == PayloadUnit.TYPE_PACKET)) {
             return AosTransferFrame.AOS_M_PDU_FIRST_HEADER_POINTER_NO_PACKET;
         } else {
             short firstPacket = (short) 0;

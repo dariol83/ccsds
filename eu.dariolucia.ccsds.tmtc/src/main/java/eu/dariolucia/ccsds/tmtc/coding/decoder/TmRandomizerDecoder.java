@@ -17,10 +17,8 @@
 package eu.dariolucia.ccsds.tmtc.coding.decoder;
 
 import eu.dariolucia.ccsds.tmtc.algorithm.RandomizerAlgorithm;
-import eu.dariolucia.ccsds.tmtc.coding.IEncodingFunction;
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * This functional class allows the usage of the {@link RandomizerAlgorithm}.randomizeFrameTm in expression using {@link java.util.stream.Stream}
@@ -28,7 +26,7 @@ import java.util.function.Function;
  *
  * XXX: It could be considered redundant, since the randomizeFrameTm method can be addressed by using method references.
  */
-public class TmRandomizerDecoder implements Function<byte[], byte[]> {
+public class TmRandomizerDecoder implements UnaryOperator<byte[]> {
 
     @Override
     public byte[] apply(byte[] input) {

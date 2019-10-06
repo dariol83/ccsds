@@ -18,14 +18,14 @@ package eu.dariolucia.ccsds.tmtc.coding.decoder;
 
 import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
 
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  * This functional class wraps a {@link ReedSolomonAlgorithm}, including the specification of the interleaving depth and
  * the error checking (set to 0 and false by default), to allow its usage in expression using {@link java.util.stream.Stream}
  * objects or in {@link eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder} instances.
  */
-public class ReedSolomonDecoder implements Function<byte[], byte[]> {
+public class ReedSolomonDecoder implements UnaryOperator<byte[]> {
 
     private final ReedSolomonAlgorithm algorithm;
     private final int interleavingDepth;
@@ -62,6 +62,6 @@ public class ReedSolomonDecoder implements Function<byte[], byte[]> {
         if(input == null) {
             throw new NullPointerException("Input cannot be null");
         }
-        return this.algorithm.decodeFrame(input, interleavingDepth, false);
+        return this.algorithm.decodeFrame(input, interleavingDepth, errorChecking);
     }
 }

@@ -162,7 +162,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
         // If gapDetected and pdu reconstruction is pending, close the pdu with dummy data and forwardItem pdu (quality = false)
         // Clearly, the packet is closed only if you can close it (length fully known)
         if (gapDetected && isReconstructionPending()) {
-            closeCurrentPacket(frame);
+            closeCurrentPacket();
         }
         // Keep reconstructing/extracting the packets and notify accordingly
         extractPackets(frame);
@@ -277,7 +277,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
         }
     }
 
-    protected final void closeCurrentPacket(T frame) {
+    protected final void closeCurrentPacket() {
         if (this.currentOffset == -1) {
             throw new IllegalStateException("Closing a void space pdu, this is a bug");
         }

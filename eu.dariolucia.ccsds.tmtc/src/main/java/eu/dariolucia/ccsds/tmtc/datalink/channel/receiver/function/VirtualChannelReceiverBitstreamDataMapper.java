@@ -38,7 +38,7 @@ public class VirtualChannelReceiverBitstreamDataMapper<T extends AbstractTransfe
 
     @Override
     public void bitstreamExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data, int numBits) {
-        this.data = new BitstreamData(data, numBits);
+        this.data.set(new BitstreamData(data, numBits));
     }
 
 }

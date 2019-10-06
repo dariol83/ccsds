@@ -175,7 +175,7 @@ public class AosTransferFrame extends AbstractTransferFrame {
 
         transferFrameVersionNumber = tfvn;
         spacecraftId = (short) ((twoOctets & (short) 0x3FC0) >> 6);
-        virtualChannelId = (short) ((twoOctets & (short) 0x003F));
+        virtualChannelId = (short) (twoOctets & (short) 0x003F);
 
         if(virtualChannelId == 63) {
             idleFrame = true;
@@ -214,14 +214,14 @@ public class AosTransferFrame extends AbstractTransferFrame {
         switch(userDataType) {
             case M_PDU:
                 twoOctets = in.getShort();
-                firstHeaderPointer = (short) ((twoOctets & (short) 0x07FF));
+                firstHeaderPointer = (short) (twoOctets & (short) 0x07FF);
                 packetZoneStart = (short) (dataFieldStart + 2);
                 noStartPacket = firstHeaderPointer == AOS_M_PDU_FIRST_HEADER_POINTER_NO_PACKET;
                 idleFrame = firstHeaderPointer == AOS_M_PDU_FIRST_HEADER_POINTER_IDLE;
                 break;
             case B_PDU:
                 twoOctets = in.getShort();
-                bitstreamDataPointer = (short) ((twoOctets & (short) 0x3FFF));
+                bitstreamDataPointer = (short) (twoOctets & (short) 0x3FFF);
                 bitstreamDataZoneStart = (short) (dataFieldStart + 2);
                 bitstreamAllValid = bitstreamDataPointer == AOS_B_PDU_FIRST_HEADER_POINTER_ALL_DATA;
                 idleFrame = bitstreamDataPointer == AOS_B_PDU_FIRST_HEADER_POINTER_IDLE;

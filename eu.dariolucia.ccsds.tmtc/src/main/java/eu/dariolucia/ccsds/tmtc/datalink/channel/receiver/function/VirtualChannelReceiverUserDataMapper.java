@@ -38,6 +38,6 @@ public class VirtualChannelReceiverUserDataMapper<T extends AbstractTransferFram
 
     @Override
     public void dataExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data) {
-        this.data = data;
+        this.data.set(data);
     }
 }
