@@ -20,10 +20,7 @@ import eu.dariolucia.ccsds.encdec.bit.BitEncoderDecoder;
 import eu.dariolucia.ccsds.encdec.definition.*;
 import eu.dariolucia.ccsds.encdec.extension.IDecoderExtension;
 import eu.dariolucia.ccsds.encdec.extension.internal.ExtensionRegistry;
-import eu.dariolucia.ccsds.encdec.structure.DecodingResult;
-import eu.dariolucia.ccsds.encdec.structure.ParameterValue;
-import eu.dariolucia.ccsds.encdec.structure.PathLocation;
-import eu.dariolucia.ccsds.encdec.structure.StructureWalker;
+import eu.dariolucia.ccsds.encdec.structure.*;
 import eu.dariolucia.ccsds.encdec.time.IGenerationTimeProcessor;
 import eu.dariolucia.ccsds.encdec.value.BitString;
 import eu.dariolucia.ccsds.encdec.value.TimeUtil;
@@ -35,16 +32,15 @@ import java.util.*;
 /**
  * The internal class used to decode packets.
  */
-public class DecodeWalker extends StructureWalker<DecodingResult> {
+public class DecodeWalker extends StructureWalker<DecodingResult, DecodingException> {
 
     private final Map<PathLocation, DecodingResult.Item> location2item = new LinkedHashMap<>();
     private final List<DecodingResult.Item> decodedItems = new LinkedList<>();
     private final List<ParameterValue> decodedParameters = new LinkedList<>();
 
-    private final Stack<DecodingResult.Item> stack = new Stack<>();
+    private final Deque<DecodingResult.Item> stack = new LinkedList<>();
     private final Instant agencyEpoch;
     private final IGenerationTimeProcessor generationTimeProcessor;
-
 
     public DecodeWalker(Definition database, PacketDefinition definition, byte[] data, int offset, int length, Instant agencyEpoch, IGenerationTimeProcessor timeProcessor) {
         super(database, definition, () -> new BitEncoderDecoder(data, offset, length));
@@ -53,13 +49,13 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
     }
 
     @Override
-    protected DecodingResult finalizeResult() {
+    protected DecodingResult finalizeResult() throws DecodingException {
         // Iterate once over the parameter structure definition and add in the decodedItems list the specified items
         for (AbstractEncodedItem ei : definition.getStructure().getEncodedItems()) {
             PathLocation pl = PathLocation.of(definition.getId(), ei.getId());
             DecodingResult.Item item = location2item.get(pl);
             if(item == null) {
-                throw new IllegalStateException("Expecting to find item at path " + pl);
+                throw new DecodingException("Expecting to find item at path " + pl);
             }
             decodedItems.add(item);
         }
@@ -67,7 +63,7 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
     }
 
     @Override
-    protected Object processValue(EncodedParameter ei) {
+    protected Object processValue(EncodedParameter ei) throws DecodingException {
         AbstractEncodedType type = ei.getType();
         DataTypeEnum dataType;
         Object value;
@@ -121,15 +117,15 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
                 String refItem = ((ReferenceLinkedParameter) linkedParameter).getReference();
                 Object linkedParamValue = this.encodedParameter2value.get(refItem);
                 if (linkedParamValue == null) {
-                    throw new RuntimeException("No encoded item " + refItem + " used as reference for linked parameter for " + ei.getId() + ", null value");
+                    throw new DecodingException("No encoded item " + refItem + " used as reference for linked parameter for " + ei.getId() + ", null value");
                 }
                 if (!(linkedParamValue instanceof Number)) {
-                    throw new RuntimeException("Encoded item " + refItem + " value used as reference for linked parameter for " + ei.getId() + ", is not a number");
+                    throw new DecodingException("Encoded item " + refItem + " value used as reference for linked parameter for " + ei.getId() + ", is not a number");
                 }
                 // Look up the definition using the external ID
                 ParameterDefinition pd = retrieveParameterDefinitionByExternalId(((Number)linkedParamValue).intValue());
                 if(pd == null) {
-                    throw new RuntimeException("No parameter with ID " + ((Number)linkedParamValue).intValue() + " found as specified by encoded item " + refItem + " connected to encoded parameter " + ei.getId() + " as linked parameter");
+                    throw new DecodingException("No parameter with ID " + ((Number)linkedParamValue).intValue() + " found as specified by encoded item " + refItem + " connected to encoded parameter " + ei.getId() + " as linked parameter");
                 } else {
                     decodedParameters.add(new ParameterValue(pd.getId(), value));
                 }
@@ -139,33 +135,29 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
         return value;
     }
 
-    private Object decodeValue(EncodedParameter ei, IDecoderExtension extDec) {
+    private Object decodeValue(EncodedParameter ei, IDecoderExtension extDec) throws DecodingException {
         return extDec.decode(super.definition, ei, currentLocation, bitHandler);
     }
 
-    private Object decodeValue(EncodedParameter ei, DataTypeEnum dataType, int dataLength) {
+    private Object decodeValue(EncodedParameter ei, DataTypeEnum dataType, int dataLength) throws DecodingException {
         Object value;
         Integer paddedWidth = ei.getPaddedWidth();
         long initialPosition = this.bitHandler.getCurrentBitIndex();
         // Now that you have the final PTC and PFC codes, you can invoke the correct operation on the bit handler
         switch (dataType) {
-            case BOOLEAN: {
+            case BOOLEAN:
                 value = this.bitHandler.getNextBoolean();
-            }
             break;
-            case ENUMERATED: {
+            case ENUMERATED:
                 value = this.bitHandler.getNextIntegerSigned(dataLength);
-            }
             break;
-            case UNSIGNED_INTEGER: {
+            case UNSIGNED_INTEGER:
                 value = this.bitHandler.getNextLongUnsigned(dataLength);
-            }
             break;
-            case SIGNED_INTEGER: {
+            case SIGNED_INTEGER:
                 value = this.bitHandler.getNextLongSigned(dataLength);
-            }
             break;
-            case REAL: {
+            case REAL:
                 switch (dataLength) {
                     case 1:
                         value = (double) this.bitHandler.getNextFloat();
@@ -180,24 +172,20 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
                         value = this.bitHandler.getNextMil48Real();
                         break;
                     default:
-                        throw new IllegalArgumentException("Length code " + dataLength + " for encoded parameter " + ei.getId() + " for real values not recognized");
+                        throw new DecodingException("Length code " + dataLength + " for encoded parameter " + ei.getId() + " for real values not recognized");
                 }
-            }
             break;
-            case BIT_STRING: {
+            case BIT_STRING:
                 byte[] val = this.bitHandler.getNextByte(dataLength);
                 value = new BitString(val, dataLength);
-            }
             break;
-            case OCTET_STRING: {
+            case OCTET_STRING:
                 value = this.bitHandler.getNextByte(dataLength * Byte.SIZE);
-            }
             break;
-            case CHARACTER_STRING: {
+            case CHARACTER_STRING:
                 value = this.bitHandler.getNextString(dataLength * Byte.SIZE);
-            }
             break;
-            case ABSOLUTE_TIME: {
+            case ABSOLUTE_TIME:
                 Instant t;
                 if (dataLength == 0) {
                     // Explicit definition of time format (CUC or CDS), i.e. including the Pfield
@@ -221,31 +209,29 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
                     byte[] tField = this.bitHandler.getNextByte(Byte.SIZE * (coarse + fine));
                     t = TimeUtil.fromCUC(tField, this.agencyEpoch, coarse, fine);
                 } else {
-                    throw new IllegalArgumentException("PFC value " + dataLength + " for PTC of type Absolute Time is not valid for encoded parameter " + ei.getId());
+                    throw new DecodingException("PFC value " + dataLength + " for PTC of type Absolute Time is not valid for encoded parameter " + ei.getId());
                 }
                 value = t;
-            }
             break;
-            case RELATIVE_TIME: {
-                Duration t;
+            case RELATIVE_TIME:
+                Duration duration;
                 if (dataLength == 0) {
                     // Explicit definition of time format (CUC), i.e. including the Pfield
-                    t = TimeUtil.fromCUCduration(this.bitHandler);
+                    duration = TimeUtil.fromCUCduration(this.bitHandler);
                 } else if (dataLength >= 1 && dataLength <= 16) {
                     int coarse = (int) Math.floor((dataLength + 3) / 4.0);
                     int fine = (dataLength + 3) % 4;
                     byte[] tField = this.bitHandler.getNextByte(Byte.SIZE * (coarse + fine));
-                    t = TimeUtil.fromCUCduration(tField, coarse, fine);
+                    duration = TimeUtil.fromCUCduration(tField, coarse, fine);
                 } else {
-                    throw new IllegalArgumentException("PFC value " + dataLength + " for PTC of type Relative Time is not valid for encoded parameter " + ei.getId());
+                    throw new DecodingException("PFC value " + dataLength + " for PTC of type Relative Time is not valid for encoded parameter " + ei.getId());
                 }
-                value = t;
-            }
+                value = duration;
             break;
             case DEDUCED:
-                throw new RuntimeException("Deduced type for encoded parameter " + ei.getId() + " at this stage is not allowed");
+                throw new DecodingException("Deduced type for encoded parameter " + ei.getId() + " at this stage is not allowed");
             default:
-                throw new IllegalArgumentException("Type " + dataType + " not supported");
+                throw new DecodingException("Type " + dataType + " not supported");
         }
         // Check padding
         if(paddedWidth != null) {
@@ -261,78 +247,83 @@ public class DecodeWalker extends StructureWalker<DecodingResult> {
     }
 
     @Override
-    protected void structureStart(EncodedStructure es, PathLocation currentLocation) {
+    protected void structureStart(EncodedStructure es, PathLocation currentLocation) throws DecodingException {
         DecodingResult.Structure struct = new DecodingResult.Structure(currentLocation, currentLocation.last(), new LinkedList<>());
         stackPush(currentLocation, struct);
     }
 
     @Override
-    protected void structureEnd(EncodedStructure es, PathLocation currentLocation) {
+    protected void structureEnd(EncodedStructure es, PathLocation currentLocation) throws DecodingException {
         stackPop(currentLocation);
     }
 
     @Override
-    protected void arrayStart(EncodedArray ea, PathLocation currentLocation) {
+    protected void arrayStart(EncodedArray ea, PathLocation currentLocation) throws DecodingException {
         DecodingResult.Array arr = new DecodingResult.Array(currentLocation, currentLocation.last(), new LinkedList<>());
         stackPush(currentLocation, arr);
     }
 
     @Override
-    protected void arrayEnd(EncodedArray ea, PathLocation append) {
+    protected void arrayEnd(EncodedArray ea, PathLocation append) throws DecodingException {
         stackPop(currentLocation);
     }
 
     @Override
-    protected void arrayItemStart(EncodedArray ea, PathLocation currentLocation, int idx) {
+    protected void arrayItemStart(EncodedArray ea, PathLocation currentLocation, int idx) throws DecodingException {
         DecodingResult.ArrayItem arrItem = new DecodingResult.ArrayItem(currentLocation, currentLocation.last(), new LinkedList<>());
         stackPush(currentLocation, arrItem);
     }
 
     @Override
-    protected void arrayItemEnd(EncodedArray ea, PathLocation currentLocation, int idx) {
+    protected void arrayItemEnd(EncodedArray ea, PathLocation currentLocation, int idx) throws DecodingException {
         stackPop(currentLocation);
     }
 
-    private void stackPush(PathLocation currentLocation, DecodingResult.Item item) {
+    private void stackPush(PathLocation currentLocation, DecodingResult.Item item) throws DecodingException {
         this.location2item.put(currentLocation, item);
         attachToParent(item);
         stack.push(item);
     }
 
-    private void stackPop(PathLocation currentLocation) {
+    private void stackPop(PathLocation currentLocation) throws DecodingException {
         if (stack.isEmpty()) {
-            throw new RuntimeException("Stack empty, not expected when processing end of location " + currentLocation);
+            throw new DecodingException("Stack empty, not expected when processing end of location " + currentLocation);
         }
         if (!stack.peek().location.equals(currentLocation)) {
-            throw new IllegalStateException("Stack head points to " + stack.peek().location + " but expecting " + currentLocation);
+            throw new DecodingException("Stack head points to " + stack.peek().location + " but expecting " + currentLocation);
         }
         stack.pop();
     }
 
-    private void attachToParent(DecodingResult.Item toBeAttached) {
+    private void attachToParent(DecodingResult.Item toBeAttached) throws DecodingException {
         if (toBeAttached.location.length() <= 2) {
             // No need to attach, no parent at this stage
             return;
         }
         if (stack.isEmpty()) {
-            throw new RuntimeException("Stack empty, cannot attach item " + toBeAttached.location);
+            throw new DecodingException("Stack empty, cannot attach item " + toBeAttached.location);
         }
         DecodingResult.Item potentialParent = stack.peek();
         if(!potentialParent.location.equals(toBeAttached.location.parent())) {
-            throw new IllegalStateException("Expected parent " + toBeAttached.location.parent() + " does not match actual parent " + potentialParent.location);
+            throw new DecodingException("Expected parent " + toBeAttached.location.parent() + " does not match actual parent " + potentialParent.location);
         }
         if(potentialParent instanceof DecodingResult.Structure) {
             ((DecodingResult.Structure) potentialParent).properties.add(toBeAttached);
         } else if(potentialParent instanceof DecodingResult.Array) {
             if(toBeAttached instanceof DecodingResult.ArrayItem) {
-                ((DecodingResult.Array) potentialParent).array.add((DecodingResult.ArrayItem) toBeAttached);
+                ((DecodingResult.Array) potentialParent).arrayItems.add((DecodingResult.ArrayItem) toBeAttached);
             } else {
-                throw new IllegalArgumentException("Provided item " + toBeAttached.location + " is not an array item");
+                throw new DecodingException("Provided item " + toBeAttached.location + " is not an array item");
             }
         } else if(potentialParent instanceof DecodingResult.ArrayItem) {
             ((DecodingResult.ArrayItem) potentialParent).array.add(toBeAttached);
         } else {
-            throw new IllegalStateException("Parent is not of supported type: " + potentialParent.getClass().getName());
+            throw new DecodingException("Parent is not of supported type: " + potentialParent.getClass().getName());
         }
+    }
+
+    @Override
+    protected DecodingException newException(String message) {
+        return new DecodingException(message);
     }
 }

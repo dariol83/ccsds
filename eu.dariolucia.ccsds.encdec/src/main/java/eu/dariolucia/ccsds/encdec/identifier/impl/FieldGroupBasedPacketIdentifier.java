@@ -122,18 +122,18 @@ public class FieldGroupBasedPacketIdentifier implements IPacketIdentifier {
         throw new PacketNotIdentifiedException(packet);
     }
 
-    private class IdSet implements Comparable<IdSet> {
+    private static class IdSet implements Comparable<IdSet> {
 
         private List<IdentField> fields;
 
         private Map<IdKey, PacketDefinition> id2packet;
 
-        public IdSet(List<IdentField> fields) {
+        private IdSet(List<IdentField> fields) {
             this.fields = fields;
             this.id2packet = new HashMap<>();
         }
 
-        public boolean supports(PacketDefinition pd) {
+        private boolean supports(PacketDefinition pd) {
             if (pd.getMatchers().size() != fields.size()) {
                 return false;
             }
@@ -146,13 +146,13 @@ public class FieldGroupBasedPacketIdentifier implements IPacketIdentifier {
             return true;
         }
 
-        public void addDefinition(PacketDefinition pd) {
+        private void addDefinition(PacketDefinition pd) {
             if (pd.getMatchers().size() != fields.size()) {
-                throw new RuntimeException("Bug, number of matchers shall be equal to fields");
+                throw new IllegalArgumentException("Bug, number of matchers shall be equal to fields. Packet definition: " + pd.getId());
             }
             for (int i = 0; i < pd.getMatchers().size(); ++i) {
                 if (!pd.getMatchers().get(i).getField().equals(fields.get(i))) {
-                    throw new RuntimeException("Bug, matcher fields shall be equal to defined IdSet fields, same order");
+                    throw new IllegalStateException("Bug, matcher fields shall be equal to defined IdSet fields, same order. Packet definition: " + pd.getId());
                 }
             }
             this.id2packet.put(IdKey.derive(pd), pd);
@@ -177,7 +177,21 @@ public class FieldGroupBasedPacketIdentifier implements IPacketIdentifier {
             }
         }
 
-        public IdKey computeKey(byte[] packet) {
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            IdSet idSet = (IdSet) o;
+            return Objects.equals(fields, idSet.fields) &&
+                    Objects.equals(id2packet, idSet.id2packet);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(fields, id2packet);
+        }
+
+        private IdKey computeKey(byte[] packet) {
             int[] key = new int[fields.size()];
             int i = 0;
             for (IdentField idf : fields) {
@@ -193,7 +207,7 @@ public class FieldGroupBasedPacketIdentifier implements IPacketIdentifier {
             return new IdKey(key);
         }
 
-        public PacketDefinition getDefinition(IdKey key) {
+        private PacketDefinition getDefinition(IdKey key) {
             return id2packet.get(key);
         }
     }
@@ -214,7 +228,7 @@ public class FieldGroupBasedPacketIdentifier implements IPacketIdentifier {
 
         private final int hashcode;
 
-        public IdKey(int... keys) {
+        private IdKey(int... keys) {
             this.keys = keys;
             this.hashcode = Arrays.hashCode(keys);
         }

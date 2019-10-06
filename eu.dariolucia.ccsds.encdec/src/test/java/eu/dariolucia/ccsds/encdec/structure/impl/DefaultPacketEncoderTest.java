@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.encdec.structure.impl;
 
 import eu.dariolucia.ccsds.encdec.bit.BitEncoderDecoder;
 import eu.dariolucia.ccsds.encdec.definition.Definition;
+import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.DefaultNullBasedResolver;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.DefinitionValueBasedResolver;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.IdentificationFieldBasedResolver;
@@ -41,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DefaultPacketEncoderTest {
 
     @Test
-    public void testDefinition1() throws IOException {
+    public void testDefinition1() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -99,7 +100,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinition2() throws IOException {
+    public void testDefinition2() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -145,7 +146,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinition3() throws IOException {
+    public void testDefinition3() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -183,7 +184,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinition4() throws IOException {
+    public void testDefinition4() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -212,7 +213,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinition5() throws IOException {
+    public void testDefinition5() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -260,7 +261,7 @@ class DefaultPacketEncoderTest {
 
 
     @Test
-    public void testDefinition6() throws IOException {
+    public void testDefinition6() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -292,7 +293,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinition7() throws IOException {
+    public void testDefinition7() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -319,7 +320,7 @@ class DefaultPacketEncoderTest {
 
 
     @Test
-    public void testDefinition8() throws IOException {
+    public void testDefinition8() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -339,7 +340,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinition9() throws IOException {
+    public void testDefinition9() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -366,7 +367,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinition10() throws IOException {
+    public void testDefinition10() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -404,7 +405,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinition11() throws IOException {
+    public void testDefinition11() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -428,7 +429,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinition12() throws IOException {
+    public void testDefinition12() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -459,7 +460,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinition13() throws IOException {
+    public void testDefinition13() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions6.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -506,7 +507,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinitionWithIdentifierResolver() throws IOException {
+    public void testDefinitionWithIdentifierResolver() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions7.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -537,7 +538,7 @@ class DefaultPacketEncoderTest {
     }
 
     @Test
-    public void testDefinitionWithNullResolver() throws IOException {
+    public void testDefinitionWithNullResolver() throws IOException, EncodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions7.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);

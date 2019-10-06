@@ -34,18 +34,19 @@ public interface IPacketDecoder {
      * @param length the length
      * @param timeProcessor an optional {@link IGenerationTimeProcessor} to derive the generation time
      * @return the result of the decoding as {@link DecodingResult}
+     * @throws DecodingException in case of problems when decoding the packet
      */
-    DecodingResult decode(String packetDefinitionId, byte[] data, int offset, int length, IGenerationTimeProcessor timeProcessor);
+    DecodingResult decode(String packetDefinitionId, byte[] data, int offset, int length, IGenerationTimeProcessor timeProcessor) throws DecodingException;
 
-    default DecodingResult decode(String packetDefinitionId, byte[] data, int offset, int length) {
+    default DecodingResult decode(String packetDefinitionId, byte[] data, int offset, int length) throws DecodingException {
         return decode(packetDefinitionId, data, offset, length, null);
     }
 
-    default DecodingResult decode(String packetDefinitionId, byte[] data) {
+    default DecodingResult decode(String packetDefinitionId, byte[] data) throws DecodingException {
         return decode(packetDefinitionId, data, 0, data.length);
     }
 
-    default DecodingResult decode(String packetDefinitionId, byte[] data, IGenerationTimeProcessor timeProcessor) {
+    default DecodingResult decode(String packetDefinitionId, byte[] data, IGenerationTimeProcessor timeProcessor) throws DecodingException {
         return decode(packetDefinitionId, data, 0, data.length, timeProcessor);
     }
 }

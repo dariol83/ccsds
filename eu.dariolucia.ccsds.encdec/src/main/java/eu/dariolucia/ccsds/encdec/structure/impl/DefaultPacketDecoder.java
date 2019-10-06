@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.encdec.structure.impl;
 
 import eu.dariolucia.ccsds.encdec.definition.Definition;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
+import eu.dariolucia.ccsds.encdec.structure.DecodingException;
 import eu.dariolucia.ccsds.encdec.structure.DecodingResult;
 import eu.dariolucia.ccsds.encdec.structure.IPacketDecoder;
 import eu.dariolucia.ccsds.encdec.structure.PacketDefinitionIndexer;
@@ -29,11 +30,6 @@ import java.time.Instant;
  * The default packet decoder provided by the library.
  */
 public class DefaultPacketDecoder implements IPacketDecoder {
-
-    /**
-     * Default maximum packet size
-     */
-    public static final int DEFAULT_MAX_PACKET_SIZE = 65536;
 
     private final PacketDefinitionIndexer definitions;
     private final Instant agencyEpoch;
@@ -60,9 +56,12 @@ public class DefaultPacketDecoder implements IPacketDecoder {
     }
 
     @Override
-    public DecodingResult decode(String packetDefinitionId, byte[] data, int offset, int length, IGenerationTimeProcessor timeProcessor) {
+    public DecodingResult decode(String packetDefinitionId, byte[] data, int offset, int length, IGenerationTimeProcessor timeProcessor) throws DecodingException {
         // Get the definition
         PacketDefinition definition = definitions.retrieveDefinition(packetDefinitionId);
+        if(definition == null) {
+            throw new DecodingException("Packet definition " + packetDefinitionId + " unknown");
+        }
         // Create a definition walker
         DecodeWalker w = new DecodeWalker(definitions.getDefinitions(), definition, data, offset, length, this.agencyEpoch, timeProcessor);
         // Decode the packet

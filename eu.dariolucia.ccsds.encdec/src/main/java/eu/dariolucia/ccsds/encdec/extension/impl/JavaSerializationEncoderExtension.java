@@ -21,6 +21,7 @@ import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
 import eu.dariolucia.ccsds.encdec.extension.ExtensionId;
 import eu.dariolucia.ccsds.encdec.extension.IEncoderExtension;
+import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
 
 import java.io.ByteArrayOutputStream;
@@ -41,7 +42,8 @@ public class JavaSerializationEncoderExtension implements IEncoderExtension {
     private static final int INITIAL_BUFFER_LENGTH = 65536;
 
     @Override
-    public void encode(PacketDefinition definition, EncodedParameter parameter, PathLocation location, BitEncoderDecoder encoder, Object value) {
+    public void encode(PacketDefinition definition, EncodedParameter parameter, PathLocation location, BitEncoderDecoder encoder, Object value)
+            throws EncodingException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream(INITIAL_BUFFER_LENGTH);
         try {
             ObjectOutputStream dos = new ObjectOutputStream(bos);
@@ -52,7 +54,7 @@ public class JavaSerializationEncoderExtension implements IEncoderExtension {
             encoder.setNextIntegerUnsigned(serialized.length, Integer.SIZE);
             encoder.setNextByte(serialized, serialized.length * Byte.SIZE);
         } catch(IOException e) {
-            throw new RuntimeException(e);
+            throw new EncodingException("Error while encoding encoded parameter " + location + " as Java object at bit position " + encoder.getCurrentBitIndex(), e);
         }
     }
 }

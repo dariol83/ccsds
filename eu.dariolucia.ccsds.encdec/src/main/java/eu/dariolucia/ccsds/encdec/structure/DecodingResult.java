@@ -20,7 +20,6 @@ import eu.dariolucia.ccsds.encdec.definition.DataTypeEnum;
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.ParameterDefinition;
 
-import java.lang.reflect.Parameter;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -109,7 +108,7 @@ public class DecodingResult {
         default void visitStructureEnd(Structure a) {}
     }
 
-    public static abstract class Item {
+    public abstract static class Item {
         public final PathLocation location;
         public final String name;
 
@@ -122,18 +121,18 @@ public class DecodingResult {
     }
 
     public static class Parameter extends Item {
-        public final EncodedParameter parameter;
+        public final EncodedParameter parameterItem;
         public final DataTypeEnum actualType;
         public final Object value;
         public final Instant generationTime;
 
-        public Parameter(PathLocation location, String name, EncodedParameter parameter, DataTypeEnum actualType, Object value) {
-            this(location, name, parameter, actualType, value, null);
+        public Parameter(PathLocation location, String name, EncodedParameter parameterItem, DataTypeEnum actualType, Object value) {
+            this(location, name, parameterItem, actualType, value, null);
         }
 
-        public Parameter(PathLocation location, String name, EncodedParameter parameter, DataTypeEnum actualType, Object value, Instant generationTime) {
+        public Parameter(PathLocation location, String name, EncodedParameter parameterItem, DataTypeEnum actualType, Object value, Instant generationTime) {
             super(location, name);
-            this.parameter = parameter;
+            this.parameterItem = parameterItem;
             this.actualType = actualType;
             this.value = value;
             this.generationTime = generationTime;
@@ -146,19 +145,19 @@ public class DecodingResult {
     }
 
     public static class Array extends Item {
-        public final List<ArrayItem> array;
+        public final List<ArrayItem> arrayItems;
 
-        public Array(PathLocation location, String name, List<ArrayItem> array) {
+        public Array(PathLocation location, String name, List<ArrayItem> arrayItems) {
             super(location, name);
-            this.array = array;
+            this.arrayItems = arrayItems;
         }
 
         @Override
         public void visit(IVisitor v) {
             v.visitArrayStart(this);
-            for(int i = 0; i < array.size(); ++i) {
+            for(int i = 0; i < arrayItems.size(); ++i) {
                 v.visitArrayItemStart(this, i);
-                array.get(i).visit(v);
+                arrayItems.get(i).visit(v);
                 v.visitArrayItemEnd(this, i);
             }
             v.visitArrayEnd(this);
@@ -175,8 +174,8 @@ public class DecodingResult {
 
         @Override
         public void visit(IVisitor v) {
-            for(int i = 0; i < array.size(); ++i) {
-                array.get(i).visit(v);
+            for (Item item : array) {
+                item.visit(v);
             }
         }
     }

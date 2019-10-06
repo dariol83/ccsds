@@ -21,7 +21,7 @@ package eu.dariolucia.ccsds.encdec.identifier;
  */
 public class PacketNotIdentifiedException extends Exception {
 
-    private byte[] packet;
+    private final byte[] packet;
 
     public PacketNotIdentifiedException(String message, byte[] packet) {
         super(message);

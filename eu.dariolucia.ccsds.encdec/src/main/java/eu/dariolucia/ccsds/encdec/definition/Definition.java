@@ -64,8 +64,7 @@ public class Definition {
         try {
             JAXBContext context = JAXBContext.newInstance(Definition.class);
             Unmarshaller unmarshaller = context.createUnmarshaller();
-            Definition d = (Definition) unmarshaller.unmarshal(in);
-            return d;
+            return (Definition) unmarshaller.unmarshal(in);
         } catch (JAXBException e) {
             throw new IOException(e);
         }

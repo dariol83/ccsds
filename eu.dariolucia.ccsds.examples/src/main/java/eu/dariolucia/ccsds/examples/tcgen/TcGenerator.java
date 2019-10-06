@@ -20,6 +20,7 @@ import eu.dariolucia.ccsds.encdec.definition.Definition;
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.IdentFieldMatcher;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
+import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.IEncodeResolver;
 import eu.dariolucia.ccsds.encdec.structure.IPacketEncoder;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
@@ -188,7 +189,7 @@ public class TcGenerator {
         }
     }
 
-    public void startGeneration() throws IOException {
+    public void startGeneration() throws IOException, EncodingException {
         // Check if the definition is available
         if(this.definition == null) {
             throw new IllegalStateException("A valid Definition database is required");
@@ -271,7 +272,7 @@ public class TcGenerator {
         // That's it
     }
 
-    private void sendCommand(IPacketEncoder encoder, TcSenderVirtualChannel vc, String packetName, boolean isAd, String mapId, Map<Integer, AtomicInteger> apid2counter) {
+    private void sendCommand(IPacketEncoder encoder, TcSenderVirtualChannel vc, String packetName, boolean isAd, String mapId, Map<Integer, AtomicInteger> apid2counter) throws EncodingException {
         PacketDefinition packetDefinition = null;
         for(PacketDefinition pd : this.definition.getPacketDefinitions()) {
             if(pd.getId().equals(packetName)) {
@@ -291,7 +292,7 @@ public class TcGenerator {
                 } else {
                     send(tcPacket.getPacket());
                 }
-            } catch(RuntimeException e) {
+            } catch(RuntimeException | EncodingException e) {
                 if (e.getMessage() != null && e.getMessage().equals("Encoding aborted by user")) {
                     return;
                 } else {
@@ -331,7 +332,7 @@ public class TcGenerator {
         }
     }
 
-    private SpacePacket generatePacket(IPacketEncoder encoder, PacketDefinition packetDefinition, Map<Integer, AtomicInteger> apid2counter) {
+    private SpacePacket generatePacket(IPacketEncoder encoder, PacketDefinition packetDefinition, Map<Integer, AtomicInteger> apid2counter) throws EncodingException {
         // First generate the user data according to the packet definition (including PUS type and PUS subtype)
         byte[] encoded = encoder.encode(packetDefinition.getId(), defaultResolver);
 
@@ -405,7 +406,7 @@ public class TcGenerator {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, EncodingException {
         TcGenerator tcGen = new TcGenerator();
         if(args.length == 0) {
             System.out.println("Usage: TcGenerator [argument]+");

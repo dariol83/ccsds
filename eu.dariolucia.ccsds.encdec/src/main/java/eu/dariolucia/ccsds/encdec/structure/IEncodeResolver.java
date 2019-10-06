@@ -39,8 +39,9 @@ public interface IEncodeResolver {
      * @param parameter the parameter definition
      * @param location the encoding path location
      * @return the boolean value to be encoded
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    boolean getBooleanValue(EncodedParameter parameter, PathLocation location);
+    boolean getBooleanValue(EncodedParameter parameter, PathLocation location) throws EncodingException;
 
     /**
      * Provide the enumeration value for the specified {@link EncodedParameter} at the specified {@link PathLocation}.
@@ -48,8 +49,9 @@ public interface IEncodeResolver {
      * @param parameter the parameter definition
      * @param location the encoding path location
      * @return the enumeration value to be encoded
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    int getEnumerationValue(EncodedParameter parameter, PathLocation location);
+    int getEnumerationValue(EncodedParameter parameter, PathLocation location) throws EncodingException;
 
     /**
      * Provide the signed integer value for the specified {@link EncodedParameter} at the specified {@link PathLocation}.
@@ -57,8 +59,9 @@ public interface IEncodeResolver {
      * @param parameter the parameter definition
      * @param location the encoding path location
      * @return the signed integer value to be encoded
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    long getSignedIntegerValue(EncodedParameter parameter, PathLocation location);
+    long getSignedIntegerValue(EncodedParameter parameter, PathLocation location) throws EncodingException;
 
     /**
      * Provide the unsigned integer value for the specified {@link EncodedParameter} at the specified {@link PathLocation}.
@@ -66,8 +69,9 @@ public interface IEncodeResolver {
      * @param parameter the parameter definition
      * @param location the encoding path location
      * @return the unsigned integer value to be encoded
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    long getUnsignedIntegerValue(EncodedParameter parameter, PathLocation location);
+    long getUnsignedIntegerValue(EncodedParameter parameter, PathLocation location) throws EncodingException;
 
     /**
      * Provide the real value for the specified {@link EncodedParameter} at the specified {@link PathLocation}.
@@ -75,8 +79,9 @@ public interface IEncodeResolver {
      * @param parameter the parameter definition
      * @param location the encoding path location
      * @return the real value to be encoded
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    double getRealValue(EncodedParameter parameter, PathLocation location);
+    double getRealValue(EncodedParameter parameter, PathLocation location) throws EncodingException;
 
     /**
      * Provide the {@link Instant} value for the specified {@link EncodedParameter} at the specified {@link PathLocation}.
@@ -84,8 +89,9 @@ public interface IEncodeResolver {
      * @param parameter the parameter definition
      * @param location the encoding path location
      * @return the {@link Instant} value to be encoded as absolute time
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    Instant getAbsoluteTimeValue(EncodedParameter parameter, PathLocation location);
+    Instant getAbsoluteTimeValue(EncodedParameter parameter, PathLocation location) throws EncodingException;
 
     /**
      * Provide the {@link Duration} value for the specified {@link EncodedParameter} at the specified {@link PathLocation}.
@@ -93,8 +99,9 @@ public interface IEncodeResolver {
      * @param parameter the parameter definition
      * @param location the encoding path location
      * @return the {@link Duration} value to be encoded as relative time
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    Duration getRelativeTimeValue(EncodedParameter parameter, PathLocation location);
+    Duration getRelativeTimeValue(EncodedParameter parameter, PathLocation location) throws EncodingException;
 
     /**
      * Provide the {@link BitString} for the specified {@link EncodedParameter} at the specified {@link PathLocation}.
@@ -103,8 +110,9 @@ public interface IEncodeResolver {
      * @param location the encoding path location
      * @param maxBitlength the maximum length in bits (it might be the exact required length, depending on the parameter specification)
      * @return the {@link BitString} value to be encoded
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    BitString getBitStringValue(EncodedParameter parameter, PathLocation location, int maxBitlength);
+    BitString getBitStringValue(EncodedParameter parameter, PathLocation location, int maxBitlength) throws EncodingException;
 
     /**
      * Provide the byte[] for the specified {@link EncodedParameter} at the specified {@link PathLocation}.
@@ -113,8 +121,9 @@ public interface IEncodeResolver {
      * @param location the encoding path location
      * @param maxByteLength the maximum length in bytes (it might be the exact required length, depending on the parameter specification)
      * @return the byte[] value to be encoded
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    byte[] getOctetStringValue(EncodedParameter parameter, PathLocation location, int maxByteLength);
+    byte[] getOctetStringValue(EncodedParameter parameter, PathLocation location, int maxByteLength) throws EncodingException;
 
     /**
      * Provide the String for the specified {@link EncodedParameter} at the specified {@link PathLocation}.
@@ -123,8 +132,9 @@ public interface IEncodeResolver {
      * @param location the encoding path location
      * @param maxStringLength the maximum length in character number (it might be the exact required length, depending on the parameter specification)
      * @return the String value to be encoded
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    String getCharacterStringValue(EncodedParameter parameter, PathLocation location, int maxStringLength);
+    String getCharacterStringValue(EncodedParameter parameter, PathLocation location, int maxStringLength) throws EncodingException;
 
     /**
      * Provide the extension value for the specified {@link EncodedParameter} at the specified {@link PathLocation}. Such
@@ -134,8 +144,9 @@ public interface IEncodeResolver {
      * @param parameter the parameter definition
      * @param location the encoding path location
      * @return the extension value to be encoded
+     * @throws EncodingException if there was a problem when resolving the specified parameter value
      */
-    Object getExtensionValue(EncodedParameter parameter, PathLocation location);
+    Object getExtensionValue(EncodedParameter parameter, PathLocation location) throws EncodingException;
 
     /**
      * Provide the absolute time specification allowing to encoded an absolute time with the P-field.
@@ -144,8 +155,9 @@ public interface IEncodeResolver {
      * @param location the encoding path location
      * @param value the value to encode
      * @return the CCSDS specification
+     * @throws EncodingException if there was a problem when resolving the specified descriptor
      */
-    AbsoluteTimeDescriptor getAbsoluteTimeDescriptor(EncodedParameter parameter, PathLocation location, Instant value);
+    AbsoluteTimeDescriptor getAbsoluteTimeDescriptor(EncodedParameter parameter, PathLocation location, Instant value) throws EncodingException;
 
     /**
      * Provide the relative time specification allowing to encoded a relative time with the P-field.
@@ -154,8 +166,9 @@ public interface IEncodeResolver {
      * @param location the encoding path location
      * @param value the value to encode
      * @return the CCSDS specification
+     * @throws EncodingException if there was a problem when resolving the specified descriptor
      */
-    RelativeTimeDescriptor getRelativeTimeDescriptor(EncodedParameter parameter, PathLocation location, Duration value);
+    RelativeTimeDescriptor getRelativeTimeDescriptor(EncodedParameter parameter, PathLocation location, Duration value) throws EncodingException;
 
     /**
      * Notify the implementation of the start of a packet encoding.

@@ -17,18 +17,15 @@
 package eu.dariolucia.ccsds.encdec.structure;
 
 /**
- * An interface implemented by objects with packet encoding capabilities. The encoding is performed by providing a packet
- * definition ID and a {@link IEncodeResolver} implementation.
+ * Exception used to propagate decoding problems.
  */
-public interface IPacketEncoder {
+public class DecodingException extends Exception {
 
-    /**
-     * Encode a packet by providing a packet definition ID and a {@link IEncodeResolver} implementation.
-     *
-     * @param packetDefinitionId the packet definition to use
-     * @param resolver the resolver for the values
-     * @return the encoded packet as byte[]
-     * @throws EncodingException in case of problems when encoding the packet
-     */
-    byte[] encode(String packetDefinitionId, IEncodeResolver resolver) throws EncodingException;
+    public DecodingException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public DecodingException(String message) {
+        super(message);
+    }
 }

@@ -17,9 +17,12 @@
 package eu.dariolucia.ccsds.encdec.extension;
 
 import eu.dariolucia.ccsds.encdec.bit.BitEncoderDecoder;
+import eu.dariolucia.ccsds.encdec.structure.DecodingException;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
+
+import java.io.IOException;
 
 /**
  * This extension interface allows to decode a parameter value within a packet, when the parameter type does not map to
@@ -44,7 +47,8 @@ public interface IDecoderExtension {
      * @param location the location of the parameter inside the packet definition
      * @param decoder the {@link BitEncoderDecoder} that must be used to decode the parameter
      * @return the decoded value
+     * @throws DecodingException in case of problems when decoding the extension value
      */
-    Object decode(PacketDefinition definition, EncodedParameter parameter, PathLocation location, BitEncoderDecoder decoder);
+    Object decode(PacketDefinition definition, EncodedParameter parameter, PathLocation location, BitEncoderDecoder decoder) throws DecodingException;
 
 }

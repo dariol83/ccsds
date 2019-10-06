@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.encdec.structure.resolvers;
 
+import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.structure.IEncodeResolver;
@@ -51,66 +52,66 @@ public class PathLocationBasedResolver implements IEncodeResolver {
         this.relativeTimeDescriptor = Objects.requireNonNullElseGet(relativeTimeDescriptor, () -> RelativeTimeDescriptor.newCucDescriptor(4, 3));
     }
 
-    private Object safeGet(PathLocation location) {
+    private Object safeGet(PathLocation location) throws EncodingException {
         if(location2value.containsKey(location.toString())) {
             return location2value.get(location.toString());
         } else {
-            throw new IllegalArgumentException("Value for path " + location + " not found");
+            throw new EncodingException("Value for path " + location + " not found");
         }
     }
 
     @Override
-    public boolean getBooleanValue(EncodedParameter parameter, PathLocation location) {
+    public boolean getBooleanValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
             return (boolean) safeGet(location);
     }
 
     @Override
-    public int getEnumerationValue(EncodedParameter ei, PathLocation location) {
+    public int getEnumerationValue(EncodedParameter ei, PathLocation location) throws EncodingException  {
         return ((Number) safeGet(location)).intValue();
     }
 
     @Override
-    public long getSignedIntegerValue(EncodedParameter parameter, PathLocation location) {
+    public long getSignedIntegerValue(EncodedParameter parameter, PathLocation location) throws EncodingException  {
         return ((Number) safeGet(location)).longValue();
     }
 
     @Override
-    public long getUnsignedIntegerValue(EncodedParameter parameter, PathLocation location) {
+    public long getUnsignedIntegerValue(EncodedParameter parameter, PathLocation location) throws EncodingException  {
         return ((Number) safeGet(location)).longValue();
     }
 
     @Override
-    public double getRealValue(EncodedParameter parameter, PathLocation location) {
+    public double getRealValue(EncodedParameter parameter, PathLocation location) throws EncodingException  {
         return ((Number) safeGet(location)).doubleValue();
     }
 
     @Override
-    public Instant getAbsoluteTimeValue(EncodedParameter parameter, PathLocation location) {
+    public Instant getAbsoluteTimeValue(EncodedParameter parameter, PathLocation location) throws EncodingException  {
         return (Instant) safeGet(location);
     }
 
     @Override
-    public Duration getRelativeTimeValue(EncodedParameter parameter, PathLocation location) {
+    public Duration getRelativeTimeValue(EncodedParameter parameter, PathLocation location) throws EncodingException  {
         return (Duration) safeGet(location);
     }
 
     @Override
-    public BitString getBitStringValue(EncodedParameter parameter, PathLocation location, int maxBitlength) {
+    public BitString getBitStringValue(EncodedParameter parameter, PathLocation location, int maxBitlength) throws EncodingException  {
         return (BitString) safeGet(location);
     }
 
     @Override
-    public byte[] getOctetStringValue(EncodedParameter parameter, PathLocation location, int maxByteLength) {
+    public byte[] getOctetStringValue(EncodedParameter parameter, PathLocation location, int maxByteLength) throws EncodingException  {
         return (byte[]) safeGet(location);
     }
 
     @Override
-    public String getCharacterStringValue(EncodedParameter parameter, PathLocation location, int maxStringLength) {
+    public String getCharacterStringValue(EncodedParameter parameter, PathLocation location, int maxStringLength) throws EncodingException  {
         return (String) safeGet(location);
     }
 
     @Override
-    public Object getExtensionValue(EncodedParameter parameter, PathLocation location) {
+    public Object getExtensionValue(EncodedParameter parameter, PathLocation location) throws EncodingException  {
         return safeGet(location);
     }
 

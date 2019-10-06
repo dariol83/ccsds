@@ -21,6 +21,7 @@ import eu.dariolucia.ccsds.encdec.identifier.IPacketIdentifier;
 import eu.dariolucia.ccsds.encdec.identifier.PacketAmbiguityException;
 import eu.dariolucia.ccsds.encdec.identifier.PacketNotIdentifiedException;
 import eu.dariolucia.ccsds.encdec.identifier.impl.FieldGroupBasedPacketIdentifier;
+import eu.dariolucia.ccsds.encdec.structure.DecodingException;
 import eu.dariolucia.ccsds.encdec.structure.DecodingResult;
 import eu.dariolucia.ccsds.encdec.structure.IPacketDecoder;
 import eu.dariolucia.ccsds.encdec.structure.impl.DefaultPacketDecoder;
@@ -250,6 +251,8 @@ public class TmProcessor {
                         System.out.println("Packet not identified: " + e.getMessage() + "\n" + StringUtil.toHexDump(packet));
                     } catch (PacketAmbiguityException e) {
                         System.out.println("Packet ambiguity: " + e.getMessage() + "\n" + StringUtil.toHexDump(packet));
+                    } catch (DecodingException e) {
+                        System.out.println("Packet decoding problem: " + e.getMessage() + "\n" + StringUtil.toHexDump(packet));
                     }
                 }
             };

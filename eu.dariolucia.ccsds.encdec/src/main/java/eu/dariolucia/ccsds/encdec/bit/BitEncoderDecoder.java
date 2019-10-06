@@ -24,6 +24,7 @@ import eu.dariolucia.ccsds.encdec.value.MilUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -64,7 +65,7 @@ public final class BitEncoderDecoder {
     /**
      * Constant for the default charset
      */
-    private static final Charset DEFAULT_CHARSET = Charset.forName("ASCII");
+    private static final Charset DEFAULT_CHARSET = StandardCharsets.US_ASCII;
 
     /**
      * Lookup table for masks
@@ -322,18 +323,18 @@ public final class BitEncoderDecoder {
             while (currentBitIndex < max) {
                 int mod = currentBitIndex % BYTE_SIZE;
                 int modTab = index % BYTE_SIZE;
-                int length = Math.min(max - currentBitIndex, Math.min(BYTE_SIZE - mod, BYTE_SIZE - modTab));
-                byte val = (byte) (byteTab[offset + currentBitIndex / BYTE_SIZE] & getMask(mod, length));
+                int lengthToRead = Math.min(max - currentBitIndex, Math.min(BYTE_SIZE - mod, BYTE_SIZE - modTab));
+                byte val = (byte) (byteTab[offset + currentBitIndex / BYTE_SIZE] & getMask(mod, lengthToRead));
                 if (pShift || pSize % BYTE_SIZE == 0) {
                     if (mod != 0) {
-                        val = (byte) (val << Math.min(mod, BYTE_SIZE - length));
+                        val = (byte) (val << Math.min(mod, BYTE_SIZE - lengthToRead));
                     } else {
                         val = (byte) ((val & DEFAULT_VALUE) >> modTab);
                     }
                 }
                 tab[index / BYTE_SIZE] |= val;
-                incrementBitIndex(length);
-                index += length;
+                incrementBitIndex(lengthToRead);
+                index += lengthToRead;
             }
             if (!pShift && pSize % BYTE_SIZE != 0) {
                 tab[tab.length - 1] = (byte) (tab[tab.length - 1] & getMask((max - pSize - 1) % BYTE_SIZE, BYTE_SIZE));
@@ -504,9 +505,9 @@ public final class BitEncoderDecoder {
         int max = currentBitIndex + pLength;
         while (currentBitIndex < max) {
             int mod = currentBitIndex % BYTE_SIZE;
-            int length = Math.min(max - currentBitIndex, BYTE_SIZE - mod);
-            byteTab[offset + currentBitIndex / BYTE_SIZE] &= ~getMask(mod, length);
-            incrementBitIndex(length);
+            int lengthToReset = Math.min(max - currentBitIndex, BYTE_SIZE - mod);
+            byteTab[offset + currentBitIndex / BYTE_SIZE] &= ~getMask(mod, lengthToReset);
+            incrementBitIndex(lengthToReset);
         }
     }
 
@@ -572,15 +573,15 @@ public final class BitEncoderDecoder {
     public void setNextByte(final byte[] pValue, final int pLength, final boolean pPadBefore) {
         int totalSize = (int) Math.ceil(pLength / BYTE_SIZE_F);
         ByteBuffer buffer = ByteBuffer.allocate(totalSize);
-        int size = Math.max(totalSize - pValue.length, 0);
+        int nbBytesToSet = Math.max(totalSize - pValue.length, 0);
         if (pPadBefore) {
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < nbBytesToSet; i++) {
                 buffer.put((byte) 0);
             }
         }
         buffer.put(pValue, 0, Math.min(totalSize, pValue.length));
         if (!pPadBefore) {
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < nbBytesToSet; i++) {
                 buffer.put((byte) 0);
             }
         }
@@ -591,16 +592,16 @@ public final class BitEncoderDecoder {
             while (currentBitIndex < max) {
                 int mod = currentBitIndex % BYTE_SIZE;
                 int modTab = index % BYTE_SIZE;
-                int length = Math.min(max - currentBitIndex, Math.min(BYTE_SIZE - mod, BYTE_SIZE - modTab));
-                byte val = (byte) (tab[index / BYTE_SIZE] & getMask(modTab, length));
+                int lengthToSet = Math.min(max - currentBitIndex, Math.min(BYTE_SIZE - mod, BYTE_SIZE - modTab));
+                byte val = (byte) (tab[index / BYTE_SIZE] & getMask(modTab, lengthToSet));
                 if (mod == 0) {
-                    val = (byte) (val << Math.min(modTab, BYTE_SIZE - length));
+                    val = (byte) (val << Math.min(modTab, BYTE_SIZE - lengthToSet));
                 } else {
                     val = (byte) ((val & DEFAULT_VALUE) >> mod);
                 }
                 byteTab[offset + currentBitIndex / BYTE_SIZE] |= val;
-                incrementBitIndex(length);
-                index += length;
+                incrementBitIndex(lengthToSet);
+                index += lengthToSet;
             }
 
         } else {
@@ -649,9 +650,8 @@ public final class BitEncoderDecoder {
                 ret = (byte) (value << BYTE_SIZE - (writeSize + mod));
             } else {
                 // shift right
-                // long length = Long.toBinaryString(value).length();
-                long length = Long.SIZE - Long.numberOfLeadingZeros(value);
-                ret = (byte) (value >> writeSize - length - (BYTE_SIZE - length - mod));
+                int valueLengthInBits = Long.SIZE - Long.numberOfLeadingZeros(value);
+                ret = (byte) (value >> writeSize - valueLengthInBits - (BYTE_SIZE - valueLengthInBits - mod));
             }
             byteTab[offset + currentBitIndex / BYTE_SIZE] |= ret;
             long val = Math.min(writeSize, BYTE_SIZE - mod);

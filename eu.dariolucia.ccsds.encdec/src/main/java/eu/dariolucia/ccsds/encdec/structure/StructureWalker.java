@@ -37,7 +37,7 @@ import java.util.function.Supplier;
  *
  * @param <T> the result type of the walk operation
  */
-public abstract class StructureWalker<T> {
+public abstract class StructureWalker<T,K extends Exception> {
 
     protected final PacketDefinition definition;
 
@@ -54,7 +54,7 @@ public abstract class StructureWalker<T> {
         this.bitHandler = bitHandlerSupplier.get();
     }
 
-    public T walk() {
+    public T walk() throws K {
         // Prepare the current location from the packet definition
         currentLocation = PathLocation.of(definition.getId());
         // Visit the definition starting from the top
@@ -67,22 +67,24 @@ public abstract class StructureWalker<T> {
             } else if (ei instanceof EncodedStructure) {
                 visitStructure((EncodedStructure) ei);
             } else {
-                throw new RuntimeException("Type " + ei.getClass().getSimpleName() + " not supported");
+                throw newException("Type " + ei.getClass().getSimpleName() + " not supported");
             }
         }
         packetStructureEnd(definition.getStructure(), currentLocation);
         return finalizeResult();
     }
 
-    protected void packetStructureEnd(PacketStructure structure, PathLocation currentLocation) {
+    protected void packetStructureEnd(PacketStructure structure, PathLocation currentLocation) throws K {
     }
 
-    protected void packetStructureStart(PacketStructure structure, PathLocation currentLocation) {
+    protected void packetStructureStart(PacketStructure structure, PathLocation currentLocation) throws K {
     }
 
-    protected abstract T finalizeResult();
+    protected abstract T finalizeResult() throws K;
 
-    protected void visitStructure(EncodedStructure es) {
+    protected abstract K newException(String message);
+
+    protected void visitStructure(EncodedStructure es) throws K {
         this.currentLocation = this.currentLocation.append(es.getId());
         structureStart(es, currentLocation);
         // Move to bit location
@@ -95,7 +97,7 @@ public abstract class StructureWalker<T> {
             } else if (ei instanceof EncodedStructure) {
                 visitStructure((EncodedStructure) ei);
             } else {
-                throw new RuntimeException("Type " + ei.getClass().getSimpleName() + " not supported");
+                throw newException("Type " + ei.getClass().getSimpleName() + " not supported");
             }
         }
         this.encodedParameter2endPosition.put(es.getId(), this.bitHandler.getCurrentBitIndex());
@@ -103,13 +105,13 @@ public abstract class StructureWalker<T> {
         this.currentLocation = this.currentLocation.parent();
     }
 
-    protected void structureEnd(EncodedStructure es, PathLocation currentLocation) {
+    protected void structureEnd(EncodedStructure es, PathLocation currentLocation) throws K {
     }
 
-    protected void structureStart(EncodedStructure es, PathLocation currentLocation) {
+    protected void structureStart(EncodedStructure es, PathLocation currentLocation) throws K {
     }
 
-    protected void visitArray(EncodedArray ea) {
+    protected void visitArray(EncodedArray ea) throws K {
         this.currentLocation = this.currentLocation.append(ea.getId());
         arrayStart(ea, currentLocation);
         // Move to bit location
@@ -127,7 +129,7 @@ public abstract class StructureWalker<T> {
                 } else if (ei instanceof EncodedStructure) {
                     visitStructure((EncodedStructure) ei);
                 } else {
-                    throw new RuntimeException("Type " + ei.getClass().getSimpleName() + " not supported");
+                    throw newException("Type " + ei.getClass().getSimpleName() + " not supported");
                 }
                 arrayItemEnd(ea, currentLocation, idx);
                 this.currentLocation = this.currentLocation.parent();
@@ -138,19 +140,19 @@ public abstract class StructureWalker<T> {
         this.currentLocation = this.currentLocation.parent();
     }
 
-    protected void arrayEnd(EncodedArray ea, PathLocation append) {
+    protected void arrayEnd(EncodedArray ea, PathLocation append) throws K {
     }
 
-    protected void arrayItemEnd(EncodedArray ea, PathLocation currentLocation, int idx) {
+    protected void arrayItemEnd(EncodedArray ea, PathLocation currentLocation, int idx) throws K {
     }
 
-    protected void arrayItemStart(EncodedArray ea, PathLocation currentLocation, int idx) {
+    protected void arrayItemStart(EncodedArray ea, PathLocation currentLocation, int idx) throws K {
     }
 
-    protected void arrayStart(EncodedArray ea, PathLocation append) {
+    protected void arrayStart(EncodedArray ea, PathLocation append) throws K {
     }
 
-    protected int deriveArrayNumElements(EncodedArray ea) {
+    protected int deriveArrayNumElements(EncodedArray ea) throws K {
         AbstractArraySize size = ea.getSize();
         if(size instanceof FixedArraySize) {
             return ((FixedArraySize) size).getLength();
@@ -160,14 +162,14 @@ public abstract class StructureWalker<T> {
             if(value instanceof Number) {
                 return ((Number) value).intValue();
             } else {
-                throw new IllegalArgumentException("Cannot map value of encoded parameter " + param + " to an integer for array size of " + ea.getId());
+                throw newException("Cannot map value of encoded parameter " + param + " to an integer for array size of " + ea.getId());
             }
         } else {
-            throw new RuntimeException("No array size type recognized for " + ea.getId() + ": " + size.getClass().getSimpleName());
+            throw newException("No array size type recognized for " + ea.getId() + ": " + size.getClass().getSimpleName());
         }
     }
 
-    protected void moveToLocation(AbstractEncodedLocation location) {
+    protected void moveToLocation(AbstractEncodedLocation location) throws K {
         // No location? Then do not change anything
         if (location == null) {
             return;
@@ -179,7 +181,7 @@ public abstract class StructureWalker<T> {
             EncodedItemRelativeLocation eirl = (EncodedItemRelativeLocation) location;
             Integer bitIndex = this.encodedParameter2endPosition.get(eirl.getReference());
             if (bitIndex == null) {
-                throw new RuntimeException("No encoded item " + eirl.getReference() + " used as reference for location");
+                throw newException("No encoded item " + eirl.getReference() + " used as reference for location");
             } else {
                 bitIndex += eirl.getBitOffset();
                 if (eirl.getBitAlignment() > 1) {
@@ -202,11 +204,11 @@ public abstract class StructureWalker<T> {
             }
             this.bitHandler.setCurrentBitIndex(currBitIndex);
         } else {
-            throw new IllegalArgumentException("Location class of type " + location.getClass().getSimpleName() + " not supported");
+            throw newException("Location class of type " + location.getClass().getSimpleName() + " not supported");
         }
     }
 
-    protected void visitParameter(EncodedParameter ei) {
+    protected void visitParameter(EncodedParameter ei) throws K {
         // Set location
         this.currentLocation = this.currentLocation.append(ei.getId());
         // Hook start
@@ -223,25 +225,25 @@ public abstract class StructureWalker<T> {
         this.currentLocation = this.currentLocation.parent();
     }
 
-    protected void parameterEnd(EncodedParameter ei, PathLocation currentLocation) {
+    protected void parameterEnd(EncodedParameter ei, PathLocation currentLocation) throws K {
     }
 
-    protected void parameterStart(EncodedParameter ei, PathLocation currentLocation) {
+    protected void parameterStart(EncodedParameter ei, PathLocation currentLocation) throws K {
     }
 
-    protected abstract Object processValue(EncodedParameter ei);
+    protected abstract Object processValue(EncodedParameter ei) throws K;
 
-    protected ParameterDefinition retrieveParameterDefinitionByExternalId(int externalId) {
+    protected ParameterDefinition retrieveParameterDefinitionByExternalId(int externalId) throws K {
         // Naive implementation
         for (ParameterDefinition pd : this.database.getParameters()) {
             if (pd.getExternalId() != ParameterDefinition.EXTERNAL_ID_NOT_SET && pd.getExternalId() == externalId) {
                 return pd;
             }
         }
-        throw new RuntimeException("Cannot map externalId " + externalId + " to parameter definition");
+        throw newException("Cannot map externalId " + externalId + " to parameter definition");
     }
 
-    protected FixedType deriveEffectiveType(EncodedParameter ei) {
+    protected FixedType deriveEffectiveType(EncodedParameter ei) throws K {
         AbstractEncodedType type = ei.getType();
         AbstractEncodedLength length = ei.getLength();
         if (type instanceof ExtensionType) {
@@ -251,7 +253,7 @@ public abstract class StructureWalker<T> {
         int dataLength;
         if (type instanceof FixedType) {
             dataTypeEnum = ((FixedType) type).getType();
-            // If there is a length, the provided length is overwritten;
+            // If there is a length, the provided length is overwritten
             if (length != null) {
                 dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
             } else {
@@ -261,22 +263,22 @@ public abstract class StructureWalker<T> {
             String refItem = ((ReferenceType) type).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw new RuntimeException("No encoded item " + refItem + " used as reference for type of " + ei.getId());
+                throw newException("No encoded item " + refItem + " used as reference for type of " + ei.getId());
             }
             if (!(value instanceof Number)) {
-                throw new RuntimeException("Encoded item " + refItem + " used as reference for type of " + ei.getId() + " is not a number");
+                throw newException("Encoded item " + refItem + " used as reference for type of " + ei.getId() + " is not a number");
             }
             dataTypeEnum = DataTypeEnum.fromCode(((Number) value).intValue());
             if (length != null) {
                 dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
             } else {
-                throw new RuntimeException("Encoded item " + ei.getId() + " use reference for type but there is no indication for length");
+                throw newException("Encoded item " + ei.getId() + " use reference for type but there is no indication for length");
             }
         } else if (type instanceof ParameterType) {
             String refItem = ((ParameterType) type).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw new RuntimeException("No encoded item " + refItem + " used as parameter reference for type of " + ei.getId());
+                throw newException("No encoded item " + refItem + " used as parameter reference for type of " + ei.getId());
             }
             if (value instanceof Number) {
                 int externalId = ((Number) value).intValue();
@@ -287,11 +289,11 @@ public abstract class StructureWalker<T> {
                     if (length != null) {
                         dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
                     } else {
-                        throw new RuntimeException("No length specified for encoded parameter " + ei.getId() + " even if type references a parameter that cannot be found via external ID");
+                        throw newException("No length specified for encoded parameter " + ei.getId() + " even if type references a parameter that cannot be found via external ID");
                     }
                 } else {
                     dataTypeEnum = pd.getType().getType();
-                    // If there is a length, the PFC is overwritten;
+                    // If there is a length, the PFC is overwritten
                     if (length != null) {
                         dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
                     } else {
@@ -304,33 +306,33 @@ public abstract class StructureWalker<T> {
                 if (length != null) {
                     dataLength = deriveLength(ei, currentLocation, dataTypeEnum, length);
                 } else {
-                    throw new RuntimeException("No length specified for encoded parameter " + ei.getId() + " even if type references a parameter, whose referenced value is not an external ID");
+                    throw newException("No length specified for encoded parameter " + ei.getId() + " even if type references a parameter, whose referenced value is not an external ID");
                 }
             }
         } else {
-            throw new IllegalArgumentException("Type class of type " + type.getClass().getSimpleName() + " not supported");
+            throw newException("Type class of type " + type.getClass().getSimpleName() + " not supported");
         }
         return new FixedType(dataTypeEnum, dataLength);
     }
 
-    protected int deriveLength(EncodedParameter ei, PathLocation location, DataTypeEnum dataType, AbstractEncodedLength length) {
+    protected int deriveLength(EncodedParameter ei, PathLocation location, DataTypeEnum dataType, AbstractEncodedLength length) throws K {
         if (length instanceof FixedLength) {
             return ((FixedLength) length).getLength();
         } else if (length instanceof ReferenceLength) {
             String refItem = ((ReferenceLength) length).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw new RuntimeException("No encoded item " + refItem + " used as reference for length, null value");
+                throw newException("No encoded item " + refItem + " used as reference for length, null value");
             }
             if (!(value instanceof Number)) {
-                throw new RuntimeException("Encoded item " + refItem + " value used as reference for length is not a number");
+                throw newException("Encoded item " + refItem + " value used as reference for length is not a number");
             }
             return ((Number) value).intValue();
         } else if (length instanceof ParameterLength) {
             String refItem = ((ParameterLength) length).getReference();
             Object value = this.encodedParameter2value.get(refItem);
             if (value == null) {
-                throw new RuntimeException("No encoded item " + refItem + " used as parameter reference for length, null value");
+                throw newException("No encoded item " + refItem + " used as parameter reference for length, null value");
             }
             if (value instanceof Number) {
                 int externalId = ((Number) value).intValue();
@@ -346,7 +348,7 @@ public abstract class StructureWalker<T> {
                 return lm.mapLength(ei, location, dataType, value);
             }
         } else {
-            throw new IllegalArgumentException("Length class of type " + length.getClass().getSimpleName() + " not supported");
+            throw newException("Length class of type " + length.getClass().getSimpleName() + " not supported");
         }
     }
 }

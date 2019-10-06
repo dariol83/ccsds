@@ -65,15 +65,9 @@ public class PacketDefinitionIndexer {
      * the specified definition is not found.
      *
      * @param packetDefinitionId the packet definition ID
-     * @return the {@link PacketDefinition} by ID
-     * @throws IllegalArgumentException if the provided packetDefinitionId is unknown
+     * @return the {@link PacketDefinition} by ID or null if not present
      */
     public PacketDefinition retrieveDefinition(String packetDefinitionId) {
-        PacketDefinition pd = this.index.get(packetDefinitionId);
-        if(pd == null) {
-            throw new IllegalArgumentException("Packet definition " + packetDefinitionId + " unknown");
-        } else {
-            return pd;
-        }
+        return this.index.get(packetDefinitionId);
     }
 }

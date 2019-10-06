@@ -18,9 +18,7 @@ package eu.dariolucia.ccsds.encdec.structure.impl;
 
 import eu.dariolucia.ccsds.encdec.definition.Definition;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
-import eu.dariolucia.ccsds.encdec.structure.IEncodeResolver;
-import eu.dariolucia.ccsds.encdec.structure.IPacketEncoder;
-import eu.dariolucia.ccsds.encdec.structure.PacketDefinitionIndexer;
+import eu.dariolucia.ccsds.encdec.structure.*;
 
 import java.time.Instant;
 
@@ -76,9 +74,12 @@ public class DefaultPacketEncoder implements IPacketEncoder {
     }
 
     @Override
-    public byte[] encode(String packetDefinitionId, IEncodeResolver resolver) {
+    public byte[] encode(String packetDefinitionId, IEncodeResolver resolver) throws EncodingException {
         // Get the definition
         PacketDefinition definition = definitions.retrieveDefinition(packetDefinitionId);
+        if(definition == null) {
+            throw new EncodingException("Packet definition " + packetDefinitionId + " unknown");
+        }
         // Create a definition walker
         EncodeWalker w = new EncodeWalker(definitions.getDefinitions(), definition, maxPacketSize, agencyEpoch, resolver);
         // Notify encoding start

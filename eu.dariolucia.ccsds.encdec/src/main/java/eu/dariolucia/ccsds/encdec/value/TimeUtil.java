@@ -30,6 +30,10 @@ import java.util.GregorianCalendar;
  */
 public class TimeUtil {
 
+    private TimeUtil() {
+        // Private constructor
+    }
+
     /**
      * Difference between 1st Jan 1970 and 1st Jan 1958 in seconds
      */
@@ -38,7 +42,7 @@ public class TimeUtil {
     /**
      * UTC leap second table (till 2017), as per https://en.wikipedia.org/wiki/Leap_second
      */
-    private static long[][] UTC_2_LEAP = {
+    private static final long[][] UTC_TO_LEAP = {
             {new GregorianCalendar(1972, Calendar.JANUARY, 1, 0, 0).getTimeInMillis()/1000 , 10},
             {new GregorianCalendar(1972, Calendar.JULY, 1, 0, 0).getTimeInMillis()/1000 , 11},
             {new GregorianCalendar(1973, Calendar.JANUARY, 1, 0, 0).getTimeInMillis()/1000 , 12},
@@ -90,7 +94,8 @@ public class TimeUtil {
      * @return the encoded CUC time
      */
     public static byte[] toCUC(Instant time, Instant agencyEpoch, int coarseOctets, int fineOctets, boolean encodePField) {
-        int fLen = coarseOctets + fineOctets + (encodePField ? 1 + (coarseOctets > 4 || fineOctets > 3 ? 1 : 0) : 0);
+        int extraByte = coarseOctets > 4 || fineOctets > 3 ? 1 : 0;
+        int fLen = coarseOctets + fineOctets + (encodePField ? 1 + (extraByte) : 0);
         ByteBuffer bb = ByteBuffer.allocate(fLen);
         if(encodePField) {
             boolean secondOctet = coarseOctets > 4 || fineOctets > 3;
@@ -144,7 +149,7 @@ public class TimeUtil {
         // Encode nanosec in fine octets: it is assumed that the maximum resolution of the fine octets determine
         // the quantization of the fractional time unit, i.e. a value of all 1s (in binary) would be equivalent to a
         // second - quantum. Therefore 1 quantum is equal to 1.000.000.000 nanosecond divided by 2^bit_resolution.
-        double quantum = 1000000000.0 / (int) Math.pow(2, fineOctets * 8);
+        double quantum = 1000000000.0 / (int) Math.pow(2, fineOctets * 8.0);
         // Let's compute how many quantums are in nanosec. The maximum error is equal to quantum - 1 nanosec.
         long quantums = Math.round(nanosec / quantum);
         // Encode quantums in fine octets
@@ -255,7 +260,7 @@ public class TimeUtil {
             --power;
         }
         // Compute the quantum
-        double quantum = 1000000000.0 / (int) Math.pow(2, fineOctets * 8);
+        double quantum = 1000000000.0 / (int) Math.pow(2, fineOctets * 8.0);
         // Now, translate the fineOctets into a long number
         long fractionalTimeUnit = 0;
 
@@ -467,7 +472,7 @@ public class TimeUtil {
             remaining *= 1000; // nanosecs in millisecs
         } else if(subMilliSegmentLength == 2) {
             remaining = wrappedTField.getInt(); // picosecs in millisecs
-            remaining /= 1000; // nanosecs in millisecs;
+            remaining /= 1000; // nanosecs in millisecs
         } else {
             remaining = 0;
         }
@@ -481,8 +486,8 @@ public class TimeUtil {
             millis += (agencyEpoch.getEpochSecond() % 86400) * 1000;
         }
 
-        long secs = days * 86400 + millis / 1000;
-        long nanosecs = (millis % 1000) * 1000000 + remaining;
+        long secs = days * 86400L + millis / 1000;
+        long nanosecs = (millis % 1000) * 1000000 + (long) remaining;
 
         return Instant.ofEpochSecond(secs, nanosecs);
     }
@@ -493,17 +498,17 @@ public class TimeUtil {
      * @return the TAI time (seconds) since 1st Jan 1970
      */
     public static long toTAI(long utcTime) {
-        for(int i = 0; i < UTC_2_LEAP.length; ++i) {
-            long[] t = UTC_2_LEAP[i];
+        for(int i = 0; i < UTC_TO_LEAP.length; ++i) {
+            long[] t = UTC_TO_LEAP[i];
             if(utcTime <= t[0]) {
                 if(i == 0) {
                     return utcTime;
                 } else {
-                    return utcTime + UTC_2_LEAP[i - 1][1];
+                    return utcTime + UTC_TO_LEAP[i - 1][1];
                 }
             }
         }
-        return utcTime + UTC_2_LEAP[UTC_2_LEAP.length - 1][1];
+        return utcTime + UTC_TO_LEAP[UTC_TO_LEAP.length - 1][1];
     }
 
     /**
@@ -512,17 +517,17 @@ public class TimeUtil {
      * @return the UTC time (seconds) since 1st Jan 1970
      */
     public static long toUTC(long taiTime) {
-        for(int i = 0; i < UTC_2_LEAP.length; ++i) {
-            long[] t = UTC_2_LEAP[i];
+        for(int i = 0; i < UTC_TO_LEAP.length; ++i) {
+            long[] t = UTC_TO_LEAP[i];
             if(taiTime <= t[0] + t[1]) {
                 if (i == 0) {
                     return taiTime;
                 } else {
-                    return taiTime - UTC_2_LEAP[i - 1][1];
+                    return taiTime - UTC_TO_LEAP[i - 1][1];
                 }
             }
         }
-        return taiTime - UTC_2_LEAP[UTC_2_LEAP.length - 1][1];
+        return taiTime - UTC_TO_LEAP[UTC_TO_LEAP.length - 1][1];
     }
 
     /**
@@ -584,7 +589,7 @@ public class TimeUtil {
             --power;
         }
         // Compute the quantum
-        double quantum = 1000000000.0 / (int) Math.pow(2, fineOctets * 8);
+        double quantum = 1000000000.0 / (int) Math.pow(2, fineOctets * 8.0);
         // Now, translate the fineOctets into a long number
         long fractionalTimeUnit = 0;
 
@@ -610,7 +615,8 @@ public class TimeUtil {
      * @return the encoded relative time in CUC format
      */
     public static byte[] toCUCduration(Duration t, int coarseOctets, int fineOctets, boolean encodePField) {
-        int fLen = coarseOctets + fineOctets + (encodePField ? 1 + (coarseOctets > 4 || fineOctets > 3 ? 1 : 0) : 0);
+        int extraByte = coarseOctets > 4 || fineOctets > 3 ? 1 : 0;
+        int fLen = coarseOctets + fineOctets + (encodePField ? 1 + (extraByte) : 0);
         ByteBuffer bb = ByteBuffer.allocate(fLen);
         if(encodePField) {
             boolean secondOctet = coarseOctets > 4 || fineOctets > 3;
@@ -653,7 +659,7 @@ public class TimeUtil {
         // Encode nanosec in fine octets: it is assumed that the maximum resolution of the fine octets determine
         // the quantization of the fractional time unit, i.e. a value of all 1s (in binary) would be equivalent to a
         // second - quantum. Therefore 1 quantum is equal to 1.000.000.000 nanosecond divided by 2^bit_resolution.
-        double quantum = 1000000000.0 / (int) Math.pow(2, fineOctets * 8);
+        double quantum = 1000000000.0 / (int) Math.pow(2, fineOctets * 8.0);
         // Let's compute how many quantums are in nanosec. The maximum error is equal to quantum - 1 nanosec.
         long quantums = Math.round(nanosec / quantum);
         // Encode quantums in fine octets

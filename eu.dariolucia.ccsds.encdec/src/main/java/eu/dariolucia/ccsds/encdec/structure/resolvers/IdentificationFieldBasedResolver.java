@@ -19,6 +19,7 @@ package eu.dariolucia.ccsds.encdec.structure.resolvers;
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.IdentFieldMatcher;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
+import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.IEncodeResolver;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
 import eu.dariolucia.ccsds.encdec.value.BitString;
@@ -45,17 +46,17 @@ public class IdentificationFieldBasedResolver implements IEncodeResolver {
     }
 
     @Override
-    public boolean getBooleanValue(EncodedParameter parameter, PathLocation location) {
+    public boolean getBooleanValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
         return delegate.getBooleanValue(parameter, location);
     }
 
     @Override
-    public int getEnumerationValue(EncodedParameter parameter, PathLocation location) {
+    public int getEnumerationValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
         return delegate.getEnumerationValue(parameter, location);
     }
 
     @Override
-    public long getSignedIntegerValue(EncodedParameter parameter, PathLocation location) {
+    public long getSignedIntegerValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
         if(this.currentDefinition != null) {
             for (IdentFieldMatcher ifm : this.currentDefinition.getMatchers()) {
                 if (ifm.getField().getId().equals(parameter.getId())) {
@@ -67,7 +68,7 @@ public class IdentificationFieldBasedResolver implements IEncodeResolver {
     }
 
     @Override
-    public long getUnsignedIntegerValue(EncodedParameter parameter, PathLocation location) {
+    public long getUnsignedIntegerValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
         if(this.currentDefinition != null) {
             for (IdentFieldMatcher ifm : this.currentDefinition.getMatchers()) {
                 if (ifm.getField().getId().equals(parameter.getId())) {
@@ -79,47 +80,47 @@ public class IdentificationFieldBasedResolver implements IEncodeResolver {
     }
 
     @Override
-    public double getRealValue(EncodedParameter parameter, PathLocation location) {
+    public double getRealValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
         return delegate.getRealValue(parameter, location);
     }
 
     @Override
-    public Instant getAbsoluteTimeValue(EncodedParameter parameter, PathLocation location) {
+    public Instant getAbsoluteTimeValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
         return delegate.getAbsoluteTimeValue(parameter, location);
     }
 
     @Override
-    public Duration getRelativeTimeValue(EncodedParameter parameter, PathLocation location) {
+    public Duration getRelativeTimeValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
         return delegate.getRelativeTimeValue(parameter, location);
     }
 
     @Override
-    public BitString getBitStringValue(EncodedParameter parameter, PathLocation location, int maxBitlength) {
+    public BitString getBitStringValue(EncodedParameter parameter, PathLocation location, int maxBitlength) throws EncodingException {
         return delegate.getBitStringValue(parameter, location, maxBitlength);
     }
 
     @Override
-    public byte[] getOctetStringValue(EncodedParameter parameter, PathLocation location, int maxByteLength) {
+    public byte[] getOctetStringValue(EncodedParameter parameter, PathLocation location, int maxByteLength) throws EncodingException {
         return delegate.getOctetStringValue(parameter, location, maxByteLength);
     }
 
     @Override
-    public String getCharacterStringValue(EncodedParameter parameter, PathLocation location, int maxStringLength) {
+    public String getCharacterStringValue(EncodedParameter parameter, PathLocation location, int maxStringLength) throws EncodingException {
         return delegate.getCharacterStringValue(parameter, location, maxStringLength);
     }
 
     @Override
-    public Object getExtensionValue(EncodedParameter parameter, PathLocation location) {
+    public Object getExtensionValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
         return delegate.getExtensionValue(parameter, location);
     }
 
     @Override
-    public AbsoluteTimeDescriptor getAbsoluteTimeDescriptor(EncodedParameter parameter, PathLocation location, Instant value) {
+    public AbsoluteTimeDescriptor getAbsoluteTimeDescriptor(EncodedParameter parameter, PathLocation location, Instant value) throws EncodingException {
         return delegate.getAbsoluteTimeDescriptor(parameter, location, value);
     }
 
     @Override
-    public RelativeTimeDescriptor getRelativeTimeDescriptor(EncodedParameter parameter, PathLocation location, Duration value) {
+    public RelativeTimeDescriptor getRelativeTimeDescriptor(EncodedParameter parameter, PathLocation location, Duration value) throws EncodingException {
         return delegate.getRelativeTimeDescriptor(parameter, location, value);
     }
 

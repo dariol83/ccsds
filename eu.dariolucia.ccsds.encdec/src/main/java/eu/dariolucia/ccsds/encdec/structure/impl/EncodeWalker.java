@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.encdec.structure.impl;
 
 import eu.dariolucia.ccsds.encdec.bit.BitEncoderDecoder;
 import eu.dariolucia.ccsds.encdec.definition.*;
+import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.IEncodeResolver;
 import eu.dariolucia.ccsds.encdec.extension.IEncoderExtension;
 import eu.dariolucia.ccsds.encdec.extension.internal.ExtensionRegistry;
@@ -32,7 +33,7 @@ import java.util.Arrays;
 /**
  * The internal class used to encode packets.
  */
-public class EncodeWalker extends StructureWalker<byte[]> {
+public class EncodeWalker extends StructureWalker<byte[], EncodingException> {
 
     private final IEncodeResolver resolver;
     private final Instant agencyEpoch;
@@ -53,7 +54,7 @@ public class EncodeWalker extends StructureWalker<byte[]> {
     }
 
     @Override
-    protected Object processValue(EncodedParameter ei) {
+    protected Object processValue(EncodedParameter ei) throws EncodingException {
         AbstractEncodedType type = ei.getType();
         if (type instanceof ExtensionType) {
             ExtensionType et = (ExtensionType) type;
@@ -66,7 +67,7 @@ public class EncodeWalker extends StructureWalker<byte[]> {
         }
     }
 
-    private Object encodeValue(EncodedParameter ei, IEncoderExtension extEnc) {
+    private Object encodeValue(EncodedParameter ei, IEncoderExtension extEnc) throws EncodingException {
         Integer paddedWidth = ei.getPaddedWidth();
         long initialPosition = this.bitHandler.getCurrentBitIndex();
 
@@ -83,86 +84,78 @@ public class EncodeWalker extends StructureWalker<byte[]> {
         return value;
     }
 
-    private Object encodeValue(EncodedParameter ei, DataTypeEnum dataType, int dataLength) {
+    private Object encodeValue(EncodedParameter ei, DataTypeEnum dataType, int dataLength) throws EncodingException {
         Object value;
         Integer paddedWidth = ei.getPaddedWidth();
         long initialPosition = this.bitHandler.getCurrentBitIndex();
 
         // Now that you have the final type and length, you can invoke the resolver to get the value and encode it
         switch (dataType) {
-            case BOOLEAN: {
-                boolean v = this.resolver.getBooleanValue(ei, this.currentLocation);
-                this.bitHandler.setNextBoolean(v);
-                value = v;
-            }
+            case BOOLEAN:
+                boolean booleanValue = this.resolver.getBooleanValue(ei, this.currentLocation);
+                this.bitHandler.setNextBoolean(booleanValue);
+                value = booleanValue;
             break;
-            case ENUMERATED: {
-                int v = this.resolver.getEnumerationValue(ei, this.currentLocation);
-                this.bitHandler.setNextIntegerSigned(v, dataLength);
-                value = v;
-            }
+            case ENUMERATED:
+                int enumerationValue = this.resolver.getEnumerationValue(ei, this.currentLocation);
+                this.bitHandler.setNextIntegerSigned(enumerationValue, dataLength);
+                value = enumerationValue;
             break;
-            case UNSIGNED_INTEGER: {
-                long v = this.resolver.getUnsignedIntegerValue(ei, this.currentLocation);
-                this.bitHandler.setNextLongUnsigned(v, dataLength);
-                value = v;
-            }
+            case UNSIGNED_INTEGER:
+                long unsignedIntegerValue = this.resolver.getUnsignedIntegerValue(ei, this.currentLocation);
+                this.bitHandler.setNextLongUnsigned(unsignedIntegerValue, dataLength);
+                value = unsignedIntegerValue;
             break;
-            case SIGNED_INTEGER: {
-                long v = this.resolver.getSignedIntegerValue(ei, this.currentLocation);
-                this.bitHandler.setNextLongSigned(v, dataLength);
-                value = v;
-            }
+            case SIGNED_INTEGER:
+                long signedIntegerValue = this.resolver.getSignedIntegerValue(ei, this.currentLocation);
+                this.bitHandler.setNextLongSigned(signedIntegerValue, dataLength);
+                value = signedIntegerValue;
             break;
-            case REAL: {
-                double v = this.resolver.getRealValue(ei, this.currentLocation);
+            case REAL:
+                double realValue = this.resolver.getRealValue(ei, this.currentLocation);
                 switch (dataLength) {
                     case 1:
-                        this.bitHandler.setNextFloat((float) v);
+                        this.bitHandler.setNextFloat((float) realValue);
                         break;
                     case 2:
-                        this.bitHandler.setNextDouble(v);
+                        this.bitHandler.setNextDouble(realValue);
                         break;
                     case 3:
-                        this.bitHandler.setNextMil32Real(v);
+                        this.bitHandler.setNextMil32Real(realValue);
                         break;
                     case 4:
-                        this.bitHandler.setNextMil48Real(v);
+                        this.bitHandler.setNextMil48Real(realValue);
                         break;
                     default:
-                        throw new IllegalArgumentException("Length code " + dataLength + " for encoded parameter " + ei.getId() + " for real values not recognized, cannot encode");
+                        throw new EncodingException("Length code " + dataLength + " for encoded parameter " + ei.getId() + " for real values not recognized, cannot encode");
                 }
-                value = v;
-            }
+                value = realValue;
             break;
-            case BIT_STRING: {
+            case BIT_STRING:
                 BitString bs = this.resolver.getBitStringValue(ei, this.currentLocation, dataLength);
                 if (dataLength != 0 && bs.getLength() != dataLength) {
-                    throw new IllegalStateException("Resolved bitstring length value " + bs.getLength() + " and PFC code " + dataLength + " for bit string do not match for encoded parameter " + ei.getId() + ", cannot encode");
+                    throw new EncodingException("Resolved bitstring length value " + bs.getLength() + " and PFC code " + dataLength + " for bit string do not match for encoded parameter " + ei.getId() + ", cannot encode");
                 }
                 this.bitHandler.setNextByte(bs.getData(), bs.getLength());
                 value = bs;
-            }
             break;
-            case OCTET_STRING: {
-                byte[] bs = this.resolver.getOctetStringValue(ei, this.currentLocation, dataLength);
-                if (dataLength != 0 && bs.length != dataLength) {
-                    throw new IllegalStateException("Resolved octet string length value " + bs.length + " and PFC code " + dataLength + " for octet string do not match for encoded parameter " + ei.getId() + ", cannot encode");
+            case OCTET_STRING:
+                byte[] os = this.resolver.getOctetStringValue(ei, this.currentLocation, dataLength);
+                if (dataLength != 0 && os.length != dataLength) {
+                    throw new EncodingException("Resolved octet string length value " + os.length + " and PFC code " + dataLength + " for octet string do not match for encoded parameter " + ei.getId() + ", cannot encode");
                 }
-                this.bitHandler.setNextByte(bs, bs.length * Byte.SIZE);
-                value = bs;
-            }
+                this.bitHandler.setNextByte(os, os.length * Byte.SIZE);
+                value = os;
             break;
-            case CHARACTER_STRING: {
-                String bs = this.resolver.getCharacterStringValue(ei, this.currentLocation, dataLength);
-                if (dataLength != 0 && bs.length() != dataLength) {
-                    throw new IllegalStateException("Resolved char string length value " + bs.length() + " and PFC code " + dataLength + " for char string do not match for encoded parameter " + ei.getId() + ", cannot encode");
+            case CHARACTER_STRING:
+                String cs = this.resolver.getCharacterStringValue(ei, this.currentLocation, dataLength);
+                if (dataLength != 0 && cs.length() != dataLength) {
+                    throw new EncodingException("Resolved char string length value " + cs.length() + " and PFC code " + dataLength + " for char string do not match for encoded parameter " + ei.getId() + ", cannot encode");
                 }
-                this.bitHandler.setNextString(bs, bs.length() * Byte.SIZE);
-                value = bs;
-            }
+                this.bitHandler.setNextString(cs, cs.length() * Byte.SIZE);
+                value = cs;
             break;
-            case ABSOLUTE_TIME: {
+            case ABSOLUTE_TIME:
                 Instant t = this.resolver.getAbsoluteTimeValue(ei, this.currentLocation);
                 if (dataLength == 0) {
                     // Explicit definition of time format (CUC or CDS), i.e. including the Pfield
@@ -186,33 +179,31 @@ public class EncodeWalker extends StructureWalker<byte[]> {
                     byte[] encoded = TimeUtil.toCUC(t, this.agencyEpoch, coarse, fine, false);
                     this.bitHandler.setNextByte(encoded, encoded.length * Byte.SIZE);
                 } else {
-                    throw new IllegalArgumentException("PFC value " + dataLength + " for PTC of type Absolute Time is not valid for encoded parameter " + ei.getId() + ", cannot encode");
+                    throw new EncodingException("PFC value " + dataLength + " for PTC of type Absolute Time is not valid for encoded parameter " + ei.getId() + ", cannot encode");
                 }
                 value = t;
-            }
             break;
-            case RELATIVE_TIME: {
-                Duration t = this.resolver.getRelativeTimeValue(ei, this.currentLocation);
+            case RELATIVE_TIME:
+                Duration duration = this.resolver.getRelativeTimeValue(ei, this.currentLocation);
                 if (dataLength == 0) {
                     // Explicit definition of time format (CUC), i.e. including the Pfield
-                    IEncodeResolver.RelativeTimeDescriptor desc = this.resolver.getRelativeTimeDescriptor(ei, this.currentLocation, t);
-                    byte[] encoded = TimeUtil.toCUCduration(t, desc.coarseTime, desc.fineTime, true);
+                    IEncodeResolver.RelativeTimeDescriptor desc = this.resolver.getRelativeTimeDescriptor(ei, this.currentLocation, duration);
+                    byte[] encoded = TimeUtil.toCUCduration(duration, desc.coarseTime, desc.fineTime, true);
                     this.bitHandler.setNextByte(encoded, encoded.length * Byte.SIZE);
                 } else if (dataLength >= 1 && dataLength <= 16) {
                     int coarse = (int) Math.floor((dataLength + 3) / 4.0);
                     int fine = (dataLength + 3) % 4;
-                    byte[] encoded = TimeUtil.toCUCduration(t, coarse, fine, false);
+                    byte[] encoded = TimeUtil.toCUCduration(duration, coarse, fine, false);
                     this.bitHandler.setNextByte(encoded, encoded.length * Byte.SIZE);
                 } else {
-                    throw new IllegalArgumentException("PFC value " + dataLength + " for PTC of type Relative Time is not valid for encoded parameter " + ei.getId() + ", cannot encode");
+                    throw new EncodingException("PFC value " + dataLength + " for PTC of type Relative Time is not valid for encoded parameter " + ei.getId() + ", cannot encode");
                 }
-                value = t;
-            }
+                value = duration;
             break;
             case DEDUCED:
-                throw new RuntimeException("Deduced type for encoded parameter " + ei.getId() + " at this stage is not allowed, cannot encode");
+                throw new EncodingException("Deduced type for encoded parameter " + ei.getId() + " at this stage is not allowed, cannot encode");
             default:
-                throw new IllegalArgumentException("Type " + dataType + " not supported");
+                throw new EncodingException("Type " + dataType + " not supported");
         }
         // Check padding
         if(paddedWidth != null) {
@@ -226,4 +217,8 @@ public class EncodeWalker extends StructureWalker<byte[]> {
         return value;
     }
 
+    @Override
+    protected EncodingException newException(String message) {
+        return new EncodingException(message);
+    }
 }

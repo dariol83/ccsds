@@ -19,7 +19,9 @@ package eu.dariolucia.ccsds.encdec.structure.impl;
 import eu.dariolucia.ccsds.encdec.definition.Definition;
 import eu.dariolucia.ccsds.encdec.extension.ExtensionId;
 import eu.dariolucia.ccsds.encdec.extension.IDecoderExtension;
+import eu.dariolucia.ccsds.encdec.structure.DecodingException;
 import eu.dariolucia.ccsds.encdec.structure.DecodingResult;
+import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.PathLocationBasedResolver;
 import eu.dariolucia.ccsds.encdec.time.impl.DefaultGenerationTimeProcessor;
 import org.junit.jupiter.api.Test;
@@ -43,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class EncoderDecoderExtensionTest {
 
     @Test
-    public void testEncoderDecoder() throws IOException {
+    public void testEncoderDecoder() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions5.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);

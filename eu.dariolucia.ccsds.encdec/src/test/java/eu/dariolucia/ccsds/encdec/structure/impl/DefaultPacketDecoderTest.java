@@ -17,7 +17,9 @@
 package eu.dariolucia.ccsds.encdec.structure.impl;
 
 import eu.dariolucia.ccsds.encdec.definition.Definition;
+import eu.dariolucia.ccsds.encdec.structure.DecodingException;
 import eu.dariolucia.ccsds.encdec.structure.DecodingResult;
+import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.ParameterValue;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.PathLocationBasedResolver;
 import eu.dariolucia.ccsds.encdec.time.impl.DefaultGenerationTimeProcessor;
@@ -35,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DefaultPacketDecoderTest {
 
     @Test
-    public void testDefinitionPerformance() throws IOException {
+    void testDefinitionPerformance() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -103,7 +105,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition1() throws IOException {
+    void testDefinition1() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -131,7 +133,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinitionTime() throws IOException {
+    void testDefinitionTime() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions4.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -158,14 +160,12 @@ class DefaultPacketDecoderTest {
         for(DecodingResult.Item i : dr.getDecodedItems()) {
             DecodingResult.Parameter ei = (DecodingResult.Parameter) i;
             switch(ei.name) {
-                case "PARAM1": {
+                case "PARAM1":
+                case "PARAM6": {
                     assertEquals(Instant.ofEpochSecond(0), ei.generationTime);
                 }
                 break;
-                case "PARAM2": {
-                    assertEquals(Instant.ofEpochSecond(123456789, 0), ei.generationTime);
-                }
-                break;
+                case "PARAM2":
                 case "PARAM3": {
                     assertEquals(Instant.ofEpochSecond(123456789, 0), ei.generationTime);
                 }
@@ -176,10 +176,6 @@ class DefaultPacketDecoderTest {
                 break;
                 case "PARAM5": {
                     assertEquals(Instant.ofEpochSecond(123456788, 950000000), ei.generationTime);
-                }
-                break;
-                case "PARAM6": {
-                    assertEquals(Instant.ofEpochSecond(0), ei.generationTime);
                 }
                 break;
                 case "PARAM7": {
@@ -202,7 +198,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition2() throws IOException {
+    void testDefinition2() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -227,7 +223,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition3() throws IOException {
+    void testDefinition3() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -255,7 +251,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition4() throws IOException {
+    void testDefinition4() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -277,7 +273,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition5() throws IOException {
+    void testDefinition5() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -310,7 +306,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition6() throws IOException {
+    void testDefinition6() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -333,7 +329,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition7() throws IOException {
+    void testDefinition7() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -358,7 +354,7 @@ class DefaultPacketDecoderTest {
 
 
     @Test
-    public void testDefinition8() throws IOException {
+    void testDefinition8() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -377,7 +373,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition9() throws IOException {
+    void testDefinition9() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -399,7 +395,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition10() throws IOException {
+    void testDefinition10() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -426,7 +422,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition11() throws IOException {
+    void testDefinition11() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -444,7 +440,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition12() throws IOException {
+    void testDefinition12() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions2.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -464,7 +460,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition13() throws IOException {
+    void testDefinition13() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions8.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -504,7 +500,7 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinition14() throws IOException {
+    void testDefinition14() throws IOException, EncodingException, DecodingException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions9.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
@@ -556,21 +552,21 @@ class DefaultPacketDecoderTest {
     }
 
     @Test
-    public void testDefinitionUnknown() throws IOException {
+    void testDefinitionUnknown() throws IOException {
         InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions8.xml");
         assertNotNull(defStr);
         Definition d = Definition.load(defStr);
         DefaultPacketDecoder decoder = new DefaultPacketDecoder(d);
         try {
             DecodingResult dr = decoder.decode("Not there", new byte[0]);
-            fail("IllegalArgumentException expected");
-        } catch (IllegalArgumentException e) {
+            fail("DecodingException expected");
+        } catch (DecodingException e) {
             // Good
         }
 
     }
 
-    public DecodingResult decodeAndCompare(Definition d, String packetDefinition, Map<String, Object> originalMap, byte[] encoded) {
+    DecodingResult decodeAndCompare(Definition d, String packetDefinition, Map<String, Object> originalMap, byte[] encoded) throws DecodingException {
         DefaultPacketDecoder decoder = new DefaultPacketDecoder(d);
         DecodingResult dr = decoder.decode(packetDefinition, encoded);
 

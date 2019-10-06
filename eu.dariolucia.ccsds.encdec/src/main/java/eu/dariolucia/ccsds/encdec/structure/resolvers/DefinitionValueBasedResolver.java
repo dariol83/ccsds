@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.encdec.structure.resolvers;
 
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
+import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.IEncodeResolver;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
 import eu.dariolucia.ccsds.encdec.value.BitString;
@@ -25,7 +26,6 @@ import eu.dariolucia.ccsds.encdec.value.StringUtil;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -55,34 +55,29 @@ public class DefinitionValueBasedResolver implements IEncodeResolver {
      *
      * @param parameter the encoded parameter
      * @param location the location of the encoded parameter
-     * @param resultClass the expected class of the value
      * @param delegateFunction the delegate function
      * @param parseFunction the parse function
      * @param <T> the type of the result
      * @return the value object
      */
-    private <T> T retrieveValue(EncodedParameter parameter, PathLocation location, Class<T> resultClass,
-                                BiFunction<EncodedParameter, PathLocation, T> delegateFunction, Function<String, T> parseFunction) {
+    private <T> T retrieveValue(EncodedParameter parameter, PathLocation location,
+                                EncodingBiFunction<EncodedParameter, PathLocation, T> delegateFunction, Function<String, T> parseFunction) throws EncodingException {
         String value = parameter.getValue();
         if(value == null) {
             return delegateFunction.apply(parameter, location);
         } else {
+            T theObj;
             try {
-                T theObj = parseFunction.apply(value);
-                if(theObj == null) {
-                    if(delegateCallOnNullOrException) {
-                        return delegateFunction.apply(parameter, location);
-                    } else {
-                        throw new RuntimeException("Parsing of " + value + " for parameter location " + location + " and type " + resultClass.getSimpleName() + " returned null");
-                    }
-                } else {
-                    return theObj;
+                theObj = parseFunction.apply(value);
+                if(theObj == null && delegateCallOnNullOrException) {
+                    return delegateFunction.apply(parameter, location);
                 }
-            } catch (Exception e) {
+                return theObj;
+            } catch (EncodingException e) {
                 if(delegateCallOnNullOrException) {
                     return delegateFunction.apply(parameter, location);
                 } else {
-                    throw new RuntimeException(e);
+                    throw e;
                 }
             }
         }
@@ -94,101 +89,96 @@ public class DefinitionValueBasedResolver implements IEncodeResolver {
      * @param parameter the encoded parameter
      * @param location the location of the encoded parameter
      * @param length the max length of the value
-     * @param resultClass the expected class of the value
      * @param delegateFunction the delegate function
      * @param parseFunction the parse function
      * @param <T> the type of the result
      * @return the value object
      */
-    private <T> T retrieveValue(EncodedParameter parameter, PathLocation location, int length, Class<T> resultClass,
-                                TriFunction<EncodedParameter, PathLocation, Integer, T> delegateFunction, Function<String, T> parseFunction) {
+    private <T> T retrieveValue(EncodedParameter parameter, PathLocation location, int length,
+                                EncodingTriFunction<EncodedParameter, PathLocation, Integer, T> delegateFunction, Function<String, T> parseFunction) throws EncodingException {
         String value = parameter.getValue();
         if(value == null) {
             return delegateFunction.apply(parameter, location, length);
         } else {
+            T theObj;
             try {
-                T theObj = parseFunction.apply(value);
-                if(theObj == null) {
-                    if(delegateCallOnNullOrException) {
-                        return delegateFunction.apply(parameter, location, length);
-                    } else {
-                        throw new RuntimeException("Parsing of " + value + " for parameter location " + location + " and type " + resultClass.getSimpleName() + " returned null");
-                    }
-                } else {
-                    return theObj;
+                theObj = parseFunction.apply(value);
+                if(theObj == null && delegateCallOnNullOrException) {
+                    return delegateFunction.apply(parameter, location, length);
                 }
-            } catch (Exception e) {
+                return theObj;
+            } catch (EncodingException e) {
                 if(delegateCallOnNullOrException) {
                     return delegateFunction.apply(parameter, location, length);
                 } else {
-                    throw new RuntimeException(e);
+                    throw e;
                 }
             }
         }
     }
 
     @Override
-    public boolean getBooleanValue(EncodedParameter parameter, PathLocation location) {
-        return retrieveValue(parameter, location, Boolean.class, delegate::getBooleanValue, Boolean::parseBoolean);
+    public boolean getBooleanValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
+        return retrieveValue(parameter, location, delegate::getBooleanValue, Boolean::parseBoolean);
     }
 
     @Override
-    public int getEnumerationValue(EncodedParameter parameter, PathLocation location) {
-        return retrieveValue(parameter, location, Integer.class, delegate::getEnumerationValue, Integer::parseInt);
+    public int getEnumerationValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
+        return retrieveValue(parameter, location, delegate::getEnumerationValue, Integer::parseInt);
     }
 
     @Override
-    public long getSignedIntegerValue(EncodedParameter parameter, PathLocation location) {
-        return retrieveValue(parameter, location, Long.class, delegate::getSignedIntegerValue, Long::parseLong);
+    public long getSignedIntegerValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
+        return retrieveValue(parameter, location, delegate::getSignedIntegerValue, Long::parseLong);
     }
 
     @Override
-    public long getUnsignedIntegerValue(EncodedParameter parameter, PathLocation location) {
-        return retrieveValue(parameter, location, Long.class, delegate::getUnsignedIntegerValue, Long::parseLong);
+    public long getUnsignedIntegerValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
+        return retrieveValue(parameter, location, delegate::getUnsignedIntegerValue, Long::parseLong);
     }
 
     @Override
-    public double getRealValue(EncodedParameter parameter, PathLocation location) {
-        return retrieveValue(parameter, location, Double.class, delegate::getRealValue, Double::parseDouble);
+    public double getRealValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
+        return retrieveValue(parameter, location, delegate::getRealValue, Double::parseDouble);
     }
 
     @Override
-    public Instant getAbsoluteTimeValue(EncodedParameter parameter, PathLocation location) {
-        return retrieveValue(parameter, location, Instant.class, delegate::getAbsoluteTimeValue, Instant::parse);
+    public Instant getAbsoluteTimeValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
+        return retrieveValue(parameter, location, delegate::getAbsoluteTimeValue, Instant::parse);
     }
 
     @Override
-    public Duration getRelativeTimeValue(EncodedParameter parameter, PathLocation location) {
-        return retrieveValue(parameter, location, Duration.class, delegate::getRelativeTimeValue, Duration::parse);
+    public Duration getRelativeTimeValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
+        return retrieveValue(parameter, location, delegate::getRelativeTimeValue, Duration::parse);
     }
 
     @Override
-    public BitString getBitStringValue(EncodedParameter parameter, PathLocation location, int maxBitlength) {
-        return retrieveValue(parameter, location, maxBitlength, BitString.class, delegate::getBitStringValue, BitString::parseBitString);
+    public BitString getBitStringValue(EncodedParameter parameter, PathLocation location, int maxBitlength) throws EncodingException {
+        return retrieveValue(parameter, location, maxBitlength, delegate::getBitStringValue, BitString::parseBitString);
     }
 
     @Override
-    public byte[] getOctetStringValue(EncodedParameter parameter, PathLocation location, int maxByteLength) {
-        return retrieveValue(parameter, location, maxByteLength, byte[].class, delegate::getOctetStringValue, StringUtil::toByteArray);
+    public byte[] getOctetStringValue(EncodedParameter parameter, PathLocation location, int maxByteLength) throws EncodingException {
+        return retrieveValue(parameter, location, maxByteLength, delegate::getOctetStringValue, StringUtil::toByteArray);
     }
 
     @Override
-    public String getCharacterStringValue(EncodedParameter parameter, PathLocation location, int maxStringLength) {
-        return retrieveValue(parameter, location, maxStringLength, String.class, delegate::getCharacterStringValue, Function.identity());
+    public String getCharacterStringValue(EncodedParameter parameter, PathLocation location, int maxStringLength) throws EncodingException {
+        return retrieveValue(parameter, location, maxStringLength, delegate::getCharacterStringValue, Function.identity());
     }
 
     @Override
-    public Object getExtensionValue(EncodedParameter parameter, PathLocation location) {
+    public Object getExtensionValue(EncodedParameter parameter, PathLocation location) throws EncodingException {
         return delegate.getExtensionValue(parameter, location);
     }
 
     @Override
-    public AbsoluteTimeDescriptor getAbsoluteTimeDescriptor(EncodedParameter parameter, PathLocation location, Instant value) {
+    public AbsoluteTimeDescriptor getAbsoluteTimeDescriptor(EncodedParameter parameter, PathLocation location, Instant value) throws EncodingException {
         return delegate.getAbsoluteTimeDescriptor(parameter, location, value);
     }
 
     @Override
-    public RelativeTimeDescriptor getRelativeTimeDescriptor(EncodedParameter parameter, PathLocation location, Duration value) {
+    public RelativeTimeDescriptor getRelativeTimeDescriptor(EncodedParameter parameter, PathLocation location, Duration value) throws EncodingException {
         return delegate.getRelativeTimeDescriptor(parameter, location, value);
     }
 
@@ -205,7 +195,12 @@ public class DefinitionValueBasedResolver implements IEncodeResolver {
     }
 
     @FunctionalInterface
-    private interface TriFunction<T, U, K, R> {
-        R apply(T t, U u, K k);
+    private interface EncodingTriFunction<T, U, K, R> {
+        R apply(T t, U u, K k) throws EncodingException;
+    }
+
+    @FunctionalInterface
+    private interface EncodingBiFunction<T, U, R> {
+        R apply(T t, U u) throws EncodingException;
     }
 }

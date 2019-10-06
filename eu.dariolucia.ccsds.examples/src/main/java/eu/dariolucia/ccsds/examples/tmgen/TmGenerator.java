@@ -19,6 +19,7 @@ package eu.dariolucia.ccsds.examples.tmgen;
 import eu.dariolucia.ccsds.encdec.definition.Definition;
 import eu.dariolucia.ccsds.encdec.definition.IdentFieldMatcher;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
+import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.IEncodeResolver;
 import eu.dariolucia.ccsds.encdec.structure.IPacketEncoder;
 import eu.dariolucia.ccsds.encdec.structure.impl.DefaultPacketEncoder;
@@ -190,7 +191,7 @@ public class TmGenerator {
         }
     }
 
-    public void startGeneration() {
+    public void startGeneration() throws EncodingException {
         // Check if the definition is available
         if(this.definition == null) {
             throw new IllegalStateException("A valid Definition database is required");
@@ -277,7 +278,7 @@ public class TmGenerator {
         // That's it
     }
 
-    private SpacePacket generatePacket(IPacketEncoder encoder, PacketDefinition packetDefinition, Map<Integer, AtomicInteger> apid2counter) {
+    private SpacePacket generatePacket(IPacketEncoder encoder, PacketDefinition packetDefinition, Map<Integer, AtomicInteger> apid2counter) throws EncodingException {
         // First generate the user data according to the packet definition (including PUS type and PUS subtype)
         byte[] encoded = encoder.encode(packetDefinition.getId(), defaultResolver);
 
@@ -427,7 +428,7 @@ public class TmGenerator {
         return toReturn;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, EncodingException {
         TmGenerator tmGen = new TmGenerator();
         if(args.length == 0) {
             System.out.println("Usage: TmGenerator [argument]+");

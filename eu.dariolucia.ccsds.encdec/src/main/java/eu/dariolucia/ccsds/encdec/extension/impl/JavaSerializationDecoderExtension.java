@@ -21,6 +21,7 @@ import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
 import eu.dariolucia.ccsds.encdec.extension.ExtensionId;
 import eu.dariolucia.ccsds.encdec.extension.IDecoderExtension;
+import eu.dariolucia.ccsds.encdec.structure.DecodingException;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
 
 import java.io.ByteArrayInputStream;
@@ -34,14 +35,15 @@ import java.io.ObjectInputStream;
 public class JavaSerializationDecoderExtension implements IDecoderExtension {
 
     @Override
-    public Object decode(PacketDefinition definition, EncodedParameter parameter, PathLocation location, BitEncoderDecoder decoder) {
+    public Object decode(PacketDefinition definition, EncodedParameter parameter, PathLocation location, BitEncoderDecoder decoder)
+            throws DecodingException {
         int len = decoder.getNextIntegerUnsigned(Integer.SIZE);
         byte[] data = decoder.getNextByte(len * Byte.SIZE);
         try {
             ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
             return ois.readObject();
-        } catch(IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+        } catch (IOException | ClassNotFoundException e) {
+            throw new DecodingException("Error while decoding encoded parameter " + location + " as Java object at bit position " + decoder.getCurrentBitIndex(), e);
         }
     }
 }
