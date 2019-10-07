@@ -52,16 +52,16 @@ public class RafTest {
         RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
         rafProvider.bind(2);
 
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
         assertEquals(ServiceInstanceBindingStateEnum.READY, rafUser.getCurrentBindingState());
+        AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
         assertEquals(ServiceInstanceBindingStateEnum.READY, rafProvider.getCurrentBindingState());
 
         rafProvider.unbind(UnbindReasonEnum.SUSPEND);
 
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
 
         rafUser.dispose();
@@ -84,7 +84,7 @@ public class RafTest {
         RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
         rafUser.bind(2);
 
-        Thread.sleep(2000);
+        AwaitUtil.await(2000);
 
         // Register listener
         OperationRecorder recorder = new OperationRecorder();
@@ -92,53 +92,41 @@ public class RafTest {
 
         // Ask for schedule status report (immediate): expect a positive return and a report
         rafUser.scheduleStatusReport(false, null);
-
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
         // Ask for parameter transfer buffer size: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RafParameterEnum.BUFFER_SIZE);
-
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(10, ((RafGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParBufferSize().getParameterValue().intValue());
 
         // Ask for parameter latency limit: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RafParameterEnum.LATENCY_LIMIT);
-
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(3, ((RafGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOnline().intValue());
 
         // Ask for parameter permitted frame quality: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RafParameterEnum.REQUESTED_FRAME_QUALITY);
-
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((RafGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqFrameQuality().getParameterValue().intValue());
 
         // Ask for parameter return timeout: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RafParameterEnum.RETURN_TIMEOUT_PERIOD);
-
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(120, ((RafGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue());
 
         // Ask for parameter min reporting cycle: expect negative return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RafParameterEnum.MIN_REPORTING_CYCLE);
-
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((RafGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getNegativeResult().getSpecific().intValue());
 
@@ -146,38 +134,32 @@ public class RafTest {
         recorder.getPduReceived().clear();
         rafUser.scheduleStatusReport(false, 5);
 
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
-        Thread.sleep(4000);
-
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 3);
         assertEquals(3, recorder.getPduReceived().size());
 
         // Ask for parameter reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RafParameterEnum.REPORTING_CYCLE);
-
-        Thread.sleep(1000);
-
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(5, ((RafGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOn().intValue());
 
         // Stop status report
         recorder.getPduReceived().clear();
         rafUser.scheduleStatusReport(true, null);
-
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
         rafUser.unbind(UnbindReasonEnum.SUSPEND);
 
-        Thread.sleep(2000);
-
+        AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
 
         rafUser.dispose();

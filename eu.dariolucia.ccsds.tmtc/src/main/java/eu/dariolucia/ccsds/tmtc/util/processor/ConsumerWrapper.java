@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.tmtc.util.processor;
 
 import java.util.Objects;
 import java.util.concurrent.Flow;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -30,7 +31,7 @@ public class ConsumerWrapper<T> implements Flow.Subscriber<T> {
 
     private final Function<Consumer<T>, Integer> backlogProvider;
     private final Consumer<T> delegate;
-    private volatile Flow.Subscription subscription;
+    private final AtomicReference<Flow.Subscription> subscription = new AtomicReference<>();
 
     /**
      * Create a {@link ConsumerWrapper} that requests Integer.MAX elements when the subscription is performed. Data
@@ -67,7 +68,7 @@ public class ConsumerWrapper<T> implements Flow.Subscriber<T> {
      */
     @Override
     public void onSubscribe(Flow.Subscription subscription) {
-        this.subscription = subscription;
+        this.subscription.set(subscription);
         if(this.backlogProvider == null) {
             subscription.request(Integer.MAX_VALUE);
         } else {
@@ -88,8 +89,9 @@ public class ConsumerWrapper<T> implements Flow.Subscriber<T> {
         this.delegate.accept(item);
         if(this.backlogProvider != null) {
             Integer requests = this.backlogProvider.apply(this.delegate);
-            if(requests != null && this.subscription != null) {
-                this.subscription.request(requests);
+            Flow.Subscription theSubscription = this.subscription.get();
+            if(requests != null && theSubscription != null) {
+                theSubscription.request(requests);
             }
         }
     }

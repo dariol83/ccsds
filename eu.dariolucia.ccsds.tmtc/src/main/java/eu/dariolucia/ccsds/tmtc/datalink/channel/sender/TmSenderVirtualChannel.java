@@ -23,8 +23,11 @@ import eu.dariolucia.ccsds.tmtc.ocf.pdu.AbstractOcf;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.IntFunction;
+import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 /**
@@ -34,11 +37,11 @@ import java.util.function.Supplier;
  */
 public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTransferFrame> {
 
-    private final Function<Integer, AbstractOcf> ocfSupplier;
+    private final IntFunction<AbstractOcf> ocfSupplier;
 
-    private final Function<Integer, byte[]> secondaryHeaderSupplier;
+    private final IntFunction<byte[]> secondaryHeaderSupplier;
 
-    private final Supplier<Integer> masterChannelFrameCounterSupplier;
+    private final IntSupplier masterChannelFrameCounterSupplier;
 
     private final int secondaryHeaderLength;
 
@@ -50,19 +53,19 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
     private final int secHeaderLength;
     private final int secTrailerLength;
 
-    public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Supplier<Integer> masterChannelFrameCounterSupplier, Function<Integer, AbstractOcf> ocfSupplier) {
+    public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, IntSupplier masterChannelFrameCounterSupplier, IntFunction<AbstractOcf> ocfSupplier) {
         this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, masterChannelFrameCounterSupplier, ocfSupplier, 0, null);
     }
 
-    public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Supplier<Integer> masterChannelFrameCounterSupplier, Function<Integer, AbstractOcf> ocfSupplier, int secondaryHeaderLength, Function<Integer, byte[]> secondaryHeaderSupplier) {
+    public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, IntSupplier masterChannelFrameCounterSupplier, IntFunction<AbstractOcf> ocfSupplier, int secondaryHeaderLength, IntFunction<byte[]> secondaryHeaderSupplier) {
         this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, masterChannelFrameCounterSupplier, ocfSupplier, secondaryHeaderLength, secondaryHeaderSupplier, null, 0, 0, null, null);
     }
 
-    public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Supplier<Integer> masterChannelFrameCounterSupplier, Function<Integer, AbstractOcf> ocfSupplier, IVirtualChannelDataProvider dataProvider) {
+    public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, IntSupplier masterChannelFrameCounterSupplier, IntFunction<AbstractOcf> ocfSupplier, IVirtualChannelDataProvider dataProvider) {
         this(spacecraftId, virtualChannelId, mode, fecfPresent, frameLength, masterChannelFrameCounterSupplier, ocfSupplier, 0, null, dataProvider, 0, 0, null, null);
     }
 
-    public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, Supplier<Integer> masterChannelFrameCounterSupplier, Function<Integer, AbstractOcf> ocfSupplier, int secondaryHeaderLength, Function<Integer, byte[]> secondaryHeaderSupplier, IVirtualChannelDataProvider dataProvider,
+    public TmSenderVirtualChannel(int spacecraftId, int virtualChannelId, VirtualChannelAccessMode mode, boolean fecfPresent, int frameLength, IntSupplier masterChannelFrameCounterSupplier, IntFunction<AbstractOcf> ocfSupplier, int secondaryHeaderLength, IntFunction<byte[]> secondaryHeaderSupplier, IVirtualChannelDataProvider dataProvider,
                                   int secHeaderLength, int secTrailerLength, Supplier<byte[]> secHeaderSupplier, Supplier<byte[]> secTrailerSupplier) {
         super(spacecraftId, virtualChannelId, mode, fecfPresent, dataProvider);
         this.frameLength = frameLength;
@@ -88,7 +91,7 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
         }
     }
 
-    public Function<Integer, AbstractOcf> getOcfSupplier() {
+    public IntFunction<AbstractOcf> getOcfSupplier() {
         return ocfSupplier;
     }
 
@@ -96,11 +99,11 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
         return ocfSupplier != null;
     }
 
-    public Function<Integer, byte[]> getSecondaryHeaderSupplier() {
+    public IntFunction<byte[]> getSecondaryHeaderSupplier() {
         return secondaryHeaderSupplier;
     }
 
-    public Supplier<Integer> getMasterChannelFrameCounterSupplier() {
+    public IntSupplier getMasterChannelFrameCounterSupplier() {
         return masterChannelFrameCounterSupplier;
     }
 
@@ -164,7 +167,6 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
             throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested Packet access");
         }
         List<SpacePacket> packets = new ArrayList<>(pkts);
-        int maxDataPerFrame = getMaxUserDataLength();
         // Strategy: fill in a transfer frame as much as you can, till the end. Do segmentation if needed.
         for (int i = 0; i < packets.size(); ++i) {
             SpacePacket isp = packets.get(i);
@@ -207,7 +209,7 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
     protected TmTransferFrame finalizeFullFrame() {
         ((TmTransferFrameBuilder) this.currentFrame)
                 .setVirtualChannelFrameCount(incrementVirtualChannelFrameCounter(256))
-                .setMasterChannelFrameCount(getMasterChannelFrameCounterSupplier().get());
+                .setMasterChannelFrameCount(getMasterChannelFrameCounterSupplier().getAsInt());
         // Add secondary header
         if(this.secondaryHeaderLength > 0) {
             ((TmTransferFrameBuilder) this.currentFrame).setSecondaryHeader(this.secondaryHeaderSupplier.apply(getVirtualChannelId()));

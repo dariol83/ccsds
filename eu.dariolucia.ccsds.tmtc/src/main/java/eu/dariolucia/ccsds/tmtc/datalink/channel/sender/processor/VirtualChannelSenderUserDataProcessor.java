@@ -17,7 +17,6 @@
 package eu.dariolucia.ccsds.tmtc.datalink.channel.sender.processor;
 
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
-import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import eu.dariolucia.ccsds.tmtc.util.internal.TransformationStreamProcessor;
 
 import java.util.concurrent.ExecutorService;

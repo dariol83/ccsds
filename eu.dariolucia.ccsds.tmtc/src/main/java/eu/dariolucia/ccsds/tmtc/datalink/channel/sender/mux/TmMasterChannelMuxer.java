@@ -109,7 +109,8 @@ public class TmMasterChannelMuxer extends SimpleMuxer<TmTransferFrame> {
 				try {
 					wait();
 				} catch (InterruptedException e) {
-					throw new RuntimeException(e);
+					// Stop the execution here
+					return;
 				}
 			}
 			// Maybe now it works again, try again
@@ -123,7 +124,7 @@ public class TmMasterChannelMuxer extends SimpleMuxer<TmTransferFrame> {
 		}
 	}
 
-	private boolean tryForwarding(TmTransferFrame tmTransferFrame) {
+	private synchronized boolean tryForwarding(TmTransferFrame tmTransferFrame) {
 		if (tmTransferFrame.getMasterChannelFrameCount() == this.expectedCounter.get()) {
 			// Forward it to the output
 			this.output.accept(tmTransferFrame);

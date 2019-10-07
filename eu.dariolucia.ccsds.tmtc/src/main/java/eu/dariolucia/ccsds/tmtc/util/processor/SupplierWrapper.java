@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Flow;
 import java.util.concurrent.SubmissionPublisher;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 /**
@@ -33,7 +34,7 @@ public class SupplierWrapper<T> extends SubmissionPublisher<T> {
     private final Supplier<T> supplier;
     private final boolean timely;
     private volatile boolean running;
-    private volatile Thread activationThread;
+    private final AtomicReference<Thread> activationThread = new AtomicReference<>();
 
     /**
      * Create an instance that produces data items using the provided supplier. An {@link ExecutorService} must be
@@ -88,17 +89,17 @@ public class SupplierWrapper<T> extends SubmissionPublisher<T> {
         }
         this.running = true;
         if (async) {
-            this.activationThread = new Thread(this::doActivate);
-            this.activationThread.start();
+            this.activationThread.set(new Thread(this::doActivate));
+            this.activationThread.get().start();
         } else {
-            this.activationThread = Thread.currentThread();
+            this.activationThread.set(Thread.currentThread());
             doActivate();
-            this.activationThread = null;
+            this.activationThread.set(null);
         }
     }
 
     private void doActivate() {
-        T item = null;
+        T item;
         while (this.running) {
             item = this.supplier.get();
             if (item == null) {
@@ -120,9 +121,10 @@ public class SupplierWrapper<T> extends SubmissionPublisher<T> {
      */
     public void deactivate() {
         this.running = false;
-        if (this.activationThread != null) {
-            this.activationThread.interrupt();
-            this.activationThread = null;
+        Thread activeThread = this.activationThread.get();
+        if (activeThread != null) {
+            activeThread.interrupt();
+            this.activationThread.set(null);
         }
     }
 

@@ -18,7 +18,6 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.function;
 
 import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.AbstractReceiverVirtualChannel;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
-import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
 
 /**
  * Mapper used to convert frames to byte[].

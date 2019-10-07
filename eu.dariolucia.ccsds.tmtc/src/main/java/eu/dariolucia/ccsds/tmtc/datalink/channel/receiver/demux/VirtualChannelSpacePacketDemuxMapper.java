@@ -79,6 +79,7 @@ public class VirtualChannelSpacePacketDemuxMapper<T extends AbstractTransferFram
     public List<SpacePacket> processFrame(T frame) {
         int vcId = frame.getVirtualChannelId();
         VirtualChannelReceiverSpacePacketMapper packetMapper = this.vcid2mapper.get(vcId);
+
         if(packetMapper != null) {
             return (List<SpacePacket>) packetMapper.apply(frame);
         } else {

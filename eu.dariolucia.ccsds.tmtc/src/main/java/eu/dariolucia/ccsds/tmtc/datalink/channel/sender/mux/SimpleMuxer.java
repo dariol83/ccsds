@@ -19,10 +19,7 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.AbstractSenderVirtualChannel;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.IVirtualChannelSenderOutput;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**

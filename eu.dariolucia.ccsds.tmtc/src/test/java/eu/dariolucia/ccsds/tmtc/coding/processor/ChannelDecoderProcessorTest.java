@@ -38,7 +38,7 @@ class ChannelDecoderProcessorTest {
     private static String FILE_TM1 = "dumpFile_tm_1.hex";
 
     @Test
-    public void testTmDecodingCompleteSync() throws InterruptedException {
+    void testTmDecodingCompleteSync() throws InterruptedException {
         // Build the reader (as supplier)
         LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1));
         // Wrap the reader in a Flow.Publisher
@@ -64,7 +64,7 @@ class ChannelDecoderProcessorTest {
         // asynchronous. So we need to wait a bit. Let's use active wait. Max wait is 10 seconds.
         for (int i = 0; i < 100; ++i) {
             Thread.sleep(100);
-            if (retrievedFrames.size() == 135) {
+            if (retrievedFrames.size() == 152) {
                 break;
             }
         }
@@ -73,7 +73,7 @@ class ChannelDecoderProcessorTest {
     }
 
     @Test
-    public void testTmDecodingCompleteAsync() throws InterruptedException {
+    void testTmDecodingCompleteAsync() throws InterruptedException {
         // Build the reader (as supplier)
         LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1));
         // Wrap the reader in a Flow.Publisher
@@ -99,15 +99,16 @@ class ChannelDecoderProcessorTest {
         // asynchronous. So we need to wait a bit. Let's use active wait. Max wait is 10 seconds.
         for (int i = 0; i < 100; ++i) {
             Thread.sleep(100);
-            if (retrievedFrames.size() == 135) {
+            if (retrievedFrames.size() == 152) {
                 break;
             }
         }
+        rawFramePublisher.deactivate();
         assertEquals(152, retrievedFrames.size());
     }
 
     @Test
-    public void testTmDecodingTimelyAsync() throws InterruptedException {
+    void testTmDecodingTimelyAsync() throws InterruptedException {
         // Build the reader (as supplier)
         LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1));
         // Wrap the reader in a Flow.Publisher
@@ -144,8 +145,13 @@ class ChannelDecoderProcessorTest {
         // Start the processing by activating the publisher, the processing chain is in place
         rawFramePublisher.activate(true);
         // When the activate returns, all frames should be in the processing queue. The SupplierWrapper is in fact
-        // asynchronous. We wait a fixed amount (1 second) and then we check.
-        Thread.sleep(1000);
+        // asynchronous. We do an active wait to check.
+        for (int i = 0; i < 100; ++i) {
+            Thread.sleep(100);
+            if (retrievedFrames.size() == 10) {
+                break;
+            }
+        }
         //
         rawFramePublisher.deactivate();
         // Only 10 items in the list
