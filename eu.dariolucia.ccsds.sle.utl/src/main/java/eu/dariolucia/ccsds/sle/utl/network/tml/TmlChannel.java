@@ -39,10 +39,11 @@ import java.util.logging.Logger;
 
 /**
  * This class implements all the required TML features as specified by CCSDS 913.1-B-2:
- * - TML context, pdu and heartbeat message;
- * - TX and RX heartbeat timers and dead factor;
- * - Server and client modes.
- *
+ * <ul>
+ * <li>TML context, pdu and heartbeat message;</li>
+ * <li>TX and RX heartbeat timers and dead factor;</li>
+ * <li>Server and client modes.</li>
+ * </ul>
  * Given the nature of the defined protocol, interactions with instances of this class have an asynchronous nature:
  * a callback object must be provided in the constructor and the relevant methods will be called, depending on the
  * type of data received from the underlying transport layer.
@@ -57,8 +58,8 @@ public class TmlChannel {
 	 *
 	 * @param host the hostname to connect to
 	 * @param port the TCP port to connect to
-	 * @param heartbeatTimer the heartbeat interval to propose in the TML context message and use later on
-	 * @param deadFactor the deadfactor to propose in the TML context message and use later on
+	 * @param heartbeatTimer the heartbeat interval to propose in the TML context message and use later on, in seconds
+	 * @param deadFactor the dead factor to propose in the TML context message and use later on
 	 * @param observer the callback interface
 	 * @param txBuffer the number of bytes to be set for the TCP transmission buffer
 	 * @param rxBuffer the number of bytes to be set for the TCP reception buffer
@@ -101,7 +102,7 @@ public class TmlChannel {
 	
 	private final boolean serverMode;
 	
-	private final ServerSocket serverSocket;
+	private ServerSocket serverSocket;
 
 	private final int txBuffer;
 	private final int rxBuffer;
@@ -167,11 +168,6 @@ public class TmlChannel {
 		this.deadFactor = new AtomicInteger(4); // Hardcoded now, it will be overwritten
 		this.observer = observer;
 		this.serverMode = true;
-		try {
-			this.serverSocket = new ServerSocket(this.port);
-		} catch(IOException e) {
-			throw new TmlChannelException("Cannot create server socket on port " + port, e);
-		}
 		this.txBuffer = txBuffer;
 		this.rxBuffer = rxBuffer;
 		if(this.rxBuffer > 0) {
@@ -191,6 +187,7 @@ public class TmlChannel {
 	 * @throws TmlChannelException in case of error when establishing the connection
 	 */
 	public void connect() throws TmlChannelException {
+		this.aboutToDisconnect = false;
 		if(!serverMode) {
 			doClientConnect();
 		} else {
@@ -206,6 +203,12 @@ public class TmlChannel {
 			}
 			if (this.readingThread != null) {
 				throw new TmlChannelException("Already waiting for a connection");
+			}
+			//
+			try {
+				this.serverSocket = new ServerSocket(this.port);
+			} catch(IOException e) {
+				throw new TmlChannelException("Cannot create server socket on port " + port, e);
 			}
 			// reset stats
 			this.statsCounter.reset();
@@ -334,7 +337,11 @@ public class TmlChannel {
 				try {
 				    // Read at least 8 octets (ref. CCSDS 913.1-B-2 3.3.4.2.3.2)
 					while(read < 8 && this.running) {
-						read += is.read(headerBuffer, read, 8 - read);
+						int readOther = is.read(headerBuffer, read, 8 - read);
+						if(readOther <= 0) {
+							throw new IOException("End of stream detected");
+						}
+						read += readOther;
 					}
 					this.statsCounter.addIn(read);
 				} catch (IOException e) {
@@ -343,8 +350,14 @@ public class TmlChannel {
 						// or other reasons. If it is because of a peer abort, headerBuffer should contain a single
 						// byte. If this is the case, then the peer abort can be decoded.
 						if(read == 1) {
+							if(LOG.isLoggable(Level.FINE)) {
+								LOG.fine(String.format("Reading thread on channel %s detected remote disconnection with a single byte %d", toString(), read));
+							}
 							remotePeerAbortDetected(e, headerBuffer[0]);
 						} else {
+							if(LOG.isLoggable(Level.FINE)) {
+								LOG.fine(String.format("Reading thread on channel %s detected remote disconnection", toString()));
+							}
 							remoteDisconnectionDetected(e);
 						}
 					}
@@ -366,7 +379,11 @@ public class TmlChannel {
 						int read2 = 0;
 						try {
 							while(read2 < 12 && this.running) {
-								read2 += is.read(msg, read2, 12 - read2);
+								int readOther = is.read(msg, read2, 12 - read2);
+								if(readOther <= 0) {
+									throw new IOException("End of stream detected");
+								}
+								read2 += readOther;
 							}
 							this.statsCounter.addIn(read2);
 						} catch (IOException e) {
@@ -380,7 +397,7 @@ public class TmlChannel {
 						this.heartbeatTimer.set(reader.getShort());
 						this.deadFactor.set(reader.getShort());
 						if(LOG.isLoggable(Level.INFO)) {
-							LOG.info(String.format("HB interval set to %d, dead factor set to %s", this.heartbeatTimer.get(), this.deadFactor));
+							LOG.info(String.format("HB interval set to %d, dead factor set to %s", this.heartbeatTimer.get(), this.deadFactor.get()));
 						}
 						// start HBT timers, if needed
 						startHbtTimers();
@@ -395,6 +412,9 @@ public class TmlChannel {
 						return;
 					}
 				} else if(isTmlHbt(headerBuffer)) {
+					if(LOG.isLoggable(Level.FINE)) {
+						LOG.fine(String.format("HB on channel %s received", toString()));
+					}
 					// If TML HBT, restart Rx timer
 					restartHbtRxTimer();
 				} else if(isTmlPdu(headerBuffer)) {
@@ -438,6 +458,9 @@ public class TmlChannel {
 	}
 
 	private void tmlPduReceived(byte[] pdu) {
+		if(LOG.isLoggable(Level.FINE)) {
+			LOG.fine(String.format("PDU received on channel %s", toString()));
+		}
 		try {
 			this.observer.onPduReceived(this, pdu);
 		} catch(Exception e) {
@@ -471,6 +494,9 @@ public class TmlChannel {
 	}
 
 	private void restartHbtRxTimer() {
+		if(LOG.isLoggable(Level.FINE)) {
+			LOG.fine(String.format("Starting HBT RX timer of %s to %d seconds", toString(), this.heartbeatTimer.get() * this.deadFactor.get()));
+		}
 		this.lock.lock();
 		try {
 			if(this.hbtRxTimer != null) {
@@ -515,6 +541,9 @@ public class TmlChannel {
 	}
 	
 	private void restartHbtTxTimer() {
+		if(LOG.isLoggable(Level.FINE)) {
+			LOG.fine(String.format("Starting HBT TX timer of %s to %d seconds", toString(), this.heartbeatTimer.get()));
+		}
 		this.lock.lock();
 		try {
 			if(this.hbtTxTimer != null) {
@@ -543,6 +572,8 @@ public class TmlChannel {
 		LOG.log(Level.SEVERE, String.format("Remote peer abort detected on channel %s, code %s", toString(), PeerAbortReasonEnum.fromCode(code)), e);
 		this.lock.lock();
 		try {
+			// stop read thread
+			stopReadingThread();
 			// stop HBT timers, if needed
 			stopHbtTimers();
 			// disconnect from endpoint
@@ -562,6 +593,8 @@ public class TmlChannel {
 		LOG.log(Level.SEVERE, String.format("Remote disconnection detected on channel %s", toString()), e);
 		this.lock.lock();
 		try {
+			// stop read thread
+			stopReadingThread();
 			// stop HBT timers, if needed
 			stopHbtTimers();
 			// disconnect from endpoint
@@ -606,6 +639,9 @@ public class TmlChannel {
 	}
 	
 	private void sendHbtMessage() {
+		if(LOG.isLoggable(Level.FINE)) {
+			LOG.fine(String.format("Sending HBT from %s via sendHbtMessage()", toString()));
+		}
 		OutputStream os = getTxStream();
 		if(os == null) {
 			if(LOG.isLoggable(Level.WARNING)) {
@@ -615,6 +651,9 @@ public class TmlChannel {
 		}
 		try {
 			os.write(HBT_MESSAGE);
+			if(LOG.isLoggable(Level.FINE)) {
+				LOG.fine(String.format("HB sent from channel %s", toString()));
+			}
 			this.statsCounter.addOut(HBT_MESSAGE.length);
 		} catch (IOException e) {
 			LOG.log(Level.SEVERE, String.format("Exception while sending HBT on channel %s", toString()), e);
@@ -713,6 +752,7 @@ public class TmlChannel {
 	}
 
 	private void disconnectEndpoint(TmlDisconnectionReasonEnum reason, PeerAbortReasonEnum peerAbortReason) {
+		// Close the thread
 		try {
 			this.aboutToDisconnect = true;
 			if(this.sock != null) {
@@ -727,6 +767,7 @@ public class TmlChannel {
 			if(this.serverSocket != null) { // Server mode
 				this.serverSocket.close();
 			}
+			this.serverSocket = null;
 		} catch (IOException e) {
 			LOG.log(Level.FINE, String.format("Socket/stream on channel %s threw exception on close()", toString()), e);
 		}
