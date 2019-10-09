@@ -427,13 +427,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 				.filter(flp -> flp.getPortName().equals(getResponderPortIdentifier())).findFirst();
 		if (port.isPresent()) {
 			// Create a new TML channel
-			try {
-				this.tmlChannel = TmlChannel.createServerTmlChannel(port.get().getRemotePort(), this, port.get().getTcpTxBufferSize(), port.get().getTcpRxBufferSize());
-			} catch (TmlChannelException e) {
-				setError("TML channel cannot be created: " + e.getMessage(), e);
-				notifyStateUpdate();
-				return;
-			}
+			this.tmlChannel = TmlChannel.createServerTmlChannel(port.get().getRemotePort(), this, port.get().getTcpTxBufferSize(), port.get().getTcpRxBufferSize());
 		} else {
 			setError(getServiceInstanceIdentifier()
 					+ ": Foreign local port " + getResponderPortIdentifier()
