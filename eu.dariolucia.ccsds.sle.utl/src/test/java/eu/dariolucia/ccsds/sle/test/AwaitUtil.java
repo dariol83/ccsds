@@ -25,6 +25,9 @@ public class AwaitUtil {
             int minWait = Math.min(maxMs, 100);
             Thread.sleep(minWait);
             maxMs -= minWait;
+            if(maxMs == 0) {
+                break;
+            }
         }
     }
 

@@ -67,8 +67,8 @@ public class RafTest {
 
         rafProvider.unbind(UnbindReasonEnum.SUSPEND);
 
-        AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
-        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND_WAIT);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND_WAIT, rafUser.getCurrentBindingState());
         AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
 
@@ -147,7 +147,7 @@ public class RafTest {
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 3);
+        AwaitUtil.awaitCondition(6000, () -> recorder.getPduReceived().size() == 3);
         assertEquals(3, recorder.getPduReceived().size());
 
         // Ask for parameter reporting cycle: expect positive return
@@ -165,7 +165,7 @@ public class RafTest {
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
-        rafUser.unbind(UnbindReasonEnum.SUSPEND);
+        rafUser.unbind(UnbindReasonEnum.END);
 
         AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
@@ -247,7 +247,7 @@ public class RafTest {
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 3);
+        AwaitUtil.awaitCondition(6000, () -> recorder.getPduReceived().size() == 3);
         assertEquals(3, recorder.getPduReceived().size());
 
         // Ask for parameter reporting cycle: expect positive return
@@ -265,7 +265,7 @@ public class RafTest {
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
-        rafUser.unbind(UnbindReasonEnum.SUSPEND);
+        rafUser.unbind(UnbindReasonEnum.END);
 
         AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
@@ -347,7 +347,7 @@ public class RafTest {
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 3);
+        AwaitUtil.awaitCondition(6000, () -> recorder.getPduReceived().size() == 3);
         assertEquals(3, recorder.getPduReceived().size());
 
         // Ask for parameter reporting cycle: expect positive return
@@ -365,7 +365,7 @@ public class RafTest {
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
-        rafUser.unbind(UnbindReasonEnum.SUSPEND);
+        rafUser.unbind(UnbindReasonEnum.END);
 
         AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
@@ -435,7 +435,7 @@ public class RafTest {
         assertEquals(new BerNull().toString(), ((SleAcknowledgement)recorder.getPduReceived().get(0)).getResult().getPositiveResult().toString());
 
         // Unbind
-        rafUser.unbind(UnbindReasonEnum.SUSPEND);
+        rafUser.unbind(UnbindReasonEnum.END);
 
         AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());

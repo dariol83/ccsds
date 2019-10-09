@@ -78,9 +78,8 @@ public class TmlChannel {
 	 * @param txBuffer the number of bytes to be set for the TCP transmission buffer
 	 * @param rxBuffer the number of bytes to be set for the TCP reception buffer
 	 * @return the TML channel, ready to be put in listen mode
-	 * @throws TmlChannelException in case of issues with the construction of the channel
 	 */
-	public static TmlChannel createServerTmlChannel(int port, ITmlChannelObserver observer, int txBuffer, int rxBuffer) throws TmlChannelException {
+	public static TmlChannel createServerTmlChannel(int port, ITmlChannelObserver observer, int txBuffer, int rxBuffer) {
 		return new TmlChannel(port, observer, txBuffer, rxBuffer);
 	}
 	
@@ -156,9 +155,8 @@ public class TmlChannel {
 	 * @param observer the callback interface
 	 * @param txBuffer the TCP transmission buffer in bytes (less or equal 0 means 'do not set')
 	 * @param rxBuffer the TCP reception buffer in bytes (less or equal 0 means 'do not set')
-	 * @throws TmlChannelException if the server socket cannot be bound to the specified port
 	 */
-	private TmlChannel(int port, ITmlChannelObserver observer, int txBuffer, int rxBuffer) throws TmlChannelException {
+	private TmlChannel(int port, ITmlChannelObserver observer, int txBuffer, int rxBuffer) {
 		if(observer == null) {
 			throw new NullPointerException("Channel observer cannot be null");
 		}
@@ -170,13 +168,6 @@ public class TmlChannel {
 		this.serverMode = true;
 		this.txBuffer = txBuffer;
 		this.rxBuffer = rxBuffer;
-		if(this.rxBuffer > 0) {
-			try {
-				this.serverSocket.setReceiveBufferSize(this.rxBuffer);
-			} catch (SocketException e) {
-				throw new TmlChannelException("Cannot set RX buffer size " + this.rxBuffer + " on server socket on port " + port, e);
-			}
-		}
 	}
 
 	/**
@@ -209,6 +200,13 @@ public class TmlChannel {
 				this.serverSocket = new ServerSocket(this.port);
 			} catch(IOException e) {
 				throw new TmlChannelException("Cannot create server socket on port " + port, e);
+			}
+			if(this.rxBuffer > 0) {
+				try {
+					this.serverSocket.setReceiveBufferSize(this.rxBuffer);
+				} catch (SocketException e) {
+					throw new TmlChannelException("Cannot set RX buffer size " + this.rxBuffer + " on server socket on port " + port, e);
+				}
 			}
 			// reset stats
 			this.statsCounter.reset();

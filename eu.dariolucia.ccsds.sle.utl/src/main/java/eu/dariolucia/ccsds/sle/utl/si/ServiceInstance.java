@@ -735,6 +735,8 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		boolean resultOk = encodeAndSend(UNBIND_INTERNAL_INVOKE_ID, pdu, UNBIND_NAME);
 
 		if (resultOk) {
+			// About to close the TML channel, do not be surprised
+			this.tmlChannel.aboutToDisconnect();
 			// If all fine, transition to new state: UNBIND_PENDING and notify PDU sent
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBIND_PENDING);
 			notifyPduSent(pdu, UNBIND_NAME, getLastPduSent());
@@ -993,15 +995,17 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
 		// All fine, check what to do with the bind
 		if (this.sendPositiveUnbindReturn) {
+			// Inform TML that this will be the last one, disconnection will follow soon
+			this.tmlChannel.aboutToDisconnect();
 			// Send response
 			resp.getResult().setPositive(new BerNull());
 			encodeAndSend(null, resp, UNBIND_RETURN_NAME);
 			// Update state
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBOUND);
-			// We do not remove the TML channel by calling disconnect, so that it is possible to rebind again, unless
-			// the UNBIND mentions END.
-			if(pdu.getUnbindReason().intValue() == UnbindReasonEnum.END.getCode()) {
-				disconnect(null);
+			// We disconnect and wait again for bind if the reason was SUSPEND
+			disconnect(null);
+			if(pdu.getUnbindReason().intValue() == UnbindReasonEnum.SUSPEND.getCode()) {
+				waitForBind(this.sendPositiveBindReturn, this.negativeBindReturnDiagnostics);
 			}
 		} else {
 			// Do nothing
@@ -1077,7 +1081,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		dispatchFromUser(this::doDispose);
 		this.dispatcher.shutdown();
 		try {
-			this.dispatcher.awaitTermination(1000L, TimeUnit.MILLISECONDS);
+			this.dispatcher.awaitTermination(5000L, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
 			LOG.log(Level.WARNING,getServiceInstanceIdentifier() + ": ", e);
 		}
@@ -1088,7 +1092,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		if(getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND) {
 			disconnect(null);
 		} else {
-			peerAbort(PeerAbortReasonEnum.OPERATIONAL_REQUIREMENTS);
+			doPeerAbort(PeerAbortReasonEnum.OPERATIONAL_REQUIREMENTS);
 		}
 	}
 

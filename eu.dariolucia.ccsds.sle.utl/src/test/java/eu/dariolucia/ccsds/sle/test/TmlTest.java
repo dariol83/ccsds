@@ -99,6 +99,8 @@ public class TmlTest {
         assertTrue(client.isRunning());
 
         // Disconnect the server
+        client.aboutToDisconnect();
         server.disconnect();
+        client.disconnect();
     }
 }
