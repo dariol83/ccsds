@@ -449,6 +449,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 			this.tmlChannel.connect();
 			LOG.log(Level.INFO, getServiceInstanceIdentifier() + ": Waiting for incoming connections");
 		} catch (TmlChannelException e) {
+			LOG.log(Level.SEVERE, getServiceInstanceIdentifier() + ": error when waiting for connection", e);
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBOUND);
 			disconnect("Cannot wait for connection", e, null);
 		}
@@ -1077,17 +1078,20 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		try {
 			this.dispatcher.awaitTermination(5000L, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException e) {
-			LOG.log(Level.WARNING,getServiceInstanceIdentifier() + ": ", e);
+			LOG.log(Level.WARNING,getServiceInstanceIdentifier() + ": problem while waiting for full disposal", e);
 		}
 	}
 
 	private void doDispose() {
-		// Disconnect if UNBOUND, PEER-ABORT if !UNBOUND
-		if(getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND) {
+		LOG.log(Level.INFO,getServiceInstanceIdentifier() + ": dispose requested");
+		// Disconnect if UNBOUND/UNBOUND_WAIT, PEER-ABORT if !UNBOUND/UNBOUND_WAIT
+		if(getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND ||
+				getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND_WAIT) {
 			disconnect(null);
 		} else {
 			doPeerAbort(PeerAbortReasonEnum.OPERATIONAL_REQUIREMENTS);
 		}
+		LOG.log(Level.INFO,getServiceInstanceIdentifier() + ": dispose completed");
 	}
 
 	protected void disconnect(String reason) {
@@ -1130,6 +1134,10 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	@Override
 	public void onChannelDisconnected(TmlChannel channel, TmlDisconnectionReasonEnum reason, PeerAbortReasonEnum peerAbortReason) {
 		dispatchFromUser(() -> {
+			if(channel != tmlChannel) {
+				// Old event, to be ignored
+				return;
+			}
 			clearError();
 
 			// If disconnection is expected, close the channel and cleanup.

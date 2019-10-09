@@ -286,11 +286,21 @@ public class TmlChannel {
 			// If server mode, wait for the connection (ref. CCSDS 913.1-B-2 3.3.4.2.1)
 			if(this.serverMode) {
 			    if(this.serverSocket == null) {
-			        throw new IllegalAccessError("Server socket cannot be null at this stage, software bug");
+			        // If we are at this stage, it means that the channel was closed even before this thread started, so bye.
+					if(LOG.isLoggable(Level.FINE)) {
+						LOG.log(Level.FINE, String.format("Server socket on channel %s closed immediately after the startup", toString()));
+					}
+					return;
                 }
 				boolean connectionOk = false;
 				try {
+					if(LOG.isLoggable(Level.FINEST)) {
+						LOG.log(Level.FINEST, String.format("Server socket on channel %s about to be on accept", toString()));
+					}
 					this.sock = this.serverSocket.accept();
+					if(LOG.isLoggable(Level.FINEST)) {
+						LOG.log(Level.FINEST, String.format("Server socket on channel %s exited from accept", toString()));
+					}
 					// Activate the reception of OOB inline (needed for peer abort detection)
 					this.sock.setOOBInline(true);
 					if(this.txBuffer > 0) {
@@ -724,9 +734,12 @@ public class TmlChannel {
 	 * This method disconnects the channel.
 	 */
 	public void disconnect() {
+		if(LOG.isLoggable(Level.FINEST)) {
+			LOG.log(Level.FINEST, String.format("Socket on channel %s received a disconnect request", toString()));
+		}
 		this.lock.lock();
 		try {
-			if (this.sock == null) {
+			if (this.sock == null && this.serverSocket == null) {
 				if(LOG.isLoggable(Level.INFO)) {
 					LOG.info(String.format("Disconnecting channel %s but it is already disconnected", toString()));
 				}
@@ -763,7 +776,13 @@ public class TmlChannel {
 				this.txStream.close();
 			}
 			if(this.serverSocket != null) { // Server mode
+				if(LOG.isLoggable(Level.FINEST)) {
+					LOG.log(Level.FINEST, String.format("Server socket on channel %s about to be closed", toString()));
+				}
 				this.serverSocket.close();
+				if(LOG.isLoggable(Level.FINEST)) {
+					LOG.log(Level.FINEST, String.format("Server socket on channel %s closed", toString()));
+				}
 			}
 			this.serverSocket = null;
 		} catch (IOException e) {

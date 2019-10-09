@@ -67,11 +67,13 @@ public class RafTest {
 
         rafProvider.unbind(UnbindReasonEnum.SUSPEND);
 
+        System.out.println("Check UNBOUND WAIT on user");
         AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND_WAIT);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND_WAIT, rafUser.getCurrentBindingState());
+        System.out.println("Check UNBOUND on provider");
         AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
-
+        System.out.println("Disposing...");
         rafUser.dispose();
         rafProvider.dispose();
     }
