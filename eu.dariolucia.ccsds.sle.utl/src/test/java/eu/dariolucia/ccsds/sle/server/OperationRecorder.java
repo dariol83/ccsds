@@ -22,11 +22,12 @@ import eu.dariolucia.ccsds.sle.utl.si.ServiceInstanceState;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class OperationRecorder implements IServiceInstanceListener {
 
-    private List<Object> pduReceived = new LinkedList<>();
-    private List<Object> pduSent = new LinkedList<>();
+    private List<Object> pduReceived = new CopyOnWriteArrayList<>();
+    private List<Object> pduSent = new CopyOnWriteArrayList<>();
 
     @Override
     public void onStateUpdated(ServiceInstance si, ServiceInstanceState state) {

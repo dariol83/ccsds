@@ -101,9 +101,6 @@ public class RafServiceInstance extends ServiceInstance {
 		registerPduReceptionHandler(RafTransferBuffer.class, this::handleRafTransferBuffer);
 		registerPduReceptionHandler(RafGetParameterReturn.class, this::handleRafGetParameterReturn);
 		registerPduReceptionHandler(RafGetParameterReturnV1toV4.class, this::handleRafGetParameterV1toV4Return);
-
-		// Update status parameters from configuration
-		resetState();
 	}
 
 	/**

@@ -91,7 +91,7 @@ public class SleTcGenerator {
 
         // Create the CLTU SLE service instance
         this.cltuServiceInstance = new CltuServiceInstance(sleConfigurationFile.getPeerConfiguration(), cltuConfiguration);
-
+        this.cltuServiceInstance.configure();
         // Register the SLE callback to process the incoming data
         this.cltuServiceInstance.register(new IServiceInstanceListener() {
             @Override

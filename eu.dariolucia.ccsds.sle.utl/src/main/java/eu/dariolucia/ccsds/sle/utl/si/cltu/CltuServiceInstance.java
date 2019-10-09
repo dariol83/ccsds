@@ -123,9 +123,6 @@ public class CltuServiceInstance extends ServiceInstance {
 		registerPduReceptionHandler(CltuThrowEventReturn.class, this::handleCltuThrowEventReturn);
 		registerPduReceptionHandler(CltuTransferDataReturn.class, this::handleCltuTransferDataReturn);
 		registerPduReceptionHandler(CltuAsyncNotifyInvocation.class, this::handleCltuAsyncNotify);
-
-		// Update status parameters from configuration
-		resetState();
 	}
 
 	/**

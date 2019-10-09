@@ -100,9 +100,6 @@ public class RcfServiceInstance extends ServiceInstance {
 		registerPduReceptionHandler(RcfTransferBuffer.class, this::handleRcfTransferBuffer);
 		registerPduReceptionHandler(RcfGetParameterReturn.class, this::handleRcfGetParameterReturn);
 		registerPduReceptionHandler(RcfGetParameterReturnV1toV4.class, this::handleRcfGetParameterV1toV4Return);
-
-		// Update status parameters from configuration
-		resetState();
 	}
 
 	/**

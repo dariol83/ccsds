@@ -16,14 +16,9 @@
 
 package eu.dariolucia.ccsds.sle.server;
 
-import com.beanit.jasn1.ber.types.BerInteger;
-import com.beanit.jasn1.ber.types.BerNull;
-import com.beanit.jasn1.ber.types.BerType;
+import com.beanit.jasn1.ber.types.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.*;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Credentials;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.IntPosShort;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.IntUnsignedLong;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.ParameterName;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafGetParameterInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafStartInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.*;
@@ -31,13 +26,17 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structur
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
+import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafParameterEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafRequestedFrameQualityEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstanceState;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 
 /**
@@ -46,6 +45,21 @@ import java.util.logging.Logger;
 public class RafServiceInstanceProvider extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(RafServiceInstanceProvider.class.getName());
+
+	private static final String START_NAME = "START";
+	private static final String START_RETURN_NAME = "START-RETURN";
+	private static final String STOP_NAME = "STOP";
+	private static final String STOP_RETURN_NAME = "STOP-RETURN";
+	private static final String SCHEDULE_STATUS_REPORT_RETURN_NAME = "SCHEDULE-STATUS-REPORT-RETURN";
+	private static final String GET_PARAMETER_NAME = "GET-PARAMETER";
+	private static final String GET_PARAMETER_RETURN_NAME = "GET-PARAMETER-RETURN";
+	private static final String STATUS_REPORT_NAME = "STATUS-REPORT";
+	private static final String SCHEDULE_STATUS_REPORT_NAME = "SCHEDULE-STATUS-REPORT";
+	private static final String TRANSFER_BUFFER_NAME = "TRANSFER-BUFFER";
+
+	public static final int FRAME_QUALITY_GOOD = 0;
+	public static final int FRAME_QUALITY_ERRED = 1;
+	public static final int FRAME_QUALITY_UNDETERMINED = 2;
 
 	// Read from configuration, retrieved via GET_PARAMETER
 	private Integer latencyLimit; // NULL if offline, otherwise a value
@@ -56,10 +70,10 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 	private DeliveryModeEnum deliveryMode = null;
 
 	// Updated via START and GET_PARAMETER
-	private RafRequestedFrameQualityEnum requestedFrameQuality = null;
+	private volatile RafRequestedFrameQualityEnum requestedFrameQuality = null;
 	private Integer reportingCycle = null; // NULL if off, otherwise a value
-	private Date startTime = null;
-	private Date endTime = null;
+	private volatile Date startTime = null;
+	private volatile Date endTime = null;
 
 	// Requested via STATUS_REPORT, updated externally
 	private int errorFreeFrameNumber = 0;
@@ -76,6 +90,15 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 	// Status report scheduler
 	private volatile Timer reportingScheduler = null;
 
+	// Transfer buffer under construction
+	private final AtomicReference<RafTransferBuffer> bufferUnderConstruction = new AtomicReference<>();
+	private final AtomicBoolean bufferUnderTransmission = new AtomicBoolean(false);
+	private final AtomicBoolean bufferActive = new AtomicBoolean(false);
+
+	// Latency timer
+	private final Timer latencyTimer = new Timer();
+	private volatile TimerTask pendingLatencyTimeout = null;
+
 	public RafServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                       RafServiceInstanceConfiguration serviceInstanceConfiguration) {
 		super(apiConfiguration, serviceInstanceConfiguration);
@@ -88,9 +111,213 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 		registerPduReceptionHandler(SleStopInvocation.class, this::handleRafStopInvocation);
 		registerPduReceptionHandler(SleScheduleStatusReportInvocation.class, this::handleRafScheduleStatusReportInvocation);
 		registerPduReceptionHandler(RafGetParameterInvocation.class, this::handleRafGetParameterInvocation);
+	}
 
-		// Update status parameters from configuration
-		resetState();
+	public boolean transferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
+		// Here we check immediately if the buffer is full: if so, we send it
+		synchronized (this.bufferUnderConstruction) {
+			checkBuffer(false);
+			this.bufferUnderConstruction.notifyAll();
+		}
+		// If the state is not correct, say bye
+		if(!this.bufferActive.get()) {
+			return false;
+		}
+		// If quality is not matching, say bye
+		if(this.requestedFrameQuality != RafRequestedFrameQualityEnum.ALL_FRAMES) {
+			if (this.requestedFrameQuality == RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY && quality != FRAME_QUALITY_GOOD) {
+				return false;
+			}
+			if (this.requestedFrameQuality == RafRequestedFrameQualityEnum.BAD_FRAMES_ONLY && quality != FRAME_QUALITY_ERRED) {
+				return false;
+			}
+		}
+		// If ERT is not matching, say bye
+		if(this.startTime != null && earthReceiveTime.getEpochSecond() < this.startTime.getTime()/1000) {
+			return false;
+		}
+		if(this.endTime != null && earthReceiveTime.getEpochSecond() > this.endTime.getTime()/1000) {
+			return false;
+		}
+		// Add the PDU to the buffer, there must be free space by algorithm implementation
+		synchronized (this.bufferUnderConstruction) {
+			addTransferData(spaceDataUnit, quality, linkContinuity, earthReceiveTime, antennaId, globalAntennaId, privateAnnotations);
+			checkBuffer(false);
+			this.bufferUnderConstruction.notifyAll();
+			return true;
+		}
+	}
+
+	// Under sync on this.bufferUnderConstruction
+	private void checkBuffer(boolean forceSend) {
+		if(this.bufferUnderConstruction.get().getFrameOrNotification().isEmpty()) {
+			// No data, nothing to do
+			return;
+		}
+		if(this.bufferUnderConstruction.get().getFrameOrNotification().size() == this.transferBufferSize || forceSend) {
+			// Stop the latency timer
+			stopLatencyTimer();
+			// Try to send the buffer: replace the buffer with a new one
+			boolean discarded = trySendBuffer(this.bufferUnderConstruction.getAndSet(new RafTransferBuffer()));
+			// If discarded, add a sync notification about it
+			if(discarded) {
+				addDataDiscardedNotification();
+			}
+			// I do not call this recursively, we are under lock: if there transfer buffer is set with 1 item, anyway go out
+			// and at the next call, it will be sent ... or not
+
+			// Start the latency timer
+			startLatencyTimer();
+		}
+		this.bufferUnderConstruction.notifyAll();
+	}
+
+	private void startLatencyTimer() {
+		if(this.latencyLimit == null) {
+			return; // No timer
+		}
+		if(this.pendingLatencyTimeout != null) {
+			stopLatencyTimer();
+		}
+		this.pendingLatencyTimeout = new TimerTask() {
+			@Override
+			public void run() {
+				if(pendingLatencyTimeout == this) {
+					// Elapsed, send the buffer if needed
+					latencyElapsed();
+				}
+			}
+		};
+		this.latencyTimer.schedule(this.pendingLatencyTimeout, this.latencyLimit * 1000L);
+	}
+
+	private void latencyElapsed() {
+		// Add the PDU to the buffer, there must be free space by algorithm implementation
+		synchronized (this.bufferUnderConstruction) {
+			checkBuffer(true);
+
+		}
+	}
+
+	private void stopLatencyTimer() {
+		if(this.pendingLatencyTimeout != null) {
+			this.pendingLatencyTimeout.cancel();
+			this.pendingLatencyTimeout = null;
+		}
+	}
+
+	// Under sync on this.bufferUnderConstruction
+	private boolean trySendBuffer(RafTransferBuffer bufferToSend) {
+		// Here we check the delivery mode
+		if(getRafConfiguration().getDeliveryMode() == DeliveryModeEnum.TIMELY_ONLINE) {
+			// Timely mode: if there is a buffer in transmission, you have to discard the buffer
+			if(this.bufferUnderTransmission.get()) {
+				return true;
+			}
+		} else {
+			// Complete mode: wait
+			while(this.bufferActive.get() && this.bufferUnderTransmission.get()) {
+				try {
+					this.bufferUnderConstruction.wait();
+				} catch (InterruptedException e) {
+					// Buffer discarded
+					return true;
+				}
+			}
+		}
+		if(bufferActive.get()) {
+			// Set transmission flag
+			this.bufferUnderTransmission.set(true);
+			// Send the buffer
+			dispatchFromProvider(() -> doHandleRafTransferBufferInvocation(bufferToSend));
+			// Not discarded
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+	private void doHandleRafTransferBufferInvocation(RafTransferBuffer bufferToSend) {
+		clearError();
+
+		// Validate state
+		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
+			setError("Transfer buffer in transmission discarded, service instance is in state "
+					+ this.currentState);
+			notifyStateUpdate();
+			return;
+		}
+
+		boolean resultOk = encodeAndSend(null, bufferToSend, TRANSFER_BUFFER_NAME);
+
+		if (resultOk) {
+			// Clear buffer transmission flag
+			synchronized (this.bufferUnderConstruction) {
+				this.bufferUnderTransmission.set(false);
+				notifyAll();
+			}
+			// Notify PDU
+			notifyPduSent(bufferToSend, TRANSFER_BUFFER_NAME, getLastPduSent());
+			// Generate state and notify update
+			notifyStateUpdate();
+		}
+	}
+
+	// Under sync on this.bufferUnderConstruction
+	private void addDataDiscardedNotification() {
+		RafSyncNotifyInvocation in = new RafSyncNotifyInvocation();
+		in.setNotification(new Notification());
+		in.getNotification().setExcessiveDataBacklog(new BerNull());
+
+		// Add credentials
+		// From the API configuration (remote peers) and SI configuration (responder
+		// id), check remote peer and check if authentication must be used.
+		Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
+		in.setInvokerCredentials(creds);
+
+		RafTransferBuffer buffer = this.bufferUnderConstruction.get();
+		FrameOrNotification fon = new FrameOrNotification();
+		fon.setSyncNotification(in);
+		buffer.getFrameOrNotification().add(fon);
+	}
+
+	// Under sync on this.bufferUnderConstruction
+	private void addTransferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
+		RafTransferDataInvocation td = new RafTransferDataInvocation();
+		// Antenna ID
+		td.setAntennaId(new AntennaId());
+		if(globalAntennaId) {
+			td.getAntennaId().setGlobalForm(new BerObjectIdentifier(PduStringUtil.instance().fromOIDString(antennaId)));
+		} else {
+			td.getAntennaId().setLocalForm(new BerOctetString(PduStringUtil.instance().fromHexDump(antennaId)));
+		}
+		// Data
+		td.setData(new SpaceLinkDataUnit(spaceDataUnit));
+		// Time
+		td.setEarthReceiveTime(new Time());
+		td.getEarthReceiveTime().setCcsdsFormat(new TimeCCSDS(PduFactoryUtil.buildCDSTime(earthReceiveTime.getEpochSecond(), earthReceiveTime.getNano()/1000)));
+		// Private annotations
+		td.setPrivateAnnotation(new RafTransferDataInvocation.PrivateAnnotation());
+		if(privateAnnotations == null || privateAnnotations.length == 0) {
+			td.getPrivateAnnotation().setNull(new BerNull());
+		} else {
+			td.getPrivateAnnotation().setNotNull(new BerOctetString(privateAnnotations));
+		}
+		// Data link continuity
+		td.setDataLinkContinuity(new BerInteger(linkContinuity));
+		// Quality
+		td.setDeliveredFrameQuality(new FrameQuality(quality));
+
+		// Add credentials
+		// From the API configuration (remote peers) and SI configuration (responder
+		// id), check remote peer and check if authentication must be used.
+		Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
+		td.setInvokerCredentials(creds);
+
+		RafTransferBuffer buffer = this.bufferUnderConstruction.get();
+		FrameOrNotification fon = new FrameOrNotification();
+		fon.setAnnotatedFrame(td);
+		buffer.getFrameOrNotification().add(fon);
 	}
 
 	private void handleRafStartInvocation(RafStartInvocation invocation) {
@@ -117,7 +344,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(invocation.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Start invocation received, but wrong credentials");
-			notifyPduReceived(invocation, "START", getLastPduReceived());
+			notifyPduReceived(invocation, START_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -147,18 +374,27 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 		Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "START-RETURN", null);
+			notifyPduSentError(pdu, START_RETURN_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setPerformerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(null, pdu, "START-RETURN");
-
-		// TODO: activate capability to send frames and notifications
+		boolean resultOk = encodeAndSend(null, pdu, START_RETURN_NAME);
 
 		if (resultOk) {
+			// Activate capability to send frames and notifications
+			this.bufferActive.set(true);
+			this.bufferUnderTransmission.set(false);
+			synchronized (this.bufferUnderConstruction) {
+				this.bufferUnderConstruction.set(new RafTransferBuffer());
+				this.bufferUnderConstruction.notifyAll();
+			}
+
+			// Start the latency timer
+			startLatencyTimer();
+
 			// If all fine, transition to new state: ACTIVE and notify PDU sent
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
 			// Set the requested frame quality
@@ -167,7 +403,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 			this.startTime = PduFactoryUtil.toDate(invocation.getStartTime());
 			this.endTime = PduFactoryUtil.toDate(invocation.getStopTime());
 			// Notify PDU
-			notifyPduSent(pdu, "START-RETURN", getLastPduSent());
+			notifyPduSent(pdu, START_RETURN_NAME, getLastPduSent());
 			// Generate state and notify update
 			notifyStateUpdate();
 		}
@@ -197,7 +433,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(invocation.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Stop invocation received, but wrong credentials");
-			notifyPduReceived(invocation, "STOP", getLastPduReceived());
+			notifyPduReceived(invocation, STOP_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -213,20 +449,30 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 		Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "STOP-RETURN", null);
+			notifyPduSentError(pdu, STOP_RETURN_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setCredentials(creds);
 		}
 
-		// TODO: stop the ability to add transfer frames
-		// TODO: schedule this last part in the management thread
+		// Stop the ability to add transfer frames: pending buffers in the executor queue will still be processed
+		// and sent. As soon as the STOP-RETURN is sent, the state will go to READY and pending buffers will be discarded.
+		this.bufferActive.set(false);
 
 		dispatchFromProvider(() -> {
-			boolean resultOk = encodeAndSend(null, pdu, "STOP-RETURN");
+			boolean resultOk = encodeAndSend(null, pdu, STOP_RETURN_NAME);
 
 			if (resultOk) {
+				// Stop the latency timer
+				stopLatencyTimer();
+				// Schedule this last part in the management thread
+				this.bufferUnderTransmission.set(false);
+				synchronized (this.bufferUnderConstruction) {
+					this.bufferUnderConstruction.set(null);
+					this.bufferUnderConstruction.notifyAll();
+				}
+
 				// If all fine, transition to new state: READY and notify PDU sent
 				setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
 				// Set the requested frame quality
@@ -235,7 +481,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 				this.startTime = null;
 				this.endTime = null;
 				// Notify PDU
-				notifyPduSent(pdu, "STOP-RETURN", getLastPduSent());
+				notifyPduSent(pdu, STOP_RETURN_NAME, getLastPduSent());
 				// Generate state and notify update
 				notifyStateUpdate();
 			}
@@ -266,7 +512,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(invocation.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Schedule status report received, but wrong credentials");
-			notifyPduReceived(invocation, "SCHEDULE-STATUS-REPORT", getLastPduReceived());
+			notifyPduReceived(invocation, SCHEDULE_STATUS_REPORT_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -303,18 +549,18 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 		Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, "SCHEDULE-STATUS-REPORT-RETURN", null);
+			notifyPduSentError(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, null);
 			notifyStateUpdate();
 			return;
 		} else {
 			pdu.setPerformerCredentials(creds);
 		}
 
-		boolean resultOk = encodeAndSend(null, pdu, "SCHEDULE-STATUS-REPORT-RETURN");
+		boolean resultOk = encodeAndSend(null, pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME);
 
 		if (resultOk) {
 			// Notify PDU
-			notifyPduSent(pdu, "SCHEDULE-STATUS-REPORT-RETURN", getLastPduSent());
+			notifyPduSent(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduSent());
 			// Generate state and notify update
 			notifyStateUpdate();
 		}
@@ -363,7 +609,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 		// If so, verify credentials.
 		if(!authenticate(invocation.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Get parameter received, but wrong credentials");
-			notifyPduReceived(invocation, "GET-PARAMETER", getLastPduReceived());
+			notifyPduReceived(invocation, GET_PARAMETER_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -379,7 +625,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 			Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
 			if (creds == null) {
 				// Error while generating credentials, set by generateCredentials()
-				notifyPduSentError(pdu, "GET-PARAMETER-RETURN", null);
+				notifyPduSentError(pdu, GET_PARAMETER_RETURN_NAME, null);
 				notifyStateUpdate();
 				return;
 			} else {
@@ -438,7 +684,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 			Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
 			if (creds == null) {
 				// Error while generating credentials, set by generateCredentials()
-				notifyPduSentError(pdu, "GET-PARAMETER-RETURN", null);
+				notifyPduSentError(pdu, GET_PARAMETER_RETURN_NAME, null);
 				notifyStateUpdate();
 				return;
 			} else {
@@ -504,11 +750,11 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 			toSend = pdu;
 		}
 
-		boolean resultOk = encodeAndSend(null, toSend, "GET-PARAMETER-RETURN");
+		boolean resultOk = encodeAndSend(null, toSend, GET_PARAMETER_RETURN_NAME);
 
 		if (resultOk) {
 			// Notify PDU
-			notifyPduSent(toSend, "GET-PARAMETER-RETURN", getLastPduSent());
+			notifyPduSent(toSend, GET_PARAMETER_RETURN_NAME, getLastPduSent());
 			// Generate state and notify update
 			notifyStateUpdate();
 		}
@@ -524,7 +770,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 			Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
 			if (creds == null) {
 				// Error while generating credentials, set by generateCredentials()
-				notifyPduSentError(pdu, "STATUS-REPORT", null);
+				notifyPduSentError(pdu, STATUS_REPORT_NAME, null);
 				notifyStateUpdate();
 				return;
 			} else {
@@ -539,11 +785,11 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 			pdu.setSubcarrierLockStatus(new LockStatus(this.subcarrierLockStatus.ordinal()));
 			pdu.setSymbolSyncLockStatus(new LockStatus(this.symbolSyncLockStatus.ordinal()));
 
-			boolean resultOk = encodeAndSend(null, pdu, "STATUS-REPORT");
+			boolean resultOk = encodeAndSend(null, pdu, STATUS_REPORT_NAME);
 
 			if (resultOk) {
 				// Notify PDU
-				notifyPduSent(pdu, "STATUS-REPORT", getLastPduSent());
+				notifyPduSent(pdu, STATUS_REPORT_NAME, getLastPduSent());
 				// Generate state and notify update
 				notifyStateUpdate();
 			}
@@ -553,7 +799,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 			Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
 			if (creds == null) {
 				// Error while generating credentials, set by generateCredentials()
-				notifyPduSentError(pdu, "STATUS-REPORT", null);
+				notifyPduSentError(pdu, STATUS_REPORT_NAME, null);
 				notifyStateUpdate();
 				return;
 			} else {
@@ -568,11 +814,11 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 			pdu.setSubcarrierLockStatus(new LockStatus(this.subcarrierLockStatus.ordinal()));
 			pdu.setSymbolSyncLockStatus(new SymbolLockStatus(this.symbolSyncLockStatus.ordinal()));
 
-			boolean resultOk = encodeAndSend(null, pdu, "STATUS-REPORT");
+			boolean resultOk = encodeAndSend(null, pdu, STATUS_REPORT_NAME);
 
 			if (resultOk) {
 				// Notify PDU
-				notifyPduSent(pdu, "STATUS-REPORT", getLastPduSent());
+				notifyPduSent(pdu, STATUS_REPORT_NAME, getLastPduSent());
 				// Generate state and notify update
 				notifyStateUpdate();
 			}
@@ -625,6 +871,14 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
 	@Override
 	protected void resetState() {
+		stopLatencyTimer();
+
+		this.bufferActive.set(false);
+		this.bufferUnderTransmission.set(false);
+		synchronized (this.bufferUnderConstruction) {
+			this.bufferUnderConstruction.set(null);
+			this.bufferUnderConstruction.notifyAll();
+		}
 		// Read from configuration, updated via GET_PARAMETER
 		this.latencyLimit = getRafConfiguration().getLatencyLimit();
 		this.permittedFrameQuality = getRafConfiguration().getPermittedFrameQuality();

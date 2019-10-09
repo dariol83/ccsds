@@ -37,6 +37,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * This class is meant to collect printer functions for all the SLE PDUs.
@@ -51,6 +52,8 @@ public class PduStringUtil {
 	}
 
 	private final Map<Class<?>, Function<Object, String>> stringRenderer;
+
+	private final Pattern oidPatternSplitter = Pattern.compile("\\.");
 
 	private PduStringUtil() {
 		this.stringRenderer = new HashMap<>();
@@ -184,4 +187,28 @@ public class PduStringUtil {
 		return DatatypeConverter.parseHexBinary(dump);
 	}
 
+	public String toOIDString(int[] oid) {
+		if(oid == null || oid.length == 0) {
+			return "";
+		}
+		StringBuilder sb = new StringBuilder();
+		for(int i : oid) {
+			sb.append(i).append('.');
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		return sb.toString();
+	}
+
+	public int[] fromOIDString(String oid) {
+		if(oid == null || oid.isBlank()) {
+			return new int[0];
+		} else {
+			String[] splt = oidPatternSplitter.split(oid, -1);
+			int[] toReturn = new int[splt.length];
+			for(int i = 0; i < splt.length; ++i) {
+				toReturn[i] = Integer.parseInt(splt[i]);
+			}
+			return toReturn;
+		}
+	}
 }

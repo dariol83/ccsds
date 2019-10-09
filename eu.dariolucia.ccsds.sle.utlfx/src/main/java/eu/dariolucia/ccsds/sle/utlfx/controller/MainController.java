@@ -341,6 +341,7 @@ public class MainController implements Initializable, IServiceInstanceListener {
 		RcfServiceInstance si;
 		try {
 			si = new RcfServiceInstance(conf, sic);
+			si.configure();
 		} catch (Exception e1) {
 			LOG.log(Level.SEVERE, "Cannot create RCF service instance " + sic.getServiceInstanceIdentifier()
 					+ " from the selected SLE API configuration and Service Instance configuration", e1);
@@ -356,6 +357,7 @@ public class MainController implements Initializable, IServiceInstanceListener {
 		RafServiceInstance si;
 		try {
 			si = new RafServiceInstance(conf, sic);
+			si.configure();
 		} catch (Exception e1) {
 			LOG.log(Level.SEVERE, "Cannot create RAF service instance " + sic.getServiceInstanceIdentifier()
 					+ " from the selected SLE API configuration and Service Instance configuration", e1);
@@ -371,6 +373,7 @@ public class MainController implements Initializable, IServiceInstanceListener {
 		RocfServiceInstance si;
 		try {
 			si = new RocfServiceInstance(conf, sic);
+			si.configure();
 		} catch (Exception e1) {
 			LOG.log(Level.SEVERE, "Cannot create ROCF service instance " + sic.getServiceInstanceIdentifier()
 					+ " from the selected SLE API configuration and Service Instance configuration", e1);
@@ -386,6 +389,7 @@ public class MainController implements Initializable, IServiceInstanceListener {
 		CltuServiceInstance si;
 		try {
 			si = new CltuServiceInstance(conf, sic);
+			si.configure();
 		} catch (Exception e1) {
 			LOG.log(Level.SEVERE, "Cannot create CLTU service instance " + sic.getServiceInstanceIdentifier()
 					+ " from the selected SLE API configuration and Service Instance configuration", e1);

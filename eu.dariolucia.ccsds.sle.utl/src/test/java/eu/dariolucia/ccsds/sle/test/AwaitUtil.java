@@ -22,7 +22,7 @@ public class AwaitUtil {
 
     public static void awaitCondition(int maxMs, Supplier<Boolean> conditionChecker) throws InterruptedException {
         while(!conditionChecker.get()) {
-            int minWait = Math.min(maxMs, 1000);
+            int minWait = Math.min(maxMs, 100);
             Thread.sleep(minWait);
             maxMs -= minWait;
         }

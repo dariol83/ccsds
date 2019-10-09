@@ -120,6 +120,7 @@ public class SleTmProcessor {
 
         // Create the RAF SLE service instance
         RafServiceInstance rafSi = new RafServiceInstance(sleConfigurationFile.getPeerConfiguration(), rafConfiguration);
+        rafSi.configure();
 
         // Prepare the virtual channel objects (from 0 to 7)
         TmReceiverVirtualChannel[] virtualChannels = new TmReceiverVirtualChannel[8];

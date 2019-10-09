@@ -66,12 +66,12 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	private static final int SI_INIT_MODE_UIB = 1;
 	private static final int SI_INIT_MODE_PIB = 2;
 
+	private static final Logger LOG = Logger.getLogger(ServiceInstance.class.getName());
+
 	private static final String BIND_RETURN_NAME = "BIND-RETURN";
 	private static final String UNBIND_NAME = "UNBIND";
 	private static final String BIND_NAME = "BIND";
-
-	private static final Logger LOG = Logger.getLogger(ServiceInstance.class.getName());
-	public static final String UNBIND_RETURN_NAME = "UNBIND-RETURN";
+    private static final String UNBIND_RETURN_NAME = "UNBIND-RETURN";
 
 	private final ExecutorService dispatcher;
 	private final ExecutorService notifier;
@@ -118,6 +118,8 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	private boolean sendPositiveUnbindReturn = true;
 	private BindDiagnosticsEnum negativeBindReturnDiagnostics = BindDiagnosticsEnum.OTHER_REASON;
 
+	private boolean configured = false;
+
 	protected ServiceInstance(PeerConfiguration peerConfiguration,
                               ServiceInstanceConfiguration serviceInstanceConfiguration) {
 		this.peerConfiguration = peerConfiguration;
@@ -144,7 +146,8 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		registerPduReceptionHandler(SleUnbindInvocation.class, this::handleSleUnbindInvocation);
 		registerPduReceptionHandler(SleBindReturn.class, this::handleSleBindReturn);
 		registerPduReceptionHandler(SleUnbindReturn.class, this::handleSleUnbindReturn);
-		dispatchFromUser(this::setup);
+		// Custom setup
+		setup();
 	}
 
 	protected final <T> void registerPduReceptionHandler(Class<T> clazz, Consumer<T> handler) {
@@ -206,11 +209,17 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	}
 
 	protected final void dispatchFromUser(Runnable r) {
+		if(!this.configured) {
+			throw new IllegalStateException("Service instance not configured: call configure() before invoking any method");
+		}
 		SleTask t = new SleTask(SleTask.FROM_USER_TYPE, r);
 		this.dispatcher.execute(t);
 	}
 
 	protected final void dispatchFromProvider(Runnable r) {
+		if(!this.configured) {
+			throw new IllegalStateException("Service instance not configured: call configure() before invoking any method");
+		}
 		SleTask t = new SleTask(SleTask.FROM_PROVIDER_TYPE, r);
 		this.dispatcher.execute(t);
 	}
@@ -1060,8 +1069,18 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 		notifyStateUpdate();
 	}
 
+	/**
+	 * This method disconnects or abort the TML channel, frees up the resources and shutdowns the internal dispatcher
+	 * thread, hence making this instance not usable anymore.
+	 */
 	public void dispose() {
 		dispatchFromUser(this::doDispose);
+		this.dispatcher.shutdown();
+		try {
+			this.dispatcher.awaitTermination(1000L, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+			LOG.log(Level.WARNING,getServiceInstanceIdentifier() + ": ", e);
+		}
 	}
 
 	private void doDispose() {
@@ -1270,6 +1289,17 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 	 */
 	public ServiceInstanceBindingStateEnum getCurrentBindingState() {
 		return this.currentState;
+	}
+
+	/**
+	 * Configure this service instance to accept operations.
+	 */
+	public void configure() {
+		if(this.configured) {
+			throw new IllegalStateException("Service instance already configured");
+		}
+		this.configured = true;
+		resetState();
 	}
 
 	protected abstract void setup();
