@@ -482,12 +482,8 @@ public class TmlChannel {
 		}
 		this.lock.lock();
 		try {
-			// stop HBT timers, if needed
-			stopHbtTimers();
-			// disconnect from endpoint
-			disconnectEndpoint(reason, null);
-			// cleanup
-			cleanup();
+			// stop the channel
+			performChannelStop(reason, null);
 			// return
 			if(LOG.isLoggable(Level.FINE)) {
 				LOG.fine(String.format("Channel disconnected: %s via protocolErrorDetected()", toString()));
@@ -531,14 +527,8 @@ public class TmlChannel {
 		}
 		this.lock.lock();
 		try {
-			// stop read thread
-			stopReadingThread();
-			// stop HBT timers, if needed
-			stopHbtTimers();
-			// disconnect from endpoint
-			disconnectEndpoint(TmlDisconnectionReasonEnum.RX_HBT_EXPIRED, null);
-			// cleanup
-			cleanup();
+			// stop the channel
+			performChannelStop(TmlDisconnectionReasonEnum.RX_HBT_EXPIRED, null);
 			// return
 			if(LOG.isLoggable(Level.FINE)) {
 				LOG.fine(String.format("Channel disconnected: %s via hbtRxTimerExpired()", toString()));
@@ -580,14 +570,8 @@ public class TmlChannel {
 		LOG.log(Level.SEVERE, String.format("Remote peer abort detected on channel %s, code %s", toString(), PeerAbortReasonEnum.fromCode(code)), e);
 		this.lock.lock();
 		try {
-			// stop read thread
-			stopReadingThread();
-			// stop HBT timers, if needed
-			stopHbtTimers();
-			// disconnect from endpoint
-			disconnectEndpoint(TmlDisconnectionReasonEnum.REMOTE_PEER_ABORT, PeerAbortReasonEnum.fromCode(code));
-			// cleanup
-			cleanup();
+			// stop the channel
+			performChannelStop(TmlDisconnectionReasonEnum.REMOTE_PEER_ABORT, PeerAbortReasonEnum.fromCode(code));
 			// return
 			if(LOG.isLoggable(Level.FINE)) {
 				LOG.fine(String.format("Channel disconnected: %s via remotePeerAbortDetected()", toString()));
@@ -601,14 +585,8 @@ public class TmlChannel {
 		LOG.log(Level.SEVERE, String.format("Remote disconnection detected on channel %s", toString()), e);
 		this.lock.lock();
 		try {
-			// stop read thread
-			stopReadingThread();
-			// stop HBT timers, if needed
-			stopHbtTimers();
-			// disconnect from endpoint
-			disconnectEndpoint(TmlDisconnectionReasonEnum.REMOTE_DISCONNECT, null);
-			// cleanup
-			cleanup();
+			// stop the channel
+			performChannelStop(TmlDisconnectionReasonEnum.REMOTE_DISCONNECT, null);
 			// return
 			if(LOG.isLoggable(Level.FINE)) {
 				LOG.fine(String.format("Channel disconnected: %s via remoteDisconnectionDetected()", toString()));
@@ -616,6 +594,17 @@ public class TmlChannel {
 		} finally {
 			this.lock.unlock();
 		}
+	}
+
+	private void performChannelStop(TmlDisconnectionReasonEnum disconnectionReason, PeerAbortReasonEnum peerAbortReason) {
+		// stop read thread
+		stopReadingThread();
+		// stop HBT timers, if needed
+		stopHbtTimers();
+		// disconnect from endpoint
+		disconnectEndpoint(disconnectionReason, peerAbortReason);
+		// cleanup
+		cleanup();
 	}
 
 	private InputStream getRxStream() {
@@ -667,14 +656,8 @@ public class TmlChannel {
 			LOG.log(Level.SEVERE, String.format("Exception while sending HBT on channel %s", toString()), e);
 			this.lock.lock();
 			try {
-				// stop read thread
-				stopReadingThread();
-				// stop HBT timers, if needed
-				stopHbtTimers();
-				// disconnect from endpoint
-				disconnectEndpoint(TmlDisconnectionReasonEnum.HBT_TX_SEND_ERROR, null);
-				// cleanup
-				cleanup();
+				// stop the channel
+				performChannelStop(TmlDisconnectionReasonEnum.HBT_TX_SEND_ERROR, null);
 				// return
 				if(LOG.isLoggable(Level.FINE)) {
 					LOG.fine(String.format("Channel disconnected: %s via sendHbtMessage()", toString()));
@@ -713,14 +696,8 @@ public class TmlChannel {
 			} catch (IOException e) {
 				LOG.log(Level.WARNING, String.format("Exception while aborting channel %s with reason %s", toString(), PeerAbortReasonEnum.fromCode(reason)), e);
 			}
-			// stop read thread
-			stopReadingThread();
-			// stop HBT timers, if needed
-			stopHbtTimers();
-			// disconnect from endpoint
-			disconnectEndpoint(TmlDisconnectionReasonEnum.PEER_ABORT, PeerAbortReasonEnum.fromCode(reason));
-			// cleanup
-			cleanup();
+			// stop the channel
+			performChannelStop(TmlDisconnectionReasonEnum.PEER_ABORT, PeerAbortReasonEnum.fromCode(reason));
 			// return
 			if(LOG.isLoggable(Level.FINE)) {
 				LOG.fine(String.format("Channel disconnected: %s via abort()", toString()));
@@ -731,7 +708,7 @@ public class TmlChannel {
 	}
 
 	/**
-	 * This method disconnects the channel.
+	 * This method disconnects the channel. If the channel is already disconnected, it does not do anything.
 	 */
 	public void disconnect() {
 		if(LOG.isLoggable(Level.FINEST)) {
@@ -740,19 +717,13 @@ public class TmlChannel {
 		this.lock.lock();
 		try {
 			if (this.sock == null && this.serverSocket == null) {
-				if(LOG.isLoggable(Level.INFO)) {
-					LOG.info(String.format("Disconnecting channel %s but it is already disconnected", toString()));
+				if(LOG.isLoggable(Level.FINE)) {
+					LOG.fine(String.format("Disconnecting channel %s but it is already disconnected", toString()));
 				}
 				return;
 			}
-			// stop read thread
-			stopReadingThread();
-			// stop HBT timers, if needed
-			stopHbtTimers();
-			// disconnect from endpoint
-			disconnectEndpoint(TmlDisconnectionReasonEnum.LOCAL_DISCONNECT, null);
-			// cleanup
-			cleanup();
+			// stop the channel
+			performChannelStop(TmlDisconnectionReasonEnum.LOCAL_DISCONNECT, null);
 			// return
 			if(LOG.isLoggable(Level.FINE)) {
 				LOG.fine(String.format("Channel disconnected: %s via disconnect()", toString()));
@@ -763,6 +734,12 @@ public class TmlChannel {
 	}
 
 	private void disconnectEndpoint(TmlDisconnectionReasonEnum reason, PeerAbortReasonEnum peerAbortReason) {
+		// Remember if the channel was already disconnected: a TML channel client is already disconnected if this.sock
+		// is null; in addition, a TML channel server is already disconnected if this.serverSocket is closed or null.
+		boolean wasAlreadyDisconnected = this.sock == null;
+		if(this.serverMode) {
+			wasAlreadyDisconnected &= this.serverSocket == null || this.serverSocket.isClosed();
+		}
 		// Close the thread
 		try {
 			this.aboutToDisconnect = true;
@@ -788,10 +765,13 @@ public class TmlChannel {
 		} catch (IOException e) {
 			LOG.log(Level.FINE, String.format("Socket/stream on channel %s threw exception on close()", toString()), e);
 		}
-		try {
-			this.observer.onChannelDisconnected(this, reason, peerAbortReason);
-		} catch (Exception e) {
-			LOG.log(Level.WARNING, String.format("Notification of disconnection on channel %s threw exception on observer", toString()), e);
+		// Send the notification only if the channel has been disconnected now
+		if(!wasAlreadyDisconnected) {
+			try {
+				this.observer.onChannelDisconnected(this, reason, peerAbortReason);
+			} catch (Exception e) {
+				LOG.log(Level.WARNING, String.format("Notification of disconnection on channel %s threw exception on observer", toString()), e);
+			}
 		}
 	}
 

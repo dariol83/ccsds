@@ -1095,7 +1095,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     }
 
     private void doDispose() {
-        LOG.log(Level.INFO, getServiceInstanceIdentifier() + ": Dispose requested");
+        if (LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, getServiceInstanceIdentifier() + ": Dispose requested");
+        }
         // Disconnect if UNBOUND/UNBOUND_WAIT, PEER-ABORT if !UNBOUND/UNBOUND_WAIT
         if (getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND ||
                 getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND_WAIT) {
@@ -1103,7 +1105,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         } else {
             doPeerAbort(PeerAbortReasonEnum.OPERATIONAL_REQUIREMENTS);
         }
-        LOG.log(Level.INFO, getServiceInstanceIdentifier() + ": Dispose completed");
+        if (LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, getServiceInstanceIdentifier() + ": Dispose completed");
+        }
     }
 
     protected void disconnect(String reason) {
@@ -1150,6 +1154,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         dispatchFromUser(() -> {
             if (channel != tmlChannel) {
                 // Old event, to be ignored
+                if (LOG.isLoggable(Level.FINER)) {
+                    LOG.log(Level.FINER, getServiceInstanceIdentifier() + ": Ignoring disconnection of TML channel " + channel + ", not current channel");
+                }
                 return;
             }
             clearError();
