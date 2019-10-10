@@ -21,14 +21,24 @@ import eu.dariolucia.ccsds.sle.utl.network.tml.TmlChannel;
 import eu.dariolucia.ccsds.sle.utl.network.tml.TmlChannelException;
 import eu.dariolucia.ccsds.sle.utl.network.tml.TmlDisconnectionReasonEnum;
 import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TmlTest {
+
+    @BeforeAll
+    static void setLogLevel() {
+        Logger.getLogger("eu.dariolucia").setLevel(Level.ALL);
+        Arrays.stream(Logger.getLogger("eu.dariolucia").getHandlers()).forEach(o -> o.setLevel(Level.ALL));
+    }
 
     @Test
     void testTmlHeartbeat() throws TmlChannelException, InterruptedException {

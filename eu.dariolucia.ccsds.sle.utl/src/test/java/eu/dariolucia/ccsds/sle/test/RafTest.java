@@ -26,21 +26,32 @@ import eu.dariolucia.ccsds.sle.server.OperationRecorder;
 import eu.dariolucia.ccsds.sle.server.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
 import eu.dariolucia.ccsds.sle.utl.si.ServiceInstanceBindingStateEnum;
 import eu.dariolucia.ccsds.sle.utl.si.UnbindReasonEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafParameterEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafRequestedFrameQualityEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstance;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RafTest {
+
+    @BeforeAll
+    static void setLogLevel() {
+        Logger.getLogger("eu.dariolucia").setLevel(Level.ALL);
+        Arrays.stream(Logger.getLogger("eu.dariolucia").getHandlers()).forEach(o -> o.setLevel(Level.ALL));
+    }
 
     @Test
     void testProviderBindUnbind() throws IOException, InterruptedException {
@@ -376,7 +387,7 @@ public class RafTest {
     }
 
     @Test
-    void testTransferData() throws IOException, InterruptedException {
+    void testTransferDataComplete() throws IOException, InterruptedException {
         // Provider
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
         UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
@@ -435,6 +446,78 @@ public class RafTest {
 
         // Unbind
         rafUser.unbind(UnbindReasonEnum.END);
+
+        AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
+
+        rafUser.dispose();
+        rafProvider.dispose();
+    }
+
+    @Test
+    void testTransferDataTimely() throws IOException, InterruptedException {
+        // Provider
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
+        UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(3); // RAF
+        RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
+        rafProvider.configure();
+        rafProvider.waitForBind(true, null);
+
+        // User
+        in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
+        UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(3); // RAF
+        RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
+        rafUser.configure();
+        rafUser.bind(2);
+
+        AwaitUtil.await(2000);
+
+        // Register listener
+        OperationRecorder recorder = new OperationRecorder();
+        rafUser.register(recorder);
+
+        // Start
+        recorder.getPduReceived().clear();
+        rafUser.start(new Date(1000000), new Date(System.currentTimeMillis() + 1000000000), RafRequestedFrameQualityEnum.ALL_FRAMES);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertEquals(new BerNull().toString(), ((RafStartReturn)recorder.getPduReceived().get(0)).getResult().getPositiveResult().toString());
+
+        // Send 500 transfer data, fast
+        recorder.getPduReceived().clear();
+        for(int i = 0; i < 500; ++i) {
+            rafProvider.transferData(new byte[300], 0, 0, Instant.now(), "AABBCCDD", false, new byte[10]);
+        }
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() > 100);
+        assertTrue(recorder.getPduReceived().size() <= 500);
+        assertTrue(recorder.getPduReceived().size() > 0);
+        // Wait the final delivery
+        AwaitUtil.await(3000);
+        // Send 5 transfer data now, fast, one bad, then wait for the buffer anyway (latency)
+        recorder.getPduReceived().clear();
+        for(int i = 0; i < 5; ++i) {
+            if(i == 0) {
+                rafProvider.transferData(new byte[300], 1, 0, Instant.now(), "AABBCCDD", false, new byte[10]);
+            } else {
+                rafProvider.transferData(new byte[300], 0, 0, Instant.now(), "AABBCCDD", false, new byte[10]);
+            }
+        }
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 5);
+        assertEquals(5, recorder.getPduReceived().size());
+
+        // Stop
+        recorder.getPduReceived().clear();
+        rafUser.stop();
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertEquals(new BerNull().toString(), ((SleAcknowledgement)recorder.getPduReceived().get(0)).getResult().getPositiveResult().toString());
+
+        // Unbind
+        rafUser.peerAbort(PeerAbortReasonEnum.OPERATIONAL_REQUIREMENTS);
 
         AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());

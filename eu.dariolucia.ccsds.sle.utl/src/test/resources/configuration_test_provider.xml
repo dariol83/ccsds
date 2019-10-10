@@ -95,6 +95,30 @@
             <requested-frame-quality>GOOD_FRAMES_ONLY</requested-frame-quality>
             <!-- start-time and end-time omitted: both null -->
         </raf>
+        <raf>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlt99</service-instance-id>
+            <service-version-number>2</service-version-number> <!-- optional -->
+            <initiator>PROVIDER</initiator><!-- workaround -->
+            <initiator-id>TEST-USER</initiator-id>
+            <responder-id>TEST-PROVIDER</responder-id>
+            <responder-port-id>TEST_TM_OLT</responder-port-id>
+            <return-timeout-period>120</return-timeout-period>
+            <!-- Everything below is optional -->
+            <reporting-cycle>30</reporting-cycle>
+
+            <delivery-mode>TIMELY_ONLINE</delivery-mode>
+            <latency-limit>3</latency-limit>
+            <transfer-buffer-size>10</transfer-buffer-size>
+            <minimum-reporting-cycle>0</minimum-reporting-cycle>
+            <permitted-frame-quality-set>
+                <quality>GOOD_FRAMES_ONLY</quality>
+                <quality>BAD_FRAMES_ONLY</quality>
+                <quality>ALL_FRAMES</quality>
+            </permitted-frame-quality-set>
+
+            <requested-frame-quality>GOOD_FRAMES_ONLY</requested-frame-quality>
+            <!-- start-time and end-time omitted: both null -->
+        </raf>
         <rcf>
             <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rcf=onlt00</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
