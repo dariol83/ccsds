@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.sle.test;
 
 import com.beanit.jasn1.ber.types.BerNull;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleBindReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleAcknowledgement;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafGetParameterReturn;
@@ -26,6 +27,7 @@ import eu.dariolucia.ccsds.sle.server.OperationRecorder;
 import eu.dariolucia.ccsds.sle.server.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.si.BindDiagnosticsEnum;
 import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
 import eu.dariolucia.ccsds.sle.utl.si.ServiceInstanceBindingStateEnum;
 import eu.dariolucia.ccsds.sle.utl.si.UnbindReasonEnum;
@@ -82,6 +84,43 @@ public class RafTest {
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND_WAIT, rafUser.getCurrentBindingState());
         AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
+        rafUser.dispose();
+        rafProvider.dispose();
+    }
+
+    @Test
+    void testNegativeBind() throws IOException, InterruptedException {
+        // Provider
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
+        UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(1); // RAF
+        RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
+        rafProvider.configure();
+        rafProvider.waitForBind(true, null);
+        rafProvider.setBindReturnBehaviour(false, BindDiagnosticsEnum.INCONSISTENT_SERVICE_TYPE);
+
+        // User
+        in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
+        UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(1); // RAF
+        RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
+        rafUser.configure();
+
+        // Register listener
+        OperationRecorder recorder = new OperationRecorder();
+        rafUser.register(recorder);
+
+        // Bind
+        rafUser.bind(2);
+        AwaitUtil.await(2000);
+        AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        assertEquals(1, recorder.getPduReceived().size());
+        assertTrue(recorder.getPduReceived().get(0) instanceof SleBindReturn);
+        assertEquals(BindDiagnosticsEnum.INCONSISTENT_SERVICE_TYPE.getCode(), ((SleBindReturn) recorder.getPduReceived().get(0)).getResult().getNegative().intValue());
+
+        rafUser.deregister(recorder);
+
         rafUser.dispose();
         rafProvider.dispose();
     }
@@ -287,9 +326,9 @@ public class RafTest {
     }
 
     @Test
-    void testStatusReportGetParameterV5() throws IOException, InterruptedException {
+    void testStatusReportGetParameterWithAuthorizationV5() throws IOException, InterruptedException {
         // Provider
-        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider_auth.xml");
         UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
         RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(1); // RAF
         RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
@@ -297,7 +336,7 @@ public class RafTest {
         rafProvider.waitForBind(true, null);
 
         // User
-        in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
+        in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user_auth.xml");
         UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
         RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(1); // RAF
         RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
@@ -457,9 +496,9 @@ public class RafTest {
     }
 
     @Test
-    void testTransferDataTimely() throws IOException, InterruptedException {
+    void testTransferDataTimelyWithAuthorization() throws IOException, InterruptedException {
         // Provider
-        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider_auth.xml");
         UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
         RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(3); // RAF
         RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
@@ -467,7 +506,7 @@ public class RafTest {
         rafProvider.waitForBind(true, null);
 
         // User
-        in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
+        in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user_auth.xml");
         UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
         RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(3); // RAF
         RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);

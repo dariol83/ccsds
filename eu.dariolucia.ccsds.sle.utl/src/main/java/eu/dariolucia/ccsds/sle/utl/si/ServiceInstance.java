@@ -175,10 +175,6 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         this.lastErrorException = e;
     }
 
-    protected final void setError(Exception e) {
-        setError(e.getMessage(), e);
-    }
-
     protected final void setError(String message) {
         setError(message, null);
     }
@@ -327,11 +323,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
      * @param l the listener to be registered
      */
     public final void register(final IServiceInstanceListener l) {
-        try {
-            dispatchFromUser(() -> doRegister(l));
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, getServiceInstanceIdentifier() + ": Listener cannot be registered: " + l, e);
-        }
+        dispatchFromUser(() -> doRegister(l));
     }
 
     private void doRegister(final IServiceInstanceListener l) {
@@ -346,11 +338,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
      * @param l the listener to be deregistered
      */
     public final void deregister(final IServiceInstanceListener l) {
-        try {
-            dispatchFromUser(() -> doDeregister(l));
-        } catch (Exception e) {
-            LOG.log(Level.SEVERE, getServiceInstanceIdentifier() + ": Listener cannot deregistered: " + l, e);
-        }
+        dispatchFromUser(() -> doDeregister(l));
     }
 
     private void doDeregister(IServiceInstanceListener l) {

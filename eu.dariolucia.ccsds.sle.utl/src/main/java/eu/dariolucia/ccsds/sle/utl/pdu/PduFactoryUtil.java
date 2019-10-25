@@ -36,7 +36,6 @@ import eu.dariolucia.ccsds.sle.utl.si.HashFunctionEnum;
 
 import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -174,35 +173,22 @@ public class PduFactoryUtil {
             // No support for microsecond resolution
             byte[] buffer = hashCredentialsData(time, 0, randomNumber, username, password);
             // The next variable is what the standard calls 'the protected'
-            byte[] hashSignature;
-            // Compute the hash signature of the credentials data, ref. CCSDS 913.1-B-2 3.1.2.1.3
-            try {
-                MessageDigest md = MessageDigest.getInstance(hashToUse.getHashFunction());
-                md.reset();
-                md.update(buffer);
-                hashSignature = md.digest();
-            } catch (NoSuchAlgorithmException e) {
-                throw new IllegalStateException("Hash function not defined: " + hashToUse.getHashFunction(), e);
-            }
-
+            byte[] hashSignature = calculateTheProtected(hashToUse, buffer);
             // Build the ISP1 Credentials object
             ISP1Credentials isp1Credentials = new ISP1Credentials();
-
             // Set the time: CDS with implicit P-Field, epoch 1st Jan 1958, microseconds resolution
             // (ref. CCSDS 913.1-B-2)
             isp1Credentials.setTime(new BerOctetString(buildCDSTime(time, 0)));
-
             // Set the protected credentials data (hashed)
             isp1Credentials.setTheProtected(new BerOctetString(hashSignature));
-
             // Set the random number
             isp1Credentials.setRandomNumber(new BerInteger(randomNumber));
-
             // Encode
-            ByteArrayOutputStream encoding = new ByteArrayOutputStream();
+            ReverseByteArrayOutputStream encoding = new ReverseByteArrayOutputStream(140, true);
             try {
                 isp1Credentials.encode(encoding, true);
-                byte[] encoded = encoding.toByteArray();
+                encoding.close();
+                byte[] encoded = encoding.getArray();
                 c.setUsed(new BerOctetString(encoded));
             } catch (IOException e) {
                 throw new IllegalStateException("Credential encoding failed", e);
@@ -211,6 +197,19 @@ public class PduFactoryUtil {
             c.setUnused(new BerNull());
         }
         return c;
+    }
+
+    private static byte[] calculateTheProtected(HashFunctionEnum hashToUse, byte[] buffer) {
+        byte[] hashSignature;// Compute the hash signature of the credentials data, ref. CCSDS 913.1-B-2 3.1.2.1.3
+        try {
+            MessageDigest md = MessageDigest.getInstance(hashToUse.getHashFunction());
+            md.reset();
+            md.update(buffer);
+            hashSignature = md.digest();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Hash function not defined: " + hashToUse.getHashFunction(), e);
+        }
+        return hashSignature;
     }
 
     /**
@@ -338,8 +337,10 @@ public class PduFactoryUtil {
         // Local hash using random number and time from the ISP1Credentials object, and locally stored user and pass
         byte[] localCredentialsData = hashCredentialsData(timeMillis[0], timeMillis[1],
                 isp1Credentials.getRandomNumber().longValue(), remotePeer.getId(), remotePeer.getPassword());
+        // Compute the hash signature
+        byte[] hashSignature = calculateTheProtected(remotePeer.getAuthenticationHash(), localCredentialsData);
         // Comparison
-        return Arrays.equals(localCredentialsData, isp1Credentials.getTheProtected().value);
+        return Arrays.equals(hashSignature, isp1Credentials.getTheProtected().value);
     }
 
     /**
