@@ -67,6 +67,7 @@ public class RafTest {
         RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(2); // RAF
         RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
         rafUser.configure();
+        rafUser.setUnbindReturnBehaviour(true);
         rafUser.waitForBind(true, null);
 
         // Provider
