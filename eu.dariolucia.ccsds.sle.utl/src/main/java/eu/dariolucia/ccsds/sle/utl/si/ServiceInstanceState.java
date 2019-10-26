@@ -110,4 +110,19 @@ public class ServiceInstanceState {
 		this.sleVersion = sleVersion;
 	}
 
+	@Override
+	public String toString() {
+		return "ServiceInstanceState{" +
+				"state=" + getState() +
+				", serviceInstanceIdentifier='" + getServiceInstanceIdentifier() + '\'' +
+				", initiatorIdentifier='" + getInitiatorIdentifier() + '\'' +
+				", responderIdentifier='" + getResponderIdentifier() + '\'' +
+				", responderPortIdentifier='" + getResponderPortIdentifier() + '\'' +
+				", sleVersion=" + getSleVersion() +
+				", returnTimeoutPeriod=" + getReturnTimeoutPeriod() +
+				", statusReportScheduled=" + isStatusReportScheduled() +
+				", lastError='" + getLastError() + '\'' +
+				", lastException=" + getLastException() +
+				'}';
+	}
 }

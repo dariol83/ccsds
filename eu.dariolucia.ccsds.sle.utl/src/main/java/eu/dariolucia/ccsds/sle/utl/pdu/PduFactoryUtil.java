@@ -293,6 +293,48 @@ public class PduFactoryUtil {
     }
 
     /**
+     * This method builds the CDS time representation according to the SLE standard:
+     * <ul>
+     * <li>P-field is implicit</li>
+     * <li>T-field:</li>
+     * <li>2 octets: number of days since 1958/01/01 00:00:00</li>
+     * <li>4 octets: number of milliseconds of the day</li>
+     * <li>4 octets: number of picoseconds of the millisecond (set to 0 if not used)</li>
+     * <li>This definition reflects exactly the format of the CCSDS defined time tag as used in spacelink data units.</li>
+     * </ul>
+     * Reference for implementation: CCSDS 301.0-B-4, section 3.3.
+     *
+     * @param timeMillisSinceEpoch time in millisecs since Java epoch
+     * @param picosecsInMillisec  picoseconds in the millisecond
+     * @return the CDS (8 bytes) representation of the provided time
+     */
+    public static byte[] buildCDSTimePico(long timeMillisSinceEpoch, long picosecsInMillisec) {
+        // Guard condition to reject negative values
+        if (picosecsInMillisec < 0 || timeMillisSinceEpoch < 0) {
+            throw new IllegalArgumentException("Negative value provided: " + timeMillisSinceEpoch + ", " + picosecsInMillisec);
+        }
+        // Compute the number of seconds from Java epoch
+        long secs = timeMillisSinceEpoch / 1000;
+        // Compute the number of days from Java epoch and, to be compliant with the CCSDS epoch (1st Jan 1958)
+        // add DAYS_FROM_1958_to_1970 days. DAYS_FROM_1958_to_1970 is the difference from the two epochs dates
+        // (1st Jan 1970 - 1st Jan 1958)
+        long daysFromEpoch = secs / 86400 + DAYS_FROM_1958_TO_1970;
+        // Now compute the milliseconds within the day: number of seconds in the day (remainder) times 1000 plus the
+        // remainder of the milliseconds
+        long millisecsInDay = (secs % 86400) * 1000 + timeMillisSinceEpoch % 1000;
+        // if microseconds is not normalised (i.e. > 999) normalize it and add the result to the milliseconds
+        millisecsInDay += picosecsInMillisec / 1000000000;
+        // Compute the number of microseconds within the millisecond (normalized)
+        picosecsInMillisec %= 1000000000;
+        // Finally, encode the result using a ByteBuffer, MSB by default in Java, integers are truncated
+        ByteBuffer bb = ByteBuffer.allocate(10);
+        bb.putShort((short) daysFromEpoch);
+        bb.putInt((int) millisecsInDay);
+        bb.putInt((int) picosecsInMillisec);
+        return bb.array();
+    }
+
+    /**
      * This method performs the authentication on the basis of the received credentials from the expected user,
      * according to the specification detailed in CCSDS 913.1-B-2, 3.1.2.2.2-4.
      *

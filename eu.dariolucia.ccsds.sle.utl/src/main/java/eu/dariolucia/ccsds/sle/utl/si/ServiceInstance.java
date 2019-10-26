@@ -1180,31 +1180,13 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                 // Generate state and notify update
                 notifyStateUpdate();
                 return;
-            } catch (RuntimeException e) {
-                LOG.log(Level.SEVERE, getServiceInstanceIdentifier() + ": internal exception raised on decoding pdu, " +
-                        "this is potentially a software bug or a severe protocol encoding/decoding error");
-                // Before the exception is swallowed, log...
-                disconnect("Internal exception while decoding PDU " + Arrays.toString(pdu) + " from channel " + channel, e,
-                        null);
-                //
-                notifyPduDecodingError(pdu);
-                // Generate state and notify update
-                notifyStateUpdate();
-                return;
             }
+            // At this stage, op cannot be null
 
-            if (op == null) {
-                disconnect("Decoded PDU is null: " + Arrays.toString(pdu) + " from channel " + channel);
-                //
-                notifyPduDecodingError(pdu);
-                // Generate state and notify update
-                notifyStateUpdate();
-                return;
-            }
             // Use a map <class 2 runnable> to process the PDU accordingly to its type. This
             // must be in this class, and handlers must be registered by children classes in the setup.
             @SuppressWarnings("unchecked")
-            Consumer<Object> c = (Consumer<Object>) getHandler(op.getClass());
+            Consumer<? super Object> c = (Consumer<Object>) getHandler(op.getClass());
             if (c != null) {
                 this.statsCounter.addIn(1);
                 this.lastPduReceived = pdu;

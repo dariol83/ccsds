@@ -32,27 +32,10 @@ public enum RafRequestedFrameQualityEnum {
     }
 
     public static RafRequestedFrameQualityEnum fromCode(int c) {
-        switch (c) {
-            case 0:
-                return RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY;
-            case 1:
-                return RafRequestedFrameQualityEnum.BAD_FRAMES_ONLY;
-            case 2:
-                return RafRequestedFrameQualityEnum.ALL_FRAMES;
-			default:
-				throw new IllegalArgumentException("Cannot recognize code for RAF RequestedFrameQuality: " + c);
-        }
-    }
-
-    public static RafRequestedFrameQualityEnum fromConfigurationString(String c) {
-        if (c.equals("goodFramesOnly")) {
-            return RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY;
-        }
-        if (c.equals("badFramesOnly")) {
-            return RafRequestedFrameQualityEnum.BAD_FRAMES_ONLY;
-        }
-        if (c.equals("allFrames")) {
-            return RafRequestedFrameQualityEnum.ALL_FRAMES;
+        for(RafRequestedFrameQualityEnum en : RafRequestedFrameQualityEnum.values()) {
+            if(en.getCode() == c) {
+                return en;
+            }
         }
         throw new IllegalArgumentException("Cannot recognize code for RAF RequestedFrameQuality: " + c);
     }

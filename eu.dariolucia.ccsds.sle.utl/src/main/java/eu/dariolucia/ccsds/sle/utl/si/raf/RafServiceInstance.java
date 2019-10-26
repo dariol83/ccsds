@@ -410,9 +410,7 @@ public class RafServiceInstance extends ServiceInstance {
 				this.permittedFrameQuality = new LinkedList<>();
 				for(RequestedFrameQuality rfq : pdu.getResult().getPositiveResult().getParPermittedFrameQuality().getParameterValue().getRequestedFrameQuality()) {
 					RafRequestedFrameQualityEnum reqs = RafRequestedFrameQualityEnum.fromCode(rfq.intValue());
-					if(reqs != null) {
-						this.permittedFrameQuality.add(reqs);
-					}
+					this.permittedFrameQuality.add(reqs);
 				}
 			} else {
 				LOG.warning(getServiceInstanceIdentifier() + ": Get parameter return received, positive result but unknown/unsupported parameter found");
@@ -684,6 +682,7 @@ public class RafServiceInstance extends ServiceInstance {
 							sn.getNotification().getLossFrameSync().getSubcarrierLockStatus().intValue());
 					this.symbolSyncLockStatus = mapSymbolSyncLockStatus(
 							sn.getNotification().getLossFrameSync().getSymbolSyncLockStatus().intValue());
+					this.frameSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
 					LOG.warning(getServiceInstanceIdentifier() + ": Loss frame synchronisation");
 				} else if (sn.getNotification().getProductionStatusChange() != null) {
 					this.productionStatus = mapProductionStatus(

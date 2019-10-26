@@ -16,21 +16,25 @@
 
 package eu.dariolucia.ccsds.sle.test;
 
+import com.beanit.jasn1.ber.types.BerInteger;
 import com.beanit.jasn1.ber.types.BerNull;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleBindReturn;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.DiagnosticScheduleStatusReport;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleAcknowledgement;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportReturn;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Diagnostics;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafGetParameterReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafGetParameterReturnV1toV4;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafStartReturn;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafSyncNotifyInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.DiagnosticRafGet;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.DiagnosticRafStart;
 import eu.dariolucia.ccsds.sle.server.OperationRecorder;
 import eu.dariolucia.ccsds.sle.server.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
-import eu.dariolucia.ccsds.sle.utl.si.BindDiagnosticsEnum;
-import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
-import eu.dariolucia.ccsds.sle.utl.si.ServiceInstanceBindingStateEnum;
-import eu.dariolucia.ccsds.sle.utl.si.UnbindReasonEnum;
+import eu.dariolucia.ccsds.sle.utl.si.*;
+import eu.dariolucia.ccsds.sle.utl.si.raf.RafDiagnosticsStrings;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafParameterEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafRequestedFrameQualityEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstance;
@@ -441,13 +445,16 @@ public class RafTest {
         RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(1); // RAF
         RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
         rafUser.configure();
-        rafUser.bind(2);
-
-        AwaitUtil.await(2000);
-
         // Register listener
         OperationRecorder recorder = new OperationRecorder();
         rafUser.register(recorder);
+
+        rafUser.bind(2);
+
+        // Check reported state
+        AwaitUtil.await(2000);
+        assertTrue(recorder.getStates().size() > 0);
+        assertEquals(ServiceInstanceBindingStateEnum.READY, recorder.getStates().get(recorder.getStates().size() - 1).getState());
 
         // Start
         recorder.getPduReceived().clear();
@@ -456,10 +463,17 @@ public class RafTest {
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(new BerNull().toString(), ((RafStartReturn)recorder.getPduReceived().get(0)).getResult().getPositiveResult().toString());
 
+        // Simulate lock and production status change
+        recorder.getPduReceived().clear();
+        rafProvider.updateProductionStatus(Instant.now(), LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, ProductionStatusEnum.RUNNING);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertEquals(ProductionStatusEnum.RUNNING.ordinal(), ((RafSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getProductionStatusChange().intValue());
+
         // Send 10 transfer data, fast
         recorder.getPduReceived().clear();
         for(int i = 0; i < 10; ++i) {
-            rafProvider.transferData(new byte[300], 0, 0, Instant.now(), "AABBCCDD", false, new byte[10]);
+            rafProvider.transferData(new byte[300], 0, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
         }
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 10);
         assertEquals(10, recorder.getPduReceived().size());
@@ -468,20 +482,48 @@ public class RafTest {
         recorder.getPduReceived().clear();
         for(int i = 0; i < 5; ++i) {
             if(i == 0) {
-                rafProvider.transferData(new byte[300], 1, 0, Instant.now(), "AABBCCDD", false, new byte[10]);
+                rafProvider.transferData(new byte[300], 1, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
             } else {
-                rafProvider.transferData(new byte[300], 0, 0, Instant.now(), "AABBCCDD", false, new byte[10]);
+                rafProvider.transferData(new byte[300], 0, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
             }
         }
         AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 4);
         assertEquals(4, recorder.getPduReceived().size());
+
+        assertTrue(recorder.getStates().size() > 0);
+        assertNotNull(recorder.getStates().get(0).toString());
+
+        // Get data rate
+        RateSample rs = rafUser.getCurrentRate();
+        assertTrue(rs.getByteSample().getInRate() > 0);
+        assertTrue(rs.getByteSample().getTotalInUnits() > 0);
+
+        assertEquals(0, rs.getPduSample().getInRate()); // Cannot be computed at first sampling
+        assertTrue(rs.getPduSample().getTotalInUnits() > 0);
+
+        assertNotNull(rs.getInstant());
+        assertNotNull(rs.toCompactByteRateString());
+
+        // Send end of data
+        recorder.getPduReceived().clear();
+        rafProvider.endOfData();
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertNotNull(((RafSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getEndOfData());
+
+        // Simulate unlock
+        recorder.getPduReceived().clear();
+        rafProvider.updateProductionStatus(Instant.now(), LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, ProductionStatusEnum.RUNNING);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertEquals(LockStatusEnum.OUT_OF_LOCK.ordinal(), ((RafSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getLossFrameSync().getSymbolSyncLockStatus().intValue());
 
         // Stop
         recorder.getPduReceived().clear();
         rafUser.stop();
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
-        assertEquals(new BerNull().toString(), ((SleAcknowledgement)recorder.getPduReceived().get(0)).getResult().getPositiveResult().toString());
+        assertNotNull(((SleAcknowledgement)recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
         rafUser.unbind(UnbindReasonEnum.END);
@@ -529,7 +571,7 @@ public class RafTest {
         // Send 500 transfer data, fast
         recorder.getPduReceived().clear();
         for(int i = 0; i < 500; ++i) {
-            rafProvider.transferData(new byte[300], 0, 0, Instant.now(), "AABBCCDD", false, new byte[10]);
+            rafProvider.transferData(new byte[300], 0, 0, Instant.now(), true,"AABBCCDD", false, new byte[10]);
         }
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() > 100);
         assertTrue(recorder.getPduReceived().size() <= 500);
@@ -540,9 +582,9 @@ public class RafTest {
         recorder.getPduReceived().clear();
         for(int i = 0; i < 5; ++i) {
             if(i == 0) {
-                rafProvider.transferData(new byte[300], 1, 0, Instant.now(), "AABBCCDD", false, new byte[10]);
+                rafProvider.transferData(new byte[300], 1, 0, Instant.now(), true, "AABBCCDD", false, new byte[10]);
             } else {
-                rafProvider.transferData(new byte[300], 0, 0, Instant.now(), "AABBCCDD", false, new byte[10]);
+                rafProvider.transferData(new byte[300], 0, 0, Instant.now(), true, "AABBCCDD", false, new byte[10]);
             }
         }
         // AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 5);
@@ -565,5 +607,78 @@ public class RafTest {
 
         rafUser.dispose();
         rafProvider.dispose();
+    }
+
+    @Test
+    void testEnumerations() {
+        try {
+            RafRequestedFrameQualityEnum.fromCode(123);
+            fail("Exception expected");
+        } catch(IllegalArgumentException e) {
+            // Good
+        }
+    }
+
+    @Test
+    void testStartDiagnosticsString() {
+        DiagnosticRafStart diagStart = new DiagnosticRafStart();
+        diagStart.setCommon(new Diagnostics(100));
+        assertTrue(RafDiagnosticsStrings.getStartDiagnostic(diagStart).endsWith("duplicateInvokeId"));
+        diagStart.setCommon(new Diagnostics(127));
+        assertTrue(RafDiagnosticsStrings.getStartDiagnostic(diagStart).endsWith("otherReason"));
+        diagStart.setCommon(new Diagnostics(101));
+        assertTrue(RafDiagnosticsStrings.getStartDiagnostic(diagStart).endsWith("<unknown value> 101"));
+
+        diagStart.setCommon(null);
+        diagStart.setSpecific(new BerInteger(0));
+        assertTrue(RafDiagnosticsStrings.getStartDiagnostic(diagStart).endsWith("outOfService"));
+        diagStart.setSpecific(new BerInteger(1));
+        assertTrue(RafDiagnosticsStrings.getStartDiagnostic(diagStart).endsWith("unableToComply"));
+        diagStart.setSpecific(new BerInteger(2));
+        assertTrue(RafDiagnosticsStrings.getStartDiagnostic(diagStart).endsWith("invalidStartTime"));
+        diagStart.setSpecific(new BerInteger(3));
+        assertTrue(RafDiagnosticsStrings.getStartDiagnostic(diagStart).endsWith("invalidStopTime"));
+        diagStart.setSpecific(new BerInteger(4));
+        assertTrue(RafDiagnosticsStrings.getStartDiagnostic(diagStart).endsWith("missingTimeValue"));
+        diagStart.setSpecific(new BerInteger(5));
+        assertTrue(RafDiagnosticsStrings.getStartDiagnostic(diagStart).endsWith("<unknown value> 5"));
+    }
+
+    @Test
+    void testGetParameterDiagnosticsString() {
+        DiagnosticRafGet diagGet = new DiagnosticRafGet();
+        diagGet.setCommon(new Diagnostics(100));
+        assertTrue(RafDiagnosticsStrings.getGetParameterDiagnostic(diagGet).endsWith("duplicateInvokeId"));
+        diagGet.setCommon(new Diagnostics(127));
+        assertTrue(RafDiagnosticsStrings.getGetParameterDiagnostic(diagGet).endsWith("otherReason"));
+        diagGet.setCommon(new Diagnostics(101));
+        assertTrue(RafDiagnosticsStrings.getGetParameterDiagnostic(diagGet).endsWith("<unknown value> 101"));
+
+        diagGet.setCommon(null);
+        diagGet.setSpecific(new BerInteger(0));
+        assertTrue(RafDiagnosticsStrings.getGetParameterDiagnostic(diagGet).endsWith("unknownParameter"));
+        diagGet.setSpecific(new BerInteger(5));
+        assertTrue(RafDiagnosticsStrings.getGetParameterDiagnostic(diagGet).endsWith("<unknown value> 5"));
+    }
+
+    @Test
+    void testScheduleStatusReportDiagnosticsString() {
+        DiagnosticScheduleStatusReport diagSched = new DiagnosticScheduleStatusReport();
+        diagSched.setCommon(new Diagnostics(100));
+        assertTrue(RafDiagnosticsStrings.getScheduleStatusReportDiagnostic(diagSched).endsWith("duplicateInvokeId"));
+        diagSched.setCommon(new Diagnostics(127));
+        assertTrue(RafDiagnosticsStrings.getScheduleStatusReportDiagnostic(diagSched).endsWith("otherReason"));
+        diagSched.setCommon(new Diagnostics(101));
+        assertTrue(RafDiagnosticsStrings.getScheduleStatusReportDiagnostic(diagSched).endsWith("<unknown value> 101"));
+
+        diagSched.setCommon(null);
+        diagSched.setSpecific(new BerInteger(0));
+        assertTrue(RafDiagnosticsStrings.getScheduleStatusReportDiagnostic(diagSched).endsWith("notSupportedInThisDeliveryMode"));
+        diagSched.setSpecific(new BerInteger(1));
+        assertTrue(RafDiagnosticsStrings.getScheduleStatusReportDiagnostic(diagSched).endsWith("alreadyStopped"));
+        diagSched.setSpecific(new BerInteger(2));
+        assertTrue(RafDiagnosticsStrings.getScheduleStatusReportDiagnostic(diagSched).endsWith("invalidReportingCycle"));
+        diagSched.setSpecific(new BerInteger(5));
+        assertTrue(RafDiagnosticsStrings.getScheduleStatusReportDiagnostic(diagSched).endsWith("<unknown value> 5"));
     }
 }

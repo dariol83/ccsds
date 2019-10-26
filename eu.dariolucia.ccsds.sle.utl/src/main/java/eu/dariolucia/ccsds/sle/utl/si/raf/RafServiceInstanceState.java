@@ -174,4 +174,25 @@ public class RafServiceInstanceState extends ServiceInstanceState {
 		this.endTime = endTime;
 	}
 
+	@Override
+	public String toString() {
+		return "RafServiceInstanceState{" +
+				"latencyLimit=" + getLatencyLimit() +
+				", permittedFrameQuality=" + getPermittedFrameQuality() +
+				", minReportingCycle=" + getMinReportingCycle() +
+				", reportingCycle=" + getReportingCycle() +
+				", transferBufferSize=" + getTransferBufferSize() +
+				", requestedFrameQuality=" + getRequestedFrameQuality() +
+				", deliveryMode=" + getDeliveryMode() +
+				", startTime=" + getStartTime() +
+				", endTime=" + getEndTime() +
+				", errorFreeFrameNumber=" + getErrorFreeFrameNumber() +
+				", deliveredFrameNumber=" + getDeliveredFrameNumber() +
+				", frameSyncLockStatus=" + getFrameSyncLockStatus() +
+				", symbolSyncLockStatus=" + getSymbolSyncLockStatus() +
+				", subcarrierLockStatus=" + getSubcarrierLockStatus() +
+				", carrierLockStatus=" + getCarrierLockStatus() +
+				", productionStatus=" + getProductionStatus() +
+				"} " + super.toString();
+	}
 }

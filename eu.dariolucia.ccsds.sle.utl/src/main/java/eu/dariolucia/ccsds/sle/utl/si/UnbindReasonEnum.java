@@ -33,12 +33,11 @@ public enum UnbindReasonEnum {
 	}
 
 	public static UnbindReasonEnum fromCode(byte code) {
-		switch(code) {
-			case 0: return END;
-			case 1: return SUSPEND;
-			case 2: return VERSION_NOT_SUPPORTED;
-			case 127: return OTHER;
-			default: throw new IllegalArgumentException("Unbind Reason code not recognized: " + code);
+		for(UnbindReasonEnum en : UnbindReasonEnum.values()) {
+			if(en.getCode() == code) {
+				return  en;
+			}
 		}
+		throw new IllegalArgumentException("Unbind Reason code not recognized: " + code);
 	}
 }

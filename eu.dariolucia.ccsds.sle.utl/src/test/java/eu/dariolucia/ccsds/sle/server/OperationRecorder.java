@@ -28,10 +28,11 @@ public class OperationRecorder implements IServiceInstanceListener {
 
     private List<Object> pduReceived = new CopyOnWriteArrayList<>();
     private List<Object> pduSent = new CopyOnWriteArrayList<>();
+    private List<ServiceInstanceState> states = new CopyOnWriteArrayList<>();
 
     @Override
     public void onStateUpdated(ServiceInstance si, ServiceInstanceState state) {
-        // Ignore for now
+        this.states.add(state);
     }
 
     @Override
@@ -65,5 +66,9 @@ public class OperationRecorder implements IServiceInstanceListener {
 
     public List<Object> getPduSent() {
         return pduSent;
+    }
+
+    public List<ServiceInstanceState> getStates() {
+        return states;
     }
 }

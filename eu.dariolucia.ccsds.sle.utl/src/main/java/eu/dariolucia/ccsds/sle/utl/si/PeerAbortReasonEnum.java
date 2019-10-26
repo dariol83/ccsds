@@ -40,18 +40,11 @@ public enum PeerAbortReasonEnum {
 	}
 
 	public static PeerAbortReasonEnum fromCode(byte code) {
-		switch(code) {
-			case 0: return ACCESS_DENIED;
-			case 1: return UNEXPECTED_RESPONDER_ID;
-			case 2: return OPERATIONAL_REQUIREMENTS;
-			case 3: return PROTOCOL_ERROR;
-			case 4: return COMMUNICATIONS_FAILURE;
-			case 5: return ENCODING_ERROR;
-			case 6: return RETURN_TIMEOUT;
-			case 7: return END_OF_SERVICE_PROVISION_PERIOD;
-			case 8: return UNSOLICITED_INVOKE_ID;
-			case 127: return OTHER_REASON;
-			default: return UNKNOWN;
+		for(PeerAbortReasonEnum en : PeerAbortReasonEnum.values()) {
+			if(en.getCode() == code) {
+				return  en;
+			}
 		}
+		return UNKNOWN;
 	}
 }
