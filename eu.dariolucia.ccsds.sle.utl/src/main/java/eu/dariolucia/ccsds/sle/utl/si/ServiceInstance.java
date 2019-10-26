@@ -695,7 +695,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
         // Validate state
         if (this.currentState != ServiceInstanceBindingStateEnum.READY) {
-            setError(getServiceInstanceIdentifier() + ": Unbind requested, but service instance is in state "
+            setError("Unbind requested, but service instance is in state "
                     + this.currentState);
             notifyStateUpdate();
             return;
@@ -755,7 +755,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
         // Validate state
         if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
-            setError(getServiceInstanceIdentifier() + ": Peer abort requested, but service instance is in state "
+            setError("Peer abort requested, but service instance is in state "
                     + this.currentState);
             notifyStateUpdate();
             return;

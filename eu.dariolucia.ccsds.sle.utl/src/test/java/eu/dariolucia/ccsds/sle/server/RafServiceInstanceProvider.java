@@ -38,6 +38,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 import java.util.logging.Logger;
 
 /**
@@ -101,6 +102,9 @@ public class RafServiceInstanceProvider extends ServiceInstance {
     private final Timer latencyTimer = new Timer();
     private volatile TimerTask pendingLatencyTimeout = null;
 
+    // Operation extension handlers: they are called to drive the positive/negative response (where supported)
+    private volatile Function<RafStartInvocation, Boolean> startOperationHandler;
+
     public RafServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                       RafServiceInstanceConfiguration serviceInstanceConfiguration) {
         super(apiConfiguration, serviceInstanceConfiguration);
@@ -113,6 +117,10 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         registerPduReceptionHandler(SleStopInvocation.class, this::handleRafStopInvocation);
         registerPduReceptionHandler(SleScheduleStatusReportInvocation.class, this::handleRafScheduleStatusReportInvocation);
         registerPduReceptionHandler(RafGetParameterInvocation.class, this::handleRafGetParameterInvocation);
+    }
+
+    public void setStartOperationHandler(Function<RafStartInvocation, Boolean> handler) {
+        this.startOperationHandler = handler;
     }
 
     public void updateProductionStatus(Instant time, LockStatusEnum carrier, LockStatusEnum subCarrier, LockStatusEnum symbol, LockStatusEnum frame, ProductionStatusEnum productionStatus) {
@@ -497,6 +505,14 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             }
         }
 
+        if(permittedOk) {
+            // Ask the external handler if any
+            Function<RafStartInvocation, Boolean> handler = this.startOperationHandler;
+            if(handler != null) {
+                permittedOk = handler.apply(invocation);
+            }
+        }
+
         RafStartReturn pdu = new RafStartReturn();
         pdu.setInvokeId(invocation.getInvokeId());
         pdu.setResult(new RafStartReturn.Result());
@@ -522,24 +538,24 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         boolean resultOk = encodeAndSend(null, pdu, START_RETURN_NAME);
 
         if (resultOk) {
-            // Activate capability to send frames and notifications
-            this.bufferActive.set(true);
-            this.bufferUnderTransmission.set(false);
-            synchronized (this.bufferUnderConstruction) {
-                this.bufferUnderConstruction.set(new RafTransferBuffer());
-                this.bufferUnderConstruction.notifyAll();
+            if(permittedOk) {
+                // Activate capability to send frames and notifications
+                this.bufferActive.set(true);
+                this.bufferUnderTransmission.set(false);
+                synchronized (this.bufferUnderConstruction) {
+                    this.bufferUnderConstruction.set(new RafTransferBuffer());
+                    this.bufferUnderConstruction.notifyAll();
+                }
+                // Start the latency timer
+                startLatencyTimer();
+                // Transition to new state: ACTIVE and notify PDU sent
+                setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
+                // Set the requested frame quality
+                this.requestedFrameQuality = RafRequestedFrameQualityEnum.fromCode(invocation.getRequestedFrameQuality().intValue());
+                // Set times
+                this.startTime = PduFactoryUtil.toDate(invocation.getStartTime());
+                this.endTime = PduFactoryUtil.toDate(invocation.getStopTime());
             }
-
-            // Start the latency timer
-            startLatencyTimer();
-
-            // If all fine, transition to new state: ACTIVE and notify PDU sent
-            setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
-            // Set the requested frame quality
-            this.requestedFrameQuality = RafRequestedFrameQualityEnum.fromCode(invocation.getRequestedFrameQuality().intValue());
-            // Set times
-            this.startTime = PduFactoryUtil.toDate(invocation.getStartTime());
-            this.endTime = PduFactoryUtil.toDate(invocation.getStopTime());
             // Notify PDU
             notifyPduSent(pdu, START_RETURN_NAME, getLastPduSent());
             // Generate state and notify update

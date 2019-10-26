@@ -130,6 +130,60 @@ public class RafTest {
     }
 
     @Test
+    void testNegativeOperationSequences() throws IOException, InterruptedException {
+        // User
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
+        UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(1); // RAF
+        RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
+        rafUser.configure();
+
+        // Register listener
+        OperationRecorder recorder = new OperationRecorder();
+        rafUser.register(recorder);
+
+        // Start
+        rafUser.start(null, null, RafRequestedFrameQualityEnum.ALL_FRAMES);
+        AwaitUtil.await(1000);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        assertEquals(0, recorder.getPduSent().size());
+
+        // Stop
+        rafUser.stop();
+        AwaitUtil.await(1000);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        assertEquals(0, recorder.getPduSent().size());
+
+        // Get parameter
+        rafUser.getParameter(RafParameterEnum.BUFFER_SIZE);
+        AwaitUtil.await(1000);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        assertEquals(0, recorder.getPduSent().size());
+
+        // Unbind
+        rafUser.unbind(UnbindReasonEnum.SUSPEND);
+        AwaitUtil.await(1000);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        assertEquals(0, recorder.getPduSent().size());
+
+        // Peer abort
+        rafUser.peerAbort(PeerAbortReasonEnum.OPERATIONAL_REQUIREMENTS);
+        AwaitUtil.await(1000);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        assertEquals(0, recorder.getPduSent().size());
+
+        // Schedule status report
+        rafUser.scheduleStatusReport(false, 20);
+        AwaitUtil.await(1000);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        assertEquals(0, recorder.getPduSent().size());
+
+        rafUser.deregister(recorder);
+
+        rafUser.dispose();
+    }
+
+    @Test
     void testStatusReportGetParameterV2() throws IOException, InterruptedException {
         // Provider
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
@@ -429,6 +483,66 @@ public class RafTest {
         rafProvider.dispose();
     }
 
+
+    @Test
+    void testNegativeStartAndSchedule() throws IOException, InterruptedException {
+        // Provider
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
+        UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(1); // RAF
+        RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
+        rafProvider.configure();
+        rafProvider.waitForBind(true, null);
+
+        // User
+        in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
+        UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(1); // RAF
+        RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
+        rafUser.configure();
+        // Register listener
+        OperationRecorder recorder = new OperationRecorder();
+        rafUser.register(recorder);
+
+        rafUser.bind(2);
+
+        // Check reported state
+        AwaitUtil.await(2000);
+        assertTrue(recorder.getStates().size() > 0);
+        assertEquals(ServiceInstanceBindingStateEnum.READY, recorder.getStates().get(recorder.getStates().size() - 1).getState());
+
+        // Test negative start
+        rafProvider.setStartOperationHandler(o -> false);
+        recorder.getPduSent().clear();
+        recorder.getPduReceived().clear();
+        rafUser.start(null, null, RafRequestedFrameQualityEnum.ALL_FRAMES);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertEquals(1, recorder.getPduSent().size());
+        assertNotNull(((RafStartReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
+
+        // Test negative schedule status report
+        recorder.getPduSent().clear();
+        recorder.getPduReceived().clear();
+        rafUser.scheduleStatusReport(true, 20);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertEquals(1, recorder.getPduSent().size());
+        assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
+
+        // Unbind
+        recorder.getPduSent().clear();
+        recorder.getPduReceived().clear();
+        rafUser.unbind(UnbindReasonEnum.END);
+        AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+        AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
+
+        rafUser.dispose();
+        rafProvider.dispose();
+    }
+
     @Test
     void testTransferDataComplete() throws IOException, InterruptedException {
         // Provider
@@ -680,5 +794,12 @@ public class RafTest {
         assertTrue(RafDiagnosticsStrings.getScheduleStatusReportDiagnostic(diagSched).endsWith("invalidReportingCycle"));
         diagSched.setSpecific(new BerInteger(5));
         assertTrue(RafDiagnosticsStrings.getScheduleStatusReportDiagnostic(diagSched).endsWith("<unknown value> 5"));
+    }
+
+    @Test
+    void testGenericNegativeDiagnosticsString() {
+        assertTrue(RafDiagnosticsStrings.getDiagnostic(new Diagnostics(100)).endsWith("duplicateInvokeId"));
+        assertTrue(RafDiagnosticsStrings.getDiagnostic(new Diagnostics(127)).endsWith("otherReason"));
+        assertTrue(RafDiagnosticsStrings.getDiagnostic(new Diagnostics(101)).endsWith("<unknown value> 101"));
     }
 }
