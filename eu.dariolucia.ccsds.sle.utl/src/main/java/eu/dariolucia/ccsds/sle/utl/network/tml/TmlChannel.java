@@ -189,7 +189,7 @@ public abstract class TmlChannel {
 				while(read < 8 && this.running) {
 					int readOther = is.read(headerBuffer, read, 8 - read);
 					if(readOther <= 0) {
-						throw new IOException("End of stream detected");
+						throw new IOException("end of stream (TML header) detected");
 					}
 					read += readOther;
 				}
@@ -231,7 +231,7 @@ public abstract class TmlChannel {
 						while(read2 < 12 && this.running) {
 							int readOther = is.read(msg, read2, 12 - read2);
 							if(readOther <= 0) {
-								throw new IOException("End of stream detected");
+								throw new IOException("end of stream (CTX) detected");
 							}
 							read2 += readOther;
 						}
@@ -277,7 +277,11 @@ public abstract class TmlChannel {
 				int read2 = 0;
 				try {
 					while(read2 < length && this.running) {
-						read2 += is.read(pdu, read2, length - read2);
+						int readOther = is.read(pdu, read2, length - read2);
+						if(readOther <= 0) {
+							throw new IOException("end of stream (PDU) detected");
+						}
+						read2 += readOther;
 					}
 					this.statsCounter.addIn(read2);
 				} catch (IOException e) {
@@ -406,7 +410,13 @@ public abstract class TmlChannel {
 	}
 
 	private void remotePeerAbortDetected(IOException e, byte code) {
-		LOG.log(Level.SEVERE, String.format("Remote peer abort detected on channel %s, code %s", toString(), PeerAbortReasonEnum.fromCode(code)), e);
+		String exceptionReason = e != null ? e.getMessage() : "N/A";
+		if(exceptionReason == null) {
+			exceptionReason = "null";
+		}
+		if(LOG.isLoggable(Level.SEVERE)) {
+			LOG.log(Level.SEVERE, String.format("Remote peer abort detected (%s) on channel %s, code %s", exceptionReason, toString(), PeerAbortReasonEnum.fromCode(code)));
+		}
 		this.lock.lock();
 		try {
 			// stop the channel
@@ -421,7 +431,13 @@ public abstract class TmlChannel {
 	}
 
 	protected void remoteDisconnectionDetected(IOException e) {
-		LOG.log(Level.SEVERE, String.format("Remote disconnection detected on channel %s", toString()), e);
+		String exceptionReason = e != null ? e.getMessage() : "N/A";
+		if(exceptionReason == null) {
+			exceptionReason = "null";
+		}
+		if(LOG.isLoggable(Level.SEVERE)) {
+			LOG.log(Level.SEVERE, String.format("Remote disconnection detected (%s) on channel %s", exceptionReason, toString()));
+		}
 		this.lock.lock();
 		try {
 			// stop the channel

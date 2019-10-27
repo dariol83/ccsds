@@ -35,8 +35,6 @@ import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstanceState;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -48,17 +46,6 @@ import java.util.logging.Logger;
 public class RafServiceInstanceProvider extends ServiceInstance {
 
     private static final Logger LOG = Logger.getLogger(RafServiceInstanceProvider.class.getName());
-
-    private static final String START_NAME = "START";
-    private static final String START_RETURN_NAME = "START-RETURN";
-    private static final String STOP_NAME = "STOP";
-    private static final String STOP_RETURN_NAME = "STOP-RETURN";
-    private static final String SCHEDULE_STATUS_REPORT_RETURN_NAME = "SCHEDULE-STATUS-REPORT-RETURN";
-    private static final String GET_PARAMETER_NAME = "GET-PARAMETER";
-    private static final String GET_PARAMETER_RETURN_NAME = "GET-PARAMETER-RETURN";
-    private static final String STATUS_REPORT_NAME = "STATUS-REPORT";
-    private static final String SCHEDULE_STATUS_REPORT_NAME = "SCHEDULE-STATUS-REPORT";
-    private static final String TRANSFER_BUFFER_NAME = "TRANSFER-BUFFER";
 
     public static final int FRAME_QUALITY_GOOD = 0;
     public static final int FRAME_QUALITY_ERRED = 1;
@@ -358,7 +345,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             return;
         }
 
-        boolean resultOk = encodeAndSend(null, bufferToSend, TRANSFER_BUFFER_NAME);
+        boolean resultOk = encodeAndSend(null, bufferToSend, SleOperationNames.TRANSFER_BUFFER_NAME);
 
         if (resultOk) {
             // Clear buffer transmission flag
@@ -367,7 +354,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             this.bufferChangedCondition.signalAll();
             this.bufferMutex.unlock();
             // Notify PDU
-            notifyPduSent(bufferToSend, TRANSFER_BUFFER_NAME, getLastPduSent());
+            notifyPduSent(bufferToSend, SleOperationNames.TRANSFER_BUFFER_NAME, getLastPduSent());
             // Generate state and notify update
             notifyStateUpdate();
         }
@@ -503,7 +490,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         // If so, verify credentials.
         if (!authenticate(invocation.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
             disconnect("Start invocation received, but wrong credentials");
-            notifyPduReceived(invocation, START_NAME, getLastPduReceived());
+            notifyPduReceived(invocation, SleOperationNames.START_NAME, getLastPduReceived());
             notifyStateUpdate();
             return;
         }
@@ -541,14 +528,14 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
         if (creds == null) {
             // Error while generating credentials, set by generateCredentials()
-            notifyPduSentError(pdu, START_RETURN_NAME, null);
+            notifyPduSentError(pdu, SleOperationNames.START_RETURN_NAME, null);
             notifyStateUpdate();
             return;
         } else {
             pdu.setPerformerCredentials(creds);
         }
 
-        boolean resultOk = encodeAndSend(null, pdu, START_RETURN_NAME);
+        boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.START_RETURN_NAME);
 
         if (resultOk) {
             if (permittedOk) {
@@ -574,7 +561,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
             }
             // Notify PDU
-            notifyPduSent(pdu, START_RETURN_NAME, getLastPduSent());
+            notifyPduSent(pdu, SleOperationNames.START_RETURN_NAME, getLastPduSent());
             // Generate state and notify update
             notifyStateUpdate();
         }
@@ -604,7 +591,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         // If so, verify credentials.
         if (!authenticate(invocation.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
             disconnect("Stop invocation received, but wrong credentials");
-            notifyPduReceived(invocation, STOP_NAME, getLastPduReceived());
+            notifyPduReceived(invocation, SleOperationNames.STOP_NAME, getLastPduReceived());
             notifyStateUpdate();
             return;
         }
@@ -620,7 +607,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
         if (creds == null) {
             // Error while generating credentials, set by generateCredentials()
-            notifyPduSentError(pdu, STOP_RETURN_NAME, null);
+            notifyPduSentError(pdu, SleOperationNames.STOP_RETURN_NAME, null);
             notifyStateUpdate();
             return;
         } else {
@@ -638,7 +625,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         }
 
         dispatchFromProvider(() -> {
-            boolean resultOk = encodeAndSend(null, pdu, STOP_RETURN_NAME);
+            boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.STOP_RETURN_NAME);
 
             if (resultOk) {
                 // Stop the latency timer
@@ -662,7 +649,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
                 this.startTime = null;
                 this.endTime = null;
                 // Notify PDU
-                notifyPduSent(pdu, STOP_RETURN_NAME, getLastPduSent());
+                notifyPduSent(pdu, SleOperationNames.STOP_RETURN_NAME, getLastPduSent());
                 // Generate state and notify update
                 notifyStateUpdate();
             }
@@ -693,7 +680,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         // If so, verify credentials.
         if (!authenticate(invocation.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
             disconnect("Schedule status report received, but wrong credentials");
-            notifyPduReceived(invocation, SCHEDULE_STATUS_REPORT_NAME, getLastPduReceived());
+            notifyPduReceived(invocation, SleOperationNames.SCHEDULE_STATUS_REPORT_NAME, getLastPduReceived());
             notifyStateUpdate();
             return;
         }
@@ -730,18 +717,18 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
         if (creds == null) {
             // Error while generating credentials, set by generateCredentials()
-            notifyPduSentError(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, null);
+            notifyPduSentError(pdu, SleOperationNames.SCHEDULE_STATUS_REPORT_RETURN_NAME, null);
             notifyStateUpdate();
             return;
         } else {
             pdu.setPerformerCredentials(creds);
         }
 
-        boolean resultOk = encodeAndSend(null, pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME);
+        boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.SCHEDULE_STATUS_REPORT_RETURN_NAME);
 
         if (resultOk) {
             // Notify PDU
-            notifyPduSent(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduSent());
+            notifyPduSent(pdu, SleOperationNames.SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduSent());
             // Generate state and notify update
             notifyStateUpdate();
         }
@@ -790,7 +777,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         // If so, verify credentials.
         if (!authenticate(invocation.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
             disconnect("Get parameter received, but wrong credentials");
-            notifyPduReceived(invocation, GET_PARAMETER_NAME, getLastPduReceived());
+            notifyPduReceived(invocation, SleOperationNames.GET_PARAMETER_NAME, getLastPduReceived());
             notifyStateUpdate();
             return;
         }
@@ -806,7 +793,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
             if (creds == null) {
                 // Error while generating credentials, set by generateCredentials()
-                notifyPduSentError(pdu, GET_PARAMETER_RETURN_NAME, null);
+                notifyPduSentError(pdu, SleOperationNames.GET_PARAMETER_RETURN_NAME, null);
                 notifyStateUpdate();
                 return;
             } else {
@@ -865,7 +852,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
             if (creds == null) {
                 // Error while generating credentials, set by generateCredentials()
-                notifyPduSentError(pdu, GET_PARAMETER_RETURN_NAME, null);
+                notifyPduSentError(pdu, SleOperationNames.GET_PARAMETER_RETURN_NAME, null);
                 notifyStateUpdate();
                 return;
             } else {
@@ -931,11 +918,11 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             toSend = pdu;
         }
 
-        boolean resultOk = encodeAndSend(null, toSend, GET_PARAMETER_RETURN_NAME);
+        boolean resultOk = encodeAndSend(null, toSend, SleOperationNames.GET_PARAMETER_RETURN_NAME);
 
         if (resultOk) {
             // Notify PDU
-            notifyPduSent(toSend, GET_PARAMETER_RETURN_NAME, getLastPduSent());
+            notifyPduSent(toSend, SleOperationNames.GET_PARAMETER_RETURN_NAME, getLastPduSent());
             // Generate state and notify update
             notifyStateUpdate();
         }
@@ -951,7 +938,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
             if (creds == null) {
                 // Error while generating credentials, set by generateCredentials()
-                notifyPduSentError(pdu, STATUS_REPORT_NAME, null);
+                notifyPduSentError(pdu, SleOperationNames.STATUS_REPORT_NAME, null);
                 notifyStateUpdate();
                 return;
             } else {
@@ -970,11 +957,11 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             } finally {
                 this.statusMutex.unlock();
             }
-            boolean resultOk = encodeAndSend(null, pdu, STATUS_REPORT_NAME);
+            boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.STATUS_REPORT_NAME);
 
             if (resultOk) {
                 // Notify PDU
-                notifyPduSent(pdu, STATUS_REPORT_NAME, getLastPduSent());
+                notifyPduSent(pdu, SleOperationNames.STATUS_REPORT_NAME, getLastPduSent());
                 // Generate state and notify update
                 notifyStateUpdate();
             }
@@ -984,7 +971,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
             if (creds == null) {
                 // Error while generating credentials, set by generateCredentials()
-                notifyPduSentError(pdu, STATUS_REPORT_NAME, null);
+                notifyPduSentError(pdu, SleOperationNames.STATUS_REPORT_NAME, null);
                 notifyStateUpdate();
                 return;
             } else {
@@ -1003,11 +990,11 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             } finally {
                 this.statusMutex.unlock();
             }
-            boolean resultOk = encodeAndSend(null, pdu, STATUS_REPORT_NAME);
+            boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.STATUS_REPORT_NAME);
 
             if (resultOk) {
                 // Notify PDU
-                notifyPduSent(pdu, STATUS_REPORT_NAME, getLastPduSent());
+                notifyPduSent(pdu, SleOperationNames.STATUS_REPORT_NAME, getLastPduSent());
                 // Generate state and notify update
                 notifyStateUpdate();
             }
@@ -1108,5 +1095,4 @@ public class RafServiceInstanceProvider extends ServiceInstance {
     private RafServiceInstanceConfiguration getRafConfiguration() {
         return (RafServiceInstanceConfiguration) this.serviceInstanceConfiguration;
     }
-
 }
