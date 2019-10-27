@@ -13,7 +13,7 @@ Stable releases are published on Maven Central. The latest code version is alway
 
 ## SLE
 The SLE User Test Library (eu.dariolucia.ccsds.sle.utl) is a test library that implements the user side of an SLE data exchange session. 
-It supports RAF, RCF, ROCF and CLTU. Support for FSP is currently missing, but it is foreseen to be added shortly. 
+It supports RAF, RCF, ROCF and CLTU. Support for FSP is currently missing. 
 It uses a custom format for the configuration of the service instances (currently not documented, can be derived by the classes inside 
 the "config" package).
 Highlights are:
