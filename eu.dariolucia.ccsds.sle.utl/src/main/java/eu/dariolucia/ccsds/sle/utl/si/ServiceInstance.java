@@ -358,7 +358,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         dispatchFromUser(() -> {
             this.sendPositiveBindReturn = sendPositiveBindReturn;
             this.negativeBindReturnDiagnostics = negativeBindReturnDiagnostics;
-            LOG.log(Level.INFO,
+            LOG.log(Level.CONFIG,
                     getServiceInstanceIdentifier() + ": BIND-RETURN behaviour updated: send positive BIND-RETURN="
                             + sendPositiveBindReturn + ", negative diagnostics=" + negativeBindReturnDiagnostics);
         });
@@ -373,7 +373,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     public final void setUnbindReturnBehaviour(boolean sendPositiveUnbindReturn) {
         dispatchFromUser(() -> {
             this.sendPositiveUnbindReturn = sendPositiveUnbindReturn;
-            LOG.log(Level.INFO,
+            LOG.log(Level.CONFIG,
                     getServiceInstanceIdentifier() + ": UNBIND-RETURN behaviour updated: send positive BIND-RETURN="
                             + sendPositiveUnbindReturn);
         });
@@ -396,23 +396,20 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
         //
         if (this.initMode != SI_INIT_MODE_NOT_SELECTED) {
-            setError(getServiceInstanceIdentifier()
-                    + ": Wait for bind requested, but service instance is not in clean init mode");
+            setError("Wait for bind requested, but service instance is not in clean init mode");
             notifyStateUpdate();
             return;
         }
 
         if (this.serviceInstanceConfiguration.getInitiator() == InitiatorRoleEnum.USER) {
-            setError(getServiceInstanceIdentifier()
-                    + ": Wait for bind requested, but service instance initiator is set to USER");
+            setError("Wait for bind requested, but service instance initiator is set to USER");
             notifyStateUpdate();
             return;
         }
 
         // Validate state
         if (this.currentState != ServiceInstanceBindingStateEnum.UNBOUND) {
-            setError(getServiceInstanceIdentifier() + ": Wait for bind requested, but service instance is in state "
-                    + this.currentState);
+            setError("Wait for bind requested, but service instance is in state " + this.currentState);
             notifyStateUpdate();
             return;
         }
@@ -429,8 +426,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             // Create a new TML channel
             this.tmlChannel = TmlChannel.createServerTmlChannel(port.get().getRemotePort(), this, port.get().getTcpTxBufferSize(), port.get().getTcpRxBufferSize());
         } else {
-            setError(getServiceInstanceIdentifier()
-                    + ": Foreign local port " + getResponderPortIdentifier()
+            setError("Foreign local port " + getResponderPortIdentifier()
                     + " not found in the SLE configuration file for service instance "
                     + getServiceInstanceIdentifier());
             notifyStateUpdate();
@@ -473,22 +469,20 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
         //
         if (this.initMode != SI_INIT_MODE_NOT_SELECTED) {
-            setError(getServiceInstanceIdentifier()
-                    + ": Bind requested, but service instance is not in clean init mode");
+            setError("Bind requested, but service instance is not in clean init mode");
             notifyStateUpdate();
             return;
         }
 
         if (this.serviceInstanceConfiguration.getInitiator() == InitiatorRoleEnum.PROVIDER) {
-            setError(getServiceInstanceIdentifier()
-                    + ": Bind requested, but service instance initiator is set to PROVIDER");
+            setError("Bind requested, but service instance initiator is set to PROVIDER");
             notifyStateUpdate();
             return;
         }
 
         // Validate state
         if (this.currentState != ServiceInstanceBindingStateEnum.UNBOUND) {
-            setError(getServiceInstanceIdentifier() + ": Bind requested, but service instance is in state "
+            setError("Bind requested, but service instance is in state "
                     + this.currentState);
             notifyStateUpdate();
             return;
@@ -616,8 +610,8 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         try {
             encodedPdu = encodePdu(pdu);
             String invokeStr = invokeId != null && invokeId >= 0 ? "(" + invokeId + ") " : "(<no invoke ID>) ";
-            if (LOG.isLoggable(Level.INFO)) {
-                LOG.info(String.format("%s: PDU %s%s encoded: %s", getServiceInstanceIdentifier(), invokeStr, name, PduStringUtil.instance().toHexDump(encodedPdu)));
+            if (LOG.isLoggable(Level.FINE)) {
+                LOG.fine(String.format("%s: PDU %s%s encoded: %s", getServiceInstanceIdentifier(), invokeStr, name, PduStringUtil.instance().toHexDump(encodedPdu)));
             }
         } catch (IOException e1) {
             disconnect("Cannot encode PDU", e1, null);
@@ -703,8 +697,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
         //
         if (this.initMode != SI_INIT_MODE_UIB) {
-            setError(getServiceInstanceIdentifier()
-                    + ": Unbind requested, but service instance is not in init mode UIB");
+            setError("Unbind requested, but service instance is not in init mode UIB");
             notifyStateUpdate();
             return;
         }

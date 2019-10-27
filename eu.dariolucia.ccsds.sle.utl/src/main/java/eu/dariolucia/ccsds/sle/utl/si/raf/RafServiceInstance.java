@@ -633,7 +633,7 @@ public class RafServiceInstance extends ServiceInstance {
 		clearError();
 
 		// Validate state
-		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
+		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE && this.currentState != ServiceInstanceBindingStateEnum.STOP_PENDING) {
 			disconnect("Transfer buffer received, but service instance is in state " + this.currentState);
 			notifyPduReceived(pdu, TRANSFER_BUFFER_NAME, getLastPduReceived());
 			notifyStateUpdate();

@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -94,9 +95,11 @@ public class RafServiceInstanceProvider extends ServiceInstance {
     private volatile Timer reportingScheduler = null;
 
     // Transfer buffer under construction
-    private final AtomicReference<RafTransferBuffer> bufferUnderConstruction = new AtomicReference<>();
-    private final AtomicBoolean bufferUnderTransmission = new AtomicBoolean(false);
-    private final AtomicBoolean bufferActive = new AtomicBoolean(false);
+    private final ReentrantLock bufferMutex = new ReentrantLock();
+    private final Condition bufferChangedCondition = bufferMutex.newCondition();
+    private RafTransferBuffer bufferUnderConstruction = null;
+    private boolean bufferUnderTransmission = false;
+    private boolean bufferActive = false;
 
     // Latency timer
     private final Timer latencyTimer = new Timer();
@@ -138,137 +141,130 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         } finally {
             this.statusMutex.unlock();
         }
+        boolean currentBufferActive;
+        this.bufferMutex.lock();
+        currentBufferActive = this.bufferActive;
+        this.bufferMutex.unlock();
+
         if (previousFrameLockStatus == LockStatusEnum.IN_LOCK && frame != LockStatusEnum.IN_LOCK) {
             // We lost the frame lock, we need to send a notification
-            if (this.bufferActive.get() && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
+            if (currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
                 sendLossFrameNotification(time, carrier, subCarrier, symbol);
             }
         }
         if (previousProductionStatus != productionStatus) {
             // We changed production status, we need to send a notification
-            if (this.bufferActive.get() && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
+            if (currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
                 sendProductionStatusChangeNotification(productionStatus);
             }
         }
     }
 
-    private void sendProductionStatusChangeNotification(ProductionStatusEnum productionStatus) {
-        // If the state is not correct, say bye
-        if (!this.bufferActive.get()) {
-            return;
-        }
-        // Here we check immediately if the buffer is full: if so, we send it
-        synchronized (this.bufferUnderConstruction) {
+    private boolean sendProductionStatusChangeNotification(ProductionStatusEnum productionStatus) {
+        this.bufferMutex.lock();
+        try {
+            // If the state is not correct, say bye
+            if (!this.bufferActive) {
+                return false;
+            }
+            // Here we check immediately if the buffer is full: if so, we send it
             checkBuffer(false);
-            this.bufferUnderConstruction.notifyAll();
-        }
-        // If the state is not correct, say bye (things might have changed)
-        if (!this.bufferActive.get()) {
-            return;
-        }
-        // Add the PDU to the buffer, there must be free space by algorithm implementation
-        synchronized (this.bufferUnderConstruction) {
+            // Add the PDU to the buffer, there must be free space by algorithm implementation
             addProductionStatusChangeNotification(productionStatus);
             checkBuffer(true); // We send it immediately
-            this.bufferUnderConstruction.notifyAll();
+            return true;
+        } finally {
+            this.bufferChangedCondition.signalAll();
+            this.bufferMutex.unlock();
         }
     }
 
-    private void sendLossFrameNotification(Instant time, LockStatusEnum carrierLockStatus, LockStatusEnum subcarrierLockStatus, LockStatusEnum symbolSyncLockStatus) {
-        // If the state is not correct, say bye
-        if (!this.bufferActive.get()) {
-            return;
-        }
-        // Here we check immediately if the buffer is full: if so, we send it
-        synchronized (this.bufferUnderConstruction) {
+    private boolean sendLossFrameNotification(Instant time, LockStatusEnum carrierLockStatus, LockStatusEnum subcarrierLockStatus, LockStatusEnum symbolSyncLockStatus) {
+        this.bufferMutex.lock();
+        try {
+            // If the state is not correct, say bye
+            if (!this.bufferActive) {
+                return false;
+            }
+            // Here we check immediately if the buffer is full: if so, we send it
             checkBuffer(false);
-            this.bufferUnderConstruction.notifyAll();
-        }
-        // If the state is not correct, say bye (things might have changed)
-        if (!this.bufferActive.get()) {
-            return;
-        }
-        // Add the PDU to the buffer, there must be free space by algorithm implementation
-        synchronized (this.bufferUnderConstruction) {
+            // Add the PDU to the buffer, there must be free space by algorithm implementation
             addLossFrameSyncNotification(time, carrierLockStatus, subcarrierLockStatus, symbolSyncLockStatus);
             checkBuffer(true); // We send it immediately
-            this.bufferUnderConstruction.notifyAll();
+            return true;
+        } finally {
+            this.bufferMutex.unlock();
         }
     }
 
     public boolean endOfData() {
-        // If the state is not correct, say bye
-        if (!this.bufferActive.get()) {
-            return false;
-        }
-        // Here we check immediately if the buffer is full: if so, we send it
-        synchronized (this.bufferUnderConstruction) {
+        this.bufferMutex.lock();
+        try {
+            // If the state is not correct, say bye
+            if (!this.bufferActive) {
+                return false;
+            }
+            // Here we check immediately if the buffer is full: if so, we send it
             checkBuffer(false);
-            this.bufferUnderConstruction.notifyAll();
-        }
-        // If the state is not correct, say bye (things might have changed)
-        if (!this.bufferActive.get()) {
-            return false;
-        }
-        // Add the PDU to the buffer, there must be free space by algorithm implementation
-        synchronized (this.bufferUnderConstruction) {
+            // Add the PDU to the buffer, there must be free space by algorithm implementation
             addEndOfDataNotification();
             checkBuffer(true); // We send it immediately
-            this.bufferUnderConstruction.notifyAll();
             return true;
+        } finally {
+            this.bufferMutex.unlock();
         }
     }
 
     public boolean transferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
-        // If the state is not correct, say bye
-        if (!this.bufferActive.get()) {
-            return false;
-        }
-        // Here we check immediately if the buffer is full: if so, we send it
-        synchronized (this.bufferUnderConstruction) {
+        this.bufferMutex.lock();
+        try {
+            // If the state is not correct, say bye
+            if (!this.bufferActive) {
+                return false;
+            }
+            // Here we check immediately if the buffer is full: if so, we send it
             checkBuffer(false);
-            this.bufferUnderConstruction.notifyAll();
-        }
-        // If the state is not correct, say bye (things might have changed)
-        if (!this.bufferActive.get()) {
-            return false;
-        }
-        // If quality is not matching, say bye
-        if (this.requestedFrameQuality != RafRequestedFrameQualityEnum.ALL_FRAMES) {
-            if (this.requestedFrameQuality == RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY && quality != FRAME_QUALITY_GOOD) {
+            // If quality is not matching, say bye
+            if (this.requestedFrameQuality != RafRequestedFrameQualityEnum.ALL_FRAMES) {
+                if (this.requestedFrameQuality == RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY && quality != FRAME_QUALITY_GOOD) {
+                    return false;
+                }
+                if (this.requestedFrameQuality == RafRequestedFrameQualityEnum.BAD_FRAMES_ONLY && quality != FRAME_QUALITY_ERRED) {
+                    return false;
+                }
+            }
+            // If ERT is not matching, say bye
+            if (this.startTime != null && earthReceiveTime.getEpochSecond() < this.startTime.getTime() / 1000) {
                 return false;
             }
-            if (this.requestedFrameQuality == RafRequestedFrameQualityEnum.BAD_FRAMES_ONLY && quality != FRAME_QUALITY_ERRED) {
+            if (this.endTime != null && earthReceiveTime.getEpochSecond() > this.endTime.getTime() / 1000) {
                 return false;
             }
-        }
-        // If ERT is not matching, say bye
-        if (this.startTime != null && earthReceiveTime.getEpochSecond() < this.startTime.getTime() / 1000) {
-            return false;
-        }
-        if (this.endTime != null && earthReceiveTime.getEpochSecond() > this.endTime.getTime() / 1000) {
-            return false;
-        }
-        // Add the PDU to the buffer, there must be free space by algorithm implementation
-        synchronized (this.bufferUnderConstruction) {
+            // Add the PDU to the buffer, there must be free space by algorithm implementation
             addTransferData(spaceDataUnit, quality, linkContinuity, earthReceiveTime, isPico, antennaId, globalAntennaId, privateAnnotations);
             checkBuffer(false);
-            this.bufferUnderConstruction.notifyAll();
             return true;
+        } finally {
+            this.bufferMutex.unlock();
         }
     }
 
-    // Under sync on this.bufferUnderConstruction
+    // Under sync on this.bufferMutex
     private void checkBuffer(boolean forceSend) {
-        if (this.bufferUnderConstruction.get().getFrameOrNotification().isEmpty()) {
+        if(!bufferActive) {
+            return;
+        }
+        if (this.bufferUnderConstruction == null || this.bufferUnderConstruction.getFrameOrNotification().isEmpty()) {
             // No data, nothing to do
             return;
         }
-        if (this.bufferUnderConstruction.get().getFrameOrNotification().size() == this.transferBufferSize || forceSend) {
+        if (this.bufferUnderConstruction.getFrameOrNotification().size() == this.transferBufferSize || forceSend) {
             // Stop the latency timer
             stopLatencyTimer();
             // Try to send the buffer: replace the buffer with a new one
-            boolean discarded = trySendBuffer(this.bufferUnderConstruction.getAndSet(new RafTransferBuffer()));
+            RafTransferBuffer bufferToSend = this.bufferUnderConstruction;
+            this.bufferUnderConstruction = new RafTransferBuffer();
+            boolean discarded = trySendBuffer(bufferToSend);
             // If discarded, add a sync notification about it
             if (discarded) {
                 addDataDiscardedNotification();
@@ -278,17 +274,19 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
             // Start the latency timer
             startLatencyTimer();
+
+            // Signal the change
+            this.bufferChangedCondition.signalAll();
         }
-        this.bufferUnderConstruction.notifyAll();
     }
 
     private void startLatencyTimer() {
         if (this.latencyLimit == null) {
             return; // No timer
         }
-        if (this.pendingLatencyTimeout != null) {
-            stopLatencyTimer();
-        }
+
+        stopLatencyTimer();
+
         this.pendingLatencyTimeout = new TimerTask() {
             @Override
             public void run() {
@@ -303,9 +301,11 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
     private void latencyElapsed() {
         // Add the PDU to the buffer, there must be free space by algorithm implementation
-        synchronized (this.bufferUnderConstruction) {
+        this.bufferMutex.lock();
+        try {
             checkBuffer(true);
-
+        } finally {
+            this.bufferMutex.unlock();
         }
     }
 
@@ -316,28 +316,28 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    // Under sync on this.bufferUnderConstruction
+    // Under sync on this.bufferMutex
     private boolean trySendBuffer(RafTransferBuffer bufferToSend) {
         // Here we check the delivery mode
         if (getRafConfiguration().getDeliveryMode() == DeliveryModeEnum.TIMELY_ONLINE) {
             // Timely mode: if there is a buffer in transmission, you have to discard the buffer
-            if (this.bufferUnderTransmission.get()) {
+            if (this.bufferUnderTransmission) {
                 return true;
             }
         } else {
             // Complete mode: wait
-            while (this.bufferActive.get() && this.bufferUnderTransmission.get()) {
+            while (this.bufferActive && this.bufferUnderTransmission) {
                 try {
-                    this.bufferUnderConstruction.wait();
+                    this.bufferChangedCondition.await();
                 } catch (InterruptedException e) {
                     // Buffer discarded
                     return true;
                 }
             }
         }
-        if (bufferActive.get()) {
+        if (bufferActive) {
             // Set transmission flag
-            this.bufferUnderTransmission.set(true);
+            this.bufferUnderTransmission = true;
             // Send the buffer
             dispatchFromProvider(() -> doHandleRafTransferBufferInvocation(bufferToSend));
             // Not discarded
@@ -362,10 +362,10 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
         if (resultOk) {
             // Clear buffer transmission flag
-            synchronized (this.bufferUnderConstruction) {
-                this.bufferUnderTransmission.set(false);
-                notifyAll();
-            }
+            this.bufferMutex.lock();
+            this.bufferUnderTransmission = false;
+            this.bufferChangedCondition.signalAll();
+            this.bufferMutex.unlock();
             // Notify PDU
             notifyPduSent(bufferToSend, TRANSFER_BUFFER_NAME, getLastPduSent());
             // Generate state and notify update
@@ -373,24 +373,33 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    // Under sync on this.bufferUnderConstruction
+    // Under sync on this.bufferMutex
     private void addProductionStatusChangeNotification(ProductionStatusEnum productionStatus) {
+        if(!bufferActive || bufferUnderConstruction == null) {
+            return;
+        }
         RafSyncNotifyInvocation in = new RafSyncNotifyInvocation();
         in.setNotification(new Notification());
         in.getNotification().setProductionStatusChange(new RafProductionStatus(productionStatus.ordinal()));
         finalizeAndAddNotification(in);
     }
 
-    // Under sync on this.bufferUnderConstruction
+    // Under sync on this.bufferMutex
     private void addDataDiscardedNotification() {
+        if(!bufferActive || bufferUnderConstruction == null) {
+            return;
+        }
         RafSyncNotifyInvocation in = new RafSyncNotifyInvocation();
         in.setNotification(new Notification());
         in.getNotification().setExcessiveDataBacklog(new BerNull());
         finalizeAndAddNotification(in);
     }
 
-    // Under sync on this.bufferUnderConstruction
+    // Under sync on this.bufferMutex
     private void addLossFrameSyncNotification(Instant time, LockStatusEnum carrierLockStatus, LockStatusEnum subcarrierLockStatus, LockStatusEnum symbolSyncLockStatus) {
+        if(!bufferActive || bufferUnderConstruction == null) {
+            return;
+        }
         RafSyncNotifyInvocation in = new RafSyncNotifyInvocation();
         in.setNotification(new Notification());
         in.getNotification().setLossFrameSync(new LockStatusReport());
@@ -402,8 +411,11 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         finalizeAndAddNotification(in);
     }
 
-    // Under sync on this.bufferUnderConstruction
+    // Under sync on this.bufferMutex
     private void addEndOfDataNotification() {
+        if(!bufferActive || bufferUnderConstruction == null) {
+            return;
+        }
         RafSyncNotifyInvocation in = new RafSyncNotifyInvocation();
         in.setNotification(new Notification());
         in.getNotification().setEndOfData(new BerNull());
@@ -417,14 +429,16 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
         in.setInvokerCredentials(creds);
 
-        RafTransferBuffer buffer = this.bufferUnderConstruction.get();
         FrameOrNotification fon = new FrameOrNotification();
         fon.setSyncNotification(in);
-        buffer.getFrameOrNotification().add(fon);
+        this.bufferUnderConstruction.getFrameOrNotification().add(fon);
     }
 
-    // Under sync on this.bufferUnderConstruction
+    // Under sync on this.bufferMutex
     private void addTransferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
+        if(!bufferActive || bufferUnderConstruction == null) {
+            return;
+        }
         RafTransferDataInvocation td = new RafTransferDataInvocation();
         // Antenna ID
         td.setAntennaId(new AntennaId());
@@ -437,7 +451,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         td.setData(new SpaceLinkDataUnit(spaceDataUnit));
         // Time
         td.setEarthReceiveTime(new Time());
-        if(isPico) {
+        if (isPico) {
             td.getEarthReceiveTime().setCcsdsPicoFormat(new TimeCCSDSpico(PduFactoryUtil.buildCDSTimePico(earthReceiveTime.toEpochMilli(), (earthReceiveTime.getNano() % 1000000) * 1000L)));
         } else {
             td.getEarthReceiveTime().setCcsdsFormat(new TimeCCSDS(PduFactoryUtil.buildCDSTime(earthReceiveTime.toEpochMilli(), (earthReceiveTime.getNano() % 1000000) / 1000)));
@@ -460,10 +474,9 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
         td.setInvokerCredentials(creds);
 
-        RafTransferBuffer buffer = this.bufferUnderConstruction.get();
         FrameOrNotification fon = new FrameOrNotification();
         fon.setAnnotatedFrame(td);
-        buffer.getFrameOrNotification().add(fon);
+        this.bufferUnderConstruction.getFrameOrNotification().add(fon);
     }
 
     private void handleRafStartInvocation(RafStartInvocation invocation) {
@@ -505,10 +518,10 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             }
         }
 
-        if(permittedOk) {
+        if (permittedOk) {
             // Ask the external handler if any
             Function<RafStartInvocation, Boolean> handler = this.startOperationHandler;
-            if(handler != null) {
+            if (handler != null) {
                 permittedOk = handler.apply(invocation);
             }
         }
@@ -538,23 +551,27 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         boolean resultOk = encodeAndSend(null, pdu, START_RETURN_NAME);
 
         if (resultOk) {
-            if(permittedOk) {
-                // Activate capability to send frames and notifications
-                this.bufferActive.set(true);
-                this.bufferUnderTransmission.set(false);
-                synchronized (this.bufferUnderConstruction) {
-                    this.bufferUnderConstruction.set(new RafTransferBuffer());
-                    this.bufferUnderConstruction.notifyAll();
-                }
-                // Start the latency timer
-                startLatencyTimer();
-                // Transition to new state: ACTIVE and notify PDU sent
-                setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
+            if (permittedOk) {
                 // Set the requested frame quality
                 this.requestedFrameQuality = RafRequestedFrameQualityEnum.fromCode(invocation.getRequestedFrameQuality().intValue());
                 // Set times
                 this.startTime = PduFactoryUtil.toDate(invocation.getStartTime());
                 this.endTime = PduFactoryUtil.toDate(invocation.getStopTime());
+                // Activate capability to send frames and notifications
+                this.bufferMutex.lock();
+                try {
+                    this.bufferActive = true;
+                    this.bufferUnderTransmission = false;
+                    this.bufferUnderConstruction = new RafTransferBuffer();
+                    this.bufferChangedCondition.signalAll();
+                } finally {
+                    this.bufferMutex.unlock();
+                }
+                // Start the latency timer
+                startLatencyTimer();
+                // Transition to new state: ACTIVE and notify PDU sent
+                setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
+
             }
             // Notify PDU
             notifyPduSent(pdu, START_RETURN_NAME, getLastPduSent());
@@ -612,7 +629,13 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
         // Stop the ability to add transfer frames: pending buffers in the executor queue will still be processed
         // and sent. As soon as the STOP-RETURN is sent, the state will go to READY and pending buffers will be discarded.
-        this.bufferActive.set(false);
+        this.bufferMutex.lock();
+        try {
+            this.bufferActive = false;
+            this.bufferChangedCondition.signalAll();
+        } finally {
+            this.bufferMutex.unlock();
+        }
 
         dispatchFromProvider(() -> {
             boolean resultOk = encodeAndSend(null, pdu, STOP_RETURN_NAME);
@@ -621,10 +644,14 @@ public class RafServiceInstanceProvider extends ServiceInstance {
                 // Stop the latency timer
                 stopLatencyTimer();
                 // Schedule this last part in the management thread
-                this.bufferUnderTransmission.set(false);
-                synchronized (this.bufferUnderConstruction) {
-                    this.bufferUnderConstruction.set(null);
-                    this.bufferUnderConstruction.notifyAll();
+                this.bufferMutex.lock();
+                try {
+                    this.bufferActive = false;
+                    this.bufferUnderTransmission = false;
+                    this.bufferUnderConstruction = null;
+                    this.bufferChangedCondition.signalAll();
+                } finally {
+                    this.bufferMutex.unlock();
                 }
 
                 // If all fine, transition to new state: READY and notify PDU sent
@@ -768,7 +795,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             return;
         }
 
-        BerType toSend = null;
+        BerType toSend;
         if (getSleVersion() <= 4) {
             RafGetParameterReturnV1toV4 pdu = new RafGetParameterReturnV1toV4();
             pdu.setInvokeId(invocation.getInvokeId());
@@ -1040,11 +1067,14 @@ public class RafServiceInstanceProvider extends ServiceInstance {
     protected void resetState() {
         stopLatencyTimer();
 
-        this.bufferActive.set(false);
-        this.bufferUnderTransmission.set(false);
-        synchronized (this.bufferUnderConstruction) {
-            this.bufferUnderConstruction.set(null);
-            this.bufferUnderConstruction.notifyAll();
+        this.bufferMutex.lock();
+        try {
+            this.bufferActive = false;
+            this.bufferUnderTransmission = false;
+            this.bufferUnderConstruction = null;
+            this.bufferChangedCondition.signalAll();
+        } finally {
+            this.bufferMutex.unlock();
         }
         // Read from configuration, updated via GET_PARAMETER
         this.latencyLimit = getRafConfiguration().getLatencyLimit();

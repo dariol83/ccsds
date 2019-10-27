@@ -246,8 +246,8 @@ public abstract class TmlChannel {
 					ByteBuffer reader = ByteBuffer.wrap(msg, 8, 4);
 					this.heartbeatTimer.set(reader.getShort());
 					this.deadFactor.set(reader.getShort());
-					if(LOG.isLoggable(Level.INFO)) {
-						LOG.info(String.format("HB interval set to %d, dead factor set to %s", this.heartbeatTimer.get(), this.deadFactor.get()));
+					if(LOG.isLoggable(Level.FINE)) {
+						LOG.fine(String.format("HB interval set to %d, dead factor set to %s", this.heartbeatTimer.get(), this.deadFactor.get()));
 					}
 					// start HBT timers, if needed
 					startHbtTimers();
