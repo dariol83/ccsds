@@ -130,7 +130,7 @@
             <!-- Everything below is optional -->
             <reporting-cycle>30</reporting-cycle>
 
-            <delivery-mode>COMPLETE_ONLINE</delivery-mode>
+            <delivery-mode>TIMELY_ONLINE</delivery-mode>
             <latency-limit>3</latency-limit>
             <transfer-buffer-size>10</transfer-buffer-size>
             <minimum-reporting-cycle>0</minimum-reporting-cycle>
@@ -151,7 +151,7 @@
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
             <responder-id>TEST-PROVIDER</responder-id>
-            <responder-port-id>TEST_TM_OLC</responder-port-id>
+            <responder-port-id>TEST_TM_ONC</responder-port-id>
             <return-timeout-period>120</return-timeout-period>
             <!-- Everything below is optional -->
             <reporting-cycle>30</reporting-cycle>

@@ -166,4 +166,24 @@ public class RcfServiceInstanceState extends ServiceInstanceState {
 		this.endTime = endTime;
 	}
 
+	@Override
+	public String toString() {
+		return "RcfServiceInstanceState{" +
+				"latencyLimit=" + getLatencyLimit() +
+				", permittedGvcid=" + getPermittedGvcid() +
+				", minReportingCycle=" + getMinReportingCycle() +
+				", reportingCycle=" + getReportingCycle() +
+				", transferBufferSize=" + getTransferBufferSize() +
+				", requestedGvcid=" + getRequestedGvcid() +
+				", deliveryMode=" + getDeliveryMode() +
+				", startTime=" + getStartTime() +
+				", endTime=" + getEndTime() +
+				", numFramesDelivered=" + getNumFramesDelivered() +
+				", frameSyncLockStatus=" + getFrameSyncLockStatus() +
+				", symbolSyncLockStatus=" + getSymbolSyncLockStatus() +
+				", subcarrierLockStatus=" + getSubcarrierLockStatus() +
+				", carrierLockStatus=" + getCarrierLockStatus() +
+				", productionStatus=" + getProductionStatus() +
+				"} " + super.toString();
+	}
 }
