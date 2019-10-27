@@ -50,7 +50,7 @@
         <raf>
             <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlc99</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
-            <initiator>PROVIDER</initiator><!-- workaround -->
+            <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
             <responder-id>TEST-PROVIDER</responder-id>
             <responder-port-id>TEST_TM_ONC</responder-port-id>
@@ -74,7 +74,7 @@
         <raf>
             <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlc90</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
-            <initiator>USER</initiator><!-- workaround -->
+            <initiator>PROVIDER</initiator>
             <initiator-id>TEST-PROVIDER</initiator-id>
             <responder-id>TEST-USER</responder-id>
             <responder-port-id>TEST_TM_ONC</responder-port-id>
@@ -98,7 +98,7 @@
         <raf>
             <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlt99</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
-            <initiator>PROVIDER</initiator><!-- workaround -->
+            <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
             <responder-id>TEST-PROVIDER</responder-id>
             <responder-port-id>TEST_TM_OLT</responder-port-id>

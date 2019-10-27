@@ -215,34 +215,34 @@ VcId                        ::= INTEGER (0 .. 63)
 
 RcfGetParameterV1toV4   ::= CHOICE
 {   parBufferSize           [0] SEQUENCE
-    { parameterName                 RcfParameterName (bufferSize)
+    { parameterName                 ParameterName (bufferSize)
     , parameterValue                IntPosShort
     }
 ,   parDeliveryMode         [1] SEQUENCE
-    { parameterName                 RcfParameterName (deliveryMode)
+    { parameterName                 ParameterName (deliveryMode)
     , parameterValue                RcfDeliveryMode
     }
 ,   parLatencyLimit         [2] SEQUENCE
-    { parameterName                 RcfParameterName (latencyLimit)
+    { parameterName                 ParameterName (latencyLimit)
     , parameterValue                CHOICE
       {   online                  [0] IntPosShort
       ,   offline                 [1] NULL
       }
     }
 ,   parPermittedGvcidSet    [3] SEQUENCE
-    { parameterName                 RcfParameterName (permittedGvcidSet)
+    { parameterName                 ParameterName (permittedGvcidSet)
     , parameterValue                GvcIdSetV1toV4
     }
 ,   parReportingCycle       [4] SEQUENCE
-    { parameterName                 RcfParameterName (reportingCycle)
+    { parameterName                 ParameterName (reportingCycle)
     , parameterValue                CurrentReportingCycle
     }
 ,   parReqGvcId             [5] SEQUENCE
-    { parameterName                 RcfParameterName (requestedGvcid)
-    , parameterValue                GvcId
+    { parameterName                 ParameterName (requestedGvcid)
+    , parameterValue                RequestedGvcId
     }
 ,   parReturnTimeout        [6] SEQUENCE
-    { parameterName                 RcfParameterName (returnTimeoutPeriod)
+    { parameterName                 ParameterName (returnTimeoutPeriod)
     , parameterValue                TimeoutPeriod
     }
 }

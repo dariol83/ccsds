@@ -440,9 +440,9 @@ public class RcfServiceInstance extends ServiceInstance {
 			}
 		} else {
 			// Dump warning with diagnostic
-			LOG.warning(getServiceInstanceIdentifier() + ": Get parameter return received, negative result: "
-					+ RcfDiagnosticsStrings.getGetParameterDiagnostic(pdu.getResult().getNegativeResult()));
-
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Get parameter return received, negative result: %s", getServiceInstanceIdentifier(), RcfDiagnosticsStrings.getGetParameterDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 		}
 		// Notify PDU
 		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
@@ -504,15 +504,14 @@ public class RcfServiceInstance extends ServiceInstance {
 							.getPeriodicReportingOn().intValue();
 				}
 			} else if (pdu.getResult().getPositiveResult().getParReqGvcId() != null) {
-				this.requestedGvcid = new GVCID(
-						pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getSpacecraftId()
-								.intValue(),
-						pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getVersionNumber()
-								.intValue(),
-						pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getVcId()
-								.getVirtualChannel() == null ? null
-										: pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue()
-												.getVcId().getVirtualChannel().intValue());
+				if (pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getUndefined() != null) {
+					this.requestedGvcid = null;
+				} else {
+					GvcId gvcid = pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid();
+					this.requestedGvcid = new GVCID(gvcid.getSpacecraftId().intValue(),
+							gvcid.getVersionNumber().intValue(), gvcid.getVcId().getVirtualChannel() == null ? null
+							: gvcid.getVcId().getVirtualChannel().intValue());
+				}
 			} else if (pdu.getResult().getPositiveResult().getParPermittedGvcidSet() != null) {
 				List<GVCID> theList = new LinkedList<>();
 				for (MasterChannelCompositionV1toV4 mcc : pdu.getResult().getPositiveResult().getParPermittedGvcidSet()
@@ -529,13 +528,16 @@ public class RcfServiceInstance extends ServiceInstance {
 				}
 				this.permittedGvcid = theList;
 			} else {
-				LOG.warning(getServiceInstanceIdentifier() + ": Get parameter return received, positive result but unknown/unsupported parameter found");
+				// Inform the user
+				if(LOG.isLoggable(Level.WARNING)) {
+					LOG.warning(String.format("%s: Get parameter return received, positive result but unknown/unsupported parameter found", getServiceInstanceIdentifier()));
+				}
 			}
 		} else {
 			// Dump warning with diagnostic
-			LOG.warning(getServiceInstanceIdentifier() + ": Get parameter return received, negative result: "
-					+ RcfDiagnosticsStrings.getGetParameterDiagnostic(pdu.getResult().getNegativeResult()));
-
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Get parameter return received, negative result: %s", getServiceInstanceIdentifier(), RcfDiagnosticsStrings.getGetParameterDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 		}
 		// Notify PDU
 		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
@@ -574,8 +576,9 @@ public class RcfServiceInstance extends ServiceInstance {
 		if (pdu.getResult().getPositiveResult() != null) {
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
 		} else {
-			LOG.warning(getServiceInstanceIdentifier() + ": Start return received, negative result: "
-					+ RcfDiagnosticsStrings.getStartDiagnostic(pdu.getResult().getNegativeResult()));
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Start return received, negative result: %s", getServiceInstanceIdentifier(), RcfDiagnosticsStrings.getStartDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 			// Reset requested GVCID
 			this.requestedGvcid = null;
 			// Set times
@@ -627,7 +630,9 @@ public class RcfServiceInstance extends ServiceInstance {
 			this.startTime = null;
 			this.endTime = null;
 		} else {
-			LOG.warning(getServiceInstanceIdentifier() + ": Stop return received, negative result: " + RcfDiagnosticsStrings.getDiagnostic(pdu.getResult().getNegativeResult()));
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Stop return received, negative result: %s", getServiceInstanceIdentifier(), RcfDiagnosticsStrings.getDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 			// If problems (result negative), ACTIVE
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
 		}
@@ -808,10 +813,14 @@ public class RcfServiceInstance extends ServiceInstance {
 		// PDU received
 		if (pdu.getResult().getPositiveResult() != null) {
 			//
-			LOG.info(getServiceInstanceIdentifier() + ": Schedule status report return received, positive result");
+			if(LOG.isLoggable(Level.INFO)) {
+				LOG.info(getServiceInstanceIdentifier() + ": Schedule status report return received, positive result");
+			}
 		} else {
-			LOG.warning(getServiceInstanceIdentifier() + ": Schedule status report return received, negative result: "
-					+ RcfDiagnosticsStrings.getScheduleStatusReportDiagnostic(pdu.getResult().getNegativeResult()));
+			//
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Schedule status report return received, negative result: %s", getServiceInstanceIdentifier(), RcfDiagnosticsStrings.getScheduleStatusReportDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 		}
 		// Notify PDU
 		notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());

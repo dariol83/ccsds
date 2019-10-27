@@ -204,6 +204,17 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         return this.sleVersion;
     }
 
+    /**
+     * This method can be overridden by subclasses to indicate that they implement a provider role. Currently,
+     * all the production-code of this library purely implement a user role. Provider-role implementations are
+     * available in the test location.
+     *
+     * @return true if the service instance is a user-side peer, false if it is a provider-side peer
+     */
+    protected boolean isUserSide() {
+        return true;
+    }
+
     protected final void dispatchFromUser(Runnable r) {
         if (!this.configured) {
             throw new IllegalStateException("Service instance not configured: call configure() before invoking any method");
@@ -401,8 +412,13 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             return;
         }
 
-        if (this.serviceInstanceConfiguration.getInitiator() == InitiatorRoleEnum.USER) {
+        if (this.serviceInstanceConfiguration.getInitiator() == InitiatorRoleEnum.USER && isUserSide()) {
             setError("Wait for bind requested, but service instance initiator is set to USER");
+            notifyStateUpdate();
+            return;
+        }
+        if (this.serviceInstanceConfiguration.getInitiator() == InitiatorRoleEnum.PROVIDER && !isUserSide()) {
+            setError("Wait for bind requested, but service instance initiator is set to PROVIDER");
             notifyStateUpdate();
             return;
         }
@@ -474,8 +490,13 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             return;
         }
 
-        if (this.serviceInstanceConfiguration.getInitiator() == InitiatorRoleEnum.PROVIDER) {
+        if (this.serviceInstanceConfiguration.getInitiator() == InitiatorRoleEnum.PROVIDER && isUserSide()) {
             setError("Bind requested, but service instance initiator is set to PROVIDER");
+            notifyStateUpdate();
+            return;
+        }
+        if (this.serviceInstanceConfiguration.getInitiator() == InitiatorRoleEnum.USER && !isUserSide()) {
+            setError("Bind requested, but service instance initiator is set to USER");
             notifyStateUpdate();
             return;
         }
@@ -691,13 +712,6 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         if (this.currentState != ServiceInstanceBindingStateEnum.READY) {
             setError("Unbind requested, but service instance is in state "
                     + this.currentState);
-            notifyStateUpdate();
-            return;
-        }
-
-        //
-        if (this.initMode != SI_INIT_MODE_UIB) {
-            setError("Unbind requested, but service instance is not in init mode UIB");
             notifyStateUpdate();
             return;
         }
@@ -939,14 +953,6 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
         // Notify the reception on the PDU
         notifyPduReceived(pdu, UNBIND_NAME, getLastPduReceived());
-
-        // Validate mode
-        if (this.initMode != SI_INIT_MODE_PIB) {
-            // Disconnect
-            disconnect("Unbind invocation received, but service instance is not in PIB mode");
-            notifyStateUpdate();
-            return;
-        }
 
         // Validate state
         if (this.currentState != ServiceInstanceBindingStateEnum.READY) {

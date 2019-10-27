@@ -60,6 +60,50 @@ public class RafTest {
     }
 
     @Test
+    void testWrongUIBPIB1() throws IOException {
+        // Provider
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
+        UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(2); // RAF
+        RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
+        rafProvider.configure();
+        rafProvider.waitForBind(true, null);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
+
+        // User
+        in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
+        UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(2); // RAF
+        RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
+        rafUser.configure();
+        rafUser.setUnbindReturnBehaviour(true);
+        rafUser.bind(2);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+    }
+
+    @Test
+    void testWrongUIBPIB2() throws IOException {
+        // User
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
+        UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(1); // RAF
+        RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
+        rafUser.configure();
+        rafUser.setUnbindReturnBehaviour(true);
+        rafUser.waitForBind(true, null);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
+
+        // Provider
+        in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
+        UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(1); // RAF
+        RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
+        rafProvider.configure();
+        rafProvider.bind(2);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
+    }
+
+    @Test
     void testProviderBindUnbind() throws IOException, InterruptedException {
         // User
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
@@ -81,6 +125,12 @@ public class RafTest {
         AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
         assertEquals(ServiceInstanceBindingStateEnum.READY, rafUser.getCurrentBindingState());
         AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
+        assertEquals(ServiceInstanceBindingStateEnum.READY, rafProvider.getCurrentBindingState());
+
+        // The next two calls must be ignored by the implementation
+        rafUser.waitForBind(true, null);
+        rafProvider.bind(2);
+        assertEquals(ServiceInstanceBindingStateEnum.READY, rafUser.getCurrentBindingState());
         assertEquals(ServiceInstanceBindingStateEnum.READY, rafProvider.getCurrentBindingState());
 
         rafProvider.unbind(UnbindReasonEnum.SUSPEND);
@@ -802,5 +852,15 @@ public class RafTest {
         assertTrue(RafDiagnosticsStrings.getDiagnostic(new Diagnostics(100)).endsWith("duplicateInvokeId"));
         assertTrue(RafDiagnosticsStrings.getDiagnostic(new Diagnostics(127)).endsWith("otherReason"));
         assertTrue(RafDiagnosticsStrings.getDiagnostic(new Diagnostics(101)).endsWith("<unknown value> 101"));
+    }
+
+    @Test
+    void testConfiguration() {
+        RafServiceInstanceConfiguration configuration = new RafServiceInstanceConfiguration();
+        RafServiceInstanceConfiguration configuration2 = new RafServiceInstanceConfiguration();
+        assertEquals(RafRequestedFrameQualityEnum.ALL_FRAMES, configuration.getRequestedFrameQuality());
+        assertNull(configuration.getStartTime());
+        assertNull(configuration.getEndTime());
+        assertEquals(configuration2.hashCode(), configuration.hashCode());
     }
 }

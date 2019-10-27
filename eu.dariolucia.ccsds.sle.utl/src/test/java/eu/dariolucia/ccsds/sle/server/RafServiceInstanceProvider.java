@@ -1095,4 +1095,9 @@ public class RafServiceInstanceProvider extends ServiceInstance {
     private RafServiceInstanceConfiguration getRafConfiguration() {
         return (RafServiceInstanceConfiguration) this.serviceInstanceConfiguration;
     }
+
+    @Override
+    protected boolean isUserSide() {
+        return false;
+    }
 }
