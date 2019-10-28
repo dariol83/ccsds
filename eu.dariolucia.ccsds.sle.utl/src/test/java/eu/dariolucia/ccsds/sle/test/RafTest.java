@@ -270,6 +270,13 @@ public class RafTest {
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(10, ((RafGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParBufferSize().getParameterValue().intValue());
 
+        // Ask for parameter delivery mode: expect positive return
+        recorder.getPduReceived().clear();
+        rafUser.getParameter(RafParameterEnum.DELIVERY_MODE);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertEquals(DeliveryModeEnum.COMPLETE_ONLINE.ordinal(), ((RafGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParDeliveryMode().getParameterValue().intValue());
+
         // Ask for parameter latency limit: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RafParameterEnum.LATENCY_LIMIT);
@@ -362,6 +369,13 @@ public class RafTest {
         rafUser.scheduleStatusReport(false, null);
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
+
+        // Ask for parameter reporting cycle: expect positive return, no value
+        recorder.getPduReceived().clear();
+        rafUser.getParameter(RafParameterEnum.REPORTING_CYCLE);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertNotNull(((RafGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOff());
 
         // Ask for parameter transfer buffer size: expect positive return
         recorder.getPduReceived().clear();
@@ -463,6 +477,13 @@ public class RafTest {
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
+        // Ask for parameter reporting cycle: expect positive return, no value
+        recorder.getPduReceived().clear();
+        rafUser.getParameter(RafParameterEnum.REPORTING_CYCLE);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertNotNull(((RafGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOff());
+
         // Ask for parameter transfer buffer size: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RafParameterEnum.BUFFER_SIZE);
@@ -476,6 +497,13 @@ public class RafTest {
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(3, ((RafGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOnline().intValue());
+
+        // Ask for parameter delivery mode: expect positive return
+        recorder.getPduReceived().clear();
+        rafUser.getParameter(RafParameterEnum.DELIVERY_MODE);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertEquals(DeliveryModeEnum.COMPLETE_ONLINE.ordinal(), ((RafGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParDeliveryMode().getParameterValue().intValue());
 
         // Ask for parameter permitted frame quality: expect positive return
         recorder.getPduReceived().clear();
@@ -497,6 +525,13 @@ public class RafTest {
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((RafGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParMinReportingCycle().getParameterValue().intValue());
+
+        // Ask for parameter permitted frame quality: expect positive return
+        recorder.getPduReceived().clear();
+        rafUser.getParameter(RafParameterEnum.PERMITTED_FRAME_QUALITY);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertNotNull(((RafGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPermittedFrameQuality().getParameterValue());
 
         // Schedule status report every 5 seconds
         recorder.getPduReceived().clear();
@@ -678,10 +713,18 @@ public class RafTest {
 
         // Simulate unlock
         recorder.getPduReceived().clear();
-        rafProvider.updateProductionStatus(Instant.now(), LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, ProductionStatusEnum.RUNNING);
+        rafProvider.updateProductionStatus(Instant.now(), LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, ProductionStatusEnum.INTERRUPTED);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        assertEquals(2, recorder.getPduReceived().size());
+        assertEquals(LockStatusEnum.OUT_OF_LOCK.ordinal(), ((RafSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getLossFrameSync().getSymbolSyncLockStatus().intValue());
+        assertEquals(ProductionStatusEnum.INTERRUPTED.ordinal(), ((RafSyncNotifyInvocation) recorder.getPduReceived().get(1)).getNotification().getProductionStatusChange().intValue());
+
+        // Simulate halt production status
+        recorder.getPduReceived().clear();
+        rafProvider.updateProductionStatus(Instant.now(), LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, ProductionStatusEnum.HALTED);
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
-        assertEquals(LockStatusEnum.OUT_OF_LOCK.ordinal(), ((RafSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getLossFrameSync().getSymbolSyncLockStatus().intValue());
+        assertEquals(ProductionStatusEnum.HALTED.ordinal(), ((RafSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getProductionStatusChange().intValue());
 
         // Stop
         recorder.getPduReceived().clear();
