@@ -41,8 +41,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.LinkedList;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class UtlConfigurationFileTest {
 
@@ -143,10 +142,15 @@ class UtlConfigurationFileTest {
         rocf.setReportingCycle(30);
         rocf.setMinReportingCycle(20);
         rocf.setStartTime(null);
+        assertNull(rocf.getStartTime());
         rocf.setEndTime(null);
+        assertNull(rocf.getEndTime());
         rocf.setPermittedGvcid(Arrays.asList(new GVCID(123, 1, null), new GVCID(123, 1, 0)));
+        assertNotNull(rocf.getPermittedGvcid());
         rocf.setPermittedTcVcids(Arrays.asList(0, 1));
+        assertNotNull(rocf.getPermittedTcVcids());
         rocf.setPermittedControlWordTypes(Arrays.asList(RocfControlWordTypeEnum.ALL, RocfControlWordTypeEnum.CLCW, RocfControlWordTypeEnum.NO_CLCW));
+        assertNotNull(rocf.getPermittedControlWordTypes());
         rocf.setPermittedUpdateModes(Arrays.asList(RocfUpdateModeEnum.CHANGE_BASED, RocfUpdateModeEnum.CONTINUOUS));
         rocf.setRequestedGvcid(new GVCID(123, 1, 0));
         rocf.setRequestedTcVcid(1);
@@ -156,6 +160,7 @@ class UtlConfigurationFileTest {
 
         // CLTU SI
         CltuServiceInstanceConfiguration cltuSi = new CltuServiceInstanceConfiguration();
+        cltuSi.setServiceInstanceIdentifier("test");
         cltuSi.setInitiator(InitiatorRoleEnum.USER);
         cltuSi.setInitiatorIdentifier("LOCAL-ID");
         cltuSi.setResponderIdentifier("PEER1");
@@ -174,11 +179,20 @@ class UtlConfigurationFileTest {
         cltuSi.setMinCltuDelay(2000);
         file.getServiceInstances().add(cltuSi);
 
+        assertEquals(30, cltuSi.getReportingCycle());
+        assertEquals(2, cltuSi.getServiceVersionNumber());
+
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         UtlConfigurationFile.save(file, bos);
         bos.flush();
         ByteArrayInputStream bin = new ByteArrayInputStream(bos.toByteArray());
         UtlConfigurationFile d1 = UtlConfigurationFile.load(bin);
         assertEquals(file, d1);
+        assertDoesNotThrow(() -> d1.hashCode());
+    }
+
+    @Test
+    void testWrongFiles() {
+        assertThrows(IOException.class, () -> UtlConfigurationFile.load(new ByteArrayInputStream("<test></test>".getBytes())));
     }
 }

@@ -17,7 +17,6 @@
 package eu.dariolucia.ccsds.sle.utl.config;
 
 import eu.dariolucia.ccsds.sle.utl.si.ApplicationIdentifierEnum;
-import eu.dariolucia.ccsds.sle.utl.si.DeliveryModeEnum;
 import eu.dariolucia.ccsds.sle.utl.si.InitiatorRoleEnum;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -162,10 +161,6 @@ public abstract class ServiceInstanceConfiguration {
     }
 
     public abstract ApplicationIdentifierEnum getType();
-
-    protected final DeliveryModeEnum parseDeliveryMode(String s) {
-        return DeliveryModeEnum.valueOf(s);
-    }
 
     @Override
     public String toString() {
