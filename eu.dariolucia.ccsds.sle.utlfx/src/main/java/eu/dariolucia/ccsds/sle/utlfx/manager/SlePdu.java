@@ -16,18 +16,13 @@
 
 package eu.dariolucia.ccsds.sle.utlfx.manager;
 
+import com.beanit.jasn1.ber.types.*;
+import javafx.scene.control.TreeItem;
+
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import com.beanit.jasn1.ber.types.*;
-import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
-import javafx.scene.control.TreeItem;
 
 public class SlePdu {
 

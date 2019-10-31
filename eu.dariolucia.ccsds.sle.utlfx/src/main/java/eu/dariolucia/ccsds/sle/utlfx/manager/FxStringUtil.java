@@ -37,7 +37,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 /**
  * This class is meant to collect printer functions for all the SLE PDUs.
