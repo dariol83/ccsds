@@ -50,7 +50,7 @@ public class SlePdu {
 		this.time = new Date();
 		this.error = error;
 		this.type = type;
-		this.details = PduStringUtil.instance().getPduDetails(pdu);
+		this.details = FxStringUtil.instance().getPduDetails(pdu);
 	}
 
 	public final Object getPdu() {

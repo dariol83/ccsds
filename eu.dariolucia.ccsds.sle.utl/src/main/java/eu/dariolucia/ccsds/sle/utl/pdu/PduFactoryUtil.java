@@ -400,7 +400,7 @@ public class PduFactoryUtil {
         int microsec = Short.toUnsignedInt(bb.getShort());
         // To move to the Java epoch, remove DAYS_FROM_1958_to_1970 days
         if (days < DAYS_FROM_1958_TO_1970) {
-            throw new IllegalArgumentException("Provided CDS time returns a number of days fewer than 1958-1970 difference: " + PduStringUtil.instance().toHexDump(cdsTime));
+            throw new IllegalArgumentException("Provided CDS time returns a number of days fewer than 1958-1970 difference: " + PduStringUtil.toHexDump(cdsTime));
         }
         days -= DAYS_FROM_1958_TO_1970;
         return new long[]{days * 86400L * 1000L + millisec, microsec};
@@ -421,7 +421,7 @@ public class PduFactoryUtil {
         long picosec = Integer.toUnsignedLong(bb.getInt());
 
         if (days < DAYS_FROM_1958_TO_1970) {
-            throw new IllegalArgumentException("Provided CDS pico-time returns a number of days fewer than 1958-1970 difference: " + PduStringUtil.instance().toHexDump(cdsTime));
+            throw new IllegalArgumentException("Provided CDS pico-time returns a number of days fewer than 1958-1970 difference: " + PduStringUtil.toHexDump(cdsTime));
         }
         days -= DAYS_FROM_1958_TO_1970;
         return new long[]{days * 86400L * 1000L + millisec, picosec};

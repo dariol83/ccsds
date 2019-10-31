@@ -19,23 +19,10 @@ package eu.dariolucia.ccsds.sle.server;
 import com.beanit.jasn1.ber.types.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.*;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.FrameQuality;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.PermittedFrameQualitySet;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.RequestedFrameQuality;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing.pdus.FrameOrNotification;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.AntennaId;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.CarrierLockStatus;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.CurrentReportingCycle;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.FrameSyncLockStatus;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.LockStatus;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.LockStatusReport;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.Notification;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.SymbolLockStatus;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.TimeoutPeriod;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.incoming.pdus.RcfGetParameterInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.incoming.pdus.RcfStartInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing.pdus.*;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.*;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
@@ -454,9 +441,9 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         // Antenna ID
         td.setAntennaId(new AntennaId());
         if (globalAntennaId) {
-            td.getAntennaId().setGlobalForm(new BerObjectIdentifier(PduStringUtil.instance().fromOIDString(antennaId)));
+            td.getAntennaId().setGlobalForm(new BerObjectIdentifier(PduStringUtil.fromOIDString(antennaId)));
         } else {
-            td.getAntennaId().setLocalForm(new BerOctetString(PduStringUtil.instance().fromHexDump(antennaId)));
+            td.getAntennaId().setLocalForm(new BerOctetString(PduStringUtil.fromHexDump(antennaId)));
         }
         // Data
         td.setData(new SpaceLinkDataUnit(spaceDataUnit));

@@ -29,11 +29,14 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.DiagnosticRcfGet;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.DiagnosticRcfStart;
 import eu.dariolucia.ccsds.sle.server.OperationRecorder;
+import eu.dariolucia.ccsds.sle.server.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.server.RcfServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
+import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
+import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstance;
 import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfDiagnosticsStrings;
 import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfParameterEnum;
 import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfServiceInstance;
@@ -56,6 +59,53 @@ public class RcfTest {
     static void setLogLevel() {
         Logger.getLogger("eu.dariolucia").setLevel(Level.ALL);
         Arrays.stream(Logger.getLogger("eu.dariolucia").getHandlers()).forEach(o -> o.setLevel(Level.ALL));
+    }
+
+
+    @Test
+    void testProviderBindUnbind() throws IOException, InterruptedException {
+        // User
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
+        UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
+        RcfServiceInstanceConfiguration rafConfigU = (RcfServiceInstanceConfiguration) userFile.getServiceInstances().get(6); // RCF
+        RcfServiceInstance rafUser = new RcfServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
+        rafUser.configure();
+        rafUser.setUnbindReturnBehaviour(true);
+        rafUser.waitForBind(true, null);
+
+        // Provider
+        in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
+        UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
+        RcfServiceInstanceConfiguration rafConfigP = (RcfServiceInstanceConfiguration) providerFile.getServiceInstances().get(6); // RCF
+        RcfServiceInstanceProvider rafProvider = new RcfServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
+        rafProvider.configure();
+
+        // Register listener
+        OperationRecorder recorder = new OperationRecorder();
+        rafUser.register(recorder);
+
+        rafProvider.bind(2);
+
+        AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
+        assertEquals(ServiceInstanceBindingStateEnum.READY, rafUser.getCurrentBindingState());
+        AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
+        assertEquals(ServiceInstanceBindingStateEnum.READY, rafProvider.getCurrentBindingState());
+
+        // The next two calls must be ignored by the implementation
+        rafUser.waitForBind(true, null);
+        rafProvider.bind(2);
+        assertEquals(ServiceInstanceBindingStateEnum.READY, rafUser.getCurrentBindingState());
+        assertEquals(ServiceInstanceBindingStateEnum.READY, rafProvider.getCurrentBindingState());
+
+        rafProvider.unbind(UnbindReasonEnum.SUSPEND);
+
+        AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND_WAIT);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND_WAIT, rafUser.getCurrentBindingState());
+        AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
+
+        rafUser.dispose();
+        rafProvider.dispose();
     }
 
     @Test
@@ -469,8 +519,6 @@ public class RcfTest {
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, recorder.getPduSent().size());
         assertNotNull(((RcfStartReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
-        assertNotNull(PduStringUtil.instance().getPduDetails(recorder.getPduReceived().get(0)));
-        assertNotNull(PduStringUtil.instance().getPduDetails(recorder.getPduSent().get(0)));
 
         // Test negative schedule status report
         recorder.getPduSent().clear();

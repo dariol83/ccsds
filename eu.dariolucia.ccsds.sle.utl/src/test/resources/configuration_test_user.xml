@@ -168,6 +168,29 @@
             <requested-global-VCID scid="100" tfvn="0" vcid="0" />
             <!-- start-time and end-time omitted: both null -->
         </rcf>
+        <rcf>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rcf=onlc01</service-instance-id>
+            <service-version-number>2</service-version-number> <!-- optional -->
+            <initiator>PROVIDER</initiator>
+            <initiator-id>TEST-PROVIDER</initiator-id>
+            <responder-id>TEST-USER</responder-id>
+            <responder-port-id>TEST_TM_ONC</responder-port-id>
+            <return-timeout-period>120</return-timeout-period>
+            <!-- Everything below is optional -->
+            <reporting-cycle>30</reporting-cycle>
+
+            <delivery-mode>COMPLETE_ONLINE</delivery-mode>
+            <latency-limit>3</latency-limit>
+            <transfer-buffer-size>10</transfer-buffer-size>
+            <minimum-reporting-cycle>0</minimum-reporting-cycle>
+            <permitted-global-VCID-set>
+                <gvcid scid="100" tfvn="0" vcid="0" />
+                <gvcid scid="100" tfvn="0" vcid="1" />
+            </permitted-global-VCID-set>
+
+            <requested-global-VCID scid="100" tfvn="0" vcid="0" />
+            <!-- start-time and end-time omitted: both null -->
+        </rcf>
         <rocf>
             <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rocf=onlt88</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->

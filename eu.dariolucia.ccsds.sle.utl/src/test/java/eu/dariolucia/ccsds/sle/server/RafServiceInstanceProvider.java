@@ -430,9 +430,9 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         // Antenna ID
         td.setAntennaId(new AntennaId());
         if (globalAntennaId) {
-            td.getAntennaId().setGlobalForm(new BerObjectIdentifier(PduStringUtil.instance().fromOIDString(antennaId)));
+            td.getAntennaId().setGlobalForm(new BerObjectIdentifier(PduStringUtil.fromOIDString(antennaId)));
         } else {
-            td.getAntennaId().setLocalForm(new BerOctetString(PduStringUtil.instance().fromHexDump(antennaId)));
+            td.getAntennaId().setLocalForm(new BerOctetString(PduStringUtil.fromHexDump(antennaId)));
         }
         // Data
         td.setData(new SpaceLinkDataUnit(spaceDataUnit));

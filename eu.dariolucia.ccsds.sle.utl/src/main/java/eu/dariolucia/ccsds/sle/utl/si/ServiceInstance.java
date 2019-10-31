@@ -632,7 +632,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             encodedPdu = encodePdu(pdu);
             String invokeStr = invokeId != null && invokeId >= 0 ? "(" + invokeId + ") " : "(<no invoke ID>) ";
             if (LOG.isLoggable(Level.FINE)) {
-                LOG.fine(String.format("%s: PDU %s%s encoded: %s", getServiceInstanceIdentifier(), invokeStr, name, PduStringUtil.instance().toHexDump(encodedPdu)));
+                LOG.fine(String.format("%s: PDU %s%s encoded: %s", getServiceInstanceIdentifier(), invokeStr, name, PduStringUtil.toHexDump(encodedPdu)));
             }
         } catch (IOException e1) {
             disconnect("Cannot encode PDU", e1, null);
@@ -935,7 +935,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             encodeAndSend(null, resp, BIND_RETURN_NAME);
             // Update state
             setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
-            notifyPduSent(pdu, BIND_RETURN_NAME, getLastPduSent());
+            notifyPduSent(resp, BIND_RETURN_NAME, getLastPduSent());
         } else {
             // Send response
             resp.getResult().setNegative(new BindDiagnostic(this.negativeBindReturnDiagnostics.getCode()));
@@ -997,7 +997,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             encodeAndSend(null, resp, UNBIND_RETURN_NAME);
             // Update state
             setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBOUND);
-            notifyPduSent(pdu, UNBIND_RETURN_NAME, getLastPduSent());
+            notifyPduSent(resp, UNBIND_RETURN_NAME, getLastPduSent());
             // We disconnect and wait again for bind if the reason was SUSPEND
             disconnect(null);
             if (pdu.getUnbindReason().intValue() == UnbindReasonEnum.SUSPEND.getCode()) {
@@ -1165,7 +1165,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     @Override
     public void onPduReceived(TmlChannel channel, final byte[] pdu) {
         if (LOG.isLoggable(Level.FINE)) {
-            LOG.fine(getServiceInstanceIdentifier() + ": PDU received: " + PduStringUtil.instance().toHexDump(pdu));
+            LOG.fine(getServiceInstanceIdentifier() + ": PDU received: " + PduStringUtil.toHexDump(pdu));
         }
         dispatchFromProvider(() -> {
             clearError();

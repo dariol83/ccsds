@@ -16,14 +16,10 @@
 
 package eu.dariolucia.ccsds.sle.test;
 
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Time;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.TimeCCSDS;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.TimeCCSDSpico;
-import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class PduStringUtilTest {
 
@@ -31,21 +27,8 @@ public class PduStringUtilTest {
     void testOIDStringConversion() {
         String oid1 = "1.112.33.22.1.232.1.232";
         String oid2 = "";
-        assertEquals(oid1, PduStringUtil.instance().toOIDString(PduStringUtil.instance().fromOIDString(oid1)));
-        assertEquals(oid2, PduStringUtil.instance().toOIDString(PduStringUtil.instance().fromOIDString(oid2)));
+        assertEquals(oid1, PduStringUtil.toOIDString(PduStringUtil.fromOIDString(oid1)));
+        assertEquals(oid2, PduStringUtil.toOIDString(PduStringUtil.fromOIDString(oid2)));
     }
 
-    @Test
-    void testTimeConversion() {
-        Time t = new Time();
-        assertEquals("<time format unknown>", PduStringUtil.instance().toString(t));
-        t.setCcsdsPicoFormat(new TimeCCSDSpico());
-        t.getCcsdsPicoFormat().value = PduFactoryUtil.buildCDSTimePico(3000, 3001);
-        assertTrue(PduStringUtil.instance().toString(t).endsWith("(pico)"));
-        t.setCcsdsPicoFormat(null);
-        t.setCcsdsFormat(new TimeCCSDS());
-        t.getCcsdsFormat().value = PduFactoryUtil.buildCDSTime(3000, 3001);
-        assertFalse(PduStringUtil.instance().toString(t).endsWith("(pico)"));
-        assertNotEquals("<time format unknown>", PduStringUtil.instance().toString(t));
-    }
 }
