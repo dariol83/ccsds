@@ -33,6 +33,7 @@ import eu.dariolucia.ccsds.sle.server.OperationRecorder;
 import eu.dariolucia.ccsds.sle.server.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafDiagnosticsStrings;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafParameterEnum;
@@ -120,12 +121,20 @@ public class RafTest {
         RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(2); // RAF
         RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
         rafProvider.configure();
+
+        // Register listener
+        OperationRecorder recorder = new OperationRecorder();
+        rafUser.register(recorder);
+
         rafProvider.bind(2);
 
         AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
         assertEquals(ServiceInstanceBindingStateEnum.READY, rafUser.getCurrentBindingState());
         AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
         assertEquals(ServiceInstanceBindingStateEnum.READY, rafProvider.getCurrentBindingState());
+
+        assertNotNull(PduStringUtil.instance().getPduDetails(recorder.getPduReceived().get(0)));
+        assertNotNull(PduStringUtil.instance().getPduDetails(recorder.getPduSent().get(0)));
 
         // The next two calls must be ignored by the implementation
         rafUser.waitForBind(true, null);
@@ -139,6 +148,10 @@ public class RafTest {
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND_WAIT, rafUser.getCurrentBindingState());
         AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
+
+        assertNotNull(PduStringUtil.instance().getPduDetails(recorder.getPduReceived().get(1)));
+        assertNotNull(PduStringUtil.instance().getPduDetails(recorder.getPduSent().get(1)));
+
         rafUser.dispose();
         rafProvider.dispose();
     }
@@ -606,6 +619,8 @@ public class RafTest {
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, recorder.getPduSent().size());
         assertNotNull(((RafStartReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
+        assertNotNull(PduStringUtil.instance().getPduDetails(recorder.getPduReceived().get(0)));
+        assertNotNull(PduStringUtil.instance().getPduDetails(recorder.getPduSent().get(0)));
 
         // Test negative schedule status report
         recorder.getPduSent().clear();

@@ -77,32 +77,31 @@ public class PduStringUtil {
 		return "Start return "
 				+ (t.getResult().getPositiveResult() != null
 				? "<positive>" : "<negative>: diagnostics code: common "
-				+ t.getResult().getNegativeResult().getCommon().intValue()
-				+ ", specific: " + t.getResult().getNegativeResult().getSpecific().intValue());
+				+ t.getResult().getNegativeResult().getCommon()
+				+ ", specific: " + t.getResult().getNegativeResult().getSpecific());
 	}
 
 	private String toStringRocfStartReturn(RocfStartReturn t) {
 		return "Start return "
 				+ (t.getResult().getPositiveResult() != null
 				? "<positive>" : "<negative>: diagnostics code: common "
-				+ t.getResult().getNegativeResult().getCommon().intValue()
-				+ ", specific: " + t.getResult().getNegativeResult().getSpecific().intValue());
+				+ t.getResult().getNegativeResult().getCommon()
+				+ ", specific: " + t.getResult().getNegativeResult().getSpecific());
 	}
 
 	private String toStringRafStartReturn(RafStartReturn t) {
 		return "Start return "
 				+ (t.getResult().getPositiveResult() != null
-				? "<positive>" : "<negative>: diagnostics code: common "
-				+ t.getResult().getNegativeResult().getCommon().intValue()
-				+ ", specific: " + t.getResult().getNegativeResult().getSpecific().intValue());
+				? "<positive>" : "<negative>: diagnostics code: common " + t.getResult().getNegativeResult().getCommon()
+				+ ", specific: " + t.getResult().getNegativeResult().getSpecific());
 	}
 
 	private String toStringCltuStartReturn(CltuStartReturn t) {
 		return "Start return "
 				+ (t.getResult().getPositiveResult() != null
 				? "<positive>" : "<negative>: diagnostics code: common "
-				+ t.getResult().getNegativeResult().getCommon().intValue()
-				+ ", specific: " + t.getResult().getNegativeResult().getSpecific().intValue());
+				+ t.getResult().getNegativeResult().getCommon()
+				+ ", specific: " + t.getResult().getNegativeResult().getSpecific());
 	}
 
 	private String toStringRcfStartInvoke(RcfStartInvocation t) {
@@ -163,7 +162,7 @@ public class PduStringUtil {
 			long[] tAsLong = PduFactoryUtil.buildTimeMillis(t.getCcsdsFormat().value);
 			return new Date(tAsLong[0]).toString();
 		} else if(t.getCcsdsPicoFormat() != null) {
-			long[] tAsLong = PduFactoryUtil.buildTimeMillisPico(t.getCcsdsFormat().value);
+			long[] tAsLong = PduFactoryUtil.buildTimeMillisPico(t.getCcsdsPicoFormat().value);
 			return new Date(tAsLong[0]).toString() + " (pico)";
 		} else {
 			return "<time format unknown>";

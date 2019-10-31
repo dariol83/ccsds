@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.sle.utl.config;
 
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.DeliveryMode;
 import eu.dariolucia.ccsds.sle.utl.config.cltu.CltuServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.network.PortMapping;
 import eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer;
@@ -86,8 +87,22 @@ class UtlConfigurationFileTest {
         file.getPeerConfiguration().setPortMappings(new LinkedList<>());
         file.getPeerConfiguration().getPortMappings().add(new PortMapping("PORT1", 4, 30, "127.0.0.1:23233", 0, 0));
         file.getPeerConfiguration().getPortMappings().add(new PortMapping("PORT2", 2, 40, "127.0.0.1:23234", 65536, 65536));
+        PortMapping pm = new PortMapping();
+        pm.setPortName("ThePort");
+        pm.setDeadFactor(4);
+        pm.setHeartbeatInterval(3);
+        pm.setAddress("127.0.0.1:20");
+        pm.setTcpRxBufferSize(32000);
+        pm.setTcpTxBufferSize(64000);
+        file.getPeerConfiguration().getPortMappings().add(pm);
         file.getPeerConfiguration().setRemotePeers(new LinkedList<>());
         file.getPeerConfiguration().getRemotePeers().add(new RemotePeer("PEER1", AuthenticationModeEnum.NONE, HashFunctionEnum.SHA_1, "AABBCCDDEEFF"));
+        RemotePeer peer2 = new RemotePeer();
+        peer2.setId("the_id");
+        peer2.setAuthenticationMode(AuthenticationModeEnum.ALL);
+        peer2.setAuthenticationHash(HashFunctionEnum.SHA_1);
+        peer2.setPassword("AABBCC");
+        file.getPeerConfiguration().getRemotePeers().add(peer2);
 
         file.setServiceInstances(new LinkedList<>());
         // RAF SI
@@ -109,6 +124,8 @@ class UtlConfigurationFileTest {
         rafSi.setRequestedFrameQuality(RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY);
         file.getServiceInstances().add(rafSi);
 
+        assertEquals(ApplicationIdentifierEnum.RAF, rafSi.getType());
+
         // RCF SI
         RcfServiceInstanceConfiguration rcfSi = new RcfServiceInstanceConfiguration();
         rcfSi.setInitiator(InitiatorRoleEnum.USER);
@@ -128,6 +145,9 @@ class UtlConfigurationFileTest {
         rcfSi.setRequestedGvcid(new GVCID(123, 1, 0));
         file.getServiceInstances().add(rcfSi);
 
+        assertEquals(ApplicationIdentifierEnum.RCF, rcfSi.getType());
+        assertNotNull(rcfSi.getRequestedGvcid());
+
         // ROCF SI
         RocfServiceInstanceConfiguration rocf = new RocfServiceInstanceConfiguration();
         rocf.setInitiator(InitiatorRoleEnum.USER);
@@ -137,10 +157,15 @@ class UtlConfigurationFileTest {
         rocf.setReturnTimeoutPeriod(60);
         rocf.setServiceVersionNumber(2);
         rocf.setDeliveryMode(DeliveryModeEnum.TIMELY_ONLINE);
+        assertEquals(DeliveryModeEnum.TIMELY_ONLINE, rocf.getDeliveryMode());
         rocf.setLatencyLimit(3);
+        assertEquals(3, rocf.getLatencyLimit());
         rocf.setTransferBufferSize(10);
+        assertEquals(10, rocf.getTransferBufferSize());
         rocf.setReportingCycle(30);
+        assertEquals(30, rocf.getReportingCycle());
         rocf.setMinReportingCycle(20);
+        assertEquals(20, rocf.getMinReportingCycle());
         rocf.setStartTime(null);
         assertNull(rocf.getStartTime());
         rocf.setEndTime(null);
@@ -152,11 +177,18 @@ class UtlConfigurationFileTest {
         rocf.setPermittedControlWordTypes(Arrays.asList(RocfControlWordTypeEnum.ALL, RocfControlWordTypeEnum.CLCW, RocfControlWordTypeEnum.NO_CLCW));
         assertNotNull(rocf.getPermittedControlWordTypes());
         rocf.setPermittedUpdateModes(Arrays.asList(RocfUpdateModeEnum.CHANGE_BASED, RocfUpdateModeEnum.CONTINUOUS));
+        assertNotNull(rocf.getPermittedUpdateModes());
         rocf.setRequestedGvcid(new GVCID(123, 1, 0));
+        assertNotNull(rocf.getRequestedGvcid());
         rocf.setRequestedTcVcid(1);
+        assertEquals(1, rocf.getRequestedTcVcid());
         rocf.setRequestedControlWordType(RocfControlWordTypeEnum.CLCW);
+        assertEquals(RocfControlWordTypeEnum.CLCW, rocf.getRequestedControlWordType());
         rocf.setRequestedUpdateMode(RocfUpdateModeEnum.CONTINUOUS);
+        assertEquals(RocfUpdateModeEnum.CONTINUOUS, rocf.getRequestedUpdateMode());
         file.getServiceInstances().add(rocf);
+
+        assertEquals(ApplicationIdentifierEnum.ROCF, rocf.getType());
 
         // CLTU SI
         CltuServiceInstanceConfiguration cltuSi = new CltuServiceInstanceConfiguration();
@@ -167,20 +199,31 @@ class UtlConfigurationFileTest {
         cltuSi.setResponderPortIdentifier("PORT2");
         cltuSi.setReturnTimeoutPeriod(60);
         cltuSi.setServiceVersionNumber(2);
+        assertEquals(2, cltuSi.getServiceVersionNumber());
         cltuSi.setBitlockRequired(false);
+        assertFalse(cltuSi.isBitlockRequired());
         cltuSi.setRfAvailableRequired(true);
+        assertTrue(cltuSi.isRfAvailableRequired());
         cltuSi.setProtocolAbortMode(CltuProtocolAbortModeEnum.ABORT_MODE);
+        assertEquals(CltuProtocolAbortModeEnum.ABORT_MODE, cltuSi.getProtocolAbortMode());
         cltuSi.setReportingCycle(30);
+        assertEquals(30, cltuSi.getReportingCycle());
         cltuSi.setMinReportingCycle(20);
+        assertEquals(20, cltuSi.getMinReportingCycle());
         cltuSi.setStartTime(null);
+        assertNull(cltuSi.getStartTime());
         cltuSi.setEndTime(null);
+        assertNull(cltuSi.getEndTime());
         cltuSi.setExpectedCltuIdentification(0);
+        assertEquals(0, cltuSi.getExpectedCltuIdentification());
         cltuSi.setMaxCltuLength(2000);
+        assertEquals(2000, cltuSi.getMaxCltuLength());
         cltuSi.setMinCltuDelay(2000);
+        assertEquals(2000, cltuSi.getMinCltuDelay());
         file.getServiceInstances().add(cltuSi);
 
-        assertEquals(30, cltuSi.getReportingCycle());
-        assertEquals(2, cltuSi.getServiceVersionNumber());
+        assertEquals(ApplicationIdentifierEnum.CLTU, cltuSi.getType());
+        assertDoesNotThrow(cltuSi::toString);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         UtlConfigurationFile.save(file, bos);

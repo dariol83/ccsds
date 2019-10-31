@@ -37,8 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RafPerformanceTest {
 
@@ -101,6 +100,10 @@ public class RafPerformanceTest {
 
         // Get data rate
         RateSample rs2 = rafUser.getCurrentRate();
+
+        assertNotNull(rs2.getInstant());
+        assertNotNull(rs2.getByteSample().getDate());
+        assertEquals(162, rs2.getByteSample().getTotalOutUnits());
 
         System.out.println("PDU  RX in 10 seconds: " + (rs2.getPduSample().getTotalInUnits() - rs1.getPduSample().getTotalInUnits()));
         System.out.println("PDU  RX data rate: " + rs2.getPduSample().getInRate());

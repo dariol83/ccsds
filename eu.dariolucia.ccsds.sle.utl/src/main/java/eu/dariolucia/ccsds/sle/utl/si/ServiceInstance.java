@@ -935,6 +935,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             encodeAndSend(null, resp, BIND_RETURN_NAME);
             // Update state
             setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
+            notifyPduSent(pdu, BIND_RETURN_NAME, getLastPduSent());
         } else {
             // Send response
             resp.getResult().setNegative(new BindDiagnostic(this.negativeBindReturnDiagnostics.getCode()));
@@ -996,6 +997,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             encodeAndSend(null, resp, UNBIND_RETURN_NAME);
             // Update state
             setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBOUND);
+            notifyPduSent(pdu, UNBIND_RETURN_NAME, getLastPduSent());
             // We disconnect and wait again for bind if the reason was SUSPEND
             disconnect(null);
             if (pdu.getUnbindReason().intValue() == UnbindReasonEnum.SUSPEND.getCode()) {

@@ -32,6 +32,7 @@ import eu.dariolucia.ccsds.sle.server.OperationRecorder;
 import eu.dariolucia.ccsds.sle.server.RcfServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
 import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfDiagnosticsStrings;
 import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfParameterEnum;
@@ -468,6 +469,8 @@ public class RcfTest {
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, recorder.getPduSent().size());
         assertNotNull(((RcfStartReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
+        assertNotNull(PduStringUtil.instance().getPduDetails(recorder.getPduReceived().get(0)));
+        assertNotNull(PduStringUtil.instance().getPduDetails(recorder.getPduSent().get(0)));
 
         // Test negative schedule status report
         recorder.getPduSent().clear();
