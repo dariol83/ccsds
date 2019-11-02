@@ -49,7 +49,7 @@ public class RafPerformanceTest {
         // Provider
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
         UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
-        RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(1); // RAF
+        RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(10); // RAF
         RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
         rafProvider.configure();
         rafProvider.waitForBind(true, null);
@@ -57,7 +57,7 @@ public class RafPerformanceTest {
         // User
         in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user.xml");
         UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
-        RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(1); // RAF
+        RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(10); // RAF
         RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
         rafUser.configure();
         // Register listener

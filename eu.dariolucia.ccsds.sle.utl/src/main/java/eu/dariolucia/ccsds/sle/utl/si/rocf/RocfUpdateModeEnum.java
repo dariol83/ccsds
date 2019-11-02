@@ -19,14 +19,4 @@ package eu.dariolucia.ccsds.sle.utl.si.rocf;
 public enum RocfUpdateModeEnum {
 	CONTINUOUS,
 	CHANGE_BASED;
-	
-	public static RocfUpdateModeEnum fromConfigurationString(String c) {
-		if(c.equals("continuous")) {
-			return RocfUpdateModeEnum.CONTINUOUS;
-		}
-		if(c.equals("changeBased")) {
-			return RocfUpdateModeEnum.CHANGE_BASED;
-		}
-		throw new IllegalArgumentException("Cannot recognize code for ROCF UpdateMode: " + c);
-	}
 }

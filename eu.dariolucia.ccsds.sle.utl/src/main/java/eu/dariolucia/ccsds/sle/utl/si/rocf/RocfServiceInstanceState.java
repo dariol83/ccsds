@@ -228,4 +228,32 @@ public class RocfServiceInstanceState extends ServiceInstanceState {
 	public final void setDeliveredOcfsNumber(int deliveredOcfsNumber) {
 		this.deliveredOcfsNumber = deliveredOcfsNumber;
 	}
+
+	@Override
+	public String toString() {
+		return "RocfServiceInstanceState{" +
+				"latencyLimit=" + getLatencyLimit() +
+				", permittedGvcid=" + getPermittedGvcid() +
+				", permittedTcVcid=" + getPermittedTcVcid() +
+				", permittedControlWordTypes=" + getPermittedControlWordTypes() +
+				", permittedUpdateModes=" + getPermittedUpdateModes() +
+				", minReportingCycle=" + getMinReportingCycle() +
+				", reportingCycle=" + getReportingCycle() +
+				", transferBufferSize=" + getTransferBufferSize() +
+				", requestedGvcid=" + getRequestedGvcid() +
+				", requestedTcVcid=" + getRequestedTcVcid() +
+				", requestedControlWordType=" + getRequestedControlWordType() +
+				", requestedUpdateMode=" + getRequestedUpdateMode() +
+				", deliveryMode=" + getDeliveryMode() +
+				", startTime=" + getStartTime() +
+				", endTime=" + getEndTime() +
+				", processedFrameNumber=" + getProcessedFrameNumber() +
+				", deliveredOcfsNumber=" + getDeliveredOcfsNumber() +
+				", frameSyncLockStatus=" + getFrameSyncLockStatus() +
+				", symbolSyncLockStatus=" + getSymbolSyncLockStatus() +
+				", subcarrierLockStatus=" + getSubcarrierLockStatus() +
+				", carrierLockStatus=" + getCarrierLockStatus() +
+				", productionStatus=" + getProductionStatus() +
+				"} " + super.toString();
+	}
 }

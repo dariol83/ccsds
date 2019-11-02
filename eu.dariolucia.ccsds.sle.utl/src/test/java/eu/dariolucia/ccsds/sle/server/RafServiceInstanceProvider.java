@@ -67,8 +67,8 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
     // Requested via STATUS_REPORT, updated externally (therefore they are protected via separate lock)
     private final ReentrantLock statusMutex = new ReentrantLock();
-    private int errorFreeFrameNumber = 0;
-    private int deliveredFrameNumber = 0;
+    private volatile int errorFreeFrameNumber = 0;
+    private volatile int deliveredFrameNumber = 0;
     private LockStatusEnum frameSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
     private LockStatusEnum symbolSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
     private LockStatusEnum subcarrierLockStatus = LockStatusEnum.OUT_OF_LOCK;
@@ -178,6 +178,24 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             // Add the PDU to the buffer, there must be free space by algorithm implementation
             addLossFrameSyncNotification(time, carrierLockStatus, subcarrierLockStatus, symbolSyncLockStatus);
             checkBuffer(true); // We send it immediately
+            return true;
+        } finally {
+            this.bufferMutex.unlock();
+        }
+    }
+
+    public boolean dataDiscarded() {
+        this.bufferMutex.lock();
+        try {
+            // If the state is not correct, say bye
+            if (!this.bufferActive) {
+                return false;
+            }
+            // Here we check immediately if the buffer is full: if so, we send it
+            checkBuffer(false);
+            // Add the PDU to the buffer, there must be free space by algorithm implementation
+            addDataDiscardedNotification();
+            checkBuffer(false); // No need to send it immediately
             return true;
         } finally {
             this.bufferMutex.unlock();
@@ -464,6 +482,12 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         FrameOrNotification fon = new FrameOrNotification();
         fon.setAnnotatedFrame(td);
         this.bufferUnderConstruction.getFrameOrNotification().add(fon);
+
+        // Assumed delivered
+        ++this.deliveredFrameNumber;
+        if(quality == FRAME_QUALITY_GOOD) {
+            ++this.errorFreeFrameNumber;
+        }
     }
 
     private void handleRafStartInvocation(RafStartInvocation invocation) {

@@ -38,8 +38,7 @@ import java.util.function.Supplier;
 /**
  * RAF encoding/decoding extension class.
  *
- * This class is meant for testing only: there are tweaks required in the provider-side configuration.
- * If you use this class to implement your own SLE provider, you have been warned.
+ * This class is meant for testing only. If you use this class to implement your own SLE provider, you have been warned.
  */
 public class RafProviderEncDec extends CommonEncDec {
 

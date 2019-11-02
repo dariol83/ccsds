@@ -22,10 +22,12 @@ public class SleOperationNames {
     public static final String START_RETURN_NAME = "START-RETURN";
     public static final String STOP_NAME = "STOP";
     public static final String STOP_RETURN_NAME = "STOP-RETURN";
-    public static final String SCHEDULE_STATUS_REPORT_RETURN_NAME = "SCHEDULE-STATUS-REPORT-RETURN";
     public static final String GET_PARAMETER_NAME = "GET-PARAMETER";
     public static final String GET_PARAMETER_RETURN_NAME = "GET-PARAMETER-RETURN";
     public static final String STATUS_REPORT_NAME = "STATUS-REPORT";
     public static final String SCHEDULE_STATUS_REPORT_NAME = "SCHEDULE-STATUS-REPORT";
+    public static final String SCHEDULE_STATUS_REPORT_RETURN_NAME = "SCHEDULE-STATUS-REPORT-RETURN";
     public static final String TRANSFER_BUFFER_NAME = "TRANSFER-BUFFER";
+    public static final String TRANSFER_DATA_NAME = "TRANSFER-DATA";
+    public static final String NOTIFY_NAME = "NOTIFY";
 }

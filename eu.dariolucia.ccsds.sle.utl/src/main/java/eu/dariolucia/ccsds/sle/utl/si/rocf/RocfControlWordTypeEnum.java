@@ -20,17 +20,4 @@ public enum RocfControlWordTypeEnum {
 	ALL,
 	CLCW,
 	NO_CLCW;
-	
-	public static RocfControlWordTypeEnum fromConfigurationString(String c) {
-		if(c.equals("all")) {
-			return RocfControlWordTypeEnum.ALL;
-		}
-		if(c.equals("clcw")) {
-			return RocfControlWordTypeEnum.CLCW;
-		}
-		if(c.equals("noclcw")) {
-			return RocfControlWordTypeEnum.NO_CLCW;
-		}
-		throw new IllegalArgumentException("Cannot recognize code for ROCF ControlWordType: " + c);
-	}
 }

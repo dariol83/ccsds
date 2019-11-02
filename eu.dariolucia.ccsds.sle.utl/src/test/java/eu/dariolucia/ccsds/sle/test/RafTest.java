@@ -121,6 +121,8 @@ public class RafTest {
         RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
         rafProvider.configure();
 
+        assertNotNull(rafUser.getServiceInstanceConfiguration());
+
         // Register listener
         OperationRecorder recorder = new OperationRecorder();
         rafUser.register(recorder);
@@ -676,13 +678,13 @@ public class RafTest {
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(ProductionStatusEnum.RUNNING.ordinal(), ((RafSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getProductionStatusChange().intValue());
 
-        // Send 10 transfer data, fast
+        // Send 100 transfer data, fast
         recorder.getPduReceived().clear();
-        for(int i = 0; i < 10; ++i) {
+        for(int i = 0; i < 100; ++i) {
             rafProvider.transferData(new byte[300], 0, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
         }
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 10);
-        assertEquals(10, recorder.getPduReceived().size());
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 100);
+        assertEquals(100, recorder.getPduReceived().size());
 
         // Send 5 transfer data now, fast, one bad, then wait for the buffer anyway (latency)
         recorder.getPduReceived().clear();
@@ -787,8 +789,11 @@ public class RafTest {
         for(int i = 0; i < 500; ++i) {
             rafProvider.transferData(new byte[300], 0, 0, Instant.now(), true,"AABBCCDD", false, new byte[10]);
         }
+        // One data discarded
+        rafProvider.dataDiscarded();
+
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() > 100);
-        assertTrue(recorder.getPduReceived().size() <= 500);
+        assertTrue(recorder.getPduReceived().size() <= 501);
         assertTrue(recorder.getPduReceived().size() > 0);
         // Wait the final delivery
         AwaitUtil.await(5000);
@@ -801,8 +806,7 @@ public class RafTest {
                 rafProvider.transferData(new byte[300], 0, 0, Instant.now(), true, "AABBCCDD", false, new byte[10]);
             }
         }
-        // AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 5);
-        // assertEquals(5, recorder.getPduReceived().size());
+
         AwaitUtil.await(4000);
         // Stop
         recorder.getPduReceived().clear();

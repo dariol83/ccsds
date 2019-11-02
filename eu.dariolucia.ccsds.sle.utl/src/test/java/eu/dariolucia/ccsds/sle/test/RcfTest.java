@@ -22,6 +22,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleAcknowledgement;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Diagnostics;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafGetParameterReturnV1toV4;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing.pdus.RcfGetParameterReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing.pdus.RcfGetParameterReturnV1toV4;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing.pdus.RcfStartReturn;
@@ -36,6 +37,7 @@ import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
+import eu.dariolucia.ccsds.sle.utl.si.raf.RafParameterEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstance;
 import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfDiagnosticsStrings;
 import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfParameterEnum;
@@ -305,6 +307,13 @@ public class RcfTest {
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(10, ((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParBufferSize().getParameterValue().intValue());
 
+        // Ask for parameter delivery mode: expect positive return
+        recorder.getPduReceived().clear();
+        rafUser.getParameter(RcfParameterEnum.DELIVERY_MODE);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertEquals(DeliveryModeEnum.TIMELY_ONLINE.ordinal(), ((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParDeliveryMode().getParameterValue().intValue());
+
         // Ask for parameter latency limit: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RcfParameterEnum.LATENCY_LIMIT);
@@ -418,6 +427,13 @@ public class RcfTest {
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(3, ((RcfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOnline().intValue());
+
+        // Ask for parameter delivery mode: expect positive return
+        recorder.getPduReceived().clear();
+        rafUser.getParameter(RcfParameterEnum.DELIVERY_MODE);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        assertEquals(1, recorder.getPduReceived().size());
+        assertEquals(DeliveryModeEnum.TIMELY_ONLINE.ordinal(), ((RcfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParDeliveryMode().getParameterValue().intValue());
 
         // Ask for parameter requested GVCID: expect positive return, undefined result
         recorder.getPduReceived().clear();
@@ -590,15 +606,15 @@ public class RcfTest {
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid());
 
-        // Send 10 transfer data, fast
+        // Send 100 transfer data, fast
         byte[] frame = new byte[]{0x06, (byte) 0x42, 0x00, 0x00}; // TFVN 0, SCID 100, VCID 1
         byte[] badFrame = new byte[]{0x06, (byte) 0x92, 0x00, 0x00}; // TFVN 0, SCID wrong, VCID 1
         recorder.getPduReceived().clear();
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 100; ++i) {
             rafProvider.transferData(frame, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
         }
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 10);
-        assertEquals(10, recorder.getPduReceived().size());
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 100);
+        assertEquals(100, recorder.getPduReceived().size());
 
         // Send 5 transfer data now, fast, one not in the GVCID, then wait for the buffer anyway (latency)
         recorder.getPduReceived().clear();
@@ -698,8 +714,11 @@ public class RcfTest {
         for (int i = 0; i < 500; ++i) {
             rafProvider.transferData(frame, 0, Instant.now(), true, "AABBCCDD", false, new byte[10]);
         }
+        // One data discarded
+        rafProvider.dataDiscarded();
+
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() > 100);
-        assertTrue(recorder.getPduReceived().size() <= 500);
+        assertTrue(recorder.getPduReceived().size() <= 501);
         assertTrue(recorder.getPduReceived().size() > 0);
         // Wait the final delivery
         AwaitUtil.await(5000);
