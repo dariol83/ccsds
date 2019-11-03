@@ -42,27 +42,14 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static eu.dariolucia.ccsds.sle.utl.si.SleOperationNames.*;
+
 /**
  * One object of this class represents an CLTU Service Instance.
  */
 public class CltuServiceInstance extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(CltuServiceInstance.class.getName());
-
-	private static final String START_NAME = "START";
-	private static final String STOP_NAME = "STOP";
-	private static final String SCHEDULE_STATUS_REPORT_NAME = "SCHEDULE-STATUS-REPORT";
-	private static final String TRANSFER_DATA_NAME = "TRANSFER-DATA";
-	private static final String THROW_EVENT_NAME = "THROW-EVENT";
-	private static final String GET_PARAMETER_NAME = "GET-PARAMETER";
-	private static final String GET_PARAMETER_RETURN_NAME = "GET-PARAMETER-RETURN";
-	private static final String START_RETURN_NAME = "START-RETURN";
-	private static final String STOP_RETURN_NAME = "STOP-RETURN";
-	private static final String STATUS_REPORT_NAME = "STATUS-REPORT";
-	private static final String TRANSFER_DATA_RETURN_NAME = "TRANSFER-DATA-RETURN";
-	private static final String ASYNC_NOTIFY_NAME = "ASYNC-NOTIFY";
-	private static final String THROW_EVENT_RETURN_NAME = "THROW-EVENT-RETURN";
-	private static final String SCHEDULE_STATUS_REPORT_RETURN_NAME = "SCHEDULE-STATUS-REPORT-RETURN";
 
 	// Configuration or GET_PARAMETER
 	private Integer maxCltuLength;
@@ -486,7 +473,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		}
 	}
 
-	protected void handleCltuGetParameterReturn(CltuGetParameterReturn pdu) {
+	private void handleCltuGetParameterReturn(CltuGetParameterReturn pdu) {
 		clearError();
 
 		// Validate state
@@ -610,7 +597,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleCltuGetParameterV1toV3Return(CltuGetParameterReturnV1toV3 pdu) {
+	private void handleCltuGetParameterV1toV3Return(CltuGetParameterReturnV1toV3 pdu) {
 		clearError();
 
 		// Validate state
@@ -696,7 +683,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleCltuGetParameterV4Return(CltuGetParameterReturnV4 pdu) {
+	private void handleCltuGetParameterV4Return(CltuGetParameterReturnV4 pdu) {
 		clearError();
 
 		// Validate state
@@ -805,7 +792,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleCltuStartReturn(CltuStartReturn pdu) {
+	private void handleCltuStartReturn(CltuStartReturn pdu) {
 		clearError();
 
 		// Validate state
@@ -850,7 +837,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleCltuStopReturn(SleAcknowledgement pdu) {
+	private void handleCltuStopReturn(SleAcknowledgement pdu) {
 		clearError();
 
 		// Validate state
@@ -894,7 +881,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleCltuStatusReport(CltuStatusReportInvocation pdu) {
+	private void handleCltuStatusReport(CltuStatusReportInvocation pdu) {
 		clearError();
 
 		// Validate state
@@ -932,7 +919,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleCltuTransferDataReturn(CltuTransferDataReturn pdu) {
+	private void handleCltuTransferDataReturn(CltuTransferDataReturn pdu) {
 		clearError();
 
 		// Validate state
@@ -979,14 +966,14 @@ public class CltuServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleCltuAsyncNotify(CltuAsyncNotifyInvocation pdu) {
+	private void handleCltuAsyncNotify(CltuAsyncNotifyInvocation pdu) {
 		clearError();
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE
 				&& this.currentState != ServiceInstanceBindingStateEnum.READY) {
 			disconnect("Async notify received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, ASYNC_NOTIFY_NAME, getLastPduReceived());
+			notifyPduReceived(pdu, NOTIFY_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -997,7 +984,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// If so, verify credentials.
 		if (!authenticate(pdu.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
 			disconnect("Async notify received, but wrong credentials");
-			notifyPduReceived(pdu, ASYNC_NOTIFY_NAME, getLastPduReceived());
+			notifyPduReceived(pdu, NOTIFY_NAME, getLastPduReceived());
 			notifyStateUpdate();
 			return;
 		}
@@ -1009,12 +996,12 @@ public class CltuServiceInstance extends ServiceInstance {
 		this.notification = mapNotification(pdu.getCltuNotification());
 
 		// Notify PDU
-		notifyPduReceived(pdu, ASYNC_NOTIFY_NAME, getLastPduReceived());
+		notifyPduReceived(pdu, NOTIFY_NAME, getLastPduReceived());
 		// Generate state and notify update
 		notifyStateUpdate();
 	}
 
-	protected void handleCltuThrowEventReturn(CltuThrowEventReturn pdu) {
+	private void handleCltuThrowEventReturn(CltuThrowEventReturn pdu) {
 		clearError();
 
 		// Validate state
@@ -1059,7 +1046,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleCltuScheduleStatusReportReturn(SleScheduleStatusReportReturn pdu) {
+	private void handleCltuScheduleStatusReportReturn(SleScheduleStatusReportReturn pdu) {
 		clearError();
 
 		// Validate state
@@ -1255,17 +1242,17 @@ public class CltuServiceInstance extends ServiceInstance {
 		this.reportingCycle = null;
 		this.returnTimeoutPeriod = getCltuConfiguration().getReturnTimeoutPeriod();
 
-		this.acquisitionSequenceLength = null;
-		this.clcwGlobalVcId = null; // can be null -> not configured
-		this.clcwPhysicalChannel = null; // can be null -> not configured
+		this.acquisitionSequenceLength = getCltuConfiguration().getAcquisitionSequenceLength();
+		this.clcwGlobalVcId = getCltuConfiguration().getClcwGlobalVcid(); // can be null -> not configured
+		this.clcwPhysicalChannel = getCltuConfiguration().getClcwPhysicalChannel(); // can be null -> not configured
 		this.cltuIdentification = null;
 		this.eventInvocationIdentification = null;
-		this.modulationFrequency = null;
-		this.modulationIndex = null;
-		this.notificationMode = null;
-		this.plop1IdleSequenceLength = null;
-		this.plopInEffect = null;
-		this.subcarrierToBitRateRation = null;
+		this.modulationFrequency = getCltuConfiguration().getModulationFrequency();
+		this.modulationIndex = getCltuConfiguration().getModulationIndex();
+		this.notificationMode = getCltuConfiguration().getNotificationMode();
+		this.plop1IdleSequenceLength = getCltuConfiguration().getPlop1idleSequenceLength();
+		this.plopInEffect = getCltuConfiguration().getPlopInEffect();
+		this.subcarrierToBitRateRation = getCltuConfiguration().getSubcarrierToBitrateRatio();
 		this.deliveryMode = DeliveryModeEnum.FWD_ONLINE;
 
 		// START

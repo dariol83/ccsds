@@ -42,6 +42,8 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static eu.dariolucia.ccsds.sle.utl.si.SleOperationNames.*;
+
 /**
  * This class is the core class of the SLE User Test Library. In an SLE association it represents the user peer: it
  * can act as initiator (User Initiated Bind) or responder (Provider Initiated Bind). It is the entry point to send
@@ -67,11 +69,6 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     private static final int SI_INIT_MODE_PIB = 2;
 
     private static final Logger LOG = Logger.getLogger(ServiceInstance.class.getName());
-
-    private static final String BIND_RETURN_NAME = "BIND-RETURN";
-    private static final String UNBIND_NAME = "UNBIND";
-    private static final String BIND_NAME = "BIND";
-    private static final String UNBIND_RETURN_NAME = "UNBIND-RETURN";
 
     private final ExecutorService dispatcher;
     private final ExecutorService notifier;

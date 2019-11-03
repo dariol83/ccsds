@@ -39,25 +39,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static eu.dariolucia.ccsds.sle.utl.si.SleOperationNames.*;
+
 /**
  * One object of this class represents an RAF Service Instance.
  */
 public class RafServiceInstance extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(RafServiceInstance.class.getName());
-
-	private static final String START_NAME = "START";
-	private static final String STOP_NAME = "STOP";
-	private static final String SCHEDULE_STATUS_REPORT_NAME = "SCHEDULE-STATUS-REPORT";
-	private static final String GET_PARAMETER_NAME = "GET-PARAMETER";
-	private static final String GET_PARAMETER_RETURN_NAME = "GET-PARAMETER-RETURN";
-	private static final String START_RETURN_NAME = "START-RETURN";
-	private static final String STOP_RETURN_NAME = "STOP-RETURN";
-	private static final String STATUS_REPORT_NAME = "STATUS-REPORT";
-	private static final String TRANSFER_BUFFER_NAME = "TRANSFER-BUFFER";
-	private static final String TRANSFER_DATA_NAME = "TRANSFER-DATA";
-	private static final String NOTIFY_NAME = "NOTIFY";
-	private static final String SCHEDULE_STATUS_REPORT_RETURN_NAME = "SCHEDULE-STATUS-REPORT-RETURN";
 
 	// Read from configuration, updated via GET_PARAMETER
 	private Integer latencyLimit; // NULL if offline, otherwise a value
@@ -345,7 +334,7 @@ public class RafServiceInstance extends ServiceInstance {
 		}
 	}
 
-	protected void handleRafGetParameterReturn(RafGetParameterReturn pdu) {
+	private void handleRafGetParameterReturn(RafGetParameterReturn pdu) {
 		clearError();
 
 		// Validate state
@@ -427,7 +416,7 @@ public class RafServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRafGetParameterV1toV4Return(RafGetParameterReturnV1toV4 pdu) {
+	private void handleRafGetParameterV1toV4Return(RafGetParameterReturnV1toV4 pdu) {
 		clearError();
 
 		// Validate state
@@ -498,7 +487,7 @@ public class RafServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRafStartReturn(RafStartReturn pdu) {
+	private void handleRafStartReturn(RafStartReturn pdu) {
 		clearError();
 
 		// Validate state
@@ -546,7 +535,7 @@ public class RafServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRafStopReturn(SleAcknowledgement pdu) {
+	private void handleRafStopReturn(SleAcknowledgement pdu) {
 		clearError();
 
 		// Validate state
@@ -592,7 +581,7 @@ public class RafServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRafStatusReport(RafStatusReportInvocation pdu) {
+	private void handleRafStatusReport(RafStatusReportInvocation pdu) {
 		clearError();
 
 		// Validate state
@@ -629,7 +618,7 @@ public class RafServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRafTransferBuffer(RafTransferBuffer pdu) {
+	private void handleRafTransferBuffer(RafTransferBuffer pdu) {
 		clearError();
 
 		// Validate state
@@ -699,7 +688,7 @@ public class RafServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRafStatusReportV1toV2(RafStatusReportInvocationV1toV2 pdu) {
+	private void handleRafStatusReportV1toV2(RafStatusReportInvocationV1toV2 pdu) {
 		clearError();
 
 		// Validate state
@@ -736,7 +725,7 @@ public class RafServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRafScheduleStatusReportReturn(SleScheduleStatusReportReturn pdu) {
+	private void handleRafScheduleStatusReportReturn(SleScheduleStatusReportReturn pdu) {
 		clearError();
 
 		// Validate state

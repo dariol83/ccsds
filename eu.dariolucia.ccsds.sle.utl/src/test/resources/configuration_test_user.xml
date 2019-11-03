@@ -34,17 +34,25 @@
             <responder-id>TEST-PROVIDER</responder-id>
             <responder-port-id>TEST_TC</responder-port-id>
             <return-timeout-period>120</return-timeout-period>
-            <!-- Everything below is optional -->
-            <reporting-cycle>30</reporting-cycle>
-
+            <!-- Everything below is service specific -->
+            <reporting-cycle>30</reporting-cycle> <!-- hint -->
             <maximum-cltu-length>1000</maximum-cltu-length>
             <minimum-cltu-delay>5000</minimum-cltu-delay>
-            <bit-lock-required>false</bit-lock-required>
-            <rf-available-required>false</rf-available-required>
+            <bit-lock-required>true</bit-lock-required>
+            <rf-available-required>true</rf-available-required>
             <protocol-abort-mode>ABORT_MODE</protocol-abort-mode>
             <minimum-reporting-cycle>0</minimum-reporting-cycle>
-
-            <expected-cltu-identification>1</expected-cltu-identification>
+            <acquisition-sequence-length>100</acquisition-sequence-length>
+            <clcw-physical-channel>CLCW_PH_CH</clcw-physical-channel>
+            <clcw-global-vcid>
+                <gvcid scid="100" tfvn="0" vcid="0" />
+            </clcw-global-vcid>
+            <modulation-frequency>700</modulation-frequency>
+            <modulation-index>10</modulation-index>
+            <notification-mode>IMMEDIATE</notification-mode>
+            <plop-1-idle-sequence-length>40</plop-1-idle-sequence-length>
+            <plop-in-effect>PLOP2</plop-in-effect>
+            <subcarrier-to-bit-rate-ratio>1</subcarrier-to-bit-rate-ratio>
             <!-- start-time and end-time omitted: both null -->
         </cltu>
         <raf>

@@ -39,25 +39,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static eu.dariolucia.ccsds.sle.utl.si.SleOperationNames.*;
+
 /**
  * One object of this class represents an ROCF Service Instance.
  */
 public class RocfServiceInstance extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(RocfServiceInstance.class.getName());
-
-	private static final String START_NAME = "START";
-	private static final String STOP_NAME = "STOP";
-	private static final String SCHEDULE_STATUS_REPORT_NAME = "SCHEDULE-STATUS-REPORT";
-	private static final String GET_PARAMETER_NAME = "GET-PARAMETER";
-	private static final String GET_PARAMETER_RETURN_NAME = "GET-PARAMETER-RETURN";
-	private static final String START_RETURN_NAME = "START-RETURN";
-	private static final String STOP_RETURN_NAME = "STOP-RETURN";
-	private static final String STATUS_REPORT_NAME = "STATUS-REPORT";
-	private static final String TRANSFER_BUFFER_NAME = "TRANSFER-BUFFER";
-	private static final String TRANSFER_DATA_NAME = "TRANSFER-DATA";
-	private static final String NOTIFY_NAME = "NOTIFY";
-	private static final String SCHEDULE_STATUS_REPORT_RETURN_NAME = "SCHEDULE-STATUS-REPORT-RETURN";
 
 	// Read from configuration, updated via GET_PARAMETER
 	private Integer latencyLimit; // NULL if offline, otherwise a value

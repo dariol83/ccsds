@@ -39,25 +39,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static eu.dariolucia.ccsds.sle.utl.si.SleOperationNames.*;
+
 /**
  * One object of this class represents an RCF Service Instance.
  */
 public class RcfServiceInstance extends ServiceInstance {
 
 	private static final Logger LOG = Logger.getLogger(RcfServiceInstance.class.getName());
-
-	private static final String START_NAME = "START";
-	private static final String STOP_NAME = "STOP";
-	private static final String SCHEDULE_STATUS_REPORT_NAME = "SCHEDULE-STATUS-REPORT";
-	private static final String GET_PARAMETER_NAME = "GET-PARAMETER";
-	private static final String GET_PARAMETER_RETURN_NAME = "GET-PARAMETER-RETURN";
-	private static final String START_RETURN_NAME = "START-RETURN";
-	private static final String STOP_RETURN_NAME = "STOP-RETURN";
-	private static final String STATUS_REPORT_NAME = "STATUS-REPORT";
-	private static final String TRANSFER_BUFFER_NAME = "TRANSFER-BUFFER";
-	private static final String TRANSFER_DATA_NAME = "TRANSFER-DATA";
-	private static final String NOTIFY_NAME = "NOTIFY";
-	private static final String SCHEDULE_STATUS_REPORT_RETURN_NAME = "SCHEDULE-STATUS-REPORT-RETURN";
 
 	// Read from configuration, updated via GET_PARAMETER
 	private Integer latencyLimit; // NULL if offline, otherwise a value
@@ -353,7 +342,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		}
 	}
 
-	protected void handleRcfGetParameterReturn(RcfGetParameterReturn pdu) {
+	private void handleRcfGetParameterReturn(RcfGetParameterReturn pdu) {
 		clearError();
 
 		// Validate state
@@ -450,7 +439,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRcfGetParameterV1toV4Return(RcfGetParameterReturnV1toV4 pdu) {
+	private void handleRcfGetParameterV1toV4Return(RcfGetParameterReturnV1toV4 pdu) {
 		clearError();
 
 		// Validate state
@@ -545,7 +534,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRcfStartReturn(RcfStartReturn pdu) {
+	private void handleRcfStartReturn(RcfStartReturn pdu) {
 		clearError();
 
 		// Validate state
@@ -594,7 +583,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRcfStopReturn(SleAcknowledgement pdu) {
+	private void handleRcfStopReturn(SleAcknowledgement pdu) {
 		clearError();
 
 		// Validate state
@@ -642,7 +631,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRcfStatusReport(RcfStatusReportInvocation pdu) {
+	private void handleRcfStatusReport(RcfStatusReportInvocation pdu) {
 		clearError();
 
 		// Validate state
@@ -678,7 +667,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRcfTransferBuffer(RcfTransferBuffer pdu) {
+	private void handleRcfTransferBuffer(RcfTransferBuffer pdu) {
 		clearError();
 
 		// Validate state
@@ -747,7 +736,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRcfStatusReportV1(RcfStatusReportInvocationV1 pdu) {
+	private void handleRcfStatusReportV1(RcfStatusReportInvocationV1 pdu) {
 		clearError();
 
 		// Validate state
@@ -783,7 +772,7 @@ public class RcfServiceInstance extends ServiceInstance {
 		notifyStateUpdate();
 	}
 
-	protected void handleRcfScheduleStatusReportReturn(SleScheduleStatusReportReturn pdu) {
+	private void handleRcfScheduleStatusReportReturn(SleScheduleStatusReportReturn pdu) {
 		clearError();
 
 		// Validate state

@@ -24,6 +24,8 @@ import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rocf.RocfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
+import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuNotificationModeEnum;
+import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuPlopInEffectEnum;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuProtocolAbortModeEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafRequestedFrameQualityEnum;
 import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfControlWordTypeEnum;
@@ -214,12 +216,19 @@ class UtlConfigurationFileTest {
         assertNull(cltuSi.getStartTime());
         cltuSi.setEndTime(null);
         assertNull(cltuSi.getEndTime());
-        cltuSi.setExpectedCltuIdentification(0);
-        assertEquals(0, cltuSi.getExpectedCltuIdentification());
         cltuSi.setMaxCltuLength(2000);
         assertEquals(2000, cltuSi.getMaxCltuLength());
         cltuSi.setMinCltuDelay(2000);
         assertEquals(2000, cltuSi.getMinCltuDelay());
+        cltuSi.setAcquisitionSequenceLength(300);
+        cltuSi.setClcwGlobalVcid(new GVCID(100,0,1));
+        cltuSi.setClcwPhysicalChannel("CLCW_PH_CH");
+        cltuSi.setModulationFrequency(70000000L);
+        cltuSi.setModulationIndex(700);
+        cltuSi.setNotificationMode(CltuNotificationModeEnum.IMMEDIATE);
+        cltuSi.setPlop1idleSequenceLength(40);
+        cltuSi.setPlopInEffect(CltuPlopInEffectEnum.PLOP2);
+        cltuSi.setSubcarrierToBitrateRatio(1);
         file.getServiceInstances().add(cltuSi);
 
         assertEquals(ApplicationIdentifierEnum.CLTU, cltuSi.getType());
@@ -231,7 +240,7 @@ class UtlConfigurationFileTest {
         ByteArrayInputStream bin = new ByteArrayInputStream(bos.toByteArray());
         UtlConfigurationFile d1 = UtlConfigurationFile.load(bin);
         assertEquals(file, d1);
-        assertDoesNotThrow(() -> d1.hashCode());
+        assertDoesNotThrow(d1::hashCode);
     }
 
     @Test

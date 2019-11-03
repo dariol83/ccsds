@@ -14,10 +14,18 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.server;
+package eu.dariolucia.ccsds.sle.utl.si;
 
 public class SleOperationNames {
 
+    private SleOperationNames() {
+        // Private constructor
+    }
+
+    public static final String BIND_NAME = "BIND";
+    public static final String BIND_RETURN_NAME = "BIND-RETURN";
+    public static final String UNBIND_NAME = "UNBIND";
+    public static final String UNBIND_RETURN_NAME = "UNBIND-RETURN";
     public static final String START_NAME = "START";
     public static final String START_RETURN_NAME = "START-RETURN";
     public static final String STOP_NAME = "STOP";
@@ -30,4 +38,7 @@ public class SleOperationNames {
     public static final String TRANSFER_BUFFER_NAME = "TRANSFER-BUFFER";
     public static final String TRANSFER_DATA_NAME = "TRANSFER-DATA";
     public static final String NOTIFY_NAME = "NOTIFY";
+    public static final String TRANSFER_DATA_RETURN_NAME = "TRANSFER-DATA-RETURN";
+    public static final String THROW_EVENT_NAME = "THROW-EVENT";
+    public static final String THROW_EVENT_RETURN_NAME = "THROW-EVENT-RETURN";
 }
