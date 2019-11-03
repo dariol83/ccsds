@@ -192,7 +192,8 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         this.productionStatus = productionStatus;
         this.uplinkStatus = uplinkStatus;
         this.bufferAvailable = bufferAvailable;
-        if(getCurrentBindingState() == ServiceInstanceBindingStateEnum.ACTIVE && previousProductionStatus != this.productionStatus) {
+        if((getCurrentBindingState() == ServiceInstanceBindingStateEnum.ACTIVE || getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY)
+                && previousProductionStatus != this.productionStatus) {
             switch (this.productionStatus) {
                 case HALTED:
                     doSendAsyncNotify(CltuNotification.CltuNotificationTypeEnum.PRODUCTION_HALTED, null);
@@ -215,7 +216,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         clearError();
 
         // Validate state
-        if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
+        if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE && this.currentState != ServiceInstanceBindingStateEnum.READY) {
             setError("Async. notify discarded, service instance is in state "
                     + this.currentState);
             notifyStateUpdate();
@@ -1049,6 +1050,8 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
                 pdu.getResult().getPositiveResult().getParClcwGlobalVcId().setParameterName(new ParameterName(invocation.getCltuParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParClcwGlobalVcId().setParameterValue(new ClcwGvcId());
                 if(this.clcwGlobalVcId == null) {
+                    pdu.getResult().getPositiveResult().getParClcwGlobalVcId().getParameterValue().setNotConfigured(new BerNull());
+                } else {
                     pdu.getResult().getPositiveResult().getParClcwGlobalVcId().getParameterValue().setCongigured(new GvcId());
                     pdu.getResult().getPositiveResult().getParClcwGlobalVcId().getParameterValue().getCongigured().setSpacecraftId(new BerInteger(this.clcwGlobalVcId.getSpacecraftId()));
                     pdu.getResult().getPositiveResult().getParClcwGlobalVcId().getParameterValue().getCongigured().setVersionNumber(new BerInteger(this.clcwGlobalVcId.getTransferFrameVersionNumber()));

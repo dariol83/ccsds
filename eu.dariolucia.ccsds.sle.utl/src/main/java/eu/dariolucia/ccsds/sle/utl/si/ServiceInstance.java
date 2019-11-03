@@ -1347,6 +1347,13 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         }
 
         @Override
+        protected void setException(Throwable t) {
+            // Exception detected
+            LOG.log(Level.SEVERE, "Exception caught when running SleTask: " + t.getMessage(), t);
+            super.setException(t);
+        }
+
+        @Override
         public int compareTo(SleTask o) {
             if (this.type != o.type) {
                 return this.type - o.type;

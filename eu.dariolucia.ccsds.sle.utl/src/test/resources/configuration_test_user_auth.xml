@@ -44,9 +44,7 @@
             <minimum-reporting-cycle>0</minimum-reporting-cycle>
             <acquisition-sequence-length>100</acquisition-sequence-length>
             <clcw-physical-channel>CLCW_PH_CH</clcw-physical-channel>
-            <clcw-global-vcid>
-                <gvcid scid="100" tfvn="0" vcid="0" />
-            </clcw-global-vcid>
+            <clcw-global-vcid  scid="100" tfvn="0" vcid="0" />
             <modulation-frequency>700</modulation-frequency>
             <modulation-index>10</modulation-index>
             <notification-mode>IMMEDIATE</notification-mode>

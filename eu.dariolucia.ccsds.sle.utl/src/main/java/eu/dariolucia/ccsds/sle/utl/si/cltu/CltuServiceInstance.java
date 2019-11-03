@@ -117,11 +117,11 @@ public class CltuServiceInstance extends ServiceInstance {
 	 *
 	 * @param firstCltuId the first CLTU to be expected
 	 */
-	public void start(Long firstCltuId) {
+	public void start(long firstCltuId) {
 		dispatchFromUser(() -> doStart(firstCltuId));
 	}
 
-	private void doStart(Long firstCltuId) {
+	private void doStart(long firstCltuId) {
 		clearError();
 
 		// Validate state
@@ -134,16 +134,9 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		int invokeId = this.invokeIdSequencer.incrementAndGet();
 
-		// Create operation
-		if (firstCltuId == null) {
-			setError("Start requested, but first CLTU ID is null, not compatible with selected SLE version");
-			notifyStateUpdate();
-			return;
-		}
-
 		CltuStartInvocation pdu = new CltuStartInvocation();
 		pdu.setInvokeId(new InvokeId(invokeId));
-		// GVCID
+		// CLTU ID
 		pdu.setFirstCltuIdentification(new CltuIdentification(firstCltuId));
 
 		// Add credentials
@@ -326,6 +319,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		} else {
 			pdu.getEarliestTransmissionTime().setUndefined(new BerNull());
 		}
+		pdu.setLatestTransmissionTime(new ConditionalTime());
 		if (latestTxTime != null) {
 			pdu.getLatestTransmissionTime().setKnown(new Time());
 			pdu.getLatestTransmissionTime().getKnown()
