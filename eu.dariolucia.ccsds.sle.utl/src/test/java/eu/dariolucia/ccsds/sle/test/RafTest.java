@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.sle.test;
 
 import com.beanit.jasn1.ber.types.BerInteger;
 import com.beanit.jasn1.ber.types.BerNull;
+import com.beanit.jasn1.ber.types.BerType;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleBindReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.DiagnosticScheduleStatusReport;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleAcknowledgement;
@@ -67,6 +68,8 @@ public class RafTest {
         RafServiceInstanceConfiguration rafConfigP = (RafServiceInstanceConfiguration) providerFile.getServiceInstances().get(2); // RAF
         RafServiceInstanceProvider rafProvider = new RafServiceInstanceProvider(providerFile.getPeerConfiguration(), rafConfigP);
         rafProvider.configure();
+        assertThrows(IllegalStateException.class, rafProvider::configure);
+
         rafProvider.waitForBind(true, null);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
 
@@ -75,6 +78,7 @@ public class RafTest {
         UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
         RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(2); // RAF
         RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
+        assertThrows(IllegalStateException.class, rafUser::stop);
         rafUser.configure();
         rafUser.setUnbindReturnBehaviour(true);
         rafUser.bind(2);
@@ -915,5 +919,19 @@ public class RafTest {
         assertNull(configuration.getStartTime());
         assertNull(configuration.getEndTime());
         assertEquals(configuration2.hashCode(), configuration.hashCode());
+    }
+
+    @Test
+    void testSleTaskObject() {
+        ServiceInstance.SleTask task = new ServiceInstance.SleTask((byte) 0, () -> {
+            throw new RuntimeException("Test");
+        });
+        ServiceInstance.SleTask task2 = new ServiceInstance.SleTask((byte) 1, () -> {
+            throw new RuntimeException("Test");
+        });
+        assertNotEquals(task, task2);
+        assertDoesNotThrow(task::hashCode);
+        assertDoesNotThrow(task::run);
+
     }
 }

@@ -21,6 +21,8 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.S
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.outgoing.pdus.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.structures.DiagnosticCltuGetParameter;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.structures.DiagnosticCltuStart;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.structures.DiagnosticCltuThrowEvent;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.structures.DiagnosticCltuTransferData;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.DiagnosticScheduleStatusReport;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleAcknowledgement;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportReturn;
@@ -507,6 +509,8 @@ public class CltuTest {
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuUser.getCurrentBindingState());
         AwaitUtil.awaitCondition(2000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuProvider.getCurrentBindingState());
+
+        assertDoesNotThrow(() -> recorder.getStates().get(0).toString());
 
         cltuUser.dispose();
         cltuProvider.dispose();
@@ -1055,6 +1059,58 @@ public class CltuTest {
     }
 
     @Test
+    void testTransferDataDiagnosticsString() {
+        DiagnosticCltuTransferData diagSched = new DiagnosticCltuTransferData();
+        diagSched.setCommon(new Diagnostics(100));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("duplicateInvokeId"));
+        diagSched.setCommon(new Diagnostics(127));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("otherReason"));
+        diagSched.setCommon(new Diagnostics(101));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("<unknown value> 101"));
+
+        diagSched.setCommon(null);
+        diagSched.setSpecific(new BerInteger(0));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("unableToProcess"));
+        diagSched.setSpecific(new BerInteger(1));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("unableToStore"));
+        diagSched.setSpecific(new BerInteger(2));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("outOfSequence"));
+        diagSched.setSpecific(new BerInteger(3));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("inconsistentTimeRange"));
+        diagSched.setSpecific(new BerInteger(4));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("invalidTime"));
+        diagSched.setSpecific(new BerInteger(5));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("lateSldu"));
+        diagSched.setSpecific(new BerInteger(6));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("invalidDelayTime"));
+        diagSched.setSpecific(new BerInteger(7));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("cltuError"));
+        diagSched.setSpecific(new BerInteger(8));
+        assertTrue(CltuDiagnosticsStrings.getTransferDataDiagnostic(diagSched).endsWith("<unknown value> 8"));
+    }
+
+    @Test
+    void testThrowEventDiagnosticsString() {
+        DiagnosticCltuThrowEvent diagSched = new DiagnosticCltuThrowEvent();
+        diagSched.setCommon(new Diagnostics(100));
+        assertTrue(CltuDiagnosticsStrings.getThrowEventDiagnostic(diagSched).endsWith("duplicateInvokeId"));
+        diagSched.setCommon(new Diagnostics(127));
+        assertTrue(CltuDiagnosticsStrings.getThrowEventDiagnostic(diagSched).endsWith("otherReason"));
+        diagSched.setCommon(new Diagnostics(101));
+        assertTrue(CltuDiagnosticsStrings.getThrowEventDiagnostic(diagSched).endsWith("<unknown value> 101"));
+
+        diagSched.setCommon(null);
+        diagSched.setSpecific(new BerInteger(0));
+        assertTrue(CltuDiagnosticsStrings.getThrowEventDiagnostic(diagSched).endsWith("operationNotSupported"));
+        diagSched.setSpecific(new BerInteger(1));
+        assertTrue(CltuDiagnosticsStrings.getThrowEventDiagnostic(diagSched).endsWith("eventInvocIdOutOfSequence"));
+        diagSched.setSpecific(new BerInteger(2));
+        assertTrue(CltuDiagnosticsStrings.getThrowEventDiagnostic(diagSched).endsWith("noSuchEvent"));
+        diagSched.setSpecific(new BerInteger(5));
+        assertTrue(CltuDiagnosticsStrings.getThrowEventDiagnostic(diagSched).endsWith("<unknown value> 5"));
+    }
+
+    @Test
     void testScheduleStatusReportDiagnosticsString() {
         DiagnosticScheduleStatusReport diagSched = new DiagnosticScheduleStatusReport();
         diagSched.setCommon(new Diagnostics(100));
@@ -1080,6 +1136,20 @@ public class CltuTest {
         assertTrue(CltuDiagnosticsStrings.getDiagnostic(new Diagnostics(100)).endsWith("duplicateInvokeId"));
         assertTrue(CltuDiagnosticsStrings.getDiagnostic(new Diagnostics(127)).endsWith("otherReason"));
         assertTrue(CltuDiagnosticsStrings.getDiagnostic(new Diagnostics(101)).endsWith("<unknown value> 101"));
+    }
+
+    @Test
+    void testDataStructure() {
+        CltuLastOk lastOk = new CltuLastOk(1L, new Date());
+        assertDoesNotThrow(lastOk::toString);
+
+        CltuLastProcessed lastProcessed = new CltuLastProcessed(1L, new Date(), CltuStatusEnum.RADIATED);
+        assertDoesNotThrow(lastProcessed::toString);
+
+        CltuNotification notification = new CltuNotification(CltuNotification.CltuNotificationTypeEnum.ACTION_LIST_NOT_COMPLETED, 1L);
+        assertDoesNotThrow(notification::toString);
+        assertEquals(1L, notification.getEventInvocationId());
+        assertEquals(CltuNotification.CltuNotificationTypeEnum.ACTION_LIST_NOT_COMPLETED, notification.getType());
     }
 
     @Test

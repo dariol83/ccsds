@@ -20,5 +20,12 @@ public enum LockStatusEnum {
 	IN_LOCK,
 	OUT_OF_LOCK,
 	NOT_IN_USE,
-	UNKNOWN
+	UNKNOWN;
+
+	public static LockStatusEnum fromCode(int code) {
+		if(code < 0 || code >= LockStatusEnum.values().length) {
+			return UNKNOWN;
+		}
+		return LockStatusEnum.values()[code];
+	}
 }

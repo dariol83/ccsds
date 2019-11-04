@@ -126,9 +126,8 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.READY) {
-			setError("Start requested, but service instance is in state "
+			notifyInternalError("Start requested, but service instance is in state "
 					+ this.currentState);
-			notifyStateUpdate();
 			return;
 		}
 
@@ -145,8 +144,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, START_NAME, null);
-			notifyStateUpdate();
+			pduTransmissionError(pdu, START_NAME, null);
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
@@ -160,10 +158,7 @@ public class CltuServiceInstance extends ServiceInstance {
 			// Set the first cltu identification
 			this.firstCltuIdentification = firstCltuId;
 			// Notify PDU
-			notifyPduSent(pdu, START_NAME, getLastPduSent());
-
-			// Generate state and notify update
-			notifyStateUpdate();
+			pduTransmissionOk(pdu, START_NAME);
 		}
 	}
 
@@ -179,9 +174,8 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
-			setError("Stop requested, but service instance is in state "
+			notifyInternalError("Stop requested, but service instance is in state "
 					+ this.currentState);
-			notifyStateUpdate();
 			return;
 		}
 
@@ -197,8 +191,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, STOP_NAME, null);
-			notifyStateUpdate();
+			pduTransmissionError(pdu, STOP_NAME, null);
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
@@ -209,9 +202,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		if (resultOk) {
 			// If all fine, transition to new state: STOP_PENDING and notify PDU sent
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.STOP_PENDING);
-			notifyPduSent(pdu, STOP_NAME, getLastPduSent());
-			// Generate state and notify update
-			notifyStateUpdate();
+			pduTransmissionOk(pdu, STOP_NAME);
 		}
 	}
 
@@ -232,8 +223,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
-			setError("Schedule status report requested, but service instance is in state " + this.currentState);
-			notifyStateUpdate();
+			notifyInternalError("Schedule status report requested, but service instance is in state " + this.currentState);
 			return;
 		}
 
@@ -258,8 +248,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, SCHEDULE_STATUS_REPORT_NAME, null);
-			notifyStateUpdate();
+			pduTransmissionError(pdu, SCHEDULE_STATUS_REPORT_NAME, null);
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
@@ -269,10 +258,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, SCHEDULE_STATUS_REPORT_NAME, getLastPduSent());
-
-			// Generate state and notify update
-			notifyStateUpdate();
+			pduTransmissionOk(pdu, SCHEDULE_STATUS_REPORT_NAME);
 		}
 	}
 
@@ -298,9 +284,8 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
-			setError("Transfer data requested, but service instance is in state "
+			notifyInternalError("Transfer data requested, but service instance is in state "
 					+ this.currentState);
-			notifyStateUpdate();
 			return;
 		}
 
@@ -337,8 +322,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, TRANSFER_DATA_NAME, null);
-			notifyStateUpdate();
+			pduTransmissionError(pdu, TRANSFER_DATA_NAME, null);
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
@@ -348,10 +332,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, TRANSFER_DATA_NAME, getLastPduSent());
-
-			// Generate state and notify update
-			notifyStateUpdate();
+			pduTransmissionOk(pdu, TRANSFER_DATA_NAME);
 		}
 	}
 
@@ -373,9 +354,8 @@ public class CltuServiceInstance extends ServiceInstance {
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
-			setError("Throw event requested, but service instance is in state "
+			notifyInternalError("Throw event requested, but service instance is in state "
 					+ this.currentState);
-			notifyStateUpdate();
 			return;
 		}
 
@@ -395,8 +375,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, THROW_EVENT_NAME, null);
-			notifyStateUpdate();
+			pduTransmissionError(pdu, THROW_EVENT_NAME, null);
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
@@ -406,10 +385,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, THROW_EVENT_NAME, getLastPduSent());
-
-			// Generate state and notify update
-			notifyStateUpdate();
+			pduTransmissionOk(pdu, THROW_EVENT_NAME);
 		}
 	}
 
@@ -429,9 +405,8 @@ public class CltuServiceInstance extends ServiceInstance {
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
-			setError("Get parameter requested, but service instance is in state "
+			notifyInternalError("Get parameter requested, but service instance is in state "
 					+ this.currentState);
-			notifyStateUpdate();
 			return;
 		}
 
@@ -449,8 +424,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, GET_PARAMETER_NAME, null);
-			notifyStateUpdate();
+			pduTransmissionError(pdu, GET_PARAMETER_NAME, null);
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
@@ -460,10 +434,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, GET_PARAMETER_NAME, getLastPduSent());
-
-			// Generate state and notify update
-			notifyStateUpdate();
+			pduTransmissionOk(pdu, GET_PARAMETER_NAME);
 		}
 	}
 
@@ -474,9 +445,8 @@ public class CltuServiceInstance extends ServiceInstance {
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
-			disconnect("Get parameter return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Get parameter return received, but service instance " +
+					"is in state " + this.currentState, pdu, GET_PARAMETER_RETURN_NAME);
 			return;
 		}
 
@@ -485,9 +455,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Get parameter return received, but wrong credentials");
-			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Get parameter return received, but wrong credentials", pdu, GET_PARAMETER_RETURN_NAME);
 			return;
 		}
 
@@ -586,9 +554,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, GET_PARAMETER_RETURN_NAME);
 	}
 
 	private void handleCltuGetParameterV1toV3Return(CltuGetParameterReturnV1toV3 pdu) {
@@ -598,9 +564,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
-			disconnect("Get parameter return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Get parameter return received, but service instance is in state " + this.currentState, pdu, GET_PARAMETER_RETURN_NAME);
 			return;
 		}
 
@@ -609,9 +573,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Get parameter return received, but wrong credentials");
-			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Get parameter return received, but wrong credentials", pdu, GET_PARAMETER_RETURN_NAME);
 			return;
 		}
 
@@ -672,9 +634,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, GET_PARAMETER_RETURN_NAME);
 	}
 
 	private void handleCltuGetParameterV4Return(CltuGetParameterReturnV4 pdu) {
@@ -684,9 +644,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
-			disconnect("Get parameter return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Get parameter return received, but service instance is in state " + this.currentState, pdu, GET_PARAMETER_RETURN_NAME);
 			return;
 		}
 
@@ -695,9 +653,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Get parameter return received, but wrong credentials");
-			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Get parameter return received, but wrong credentials", pdu, GET_PARAMETER_RETURN_NAME);
 			return;
 		}
 
@@ -781,9 +737,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, GET_PARAMETER_RETURN_NAME);
 	}
 
 	private void handleCltuStartReturn(CltuStartReturn pdu) {
@@ -791,9 +745,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.START_PENDING) {
-			disconnect("Start return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Start return received, but service instance is in state " + this.currentState, pdu, START_RETURN_NAME);
 			return;
 		}
 
@@ -802,9 +754,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Start return received, but wrong credentials");
-			notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Start return received, but wrong credentials", pdu, START_RETURN_NAME);
 			return;
 		}
 
@@ -826,9 +776,7 @@ public class CltuServiceInstance extends ServiceInstance {
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, START_RETURN_NAME);
 	}
 
 	private void handleCltuStopReturn(SleAcknowledgement pdu) {
@@ -836,9 +784,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.STOP_PENDING) {
-			disconnect("Stop return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Stop return received, but service instance is in state " + this.currentState, pdu, STOP_RETURN_NAME);
 			return;
 		}
 
@@ -847,9 +793,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Stop return received, but wrong credentials");
-			notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Stop return received, but wrong credentials", pdu, STOP_RETURN_NAME);
 			return;
 		}
 
@@ -870,9 +814,7 @@ public class CltuServiceInstance extends ServiceInstance {
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, STOP_RETURN_NAME);
 	}
 
 	private void handleCltuStatusReport(CltuStatusReportInvocation pdu) {
@@ -880,9 +822,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
-			disconnect("Status report received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Status report received, but service instance is in state " + this.currentState, pdu, STATUS_REPORT_NAME);
 			return;
 		}
 
@@ -891,9 +831,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Status report received, but wrong credentials");
-			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Status report received, but wrong credentials", pdu, STATUS_REPORT_NAME);
 			return;
 		}
 
@@ -908,9 +846,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		this.bufferAvailable = pdu.getCltuBufferAvailable().longValue();
 
 		// Notify PDU
-		notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, STATUS_REPORT_NAME);
 	}
 
 	private void handleCltuTransferDataReturn(CltuTransferDataReturn pdu) {
@@ -918,9 +854,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
-			disconnect("Transfer data return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, TRANSFER_DATA_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Transfer data return received, but service instance is in state " + this.currentState, pdu, TRANSFER_DATA_RETURN_NAME);
 			return;
 		}
 
@@ -929,9 +863,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Transfer data return received, but wrong credentials");
-			notifyPduReceived(pdu, TRANSFER_DATA_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Transfer data return received, but wrong credentials", pdu, TRANSFER_DATA_RETURN_NAME);
 			return;
 		}
 
@@ -955,9 +887,7 @@ public class CltuServiceInstance extends ServiceInstance {
 			}
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, TRANSFER_DATA_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, TRANSFER_DATA_RETURN_NAME);
 	}
 
 	private void handleCltuAsyncNotify(CltuAsyncNotifyInvocation pdu) {
@@ -966,9 +896,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE
 				&& this.currentState != ServiceInstanceBindingStateEnum.READY) {
-			disconnect("Async notify received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, NOTIFY_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Async notify received, but service instance is in state " + this.currentState, pdu, NOTIFY_NAME);
 			return;
 		}
 
@@ -977,9 +905,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Async notify received, but wrong credentials");
-			notifyPduReceived(pdu, NOTIFY_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Async notify received, but wrong credentials", pdu, NOTIFY_NAME);
 			return;
 		}
 
@@ -1000,9 +926,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
-			disconnect("Throw event return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, THROW_EVENT_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Throw event return received, but service instance is in state " + this.currentState, pdu, THROW_EVENT_RETURN_NAME);
 			return;
 		}
 
@@ -1011,9 +935,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Throw event return received, but wrong credentials");
-			notifyPduReceived(pdu, THROW_EVENT_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Throw event return received, but wrong credentials", pdu, THROW_EVENT_RETURN_NAME);
 			return;
 		}
 
@@ -1035,9 +957,7 @@ public class CltuServiceInstance extends ServiceInstance {
 			}
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, THROW_EVENT_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, THROW_EVENT_RETURN_NAME);
 	}
 
 	private void handleCltuScheduleStatusReportReturn(SleScheduleStatusReportReturn pdu) {
@@ -1045,9 +965,7 @@ public class CltuServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
-			disconnect("Schedule status report return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Schedule status report return received, but service instance is in state " + this.currentState, pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME);
 			return;
 		}
 
@@ -1056,9 +974,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Schedule status report return received, but wrong credentials");
-			notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Schedule status report return received, but wrong credentials", pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME);
 			return;
 		}
 
@@ -1076,9 +992,7 @@ public class CltuServiceInstance extends ServiceInstance {
 					+ CltuDiagnosticsStrings.getScheduleStatusReportDiagnostic(pdu.getResult().getNegativeResult()));
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME);
 	}
 
 	private CltuProductionStatusEnum mapProductionStatus(int intValue) {

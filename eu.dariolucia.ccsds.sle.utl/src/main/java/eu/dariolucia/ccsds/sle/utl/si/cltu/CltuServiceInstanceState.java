@@ -25,7 +25,6 @@ public class CltuServiceInstanceState extends ServiceInstanceState {
 	// Configuration or GET_PARAMETER
 	private Integer maxCltuLength;
 	private Integer minCltuDelay;
-	private Integer maxCltuDelay;
 	private boolean bitlockRequired;
 	private boolean rfAvailableRequired;
 	private Integer minReportingCycle;
@@ -73,14 +72,6 @@ public class CltuServiceInstanceState extends ServiceInstanceState {
 
 	public final void setMinCltuDelay(Integer minCltuDelay) {
 		this.minCltuDelay = minCltuDelay;
-	}
-
-	public final Integer getMaxCltuDelay() {
-		return maxCltuDelay;
-	}
-
-	public final void setMaxCltuDelay(Integer maxCltuDelay) {
-		this.maxCltuDelay = maxCltuDelay;
 	}
 
 	public final boolean isBitlockRequired() {
@@ -299,4 +290,38 @@ public class CltuServiceInstanceState extends ServiceInstanceState {
 		this.deliveryMode = deliveryMode;
 	}
 
+	@Override
+	public String toString() {
+		return "CltuServiceInstanceState{" +
+				"maxCltuLength=" + getMaxCltuLength() +
+				", minCltuDelay=" + getMinCltuDelay() +
+				", bitlockRequired=" + isBitlockRequired() +
+				", rfAvailableRequired=" + isRfAvailableRequired() +
+				", minReportingCycle=" + getMinReportingCycle() +
+				", reportingCycle=" + getReportingCycle() +
+				", acquisitionSequenceLength=" + getAcquisitionSequenceLength() +
+				", clcwGlobalVcId=" + getClcwGlobalVcId() +
+				", clcwPhysicalChannel='" + getClcwPhysicalChannel() + '\'' +
+				", cltuIdentification=" + getCltuIdentification() +
+				", eventInvocationIdentification=" + getEventInvocationIdentification() +
+				", modulationFrequency=" + getModulationFrequency() +
+				", modulationIndex=" + getModulationIndex() +
+				", notificationMode=" + getNotificationMode() +
+				", plop1IdleSequenceLength=" + getPlop1IdleSequenceLength() +
+				", plopInEffect=" + getPlopInEffect() +
+				", protocolAbortMode=" + getProtocolAbortMode() +
+				", subcarrierToBitRateRation=" + getSubcarrierToBitRateRation() +
+				", deliveryMode=" + getDeliveryMode() +
+				", firstCltuIdentification=" + getFirstCltuIdentification() +
+				", lastProcessed=" + getLastProcessed() +
+				", lastOk=" + getLastOk() +
+				", productionStatus=" + getProductionStatus() +
+				", uplinkStatus=" + getUplinkStatus() +
+				", nbCltuReceived=" + getNbCltuReceived() +
+				", nbCltuProcessed=" + getNbCltuProcessed() +
+				", nbCltuRadiated=" + getNbCltuRadiated() +
+				", bufferAvailable=" + getBufferAvailable() +
+				", notification=" + getNotification() +
+				"} " + super.toString();
+	}
 }

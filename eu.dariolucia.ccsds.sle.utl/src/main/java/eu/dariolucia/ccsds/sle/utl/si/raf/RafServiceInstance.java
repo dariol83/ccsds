@@ -108,9 +108,8 @@ public class RafServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.READY) {
-			setError("Start requested, but service instance is in state "
+			notifyInternalError("Start requested, but service instance is in state "
 					+ this.currentState);
-			notifyStateUpdate();
 			return;
 		}
 
@@ -146,8 +145,7 @@ public class RafServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, START_NAME, null);
-			notifyStateUpdate();
+			pduTransmissionError(pdu, START_NAME, null);
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
@@ -164,10 +162,7 @@ public class RafServiceInstance extends ServiceInstance {
 			this.startTime = start;
 			this.endTime = end;
 			// Notify PDU
-			notifyPduSent(pdu, START_NAME, getLastPduSent());
-
-			// Generate state and notify update
-			notifyStateUpdate();
+			pduTransmissionOk(pdu, START_NAME);
 		}
 	}
 
@@ -183,9 +178,8 @@ public class RafServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
-			setError("Stop requested, but service instance is in state "
+			notifyInternalError("Stop requested, but service instance is in state "
 					+ this.currentState);
-			notifyStateUpdate();
 			return;
 		}
 
@@ -201,8 +195,7 @@ public class RafServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, STOP_NAME, null);
-			notifyStateUpdate();
+			pduTransmissionError(pdu, STOP_NAME, null);
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
@@ -213,9 +206,7 @@ public class RafServiceInstance extends ServiceInstance {
 		if (resultOk) {
 			// If all fine, transition to new state: STOP_PENDING and notify PDU sent
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.STOP_PENDING);
-			notifyPduSent(pdu, STOP_NAME, getLastPduSent());
-			// Generate state and notify update
-			notifyStateUpdate();
+			pduTransmissionOk(pdu, STOP_NAME);
 		}
 	}
 
@@ -236,8 +227,7 @@ public class RafServiceInstance extends ServiceInstance {
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
-			setError("Schedule status report requested, but service instance is in state " + this.currentState);
-			notifyStateUpdate();
+			notifyInternalError("Schedule status report requested, but service instance is in state " + this.currentState);
 			return;
 		}
 
@@ -262,8 +252,7 @@ public class RafServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, SCHEDULE_STATUS_REPORT_NAME, null);
-			notifyStateUpdate();
+			pduTransmissionError(pdu, SCHEDULE_STATUS_REPORT_NAME, null);
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
@@ -273,10 +262,7 @@ public class RafServiceInstance extends ServiceInstance {
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, SCHEDULE_STATUS_REPORT_NAME, getLastPduSent());
-
-			// Generate state and notify update
-			notifyStateUpdate();
+			pduTransmissionOk(pdu, SCHEDULE_STATUS_REPORT_NAME);
 		}
 	}
 
@@ -296,9 +282,8 @@ public class RafServiceInstance extends ServiceInstance {
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
-			setError("Get parameter requested, but service instance is in state "
+			notifyInternalError("Get parameter requested, but service instance is in state "
 					+ this.currentState);
-			notifyStateUpdate();
 			return;
 		}
 
@@ -316,8 +301,7 @@ public class RafServiceInstance extends ServiceInstance {
 		Credentials creds = generateCredentials(getResponderIdentifier(), AuthenticationModeEnum.ALL);
 		if (creds == null) {
 			// Error while generating credentials, set by generateCredentials()
-			notifyPduSentError(pdu, GET_PARAMETER_NAME, null);
-			notifyStateUpdate();
+			pduTransmissionError(pdu, GET_PARAMETER_NAME, null);
 			return;
 		} else {
 			pdu.setInvokerCredentials(creds);
@@ -327,10 +311,7 @@ public class RafServiceInstance extends ServiceInstance {
 
 		if (resultOk) {
 			// If all fine, notify PDU sent
-			notifyPduSent(pdu, GET_PARAMETER_NAME, getLastPduSent());
-
-			// Generate state and notify update
-			notifyStateUpdate();
+			pduTransmissionOk(pdu, GET_PARAMETER_NAME);
 		}
 	}
 
@@ -341,9 +322,7 @@ public class RafServiceInstance extends ServiceInstance {
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
-			disconnect("Get parameter return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Get parameter return received, but service instance is in state " + this.currentState, pdu, GET_PARAMETER_RETURN_NAME);
 			return;
 		}
 
@@ -352,9 +331,7 @@ public class RafServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if(!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Get parameter return received, but wrong credentials");
-			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Get parameter return received, but wrong credentials", pdu, GET_PARAMETER_RETURN_NAME);
 			return;
 		}
 
@@ -411,9 +388,7 @@ public class RafServiceInstance extends ServiceInstance {
 
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, GET_PARAMETER_RETURN_NAME);
 	}
 
 	private void handleRafGetParameterV1toV4Return(RafGetParameterReturnV1toV4 pdu) {
@@ -423,9 +398,7 @@ public class RafServiceInstance extends ServiceInstance {
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND
 				|| this.currentState == ServiceInstanceBindingStateEnum.BIND_PENDING
 				|| this.currentState == ServiceInstanceBindingStateEnum.UNBIND_PENDING) {
-			disconnect("Get parameter return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Get parameter return received, but service instance is in state " + this.currentState, pdu, GET_PARAMETER_RETURN_NAME);
 			return;
 		}
 
@@ -434,9 +407,7 @@ public class RafServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if(!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Get parameter return received, but wrong credentials");
-			notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Get parameter return received, but wrong credentials", pdu, GET_PARAMETER_RETURN_NAME);
 			return;
 		}
 
@@ -482,9 +453,7 @@ public class RafServiceInstance extends ServiceInstance {
 
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, GET_PARAMETER_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, GET_PARAMETER_RETURN_NAME);
 	}
 
 	private void handleRafStartReturn(RafStartReturn pdu) {
@@ -492,9 +461,7 @@ public class RafServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.START_PENDING) {
-			disconnect("Start return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Start return received, but service instance is in state " + this.currentState, pdu, START_RETURN_NAME);
 			return;
 		}
 
@@ -503,9 +470,7 @@ public class RafServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if(!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Start return received, but wrong credentials");
-			notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Start return received, but wrong credentials", pdu, START_RETURN_NAME);
 			return;
 		}
 
@@ -530,9 +495,7 @@ public class RafServiceInstance extends ServiceInstance {
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, START_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, START_RETURN_NAME);
 	}
 
 	private void handleRafStopReturn(SleAcknowledgement pdu) {
@@ -540,9 +503,7 @@ public class RafServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.STOP_PENDING) {
-			disconnect("Stop return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Stop return received, but service instance is in state " + this.currentState, pdu, STOP_RETURN_NAME);
 			return;
 		}
 
@@ -551,9 +512,7 @@ public class RafServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if(!authenticate(pdu.getCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Stop return received, but wrong credentials");
-			notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Stop return received, but wrong credentials", pdu, STOP_RETURN_NAME);
 			return;
 		}
 
@@ -576,9 +535,7 @@ public class RafServiceInstance extends ServiceInstance {
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, STOP_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, STOP_RETURN_NAME);
 	}
 
 	private void handleRafStatusReport(RafStatusReportInvocation pdu) {
@@ -586,9 +543,7 @@ public class RafServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
-			disconnect("Status report received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Status report received, but service instance is in state " + this.currentState, pdu, STATUS_REPORT_NAME);
 			return;
 		}
 
@@ -597,25 +552,21 @@ public class RafServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if(!authenticate(pdu.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Status report received, but wrong credentials");
-			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Status report received, but wrong credentials", pdu, STATUS_REPORT_NAME);
 			return;
 		}
 
 		// Set the status report parameters
-		this.carrierLockStatus = mapCarrierLockStatus(pdu.getCarrierLockStatus().intValue());
-		this.subcarrierLockStatus = mapSubCarrierLockStatus(pdu.getSubcarrierLockStatus().intValue());
-		this.symbolSyncLockStatus = mapSymbolSyncLockStatus(pdu.getSymbolSyncLockStatus().intValue());
-		this.frameSyncLockStatus = mapFrameSyncLockStatus(pdu.getFrameSyncLockStatus().intValue());
+		this.carrierLockStatus = mapLockStatus(pdu.getCarrierLockStatus().intValue());
+		this.subcarrierLockStatus = mapLockStatus(pdu.getSubcarrierLockStatus().intValue());
+		this.symbolSyncLockStatus = mapLockStatus(pdu.getSymbolSyncLockStatus().intValue());
+		this.frameSyncLockStatus = mapLockStatus(pdu.getFrameSyncLockStatus().intValue());
 		this.productionStatus = mapProductionStatus(pdu.getProductionStatus().intValue());
 		this.errorFreeFrameNumber = pdu.getErrorFreeFrameNumber().intValue();
 		this.deliveredFrameNumber = pdu.getDeliveredFrameNumber().intValue();
 
 		// Notify PDU
-		notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, STATUS_REPORT_NAME);
 	}
 
 	private void handleRafTransferBuffer(RafTransferBuffer pdu) {
@@ -623,9 +574,7 @@ public class RafServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE && this.currentState != ServiceInstanceBindingStateEnum.STOP_PENDING) {
-			disconnect("Transfer buffer received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, TRANSFER_BUFFER_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Transfer buffer received, but service instance is in state " + this.currentState, pdu, TRANSFER_BUFFER_NAME);
 			return;
 		}
 
@@ -638,9 +587,7 @@ public class RafServiceInstance extends ServiceInstance {
 				// check remote peer and check if authentication must be used.
 				// If so, verify credentials.
 				if(!authenticate(tf.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
-					disconnect("Transfer data received, but wrong credentials");
-					notifyPduReceived(pdu, TRANSFER_DATA_NAME, getLastPduReceived());
-					notifyStateUpdate();
+					pduReceptionProcessingError("Transfer data received, but wrong credentials", pdu, TRANSFER_DATA_NAME);
 					return;
 				}
 
@@ -654,9 +601,7 @@ public class RafServiceInstance extends ServiceInstance {
 				// check remote peer and check if authentication must be used.
 				// If so, verify credentials.
 				if(!authenticate(sn.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
-					disconnect("Notify received, but wrong credentials");
-					notifyPduReceived(pdu, NOTIFY_NAME, getLastPduReceived());
-					notifyStateUpdate();
+					pduReceptionProcessingError("Notify received, but wrong credentials", pdu, NOTIFY_NAME);
 					return;
 				}
 
@@ -665,11 +610,11 @@ public class RafServiceInstance extends ServiceInstance {
 				} else if (sn.getNotification().getExcessiveDataBacklog() != null) {
 					LOG.warning(getServiceInstanceIdentifier() + ": Data discarded due to excessive backlog");
 				} else if (sn.getNotification().getLossFrameSync() != null) {
-					this.carrierLockStatus = mapCarrierLockStatus(
+					this.carrierLockStatus = mapLockStatus(
 							sn.getNotification().getLossFrameSync().getCarrierLockStatus().intValue());
-					this.subcarrierLockStatus = mapSubCarrierLockStatus(
+					this.subcarrierLockStatus = mapLockStatus(
 							sn.getNotification().getLossFrameSync().getSubcarrierLockStatus().intValue());
-					this.symbolSyncLockStatus = mapSymbolSyncLockStatus(
+					this.symbolSyncLockStatus = mapLockStatus(
 							sn.getNotification().getLossFrameSync().getSymbolSyncLockStatus().intValue());
 					this.frameSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
 					LOG.warning(getServiceInstanceIdentifier() + ": Loss frame synchronisation");
@@ -693,9 +638,7 @@ public class RafServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
-			disconnect("Status report received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Status report received, but service instance is in state " + this.currentState, pdu, STATUS_REPORT_NAME);
 			return;
 		}
 
@@ -704,25 +647,21 @@ public class RafServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if(!authenticate(pdu.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Status report received, but wrong credentials");
-			notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Status report received, but wrong credentials", pdu, STATUS_REPORT_NAME);
 			return;
 		}
 
 		// Set the status report parameters
-		this.carrierLockStatus = mapCarrierLockStatus(pdu.getCarrierLockStatus().intValue());
-		this.subcarrierLockStatus = mapSubCarrierLockStatus(pdu.getSubcarrierLockStatus().intValue());
-		this.symbolSyncLockStatus = mapSymbolSyncLockStatus(pdu.getSymbolSyncLockStatus().intValue());
-		this.frameSyncLockStatus = mapFrameSyncLockStatus(pdu.getFrameSyncLockStatus().intValue());
+		this.carrierLockStatus = mapLockStatus(pdu.getCarrierLockStatus().intValue());
+		this.subcarrierLockStatus = mapLockStatus(pdu.getSubcarrierLockStatus().intValue());
+		this.symbolSyncLockStatus = mapLockStatus(pdu.getSymbolSyncLockStatus().intValue());
+		this.frameSyncLockStatus = mapLockStatus(pdu.getFrameSyncLockStatus().intValue());
 		this.productionStatus = mapProductionStatus(pdu.getProductionStatus().intValue());
 		this.deliveredFrameNumber = pdu.getDeliveredFrameNumber().intValue();
 		this.errorFreeFrameNumber = pdu.getErrorFreeFrameNumber().intValue();
 
 		// Notify PDU
-		notifyPduReceived(pdu, STATUS_REPORT_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, STATUS_REPORT_NAME);
 	}
 
 	private void handleRafScheduleStatusReportReturn(SleScheduleStatusReportReturn pdu) {
@@ -730,9 +669,7 @@ public class RafServiceInstance extends ServiceInstance {
 
 		// Validate state
 		if (this.currentState == ServiceInstanceBindingStateEnum.UNBOUND) {
-			disconnect("Schedule status report return received, but service instance is in state " + this.currentState);
-			notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Schedule status report return received, but service instance is in state " + this.currentState, pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME);
 			return;
 		}
 
@@ -741,9 +678,7 @@ public class RafServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if(!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			disconnect("Schedule status report return received, but wrong credentials");
-			notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
-			notifyStateUpdate();
+			pduReceptionProcessingError("Schedule status report return received, but wrong credentials", pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME);
 			return;
 		}
 
@@ -761,68 +696,15 @@ public class RafServiceInstance extends ServiceInstance {
 					+ RafDiagnosticsStrings.getScheduleStatusReportDiagnostic(pdu.getResult().getNegativeResult()));
 		}
 		// Notify PDU
-		notifyPduReceived(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduReceived());
-		// Generate state and notify update
-		notifyStateUpdate();
+		pduReceptionOk(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME);
 	}
 
 	private ProductionStatusEnum mapProductionStatus(int intValue) {
-		switch (intValue) {
-		case 0:
-			return ProductionStatusEnum.RUNNING;
-		case 1:
-			return ProductionStatusEnum.INTERRUPTED;
-		case 2:
-			return ProductionStatusEnum.HALTED;
-		default:
-			return ProductionStatusEnum.UNKNOWN;
-		}
+		return ProductionStatusEnum.fromCode(intValue);
 	}
 
-	private LockStatusEnum mapFrameSyncLockStatus(int intValue) {
-		switch (intValue) {
-		case 0:
-			return LockStatusEnum.IN_LOCK;
-		case 1:
-			return LockStatusEnum.OUT_OF_LOCK;
-		default:
-			return LockStatusEnum.UNKNOWN;
-		}
-	}
-
-	private LockStatusEnum mapSymbolSyncLockStatus(int intValue) {
-		switch (intValue) {
-		case 0:
-			return LockStatusEnum.IN_LOCK;
-		case 1:
-			return LockStatusEnum.OUT_OF_LOCK;
-		default:
-			return LockStatusEnum.UNKNOWN;
-		}
-	}
-
-	private LockStatusEnum mapSubCarrierLockStatus(int intValue) {
-		switch (intValue) {
-		case 0:
-			return LockStatusEnum.IN_LOCK;
-		case 1:
-			return LockStatusEnum.OUT_OF_LOCK;
-		case 2:
-			return LockStatusEnum.NOT_IN_USE;
-		default:
-			return LockStatusEnum.UNKNOWN;
-		}
-	}
-
-	private LockStatusEnum mapCarrierLockStatus(int intValue) {
-		switch (intValue) {
-		case 0:
-			return LockStatusEnum.IN_LOCK;
-		case 1:
-			return LockStatusEnum.OUT_OF_LOCK;
-		default:
-			return LockStatusEnum.UNKNOWN;
-		}
+	private LockStatusEnum mapLockStatus(int intValue) {
+		return LockStatusEnum.fromCode(intValue);
 	}
 
 	@Override

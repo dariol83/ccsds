@@ -17,9 +17,7 @@
 package eu.dariolucia.ccsds.sle.test;
 
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.UnbindReason;
-import eu.dariolucia.ccsds.sle.utl.si.BindDiagnosticsEnum;
-import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
-import eu.dariolucia.ccsds.sle.utl.si.UnbindReasonEnum;
+import eu.dariolucia.ccsds.sle.utl.si.*;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,5 +43,10 @@ public class EnumTest {
         } catch (IllegalArgumentException e) {
             // Good
         }
+
+        assertEquals(ProductionStatusEnum.UNKNOWN, ProductionStatusEnum.fromCode(-1));
+        assertEquals(ProductionStatusEnum.UNKNOWN, ProductionStatusEnum.fromCode(20));
+        assertEquals(LockStatusEnum.UNKNOWN, LockStatusEnum.fromCode(-2));
+        assertEquals(LockStatusEnum.UNKNOWN, LockStatusEnum.fromCode(20));
     }
 }

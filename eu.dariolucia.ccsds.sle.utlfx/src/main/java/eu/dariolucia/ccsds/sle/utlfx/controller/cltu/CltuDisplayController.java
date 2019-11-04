@@ -54,7 +54,6 @@ public class CltuDisplayController extends AbstractDisplayController {
 	protected void doRegisterCommonProperties() {
 		registerLabel("Max. CLTU Length", "The maximum length of CLTUs", CltuServiceInstanceState.class, (state) -> toString(state.getMaxCltuLength()));
 		registerLabel("Min. CLTU Delay", "The minimum CLTU delay", CltuServiceInstanceState.class, (state) -> toString(state.getMinCltuDelay()));
-		registerLabel("Max. CLTU Delay", "The maximum CLTU delay", CltuServiceInstanceState.class, (state) -> toString(state.getMaxCltuDelay()));
 		registerLabel("Bitlock Required", "Bitlock required for radiation", CltuServiceInstanceState.class, (state) -> String.valueOf(state.isBitlockRequired()));
 		registerLabel("RF Available Required", "RF available required for radiation", CltuServiceInstanceState.class, (state) -> String.valueOf(state.isRfAvailableRequired()));
 		registerLabel("Protocol Abort Mode", "Protocol abort mode selection", CltuServiceInstanceState.class, (state) -> Objects.toString(state.getProtocolAbortMode(), ""));

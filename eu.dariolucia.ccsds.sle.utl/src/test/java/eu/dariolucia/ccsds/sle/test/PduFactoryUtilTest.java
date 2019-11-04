@@ -22,8 +22,10 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Time;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.TimeCCSDSpico;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.isp1.credentials.ISP1Credentials;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.service.instance.id.ServiceInstanceIdentifier;
 import eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
+import eu.dariolucia.ccsds.sle.utl.si.ApplicationIdentifierEnum;
 import eu.dariolucia.ccsds.sle.utl.si.AuthenticationModeEnum;
 import eu.dariolucia.ccsds.sle.utl.si.HashFunctionEnum;
 import org.junit.jupiter.api.Test;
@@ -57,5 +59,12 @@ public class PduFactoryUtilTest {
         Credentials creds = PduFactoryUtil.buildCredentials(true, "PEER", new byte[] { 0, 1 }, HashFunctionEnum.SHA_1);
         AwaitUtil.await(2000);
         assertFalse(PduFactoryUtil.performAuthentication(peer, creds.getUsed().value, 0));
+    }
+
+    @Test
+    void testBuildSIID() {
+        String siid = "sagr=232.spack=123.what=111.ever=222";
+        ServiceInstanceIdentifier s = PduFactoryUtil.buildServiceInstanceIdentifier(siid, ApplicationIdentifierEnum.FSP);
+        assertNotNull(s);
     }
 }

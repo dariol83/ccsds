@@ -20,5 +20,12 @@ public enum ProductionStatusEnum {
 	RUNNING,
 	INTERRUPTED,
 	HALTED,
-	UNKNOWN
+	UNKNOWN;
+
+	public static ProductionStatusEnum fromCode(int code) {
+		if(code < 0 || code >= ProductionStatusEnum.values().length) {
+			return UNKNOWN;
+		}
+		return ProductionStatusEnum.values()[code];
+	}
 }
