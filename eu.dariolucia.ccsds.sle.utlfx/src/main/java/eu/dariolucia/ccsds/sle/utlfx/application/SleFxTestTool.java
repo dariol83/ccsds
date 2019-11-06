@@ -44,13 +44,12 @@ public class SleFxTestTool extends Application {
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-			VBox root = (VBox)FXMLLoader.load(SleFxTestTool.class.getResource("/eu/dariolucia/ccsds/sle/utlfx/fxml/Main.fxml"));
+			VBox root = FXMLLoader.load(SleFxTestTool.class.getResource("/eu/dariolucia/ccsds/sle/utlfx/fxml/Main.fxml"));
 			Scene scene = new Scene(root,1600,960);
-			// scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.getIcons().add(new Image(SleFxTestTool.class.getResourceAsStream("/eu/dariolucia/ccsds/sle/utlfx/images/monitor.png")));
 			primaryStage.setScene(scene);
 			primaryStage.setTitle(NAME + " " + VERSION);
-			primaryStage.setOnCloseRequest(t -> performExit(t));
+			primaryStage.setOnCloseRequest(SleFxTestTool::performExit);
 			primaryStage.show();
 
 		} catch(Exception e) {
@@ -64,7 +63,7 @@ public class SleFxTestTool extends Application {
 	
 	public static void performExit(Event e) {
 		Optional<ButtonType> result = DialogUtils.showConfirmation(NAME + " - Confirm Exit", "Are you sure you want to exit?", null, null);
-		if (result.get() == ButtonType.OK) {
+		if (result.isPresent() && result.get() == ButtonType.OK) {
 			Platform.exit();
 			System.exit(0);
 		} else {
