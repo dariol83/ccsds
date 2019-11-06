@@ -20,6 +20,8 @@
             <mapping port-name="TEST_TM_OLT" address="127.0.0.1:23232" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
             <mapping port-name="TEST_TM_ONC" address="127.0.0.1:23233" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
             <mapping port-name="TEST_TC" address="127.0.0.1:23234" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
+            <mapping port-name="TEST_TM_OLT1" address="127.0.0.1:23235" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
+            <mapping port-name="TEST_TM_OLT2" address="127.0.0.1:23236" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
         </port-mappings>
         <remote-peers>
             <peer id="TEST-USER" password="AABBCCDDEEFF00" auth-mode="ALL" auth-hash="SHA_256"  />
@@ -54,7 +56,7 @@
             <!-- start-time and end-time omitted: both null -->
         </cltu>
         <raf>
-            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlc99</service-instance-id>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlc91</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
@@ -131,7 +133,7 @@
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
             <responder-id>TEST-PROVIDER</responder-id>
-            <responder-port-id>TEST_TM_OLT</responder-port-id>
+            <responder-port-id>TEST_TM_OLT1</responder-port-id>
             <return-timeout-period>120</return-timeout-period>
             <!-- Everything below is optional -->
             <reporting-cycle>30</reporting-cycle>
@@ -175,7 +177,7 @@
             <!-- start-time and end-time omitted: both null -->
         </rcf>
         <rcf>
-            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rcf=onlc01</service-instance-id>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rcf=onlc02</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
             <initiator>PROVIDER</initiator>
             <initiator-id>TEST-PROVIDER</initiator-id>
@@ -203,7 +205,7 @@
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
             <responder-id>TEST-PROVIDER</responder-id>
-            <responder-port-id>TEST_TM_OLT</responder-port-id>
+            <responder-port-id>TEST_TM_OLT2</responder-port-id>
             <return-timeout-period>120</return-timeout-period>
             <!-- Everything below is optional -->
             <reporting-cycle>30</reporting-cycle>
@@ -233,7 +235,7 @@
             <!-- start-time and end-time omitted: both null -->
         </rocf>
         <rocf>
-            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rocf=onlc88</service-instance-id>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rocf=onlc89</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>
@@ -268,7 +270,7 @@
             <!-- start-time and end-time omitted: both null -->
         </rocf>
         <rocf>
-            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rocf=onlc88</service-instance-id>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.rocf=onlc87</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
             <initiator>PROVIDER</initiator>
             <initiator-id>TEST-PROVIDER</initiator-id>
@@ -303,7 +305,7 @@
             <!-- start-time and end-time omitted: both null -->
         </rocf>
         <raf>
-            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlc99</service-instance-id>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlc55</service-instance-id>
             <service-version-number>2</service-version-number> <!-- optional -->
             <initiator>USER</initiator>
             <initiator-id>TEST-USER</initiator-id>

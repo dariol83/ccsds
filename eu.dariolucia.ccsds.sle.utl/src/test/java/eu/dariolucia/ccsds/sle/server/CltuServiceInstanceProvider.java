@@ -316,10 +316,6 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     }
 
     private void handleCltuTransferDataInvocation(CltuTransferDataInvocation invocation) {
-        dispatchFromProvider(() -> doHandleCltuTransferDataInvocation(invocation));
-    }
-
-    private void doHandleCltuTransferDataInvocation(CltuTransferDataInvocation invocation) {
         clearError();
 
         // Validate state
@@ -378,6 +374,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
             pdu.getResult().setPositiveResult(new BerNull());
             this.bufferAvailable = newBufferAvailable;
             ++this.cltuIdentification;
+            ++this.nbCltuReceived;
         } else {
             pdu.getResult().setNegativeResult(new DiagnosticCltuTransferData());
             // If you reach this point, it means that either there was a previous fail, so newBufferAvailable is null, or that the provider returned a negative or zero number
@@ -386,7 +383,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
                 pdu.getResult().getNegativeResult().setSpecific(new BerInteger(Math.abs(newBufferAvailable)));
             } else {
                 // Unable to process: not really according to the standard but good enough for testing
-                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(1));
+                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(0));
             }
         }
         pdu.setCltuBufferAvailable(new BufferSize(this.bufferAvailable != null ? this.bufferAvailable : 0));
@@ -419,10 +416,6 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     }
 
     private void handleCltuThrowEventInvocation(CltuThrowEventInvocation invocation) {
-        dispatchFromProvider(() -> doHandleCltuThrowEventInvocation(invocation));
-    }
-
-    private void doHandleCltuThrowEventInvocation(CltuThrowEventInvocation invocation) {
         clearError();
 
         // Validate state
@@ -508,12 +501,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-
     private void handleCltuStartInvocation(CltuStartInvocation invocation) {
-        dispatchFromProvider(() -> doHandleCltuStartInvocation(invocation));
-    }
-
-    private void doHandleCltuStartInvocation(CltuStartInvocation invocation) {
         clearError();
 
         // Validate state
@@ -566,7 +554,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
             pdu.getResult().getPositiveResult().getStartRadiationTime().setCcsdsFormat(new TimeCCSDS(PduFactoryUtil.buildCDSTime(this.productionStatusOperationalTime.getTime(), 0)));
         } else {
             pdu.getResult().setNegativeResult(new DiagnosticCltuStart());
-            pdu.getResult().getNegativeResult().setSpecific(new BerInteger(2)); // Unable to comply: not really according to the standart, but good enough for testing
+            pdu.getResult().getNegativeResult().setSpecific(new BerInteger(1)); // Unable to comply: not really according to the standard, but good enough for testing
         }
         // Add credentials
         // From the API configuration (remote peers) and SI configuration (responder
@@ -600,10 +588,6 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     }
 
     private void handleCltuStopInvocation(SleStopInvocation invocation) {
-        dispatchFromProvider(() -> doHandleCltuStopInvocation(invocation));
-    }
-
-    private void doHandleCltuStopInvocation(SleStopInvocation invocation) {
         clearError();
 
         // Validate state
@@ -663,10 +647,6 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     }
 
     private void handleCltuScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
-        dispatchFromProvider(() -> doHandleCltuScheduleStatusReportInvocation(invocation));
-    }
-
-    private void doHandleCltuScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
         clearError();
 
         // Validate state
@@ -760,10 +740,6 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     }
 
     private void handleCltuGetParameterInvocation(CltuGetParameterInvocation invocation) {
-        dispatchFromProvider(() -> doHandleCltuGetParameterInvocation(invocation));
-    }
-
-    private void doHandleCltuGetParameterInvocation(CltuGetParameterInvocation invocation) {
         clearError();
 
         // Validate state

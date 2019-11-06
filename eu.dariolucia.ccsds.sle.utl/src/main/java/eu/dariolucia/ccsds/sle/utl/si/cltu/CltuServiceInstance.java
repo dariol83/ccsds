@@ -949,11 +949,11 @@ public class CltuServiceInstance extends ServiceInstance {
 		if (pdu.getResult().getPositiveResult() != null) {
 			//
 			if(LOG.isLoggable(Level.INFO)) {
-				LOG.info(String.format("Throw event return (%d) received, positive result", this.eventInvocationIdentification));
+				LOG.info(String.format("%s: Throw event return (%d) received, positive result", getServiceInstanceIdentifier(), this.eventInvocationIdentification));
 			}
 		} else {
 			if(LOG.isLoggable(Level.INFO)) {
-				LOG.warning(String.format("Throw event return (%d) received, negative result: %s", this.eventInvocationIdentification, CltuDiagnosticsStrings.getThrowEventDiagnostic(pdu.getResult().getNegativeResult())));
+				LOG.warning(String.format("%s: Throw event return (%d) received, negative result: %s", getServiceInstanceIdentifier(), this.eventInvocationIdentification, CltuDiagnosticsStrings.getThrowEventDiagnostic(pdu.getResult().getNegativeResult())));
 			}
 		}
 		// Notify PDU
