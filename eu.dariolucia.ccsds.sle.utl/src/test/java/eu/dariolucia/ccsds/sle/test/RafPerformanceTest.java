@@ -107,13 +107,13 @@ public class RafPerformanceTest {
 
         System.out.println("PDU  RX in 10 seconds: " + (rs2.getPduSample().getTotalInUnits() - rs1.getPduSample().getTotalInUnits()));
         System.out.println("PDU  RX data rate: " + rs2.getPduSample().getInRate());
-        System.out.println("Byte RX data rate: " + rs2.getByteSample().getInRate());
-
+        System.out.println("Byte RX data rate: " + rs2.getByteSample().getInRate() + " bytes/sec");
+        System.out.println("Bits RX data rate: " + (rs2.getByteSample().getInRate() / (1024 * 1024)) * 8 + " Mbps");
         generationRunning.set(false);
 
         // Stop
         rafUser.stop();
-        AwaitUtil.awaitCondition(2000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
+        AwaitUtil.awaitCondition(5000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
 
         // Unbind
         rafUser.unbind(UnbindReasonEnum.END);
