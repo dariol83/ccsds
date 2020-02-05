@@ -21,11 +21,16 @@ import eu.dariolucia.ccsds.tmtc.coding.decoder.ReedSolomonDecoder;
 import eu.dariolucia.ccsds.tmtc.coding.decoder.TmAsmDecoder;
 import eu.dariolucia.ccsds.tmtc.coding.reader.LineHexDumpChannelReader;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
+import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.AbstractSenderVirtualChannel;
+import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.AosSenderVirtualChannel;
+import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.IVirtualChannelSenderOutput;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
+import eu.dariolucia.ccsds.tmtc.transport.builder.SpacePacketBuilder;
 import eu.dariolucia.ccsds.tmtc.util.StreamUtil;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,6 +43,74 @@ class AosReceiverVirtualChannelTest {
     private static final String FILE_TM1 = "dumpFile_aos_1.hex";
     private static final String FILE_TM1_GAP = "dumpFile_aos_1_gap.hex";
     private static final String FILE_TM1_BITSTREAM = "dumpFile_aos_bitstream.hex";
+
+    @Test
+    public void testAosVc0SpacePacketSegmentedBigPacket() {
+
+        AosSenderVirtualChannel senderVc = new AosSenderVirtualChannel(111, 0, VirtualChannelAccessMode.PACKET, false, 892, null);
+        List<AosTransferFrame> aosFrames = new LinkedList<>();
+        senderVc.register(new IVirtualChannelSenderOutput() {
+            @Override
+            public void transferFrameGenerated(AbstractSenderVirtualChannel vc, AbstractTransferFrame generatedFrame, int bufferedBytes) {
+                aosFrames.add((AosTransferFrame) generatedFrame);
+            }
+        });
+        SpacePacketBuilder builder = SpacePacketBuilder.create().setApid(100).setPacketSequenceCount(30).setTelemetryPacket();
+        builder.addData(new byte[874]);
+        senderVc.dispatch(builder.build());
+        builder = SpacePacketBuilder.create().setApid(100).setPacketSequenceCount(31).setTelemetryPacket();
+        builder.addData(new byte[4000]);
+        senderVc.dispatch(builder.build());
+        int freeSpaceToClose = senderVc.getRemainingFreeSpace();
+        builder = SpacePacketBuilder.create().setApid(100).setPacketSequenceCount(32).setTelemetryPacket();
+        builder.addData(new byte[freeSpaceToClose - 6]);
+        senderVc.dispatch(builder.build());
+
+        // Create a virtual channel for VC0
+        AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
+        // Subscribe a packet collector
+        List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
+        List<byte[]> badPackets = new CopyOnWriteArrayList<>();
+        final AtomicInteger frameCounter = new AtomicInteger(0);
+        vc0.register(new IVirtualChannelReceiverOutput() {
+            @Override
+            public void transferFrameReceived(AbstractReceiverVirtualChannel vc, AbstractTransferFrame receivedFrame) {
+                frameCounter.incrementAndGet();
+            }
+
+            @Override
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+                if(qualityIndicator) {
+                    goodPackets.add(packet);
+                } else {
+                    badPackets.add(packet);
+                }
+            }
+
+            @Override
+            public void dataExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data) {
+
+            }
+
+            @Override
+            public void bitstreamExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data, int numBits) {
+
+            }
+
+            @Override
+            public void gapDetected(AbstractReceiverVirtualChannel vc, int expectedVc, int receivedVc, int missingFrames) {
+
+            }
+        });
+
+        // Re-read the data back
+        for(AosTransferFrame atf : aosFrames) {
+            vc0.accept(atf);
+        }
+        // Check the list of packets
+        assertEquals(3, goodPackets.size());
+        assertEquals(0, badPackets.size());
+    }
 
     @Test
     public void testAosVc0SpacePacket() {
