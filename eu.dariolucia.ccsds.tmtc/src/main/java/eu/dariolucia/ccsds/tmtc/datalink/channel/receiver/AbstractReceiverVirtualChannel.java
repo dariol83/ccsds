@@ -209,7 +209,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                 int yetToRead = this.currentPacketLength - this.currentOffset;
                 // If the frame contains no start pdu, copy what is remaining (as much as you can)
                 if (frameContainsNoStartOfPacket(frame)) {
-                    int toCopy = Math.min(yetToRead, frameDataLength);
+                    int toCopy = Math.min(yetToRead, frameDataLength - alreadyRead);
                     System.arraycopy(fullFrame, firstFrameDataOffset + alreadyRead, this.currentPacket, this.currentOffset, toCopy);
                     this.currentOffset += toCopy;
                 } else {
