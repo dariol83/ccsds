@@ -71,6 +71,7 @@
         <maven.compiler.version>3.8.1</maven.compiler.version>
         <maven.gpg.version>1.6</maven.gpg.version>
         <maven.version>2.5</maven.version>
+        <maven.bundle.version>4.2.1</maven.bundle.version>
     </properties>
 
     <modules>
@@ -160,6 +161,17 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>${maven.bundle.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Export-Package>eu.dariolucia.ccsds.*</Export-Package>
+                    </instructions>
+                </configuration>
             </plugin>
         </plugins>
     </build>
