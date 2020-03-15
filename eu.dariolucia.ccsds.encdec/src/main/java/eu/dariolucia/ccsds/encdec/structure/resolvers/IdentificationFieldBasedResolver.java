@@ -22,6 +22,8 @@ import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
 import eu.dariolucia.ccsds.encdec.structure.EncodingException;
 import eu.dariolucia.ccsds.encdec.structure.IEncodeResolver;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
+import eu.dariolucia.ccsds.encdec.time.AbsoluteTimeDescriptor;
+import eu.dariolucia.ccsds.encdec.time.RelativeTimeDescriptor;
 import eu.dariolucia.ccsds.encdec.value.BitString;
 
 import java.time.Duration;

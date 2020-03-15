@@ -26,6 +26,7 @@ import java.time.Instant;
 public class ParameterValue {
 
     private final String id;
+    private final long externalId;
     private final Object value;
     private final Instant generationTime;
 
@@ -33,11 +34,13 @@ public class ParameterValue {
      * Construct a {@link ParameterValue} instance.
      *
      * @param id the ID of the {@link ParameterValue}
+     * @param externalId the external ID of the parameter
      * @param value the value as extracted from the packet
      * @param time the generation time, can be null
      */
-    public ParameterValue(String id, Object value, Instant time) {
+    public ParameterValue(String id, long externalId, Object value, Instant time) {
         this.id = id;
+        this.externalId = externalId;
         this.value = value;
         this.generationTime = time;
     }
@@ -46,10 +49,11 @@ public class ParameterValue {
      * Construct a {@link ParameterValue} instance with null generation time.
      *
      * @param id the ID of the {@link ParameterValue}
+     * @param externalId the external ID of the parameter
      * @param value the value as extracted from the packet
      */
-    public ParameterValue(String id, Object value) {
-        this(id, value, null);
+    public ParameterValue(String id, long externalId, Object value) {
+        this(id, externalId, value, null);
     }
 
     /**
@@ -79,10 +83,20 @@ public class ParameterValue {
         return value;
     }
 
+    /**
+     * Return the parameter external ID, as defined in the related {@link eu.dariolucia.ccsds.encdec.definition.ParameterDefinition}.
+     *
+     * @return the external ID
+     */
+    public long getExternalId() {
+        return externalId;
+    }
+
     @Override
     public String toString() {
         return "ParameterValue {" +
                 "id='" + id + '\'' +
+                ", externalId=" + externalId +
                 ", value=" + value +
                 ", generationTime=" + generationTime +
                 '}';

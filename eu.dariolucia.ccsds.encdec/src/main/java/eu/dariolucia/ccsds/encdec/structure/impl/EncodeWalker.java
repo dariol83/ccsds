@@ -23,6 +23,8 @@ import eu.dariolucia.ccsds.encdec.structure.IEncodeResolver;
 import eu.dariolucia.ccsds.encdec.extension.IEncoderExtension;
 import eu.dariolucia.ccsds.encdec.extension.internal.ExtensionRegistry;
 import eu.dariolucia.ccsds.encdec.structure.StructureWalker;
+import eu.dariolucia.ccsds.encdec.time.AbsoluteTimeDescriptor;
+import eu.dariolucia.ccsds.encdec.time.RelativeTimeDescriptor;
 import eu.dariolucia.ccsds.encdec.value.BitString;
 import eu.dariolucia.ccsds.encdec.value.TimeUtil;
 
@@ -159,7 +161,7 @@ public class EncodeWalker extends StructureWalker<byte[], EncodingException> {
                 Instant t = this.resolver.getAbsoluteTimeValue(ei, this.currentLocation);
                 if (dataLength == 0) {
                     // Explicit definition of time format (CUC or CDS), i.e. including the Pfield
-                    IEncodeResolver.AbsoluteTimeDescriptor desc = this.resolver.getAbsoluteTimeDescriptor(ei, this.currentLocation, t);
+                    AbsoluteTimeDescriptor desc = this.resolver.getAbsoluteTimeDescriptor(ei, this.currentLocation, t);
                     byte[] encoded;
                     if(desc.cuc) {
                         encoded = TimeUtil.toCUC(t, this.agencyEpoch, desc.coarseTime, desc.fineTime, true);
@@ -187,7 +189,7 @@ public class EncodeWalker extends StructureWalker<byte[], EncodingException> {
                 Duration duration = this.resolver.getRelativeTimeValue(ei, this.currentLocation);
                 if (dataLength == 0) {
                     // Explicit definition of time format (CUC), i.e. including the Pfield
-                    IEncodeResolver.RelativeTimeDescriptor desc = this.resolver.getRelativeTimeDescriptor(ei, this.currentLocation, duration);
+                    RelativeTimeDescriptor desc = this.resolver.getRelativeTimeDescriptor(ei, this.currentLocation, duration);
                     byte[] encoded = TimeUtil.toCUCduration(duration, desc.coarseTime, desc.fineTime, true);
                     this.bitHandler.setNextByte(encoded, encoded.length * Byte.SIZE);
                 } else if (dataLength >= 1 && dataLength <= 16) {

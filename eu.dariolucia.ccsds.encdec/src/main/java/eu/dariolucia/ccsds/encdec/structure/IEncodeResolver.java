@@ -18,6 +18,8 @@ package eu.dariolucia.ccsds.encdec.structure;
 
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
+import eu.dariolucia.ccsds.encdec.time.AbsoluteTimeDescriptor;
+import eu.dariolucia.ccsds.encdec.time.RelativeTimeDescriptor;
 import eu.dariolucia.ccsds.encdec.value.BitString;
 
 import java.time.Duration;
@@ -186,70 +188,4 @@ public interface IEncodeResolver {
         // Stub, can be redefined
     }
 
-    /**
-     * This class allows to specify a CUC or CDS time descriptor, with the related characteristics, for absolute time encoding.
-     */
-    final class AbsoluteTimeDescriptor {
-
-        /**
-         * Create a CUC descriptor with the provided characteristics.
-         *
-         * @param coarseTime the size of coarse time in bytes
-         * @param fineTime the size of fine time in bytes
-         * @return the CUC descriptor
-         */
-        public static AbsoluteTimeDescriptor newCucDescriptor(int coarseTime, int fineTime) {
-            return new AbsoluteTimeDescriptor(true, coarseTime, fineTime, false, 0);
-        }
-
-        /**
-         * Create a CDS descriptor with the provided characteristics.
-         *
-         * @param use16bits true if two bytes are used for the day field, false if three bytes are used
-         * @param subMsPart the size of sub-millisecond field (0: not used, 1: microseconds, 2: picoseconds).
-         * @return the CDS descriptor
-         */
-        public static AbsoluteTimeDescriptor newCdsDescriptor(boolean use16bits, int subMsPart) {
-            return new AbsoluteTimeDescriptor(false, 0, 0, use16bits, subMsPart);
-        }
-
-        public final boolean cuc;
-        public final int coarseTime;
-        public final int fineTime;
-        public final boolean use16bits;
-        public final int subMsPart;
-
-        private AbsoluteTimeDescriptor(boolean cuc, int coarseTime, int fineTime, boolean use16bits, int subMsPart) {
-            this.cuc = cuc;
-            this.coarseTime = coarseTime;
-            this.fineTime = fineTime;
-            this.use16bits = use16bits;
-            this.subMsPart = subMsPart;
-        }
-    }
-
-    /**
-     * This class allows to specify a CUC time descriptor, with the related characteristics, for relative time encoding.
-     */
-    final class RelativeTimeDescriptor {
-
-        /**
-         * Create a CUC descriptor with the provided characteristics.
-         *
-         * @param coarseTime the size of coarse time in bytes
-         * @param fineTime the size of fine time in bytes
-         * @return the CUC descriptor
-         */
-        public static RelativeTimeDescriptor newCucDescriptor(int coarseTime, int fineTime) {
-            return new RelativeTimeDescriptor(coarseTime, fineTime);
-        }
-
-        public final int coarseTime;
-        public final int fineTime;
-
-        private RelativeTimeDescriptor(int coarseTime, int fineTime) {
-            this.coarseTime = coarseTime;
-            this.fineTime = fineTime;
-        }
-    }
 }

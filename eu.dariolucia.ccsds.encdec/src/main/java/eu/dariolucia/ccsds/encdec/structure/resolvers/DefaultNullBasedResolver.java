@@ -19,6 +19,8 @@ package eu.dariolucia.ccsds.encdec.structure.resolvers;
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.structure.IEncodeResolver;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
+import eu.dariolucia.ccsds.encdec.time.AbsoluteTimeDescriptor;
+import eu.dariolucia.ccsds.encdec.time.RelativeTimeDescriptor;
 import eu.dariolucia.ccsds.encdec.value.BitString;
 
 import java.time.Duration;
@@ -96,12 +98,12 @@ public class DefaultNullBasedResolver implements IEncodeResolver {
     }
 
     @Override
-    public IEncodeResolver.AbsoluteTimeDescriptor getAbsoluteTimeDescriptor(EncodedParameter parameter, PathLocation location, Instant value) {
+    public AbsoluteTimeDescriptor getAbsoluteTimeDescriptor(EncodedParameter parameter, PathLocation location, Instant value) {
         return absoluteTimeDescriptor;
     }
 
     @Override
-    public IEncodeResolver.RelativeTimeDescriptor getRelativeTimeDescriptor(EncodedParameter parameter, PathLocation location, Duration value) {
+    public RelativeTimeDescriptor getRelativeTimeDescriptor(EncodedParameter parameter, PathLocation location, Duration value) {
         return relativeTimeDescriptor;
     }
 }

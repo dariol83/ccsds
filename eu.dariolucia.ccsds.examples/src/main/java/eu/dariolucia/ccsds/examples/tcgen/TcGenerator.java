@@ -26,6 +26,8 @@ import eu.dariolucia.ccsds.encdec.structure.IPacketEncoder;
 import eu.dariolucia.ccsds.encdec.structure.PathLocation;
 import eu.dariolucia.ccsds.encdec.structure.impl.DefaultPacketEncoder;
 import eu.dariolucia.ccsds.encdec.structure.resolvers.IdentificationFieldBasedResolver;
+import eu.dariolucia.ccsds.encdec.time.AbsoluteTimeDescriptor;
+import eu.dariolucia.ccsds.encdec.time.RelativeTimeDescriptor;
 import eu.dariolucia.ccsds.encdec.value.BitString;
 import eu.dariolucia.ccsds.tmtc.coding.ChannelEncoder;
 import eu.dariolucia.ccsds.tmtc.coding.encoder.CltuEncoder;
