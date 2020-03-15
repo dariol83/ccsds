@@ -28,6 +28,10 @@ public interface IConnector {
 
 	void start();
 
+	default void step() {
+		throw new UnsupportedOperationException();
+	}
+
 	void stop();
 
 	boolean isDisposed();

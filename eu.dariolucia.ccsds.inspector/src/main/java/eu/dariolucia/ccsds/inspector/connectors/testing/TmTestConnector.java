@@ -92,20 +92,26 @@ public class TmTestConnector extends AbstractConnector implements IVirtualChanne
                 Thread.interrupted();
                 continue;
             }
-            // Generate packet: select random apid (between 900 and 1200) and VC
-            int apid = (int) Math.floor(900 + Math.random() * 300);
-            int vc = selectedVcIds[(apid % selectedVcIds.length)];
+            generatePackets();
+        }
+    }
 
-            if(vc == 7 && frameType == TmFrameSelection.TM) {
-                // Idle frame
-                generateIdle(vc);
-            } else if(vc == 63 && frameType == TmFrameSelection.AOS) {
-                // Idle frame
-                generateIdle(vc);
-            } else {
-                // Normal packet
-                generateSpacePacket(vc, apid);
-            }
+    private boolean generatePackets() {
+        // Generate packet: select random apid (between 900 and 1200) and VC
+        int apid = (int) Math.floor(900 + Math.random() * 300);
+        int vc = selectedVcIds[(apid % selectedVcIds.length)];
+
+        if(vc == 7 && frameType == TmFrameSelection.TM) {
+            // Idle frame
+            generateIdle(vc);
+            return true;
+        } else if(vc == 63 && frameType == TmFrameSelection.AOS) {
+            // Idle frame
+            generateIdle(vc);
+            return true;
+        } else {
+            // Normal packet
+            return generateSpacePacket(vc, apid);
         }
     }
 
@@ -162,10 +168,12 @@ public class TmTestConnector extends AbstractConnector implements IVirtualChanne
         }
     }
 
-    private void generateSpacePacket(int vcId, int apid) {
+    private boolean generateSpacePacket(int vcId, int apid) {
         AbstractSenderVirtualChannel<?> vc = this.vcid2sender.get(vcId);
         SpacePacket sp = buildSpacePacket(apid, 450);
+        long emittedFrames = vc.getNbOfEmittedFrames();
         vc.dispatch(sp);
+        return vc.getNbOfEmittedFrames() > emittedFrames;
     }
 
     private SpacePacket buildSpacePacket(int apid, int payload) {
@@ -202,6 +210,14 @@ public class TmTestConnector extends AbstractConnector implements IVirtualChanne
         }
         generator = null;
         notifyInfo(SeverityEnum.INFO, "Connector stopped");
+    }
+
+    @Override
+    protected void doStep() {
+        boolean frameGenerated = generatePackets();
+        while(!frameGenerated) {
+            frameGenerated = generatePackets();
+        }
     }
 
     @Override

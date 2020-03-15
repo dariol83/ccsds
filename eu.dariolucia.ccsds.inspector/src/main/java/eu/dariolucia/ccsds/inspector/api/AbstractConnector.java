@@ -63,6 +63,17 @@ public abstract class AbstractConnector implements IConnector {
 	}
 
 	@Override
+	public void step() {
+		if(this.state == ConnectorState.RUNNING || this.state == ConnectorState.STARTING || this.state == ConnectorState.STOPPING) {
+			return;
+		}
+		updateState(ConnectorState.STARTING);
+		doStep();
+		updateState(ConnectorState.STOPPING);
+		updateState(ConnectorState.IDLE);
+	}
+
+	@Override
 	public void stop() {
 		if(this.state == ConnectorState.STOPPING || this.state == ConnectorState.IDLE || this.state == ConnectorState.ERROR) {
 			return;
@@ -150,6 +161,8 @@ public abstract class AbstractConnector implements IConnector {
 	protected abstract void doStart();
 
 	protected abstract void doStop();
+
+	protected abstract void doStep();
 
 	protected abstract void doDispose();
 }

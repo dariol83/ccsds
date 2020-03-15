@@ -45,6 +45,10 @@
                <cursor>
                   <Cursor fx:constant="HAND" />
                </cursor></ImageView>
+            <ImageView fx:id="stepImage" fitHeight="20.0" fitWidth="20.0" layoutX="967.0" layoutY="10.0" onMouseClicked="#onStepButtonPressed" pickOnBounds="true" preserveRatio="true">
+               <cursor>
+                  <Cursor fx:constant="HAND" />
+               </cursor></ImageView>
             <Label fx:id="titleLabel" maxWidth="700.0" onMouseDragged="#onWindowMouseDragged" onMousePressed="#onWindowMousePressed" onMouseReleased="#onWindowMouseReleased" prefHeight="20.0" text="Connector Title Here" HBox.hgrow="ALWAYS">
                <font>
                   <Font name="Monospaced Bold" size="12.0" />

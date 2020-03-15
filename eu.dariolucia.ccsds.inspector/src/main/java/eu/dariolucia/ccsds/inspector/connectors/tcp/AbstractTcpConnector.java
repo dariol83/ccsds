@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.time.Instant;
+import java.util.concurrent.Semaphore;
 
 public abstract class AbstractTcpConnector extends AbstractConnector {
 
@@ -40,6 +41,9 @@ public abstract class AbstractTcpConnector extends AbstractConnector {
 
     // Readible by subclasses
     protected final boolean fecfPresent;
+
+    // Semaphore to release a frame
+    protected volatile Semaphore flowControlSemaphore = null;
 
     public AbstractTcpConnector(String name, String description, String version, ConnectorConfiguration configuration, IConnectorObserver observer) {
         super(name, description, version, configuration, observer);
@@ -68,6 +72,18 @@ public abstract class AbstractTcpConnector extends AbstractConnector {
         }
     }
 
+    @Override
+    protected void doStep() {
+        if(flowControlSemaphore == null) {
+            flowControlSemaphore = new Semaphore(1);
+        } else {
+            flowControlSemaphore.release(1);
+        }
+        if(!running) {
+            start();
+        }
+    }
+
     protected void readFromSocket() {
         try {
             do {
@@ -75,8 +91,14 @@ public abstract class AbstractTcpConnector extends AbstractConnector {
                 InputStream is = this.sock.getInputStream();
                 // Read the frame
                 AnnotatedObject ttf = getData(is);
-                ttf.setAnnotationValue(AbstractConnector.ANNOTATION_TIME_KEY, Instant.now());
+                if(!ttf.isAnnotationPresent(AbstractConnector.ANNOTATION_TIME_KEY)) {
+                    ttf.setAnnotationValue(AbstractConnector.ANNOTATION_TIME_KEY, Instant.now());
+                }
                 notifyData(ttf);
+
+                if(flowControlSemaphore != null) {
+                    flowControlSemaphore.acquire();
+                }
             } while(this.running);
         } catch (IOException e) {
             notifyInfo(SeverityEnum.ALARM, "IO Error reading stream: " + e.getMessage());
@@ -94,6 +116,10 @@ public abstract class AbstractTcpConnector extends AbstractConnector {
             return;
         }
         running = false;
+        if(flowControlSemaphore != null) {
+            flowControlSemaphore.release(Integer.MAX_VALUE);
+            flowControlSemaphore = null;
+        }
         if(this.sock != null) {
             try {
                 this.sock.close();

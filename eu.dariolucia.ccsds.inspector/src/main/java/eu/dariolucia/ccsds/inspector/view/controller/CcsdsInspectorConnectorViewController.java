@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.inspector.view.controller;
 
 import eu.dariolucia.ccsds.inspector.api.IConnector;
 import eu.dariolucia.ccsds.inspector.api.SeverityEnum;
+import eu.dariolucia.ccsds.inspector.application.CcsdsInspector;
 import eu.dariolucia.ccsds.inspector.manager.ConnectorManager;
 import eu.dariolucia.ccsds.inspector.manager.ConnectorManagerState;
 import eu.dariolucia.ccsds.inspector.manager.IConnectorManagerObserver;
@@ -56,8 +57,12 @@ import java.time.format.FormatStyle;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class CcsdsInspectorConnectorViewController implements Initializable, IConnectorManagerObserver {
+
+    private static final ExecutorService DISPATCHER = Executors.newSingleThreadExecutor();
 
     private static final DateTimeFormatter INSTANT_TIME_FORMATTER = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(Locale.GERMAN).withZone(ZoneId.of("UTC"));
     private static final int MAX_DATA_ITEMS_PER_TABLE = 5000;
@@ -68,9 +73,12 @@ public class CcsdsInspectorConnectorViewController implements Initializable, ICo
 
     @FXML
     public ImageView playPauseImage;
+    @FXML
+    public ImageView stepImage;
 
     private Image playImg;
     private Image pauseImg;
+    private Image stepImg;
 
     @FXML
     public ImageView minimizeImage;
@@ -149,6 +157,8 @@ public class CcsdsInspectorConnectorViewController implements Initializable, ICo
                 true, true);
         pauseImg = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/stop.png"), 20, 20,
                 true, true);
+        stepImg = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/step.png"), 20, 20,
+                true, true);
         minimizeImg = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/minus.png"), 20, 20,
                 true, true);
         closeImg = new Image(getClass().getResourceAsStream("/eu/dariolucia/ccsds/inspector/view/res/cancel.png"), 20, 20,
@@ -165,6 +175,7 @@ public class CcsdsInspectorConnectorViewController implements Initializable, ICo
                 true, true);
 
         playPauseImage.setImage(playImg);
+        stepImage.setImage(stepImg);
         minimizeImage.setImage(minimizeImg);
         closeImage.setImage(closeImg);
 
@@ -398,12 +409,46 @@ public class CcsdsInspectorConnectorViewController implements Initializable, ICo
     @FXML
     public void onPlayPauseButtonPressed(MouseEvent mouseEvent) {
         if (playPauseImage.getImage() == playImg) {
-            this.connectorManager.start();
+            startConnector();
             playPauseImage.setImage(pauseImg);
         } else {
-            this.connectorManager.stop();
+            stopConnector();
             playPauseImage.setImage(playImg);
         }
+    }
+
+    private void stopConnector() {
+        DISPATCHER.execute(connectorManager::stop);
+    }
+
+    private void startConnector() {
+        DISPATCHER.execute(connectorManager::start);
+    }
+
+    @FXML
+    public void onStepButtonPressed(MouseEvent mouseEvent) {
+        if (playPauseImage.getImage() == pauseImg) {
+            stopConnector();
+            playPauseImage.setImage(playImg);
+        }
+        stepConnector();
+        playPauseImage.setImage(pauseImg);
+    }
+
+    private void stepConnector() {
+        DISPATCHER.execute(() -> {
+            try {
+                connectorManager.step();
+            } catch (UnsupportedOperationException e) {
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle(CcsdsInspector.NAME);
+                    alert.setHeaderText(null);
+                    alert.setContentText("Step-based processing not supported by connector");
+                    alert.show();
+                });
+            }
+        });
     }
 
     @FXML

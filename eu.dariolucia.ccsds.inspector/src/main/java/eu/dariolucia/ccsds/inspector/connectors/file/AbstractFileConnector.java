@@ -65,29 +65,60 @@ public abstract class AbstractFileConnector extends AbstractConnector {
 		notifyInfo(SeverityEnum.INFO, getName() + " started");
 	}
 
+	@Override
+	protected void doStep() {
+		try {
+			openFileReader();
+			// Read the next line
+			String line = readNextLine();
+			if (running && line != null) {
+				processFrameLine(line);
+			} else {
+				closeFileReader();
+			}
+		} catch (IOException e) {
+			notifyInfo(SeverityEnum.ALARM, "Error processing file " + this.filePath.getAbsolutePath() + ": " + e.getMessage());
+			closeFileReader();
+		} catch (Exception e) {
+			e.printStackTrace();
+			notifyInfo(SeverityEnum.ALARM, "Error processing file " + this.filePath.getAbsolutePath() + ": " + e.getMessage());
+			closeFileReader();
+		}
+	}
+
+	private void openFileReader() throws FileNotFoundException {
+		if(this.fileReader == null) {
+			// Open the file
+			this.fileReader = new BufferedReader(new InputStreamReader(new FileInputStream(this.filePath)));
+		}
+	}
+
+	private void closeFileReader() {
+		if (this.fileReader != null) {
+			try {
+				this.fileReader.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			} finally {
+				this.fileReader = null;
+			}
+		}
+	}
+
 	protected void generate() {
 		try {
 			do {
-				if(this.fileReader != null) {
-					try {
-						this.fileReader.close();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-					this.fileReader = null;
-				}
+				// Close the file if any
+				closeFileReader();
 				// Open the file
-				this.fileReader = new BufferedReader(new InputStreamReader(new FileInputStream(this.filePath)));
+				openFileReader();
 				// Read the first line and use it to compute the frame size
 				String line = readNextLine();
 				int frameSizeInBits = line.length() * 4; // line.length() / 2 * 8
 				// Compute the interleave time
 				int msecBetweenFrames = (int) (1000.0 / ((double) bitrate / (double)(frameSizeInBits)));
 				while (running && line != null) {
-					byte[] frame = StringUtil.toByteArray(line.toUpperCase());
-					AnnotatedObject ttf = getData(frame);
-					ttf.setAnnotationValue(AbstractConnector.ANNOTATION_TIME_KEY, Instant.now());
-					notifyData(ttf);
+					processFrameLine(line);
 					try {
 						Thread.sleep(msecBetweenFrames);
 					} catch (InterruptedException e) {
@@ -102,13 +133,16 @@ public abstract class AbstractFileConnector extends AbstractConnector {
 			e.printStackTrace();
 			notifyInfo(SeverityEnum.ALARM, "Error processing file " + this.filePath.getAbsolutePath() + ": " + e.getMessage());
 		}
-		if(this.fileReader != null) {
-			try {
-				this.fileReader.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		closeFileReader();
+	}
+
+	private void processFrameLine(String line) {
+		byte[] frame = StringUtil.toByteArray(line.toUpperCase());
+		AnnotatedObject ttf = getData(frame);
+		if(!ttf.isAnnotationPresent(AbstractConnector.ANNOTATION_TIME_KEY)) {
+			ttf.setAnnotationValue(AbstractConnector.ANNOTATION_TIME_KEY, Instant.now());
 		}
+		notifyData(ttf);
 	}
 
 	private String readNextLine() throws IOException {

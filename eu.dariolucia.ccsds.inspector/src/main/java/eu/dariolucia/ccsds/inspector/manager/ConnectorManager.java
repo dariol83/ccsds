@@ -125,6 +125,13 @@ public final class ConnectorManager implements IConnectorObserver {
         this.connector.start();
     }
 
+    public void step() {
+        if (disposed) {
+            throw new IllegalStateException("Connector manager disposed: " + getConnectorFactory().getName());
+        }
+        this.connector.step();
+    }
+
     public void stop() {
         if (disposed) {
             throw new IllegalStateException("Connector manager disposed: " + getConnectorFactory().getName());

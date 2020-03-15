@@ -164,7 +164,7 @@ public class CcsdsInspectorMainViewController implements Initializable, IConnect
 		Alert alert = new Alert(AlertType.INFORMATION);
 		alert.setTitle(CcsdsInspector.NAME);
 		alert.setHeaderText(null);
-		alert.setContentText("Version: " + CcsdsInspector.VERSION + " - Author: Dario Lucia - 2019\n\n" +
+		alert.setContentText("Version: " + CcsdsInspector.VERSION + " - Author: Dario Lucia - 2019, 2020\n\n" +
 				"Icons made by Akveo (https://github.com/akveo/eva-icons)\n");
 		alert.show();
 	}
