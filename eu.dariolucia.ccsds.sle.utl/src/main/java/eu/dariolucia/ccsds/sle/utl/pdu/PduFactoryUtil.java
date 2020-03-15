@@ -350,8 +350,7 @@ public class PduFactoryUtil {
         try {
             isp1Credentials.decode(in, true);
         } catch (IOException e) {
-            LOG.log(Level.WARNING, "Cannot decode credentials from remote peer " + remotePeer.getId() + ", encoded credentials are "
-                    + DatatypeConverter.printHexBinary(encodedCredentials), e);
+            LOG.log(Level.WARNING, String.format("Cannot decode credentials from remote peer %s, encoded credentials are %s", remotePeer.getId(), DatatypeConverter.printHexBinary(encodedCredentials)), e);
             return false;
         }
         // From the Credentials time, we extract the time
