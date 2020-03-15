@@ -47,7 +47,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import javafx.util.Pair;
 
 import java.net.URL;
 import java.time.Instant;
@@ -311,7 +310,7 @@ public class CcsdsInspectorConnectorViewController implements Initializable, ICo
 
     private void checkTableFull(TableView<?> table) {
         // Let's be conservative: if the size goes beyond MAX_DATA_ITEMS_PER_TABLE, drop NB_AMOUNT_TO_REMOVE
-        if(table.getItems().size() > MAX_DATA_ITEMS_PER_TABLE) {
+        while(table.getItems().size() > MAX_DATA_ITEMS_PER_TABLE) {
             table.getItems().remove(0, NB_AMOUNT_TO_REMOVE);
         }
     }
