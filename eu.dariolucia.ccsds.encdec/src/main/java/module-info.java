@@ -18,6 +18,7 @@ open module eu.dariolucia.ccsds.encdec {
     exports eu.dariolucia.ccsds.encdec.time;
     exports eu.dariolucia.ccsds.encdec.time.impl;
     exports eu.dariolucia.ccsds.encdec.value;
+    exports eu.dariolucia.ccsds.encdec.pus;
 
     provides eu.dariolucia.ccsds.encdec.extension.IDecoderExtension with eu.dariolucia.ccsds.encdec.extension.impl.JavaSerializationDecoderExtension;
     provides eu.dariolucia.ccsds.encdec.extension.IEncoderExtension with eu.dariolucia.ccsds.encdec.extension.impl.JavaSerializationEncoderExtension;
