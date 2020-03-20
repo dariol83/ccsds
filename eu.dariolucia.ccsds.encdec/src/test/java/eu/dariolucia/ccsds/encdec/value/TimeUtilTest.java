@@ -62,6 +62,8 @@ class TimeUtilTest {
         assertEquals(8, cuc.length);
         Instant back = TimeUtil.fromCUC(cuc);
         assertEquals(t, back);
+        Instant back2 = TimeUtil.fromCUC(cuc, 0, cuc.length, null);
+        assertEquals(t, back2);
 
         back = TimeUtil.fromCUC(new BitEncoderDecoder(cuc), null);
         assertEquals(t, back);
@@ -78,6 +80,11 @@ class TimeUtilTest {
         assertEquals(12, cuc.length);
         back = TimeUtil.fromCUC(cuc, Instant.ofEpochSecond(100000));
         assertEquals(t, back);
+
+        cuc = TimeUtil.toCUC(t, null, 4, 3, false);
+        back = TimeUtil.fromCUC(cuc, 0, cuc.length, null, 4, 3);
+        assertEquals(t, back);
+
     }
 
     @Test

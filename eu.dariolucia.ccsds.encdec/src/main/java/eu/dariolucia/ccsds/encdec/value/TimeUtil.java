@@ -238,6 +238,40 @@ public class TimeUtil {
     }
 
     /**
+     * Decode a CUC time to UTC instant, assuming the presence of the P Field and an agency epoch. If the agency
+     * epoch is null, then a Level 1 Time Code is assumed. If Level 1 Time Code is reported by the P Field, the agency
+     * epoch is ignored. If the P Field reports a Level 2 Time Code and the agency epoch is null, an exception is thrown.
+     *
+     * @param cuc the CUC encoded time with P Field
+     * @param offset the offset to start from
+     * @param length the number of bytes that can be read from offset
+     * @param agencyEpoch the agency epoch, can be null
+     * @return the corresponding UTC time
+     */
+    public static Instant fromCUC(byte[] cuc, int offset, int length, Instant agencyEpoch) {
+        ByteBuffer bb = ByteBuffer.wrap(cuc, offset, length);
+        byte first = bb.get();
+        boolean additionalPfield = false;
+        if(first >> 7 != 0) {
+            additionalPfield = true;
+        }
+        int timeCodeLevel = (first & (byte) 0x70) >> 4;
+        if(timeCodeLevel != 1 && agencyEpoch == null) {
+            throw new IllegalArgumentException("P Field reports Level 2 Time Code but no agency epoch supplied, cannot decode");
+        } else if(timeCodeLevel == 1) {
+            agencyEpoch = null;
+        }
+        int coarseOctets = ((first & (byte) 0x0C) >> 2) + 1;
+        int fineOctets = (first & (byte) 0x03);
+        if(additionalPfield) {
+            byte second = bb.get();
+            coarseOctets += (second & 0x60) >> 5;
+            fineOctets += (second & 0x1C) >> 2;
+        }
+        return fromCUC(bb, agencyEpoch, coarseOctets, fineOctets);
+    }
+
+    /**
      * Decode a CUC time to UCT instant, assuming no presence of P Field. If the agency epoch is not present, then
      * the code assumes a Level 1 Time Code.
      *
@@ -249,6 +283,22 @@ public class TimeUtil {
      */
     public static Instant fromCUC(byte[] cuc, Instant agencyEpoch, int coarseOctets, int fineOctets) {
         return fromCUC(ByteBuffer.wrap(cuc), agencyEpoch, coarseOctets, fineOctets);
+    }
+
+    /**
+     * Decode a CUC time to UCT instant, assuming no presence of P Field. If the agency epoch is not present, then
+     * the code assumes a Level 1 Time Code.
+     *
+     * @param cuc the CUC encoded time without P Field
+     * @param offset the offset to start from
+     * @param length the length of the data that can be read, in bytes
+     * @param agencyEpoch the agency epoch, can be null
+     * @param coarseOctets the number of octets used for basic time unit encoding
+     * @param fineOctets the number of octets used for fractional time unit encoding
+     * @return the corresponding UTC time
+     */
+    public static Instant fromCUC(byte[] cuc, int offset, int length, Instant agencyEpoch, int coarseOctets, int fineOctets) {
+        return fromCUC(ByteBuffer.wrap(cuc, offset, length), agencyEpoch, coarseOctets, fineOctets);
     }
 
     private static Instant fromCUC(ByteBuffer tFieldWrapped, Instant agencyEpoch, int coarseOctets, int fineOctets) {
