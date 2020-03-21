@@ -59,7 +59,7 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
             }
             decodedItems.add(item);
         }
-        return new DecodingResult(decodedItems, decodedParameters);
+        return new DecodingResult(definition, decodedItems, decodedParameters);
     }
 
     @Override

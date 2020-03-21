@@ -569,7 +569,7 @@ class DefaultPacketDecoderTest {
     DecodingResult decodeAndCompare(Definition d, String packetDefinition, Map<String, Object> originalMap, byte[] encoded) throws DecodingException {
         DefaultPacketDecoder decoder = new DefaultPacketDecoder(d);
         DecodingResult dr = decoder.decode(packetDefinition, encoded);
-
+        assertEquals(packetDefinition, dr.getDefinition().getId());
         Map<String, Object> decodedMap = dr.getDecodedItemsAsMap();
         assertEquals(originalMap.size(), decodedMap.size());
         for (String key : originalMap.keySet()) {

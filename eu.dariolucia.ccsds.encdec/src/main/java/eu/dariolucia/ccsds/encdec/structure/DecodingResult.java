@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.encdec.structure;
 
 import eu.dariolucia.ccsds.encdec.definition.DataTypeEnum;
 import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
+import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
 import eu.dariolucia.ccsds.encdec.definition.ParameterDefinition;
 
 import java.time.Instant;
@@ -33,18 +34,30 @@ import java.util.Map;
  */
 public class DecodingResult {
 
+    private final PacketDefinition definition;
     private final List<Item> decodedItems;
     private final List<ParameterValue> decodedParameters;
 
     /**
      * Construct an object with the provided list of decoded {@link Item} and list of {@link ParameterValue}.
      *
+     * @param definition the packet definition used to obtain the result
      * @param decodedItems the list of decoded items
      * @param decodedParameters the list of parameter values
      */
-    public DecodingResult(List<Item> decodedItems, List<ParameterValue> decodedParameters) {
+    public DecodingResult(PacketDefinition definition, List<Item> decodedItems, List<ParameterValue> decodedParameters) {
+        this.definition = definition;
         this.decodedItems = List.copyOf(decodedItems);
         this.decodedParameters = List.copyOf(decodedParameters);
+    }
+
+    /**
+     * This method returns the packet definition used to obtain the result.
+     *
+     * @return the packet definition
+     */
+    public PacketDefinition getDefinition() {
+        return definition;
     }
 
     /**
