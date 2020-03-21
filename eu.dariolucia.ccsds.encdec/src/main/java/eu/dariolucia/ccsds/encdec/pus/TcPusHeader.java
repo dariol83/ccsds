@@ -155,6 +155,7 @@ public class TcPusHeader {
      * @param input the input byte buffer. It shall contain the full PUS header
      * @param offset the offset, the reading will start from
      * @param sourceIdLength the encoded length in bits of the source ID (used only if the source ID is present), less or equal to 0 means not present
+     * @return the TC PUS header
      */
     public static TcPusHeader decodeFrom(byte[] input, int offset, int sourceIdLength) {
         BitEncoderDecoder decoder = new BitEncoderDecoder(input, offset, input.length - offset);

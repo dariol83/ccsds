@@ -37,9 +37,9 @@ public class TmPusHeader {
     /**
      * Shorten version of the class constructor. This constructor set the version to 1,
      * and the packet sub-counter and destination ID to null.
-     * @param serviceType
-     * @param serviceSubType
-     * @param absoluteTime
+     * @param serviceType the PUS service type
+     * @param serviceSubType the PUS service subtype
+     * @param absoluteTime the absolute time (or null)
      */
     public TmPusHeader(short serviceType, short serviceSubType, Instant absoluteTime) {
         this((byte) 1, serviceType, serviceSubType, null, null, absoluteTime);
@@ -214,6 +214,7 @@ public class TmPusHeader {
      * @param absoluteTimeExplicit if true, then the time is encoded with a P-Field, otherwise no P-Field is used
      * @param absoluteTimeAgencyEpoch if set, then the absolute time set in this class is decoded using the provided epoch
      * @param absoluteTimeFormat the type and (if not explicit) format of the absolute time
+     * @return the TM PUS Header
      */
     public static TmPusHeader decodeFrom(byte[] input, int offset, boolean packetSubCounterPresent, int destinationIdLength, boolean absoluteTimeExplicit, Instant absoluteTimeAgencyEpoch, AbsoluteTimeDescriptor absoluteTimeFormat) {
         BitEncoderDecoder decoder = new BitEncoderDecoder(input, offset, input.length - offset);
