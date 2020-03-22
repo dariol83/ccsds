@@ -26,6 +26,7 @@ import java.util.Objects;
  * The definition of a packet in terms of matchers and structure. Such definition is composed by:
  * <ul>
  *     <li>a mandatory ID, which must be unique among the packet definitions</li>
+ *     <li>an optional external id</li>
  *     <li>an optional textual description</li>
  *     <li>an optional type, which is a label that can be used to include/exclude categories of packets from the identification process</li>
  *     <li>an optional identification definition, which contains an ordered list of matchers</li>
@@ -36,9 +37,14 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class PacketDefinition {
 
+    public static final int EXTERNAL_ID_NOT_SET = -1;
+
     @XmlID
     @XmlAttribute(name = "id", required = true)
     private String id;
+
+    @XmlAttribute(name = "external_id")
+    private long externalId = EXTERNAL_ID_NOT_SET;
 
     @XmlAttribute(name = "description")
     private String description;
@@ -108,6 +114,21 @@ public class PacketDefinition {
     }
 
     /**
+     * The external ID of this packet, i.e. an ID that identifies this packet in an external system.
+     *
+     * This is an optional field.
+     *
+     * @return the packet external ID
+     */
+    public long getExternalId() {
+        return externalId;
+    }
+
+    public void setExternalId(long externalId) {
+        this.externalId = externalId;
+    }
+
+    /**
      * The list of identification field matchers, which unequivocally identify this packet. The definition order matters
      * and a consistent order among packet definitions is mandatory, in order to achieve correct packet identification
      * results.
@@ -172,6 +193,7 @@ public class PacketDefinition {
         PacketDefinition that = (PacketDefinition) o;
         return Objects.equals(getId(), that.getId()) &&
                 Objects.equals(getDescription(), that.getDescription()) &&
+                Objects.equals(getExternalId(), that.getExternalId()) &&
                 Objects.equals(getType(), that.getType()) &&
                 Objects.equals(getMatchers(), that.getMatchers()) &&
                 Objects.equals(getStructure(), that.getStructure()) &&
@@ -180,6 +202,6 @@ public class PacketDefinition {
 
     @Override
     public int hashCode() {
-        return Objects.hash(getId(), getDescription(), getType(), getMatchers(), getStructure(), getExtension());
+        return Objects.hash(getId(), getExternalId(), getDescription(), getType(), getMatchers(), getStructure(), getExtension());
     }
 }

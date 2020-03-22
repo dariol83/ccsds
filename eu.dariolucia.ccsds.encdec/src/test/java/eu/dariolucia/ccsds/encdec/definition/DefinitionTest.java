@@ -50,11 +50,11 @@ class DefinitionTest {
 //    }
 
     @Test
-    public void testFailedUnmarshalling() throws IOException {
+    public void testFailedUnmarshalling() {
         try {
             String text = "Whatever";
             ByteArrayInputStream bin = new ByteArrayInputStream(text.getBytes());
-            Definition d1 = Definition.load(bin);
+            Definition.load(bin);
             fail("Exception expected");
         } catch (IOException e) {
             // Good
@@ -110,6 +110,7 @@ class DefinitionTest {
                 new IdentFieldMatcher(d.getIdentificationFields().get(2), 25),
                 new IdentFieldMatcher(d.getIdentificationFields().get(3), 2)
         ));
+        d.getPacketDefinitions().get(d.getPacketDefinitions().size() - 1).setExternalId(20);
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         Definition.save(d, bos);
