@@ -28,6 +28,7 @@ public class TcPusHeader {
     private final short serviceType;
     private final short serviceSubType;
     private final Integer sourceId;
+    private final Integer encodedLength;
 
     /**
      * Shorten version of the class constructor. This constructor set the version to 1, the ack field to all 1s,
@@ -37,7 +38,7 @@ public class TcPusHeader {
      * @param serviceSubType the PUS service subtype
      */
     public TcPusHeader(short serviceType, short serviceSubType) {
-        this((byte) 1, AckField.allAcks(), serviceType, serviceSubType, null);
+        this((byte) 1, AckField.allAcks(), serviceType, serviceSubType, null, null);
     }
 
     /**
@@ -49,13 +50,15 @@ public class TcPusHeader {
      * @param serviceType the PUS service type
      * @param serviceSubType the PUS service subtype
      * @param sourceId the source ID (or null)
+     * @param encodedLength the encoded length (if known, otherwise null)
      */
-    public TcPusHeader(byte version, AckField ackField, short serviceType, short serviceSubType, Integer sourceId) {
+    public TcPusHeader(byte version, AckField ackField, short serviceType, short serviceSubType, Integer sourceId, Integer encodedLength) {
         this.version = version;
         this.ackField = ackField;
         this.serviceType = serviceType;
         this.serviceSubType = serviceSubType;
         this.sourceId = sourceId;
+        this.encodedLength = encodedLength;
     }
 
     /**
@@ -112,6 +115,15 @@ public class TcPusHeader {
         return sourceId != null;
     }
 
+    /**
+     * Return the encoded length in bytes, if known. Otherwise null. This field is always set on decoding.
+     *
+     * @return the encoded length
+     */
+    public Integer getEncodedLength() {
+        return encodedLength;
+    }
+
     @Override
     public String toString() {
         return "TcPusHeader{" +
@@ -131,9 +143,11 @@ public class TcPusHeader {
      * @param offset the offset, the writing will start from
      * @param sourceIdLength the encoded length in bits of the source ID (used only if the source ID is present)
      * @param spare the number of spare bits to be added at the end of the encoding process (0 if unused)
+     * return number of encoded bytes
      */
-    public void encodeTo(byte[] output, int offset, int sourceIdLength, int spare) {
+    public int encodeTo(byte[] output, int offset, int sourceIdLength, int spare) {
         BitEncoderDecoder encoder = new BitEncoderDecoder(output, offset, output.length - offset);
+        int startBitNumber = encoder.getCurrentBitIndex();
         // Write first bit (0), TC Packet PUS Version Number, ack field and the two octets for type and subtype
         int firstThreeOctets = version & 0x07;
         firstThreeOctets <<= 4;
@@ -147,6 +161,9 @@ public class TcPusHeader {
             encoder.setNextIntegerUnsigned(sourceId, sourceIdLength);
         }
         encoder.setNextIntegerUnsigned(0, spare);
+
+        int finalBitNumber = encoder.getCurrentBitIndex();
+        return (int) Math.ceil((finalBitNumber - startBitNumber) / (double) Byte.SIZE);
     }
 
     /**
@@ -159,6 +176,7 @@ public class TcPusHeader {
      */
     public static TcPusHeader decodeFrom(byte[] input, int offset, int sourceIdLength) {
         BitEncoderDecoder decoder = new BitEncoderDecoder(input, offset, input.length - offset);
+        int startBitIdx = decoder.getCurrentBitIndex();
         int firstThreeOctets = decoder.getNextIntegerUnsigned(24);
         byte version = (byte) ((firstThreeOctets & 0x00700000) >>> 20);
         byte ackField = (byte) ((firstThreeOctets & 0x000F0000) >>> 16);
@@ -168,6 +186,13 @@ public class TcPusHeader {
         if(sourceIdLength > 0) {
             sourceId = decoder.getNextIntegerUnsigned(sourceIdLength);
         }
-        return new TcPusHeader(version, new AckField(ackField), serviceType, serviceSubType, sourceId);
+        // Reach byte alignment
+        int cBitIdx = decoder.getCurrentBitIndex();
+        int mod = cBitIdx % Byte.SIZE;
+        if(mod != 0) {
+            decoder.addCurrentBitIndex(Byte.SIZE - mod);
+        }
+        int bytesRead = (decoder.getCurrentBitIndex() - startBitIdx) / Byte.SIZE;
+        return new TcPusHeader(version, new AckField(ackField), serviceType, serviceSubType, sourceId, bytesRead);
     }
 }

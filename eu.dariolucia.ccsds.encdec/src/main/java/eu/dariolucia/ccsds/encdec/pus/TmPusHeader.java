@@ -33,6 +33,7 @@ public class TmPusHeader {
     private final Short packetSubCounter;
     private final Integer destinationId;
     private final Instant absoluteTime;
+    private final Integer encodedLength;
 
     /**
      * Shorten version of the class constructor. This constructor set the version to 1,
@@ -42,7 +43,7 @@ public class TmPusHeader {
      * @param absoluteTime the absolute time (or null)
      */
     public TmPusHeader(short serviceType, short serviceSubType, Instant absoluteTime) {
-        this((byte) 1, serviceType, serviceSubType, null, null, absoluteTime);
+        this((byte) 1, serviceType, serviceSubType, null, null, absoluteTime, null);
     }
 
     /**
@@ -55,14 +56,16 @@ public class TmPusHeader {
      * @param packetSubCounter the packet sub-counter (or null)
      * @param destinationId the destination ID (or null)
      * @param absoluteTime the absolute time (or null)
+     * @param encodedLength the encoded length (if known, otherwise null)
      */
-    public TmPusHeader(byte version, short serviceType, short serviceSubType, Short packetSubCounter, Integer destinationId, Instant absoluteTime) {
+    public TmPusHeader(byte version, short serviceType, short serviceSubType, Short packetSubCounter, Integer destinationId, Instant absoluteTime, Integer encodedLength) {
         this.version = version;
         this.serviceType = serviceType;
         this.serviceSubType = serviceSubType;
         this.packetSubCounter = packetSubCounter;
         this.destinationId = destinationId;
         this.absoluteTime = absoluteTime;
+        this.encodedLength = encodedLength;
     }
 
     /**
@@ -146,6 +149,15 @@ public class TmPusHeader {
         return absoluteTime != null;
     }
 
+    /**
+     * Return the encoded length in bytes, if known. Otherwise null. This field is always set on decoding.
+     *
+     * @return the encoded length
+     */
+    public Integer getEncodedLength() {
+        return encodedLength;
+    }
+
     @Override
     public String toString() {
         return "TmPusHeader{" +
@@ -169,9 +181,11 @@ public class TmPusHeader {
      * @param absoluteTimeAgencyEpoch if set, then the absolute time set in this class is encoded using the provided epoch
      * @param absoluteTimeFormat the format of the absolute time
      * @param spare the number of spare bits to be added at the end of the encoding process (0 if unused)
+     * @return number of encoded bytes
      */
-    public void encodeTo(byte[] output, int offset, int destinationIdLength, boolean absoluteTimeExplicit, Instant absoluteTimeAgencyEpoch, AbsoluteTimeDescriptor absoluteTimeFormat, int spare) {
+    public int encodeTo(byte[] output, int offset, int destinationIdLength, boolean absoluteTimeExplicit, Instant absoluteTimeAgencyEpoch, AbsoluteTimeDescriptor absoluteTimeFormat, int spare) {
         BitEncoderDecoder encoder = new BitEncoderDecoder(output, offset, output.length - offset);
+        int startBitNumber = encoder.getCurrentBitIndex();
         // Write first bit (0), TM Packet PUS Version Number, 4 bits spare and the two octets for type and subtype
         int firstThreeOctets = version & 0x07;
         firstThreeOctets <<= 12;
@@ -199,6 +213,9 @@ public class TmPusHeader {
             encoder.setNextByte(encoded, encoded.length * Byte.SIZE);
         }
         encoder.setNextIntegerUnsigned(0, spare);
+
+        int finalBitNumber = encoder.getCurrentBitIndex();
+        return (int) Math.ceil((finalBitNumber - startBitNumber) / (double) Byte.SIZE);
     }
 
     /**
@@ -218,6 +235,7 @@ public class TmPusHeader {
      */
     public static TmPusHeader decodeFrom(byte[] input, int offset, boolean packetSubCounterPresent, int destinationIdLength, boolean absoluteTimeExplicit, Instant absoluteTimeAgencyEpoch, AbsoluteTimeDescriptor absoluteTimeFormat) {
         BitEncoderDecoder decoder = new BitEncoderDecoder(input, offset, input.length - offset);
+        int startBitIdx = decoder.getCurrentBitIndex();
         int firstThreeOctets = decoder.getNextIntegerUnsigned(24);
         byte version = (byte) ((firstThreeOctets & 0x00700000) >>> 20);
         short serviceType = (short) ((firstThreeOctets & 0x0000FF00) >>> 8);
@@ -250,6 +268,13 @@ public class TmPusHeader {
             }
         } // Otherwise, not used
 
-        return new TmPusHeader(version, serviceType, serviceSubType, subPacketCounter, destinationId, absoluteTime);
+        // Reach byte alignment
+        int cBitIdx = decoder.getCurrentBitIndex();
+        int mod = cBitIdx % Byte.SIZE;
+        if(mod != 0) {
+            decoder.addCurrentBitIndex(Byte.SIZE - mod);
+        }
+        int bytesRead = (decoder.getCurrentBitIndex() - startBitIdx) / Byte.SIZE;
+        return new TmPusHeader(version, serviceType, serviceSubType, subPacketCounter, destinationId, absoluteTime, bytesRead);
     }
 }

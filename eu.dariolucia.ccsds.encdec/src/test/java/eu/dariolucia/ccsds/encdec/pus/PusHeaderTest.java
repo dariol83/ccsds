@@ -29,15 +29,16 @@ public class PusHeaderTest {
     public void testTmPusHeader() {
         {
             Instant genTime = Instant.now();
-            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 3, (short) 25, null, 4, genTime);
+            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 3, (short) 25, null, 4, genTime, null);
             byte[] encodedHeader = new byte[20];
             AbsoluteTimeDescriptor desc = AbsoluteTimeDescriptor.newCucDescriptor(4, 3);
-            h1.encodeTo(encodedHeader, 6, 8, false, Instant.parse("2000-01-01T00:00:00.000Z"), desc, 0);
+            int encBytes = h1.encodeTo(encodedHeader, 6, 8, false, Instant.parse("2000-01-01T00:00:00.000Z"), desc, 0);
             // Check at byte level
             assertEquals((byte) 0x10, encodedHeader[6]);
             assertEquals(3, Byte.toUnsignedInt(encodedHeader[7]));
             assertEquals((byte) 25, Byte.toUnsignedInt(encodedHeader[8]));
             assertEquals(4, Byte.toUnsignedInt(encodedHeader[9]));
+            assertEquals(11, encBytes);
             // Read back
             TmPusHeader readBack = TmPusHeader.decodeFrom(encodedHeader, 6, false, 8, false, Instant.parse("2000-01-01T00:00:00.000Z"), desc);
             // Equality
@@ -53,9 +54,10 @@ public class PusHeaderTest {
             assertEquals(h1.getDestinationId(), readBack.getDestinationId());
             assertEquals(h1.getAbsoluteTime().getEpochSecond(), readBack.getAbsoluteTime().getEpochSecond());
             assertTrue(Math.abs(h1.getAbsoluteTime().getNano() - readBack.getAbsoluteTime().getNano()) <= 60); // Delta is less than the quantisation error: 1/(2^24) of a second -> 59.6 nsec
+            assertEquals(11, readBack.getEncodedLength());
         }
         {
-            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 200, (short) 129, (short) 50, null, null);
+            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 200, (short) 129, (short) 50, null, null, null);
             byte[] encodedHeader = new byte[20];
             h1.encodeTo(encodedHeader, 3, 0, false, null, null, 0);
             // Check at byte level
@@ -81,7 +83,7 @@ public class PusHeaderTest {
         }
         {
             Instant genTime = Instant.now();
-            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 3, (short) 25, null, 4, genTime);
+            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 3, (short) 25, null, 4, genTime, null);
             byte[] encodedHeader = new byte[20];
             AbsoluteTimeDescriptor desc = AbsoluteTimeDescriptor.newCucDescriptor(4, 3);
             h1.encodeTo(encodedHeader, 6, 8, true, Instant.parse("2000-01-01T00:00:00.000Z"), desc, 0);
@@ -108,7 +110,7 @@ public class PusHeaderTest {
         }
         {
             Instant genTime = Instant.now();
-            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 3, (short) 25, null, 4, genTime);
+            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 3, (short) 25, null, 4, genTime, null);
             byte[] encodedHeader = new byte[20];
             AbsoluteTimeDescriptor desc = AbsoluteTimeDescriptor.newCdsDescriptor(true, 1);
             h1.encodeTo(encodedHeader, 6, 8, true, Instant.parse("2000-01-01T00:00:00.000Z"), desc, 0);
@@ -135,7 +137,7 @@ public class PusHeaderTest {
         }
         {
             Instant genTime = Instant.now();
-            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 3, (short) 25, null, 4, genTime);
+            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 3, (short) 25, null, 4, genTime, null);
             byte[] encodedHeader = new byte[20];
             AbsoluteTimeDescriptor desc = AbsoluteTimeDescriptor.newCdsDescriptor(true, 1);
             h1.encodeTo(encodedHeader, 6, 8, true, Instant.parse("2000-01-01T00:00:00.000Z"), desc, 0);
@@ -162,7 +164,7 @@ public class PusHeaderTest {
         }
         {
             Instant genTime = Instant.now();
-            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 3, (short) 25, null, 4, genTime);
+            TmPusHeader h1 = new TmPusHeader((byte) 1, (short) 3, (short) 25, null, 4, genTime, null);
             byte[] encodedHeader = new byte[20];
             AbsoluteTimeDescriptor desc = AbsoluteTimeDescriptor.newCdsDescriptor(true, 1);
             h1.encodeTo(encodedHeader, 6, 8, false, Instant.parse("2000-01-01T00:00:00.000Z"), desc, 0);
@@ -200,14 +202,15 @@ public class PusHeaderTest {
     @Test
     public void testTcPusHeader() {
         {
-            TcPusHeader h1 = new TcPusHeader((byte) 1, new AckField(true, false, false, true), (short) 3, (short) 25, 13);
+            TcPusHeader h1 = new TcPusHeader((byte) 1, new AckField(true, false, false, true), (short) 3, (short) 25, 13, null);
             byte[] encodedHeader = new byte[20];
-            h1.encodeTo(encodedHeader, 6, 8, 0);
+            int encodedBytes = h1.encodeTo(encodedHeader, 6, 8, 0);
             // Check at byte level
             assertEquals((byte) 0x19, encodedHeader[6]);
             assertEquals(3, Byte.toUnsignedInt(encodedHeader[7]));
             assertEquals((byte) 25, Byte.toUnsignedInt(encodedHeader[8]));
             assertEquals(13, Byte.toUnsignedInt(encodedHeader[9]));
+            assertEquals(4, encodedBytes);
             // Read back
             TcPusHeader readBack = TcPusHeader.decodeFrom(encodedHeader, 6, 8);
             // Equality
@@ -222,6 +225,7 @@ public class PusHeaderTest {
             assertEquals(h1.getSourceId(), readBack.getSourceId());
             assertEquals(h1.getAckField(), readBack.getAckField());
             assertEquals(h1.getAckField().hashCode(), readBack.getAckField().hashCode());
+            assertEquals(4, readBack.getEncodedLength());
         }
         {
             TcPusHeader h1 = new TcPusHeader((short) 200,(short) 200);
