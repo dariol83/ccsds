@@ -39,13 +39,13 @@ import java.util.function.Supplier;
 /**
  * RCF encoding/decoding extension class.
  */
-public class RcfEncDec extends CommonEncDec {
+public class RcfUserEncDec extends CommonEncDec {
 
     private final List<Function<RcfProviderToUserPduV1, BerType>> unwrapFunctionV1List;
     private final List<Function<RcfProviderToUserPduV2toV4, BerType>> unwrapFunctionV2V4List;
     private final List<Function<RcfProviderToUserPdu, BerType>> unwrapFunctionV5List;
 
-    public RcfEncDec() {
+    public RcfUserEncDec() {
         register(1, RcfProviderToUserPduV1::new);
         register(2, RcfProviderToUserPduV2toV4::new);
         register(3, RcfProviderToUserPduV2toV4::new);

@@ -27,8 +27,8 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleAcknowledgement;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Diagnostics;
-import eu.dariolucia.ccsds.sle.server.CltuServiceInstanceProvider;
-import eu.dariolucia.ccsds.sle.server.OperationRecorder;
+import eu.dariolucia.ccsds.sle.utl.server.CltuServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.cltu.CltuServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.BindDiagnosticsEnum;

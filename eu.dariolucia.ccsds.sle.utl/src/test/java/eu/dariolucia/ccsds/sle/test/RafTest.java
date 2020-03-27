@@ -18,7 +18,6 @@ package eu.dariolucia.ccsds.sle.test;
 
 import com.beanit.jasn1.ber.types.BerInteger;
 import com.beanit.jasn1.ber.types.BerNull;
-import com.beanit.jasn1.ber.types.BerType;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleBindReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.DiagnosticScheduleStatusReport;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleAcknowledgement;
@@ -30,8 +29,8 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafSyncNotifyInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.DiagnosticRafGet;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.DiagnosticRafStart;
-import eu.dariolucia.ccsds.sle.server.OperationRecorder;
-import eu.dariolucia.ccsds.sle.server.RafServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
+import eu.dariolucia.ccsds.sle.utl.server.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;

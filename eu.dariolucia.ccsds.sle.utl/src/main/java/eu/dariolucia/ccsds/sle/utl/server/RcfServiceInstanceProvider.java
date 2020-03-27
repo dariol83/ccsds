@@ -14,24 +14,23 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.server;
+package eu.dariolucia.ccsds.sle.utl.server;
 
 import com.beanit.jasn1.ber.types.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.*;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.incoming.pdus.RocfGetParameterInvocation;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.incoming.pdus.RocfStartInvocation;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.outgoing.pdus.*;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.structures.*;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.incoming.pdus.RcfGetParameterInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.incoming.pdus.RcfStartInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing.pdus.*;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.*;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
-import eu.dariolucia.ccsds.sle.utl.config.rocf.RocfServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.encdec.RcfProviderEncDec;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
-import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfControlWordTypeEnum;
-import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfParameterEnum;
-import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfServiceInstanceState;
-import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfUpdateModeEnum;
+import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfParameterEnum;
+import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfServiceInstanceState;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -43,18 +42,15 @@ import java.util.function.Function;
 import java.util.logging.Logger;
 
 /**
- * One object of this class represents an ROCF Service Instance (provider role).
+ * One object of this class represents an RCF Service Instance (provider role).
  */
-public class RocfServiceInstanceProvider extends ServiceInstance {
+public class RcfServiceInstanceProvider extends ServiceInstance {
 
-    private static final Logger LOG = Logger.getLogger(RocfServiceInstanceProvider.class.getName());
+    private static final Logger LOG = Logger.getLogger(RcfServiceInstanceProvider.class.getName());
 
     // Read from configuration, retrieved via GET_PARAMETER
     private Integer latencyLimit; // NULL if offline, otherwise a value
     private List<GVCID> permittedGvcids;
-    private List<Integer> permittedTcVcid;
-    private List<RocfControlWordTypeEnum> permittedControlWordTypes;
-    private List<RocfUpdateModeEnum> permittedUpdateModes;
     private Integer minReportingCycle;
     private int returnTimeoutPeriod;
     private int transferBufferSize;
@@ -62,17 +58,13 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
 
     // Updated via START and GET_PARAMETER
     private volatile GVCID requestedGvcid = null;
-    private volatile Integer requestedTcVcid = null;
-    private volatile RocfControlWordTypeEnum requestedControlWordType = null;
-    private volatile RocfUpdateModeEnum requestedUpdateMode = null;
     private Integer reportingCycle = null; // NULL if off, otherwise a value
     private volatile Date startTime = null;
     private volatile Date endTime = null;
 
     // Requested via STATUS_REPORT, updated externally (therefore they are protected via separate lock)
     private final ReentrantLock statusMutex = new ReentrantLock();
-    private volatile int processedFrameNumber = 0;
-    private volatile int deliveredOcfsNumber = 0;
+    private volatile int deliveredFrameNumber = 0;
     private LockStatusEnum frameSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
     private LockStatusEnum symbolSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
     private LockStatusEnum subcarrierLockStatus = LockStatusEnum.OUT_OF_LOCK;
@@ -80,7 +72,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     private ProductionStatusEnum productionStatus = ProductionStatusEnum.HALTED;
 
     // Encoder/decoder
-    private final RocfProviderEncDec encDec = new RocfProviderEncDec();
+    private final RcfProviderEncDec encDec = new RcfProviderEncDec();
 
     // Status report scheduler
     private volatile Timer reportingScheduler = null;
@@ -88,7 +80,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     // Transfer buffer under construction
     private final ReentrantLock bufferMutex = new ReentrantLock();
     private final Condition bufferChangedCondition = bufferMutex.newCondition();
-    private RocfTransferBuffer bufferUnderConstruction = null;
+    private RcfTransferBuffer bufferUnderConstruction = null;
     private boolean bufferUnderTransmission = false;
     private boolean bufferActive = false;
 
@@ -96,27 +88,24 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     private final Timer latencyTimer = new Timer();
     private volatile TimerTask pendingLatencyTimeout = null;
 
-    // Last recorded OCF per TC VC ID
-    private final Map<Integer, Integer> tcVcId2lastClcw = new HashMap<>();
-
     // Operation extension handlers: they are called to drive the positive/negative response (where supported)
-    private volatile Function<RocfStartInvocation, Boolean> startOperationHandler;
+    private volatile Function<RcfStartInvocation, Boolean> startOperationHandler;
 
-    public RocfServiceInstanceProvider(PeerConfiguration apiConfiguration,
-                                       RocfServiceInstanceConfiguration serviceInstanceConfiguration) {
+    public RcfServiceInstanceProvider(PeerConfiguration apiConfiguration,
+                                      RcfServiceInstanceConfiguration serviceInstanceConfiguration) {
         super(apiConfiguration, serviceInstanceConfiguration);
     }
 
     @Override
     protected void setup() {
         // Register handlers
-        registerPduReceptionHandler(RocfStartInvocation.class, this::handleRocfStartInvocation);
-        registerPduReceptionHandler(SleStopInvocation.class, this::handleRocfStopInvocation);
-        registerPduReceptionHandler(SleScheduleStatusReportInvocation.class, this::handleRocfScheduleStatusReportInvocation);
-        registerPduReceptionHandler(RocfGetParameterInvocation.class, this::handleRocfGetParameterInvocation);
+        registerPduReceptionHandler(RcfStartInvocation.class, this::handleRcfStartInvocation);
+        registerPduReceptionHandler(SleStopInvocation.class, this::handleRcfStopInvocation);
+        registerPduReceptionHandler(SleScheduleStatusReportInvocation.class, this::handleRcfScheduleStatusReportInvocation);
+        registerPduReceptionHandler(RcfGetParameterInvocation.class, this::handleRcfGetParameterInvocation);
     }
 
-    public void setStartOperationHandler(Function<RocfStartInvocation, Boolean> handler) {
+    public void setStartOperationHandler(Function<RcfStartInvocation, Boolean> handler) {
         this.startOperationHandler = handler;
     }
 
@@ -191,6 +180,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
+
     public boolean dataDiscarded() {
         this.bufferMutex.lock();
         try {
@@ -236,6 +226,10 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
             }
             // Here we check immediately if the buffer is full: if so, we send it
             checkBuffer(false);
+            // If GVCID is not matching, say bye
+            if (!match(this.requestedGvcid, spaceDataUnit)) {
+                return false;
+            }
             // If ERT is not matching, say bye
             if (this.startTime != null && earthReceiveTime.getEpochSecond() < this.startTime.getTime() / 1000) {
                 return false;
@@ -243,41 +237,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
             if (this.endTime != null && earthReceiveTime.getEpochSecond() > this.endTime.getTime() / 1000) {
                 return false;
             }
-            // If GVCID is not matching, say bye
-            if (!match(this.requestedGvcid, spaceDataUnit)) {
-                return false;
-            }
-            // So we are processing the frame
-            ++this.processedFrameNumber;
-            // Extract and check the OCF (selected TC VC ID, on-change/continuous, report type)
-            int ocfAsInt = ByteBuffer.wrap(spaceDataUnit, spaceDataUnit.length - 4, 4).getInt();
-            boolean isClcw = (ocfAsInt & 0x80000000) == 0;
-            // CLCW and requesting no CLCW -> skip
-            if(this.requestedControlWordType == RocfControlWordTypeEnum.NO_CLCW && isClcw) {
-                return false;
-            }
-            // Not a CLCW and requesting CLCW only -> skip
-            if(this.requestedControlWordType == RocfControlWordTypeEnum.CLCW && !isClcw) {
-                return false;
-            }
-            // If it is not a CLCW, we need to ignore the TC VC ID and the update mode (we use -1 for that)
-            int tcVcId = !isClcw ? -1 : (ocfAsInt & 0x00FC0000) >>> 18;
-            // Check if the TC VC ID is the requested one (only is it is a CLCW)
-            if(isClcw && this.requestedTcVcid != null && this.requestedTcVcid != tcVcId) {
-                return false;
-            }
-            // Change based or continuous?
-            if(this.requestedUpdateMode == RocfUpdateModeEnum.CHANGE_BASED) {
-                Integer lastOcf = this.tcVcId2lastClcw.get(tcVcId);
-                if (lastOcf != null &&
-                        lastOcf == ocfAsInt) {
-                    return false;
-                }
-            }
-            // Remember the OCF
-            this.tcVcId2lastClcw.put(tcVcId, ocfAsInt);
             // Add the PDU to the buffer, there must be free space by algorithm implementation
-            addTransferData(Arrays.copyOfRange(spaceDataUnit, spaceDataUnit.length - 4, spaceDataUnit.length), linkContinuity, earthReceiveTime, isPico, antennaId, globalAntennaId, privateAnnotations);
+            addTransferData(spaceDataUnit, linkContinuity, earthReceiveTime, isPico, antennaId, globalAntennaId, privateAnnotations);
             checkBuffer(false);
             return true;
         } finally {
@@ -311,16 +272,16 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         if(!bufferActive) {
             return;
         }
-        if (this.bufferUnderConstruction == null || this.bufferUnderConstruction.getOcfOrNotification().isEmpty()) {
+        if (this.bufferUnderConstruction == null || this.bufferUnderConstruction.getFrameOrNotification().isEmpty()) {
             // No data, nothing to do
             return;
         }
-        if (this.bufferUnderConstruction.getOcfOrNotification().size() == this.transferBufferSize || forceSend) {
+        if (this.bufferUnderConstruction.getFrameOrNotification().size() == this.transferBufferSize || forceSend) {
             // Stop the latency timer
             stopLatencyTimer();
             // Try to send the buffer: replace the buffer with a new one
-            RocfTransferBuffer bufferToSend = this.bufferUnderConstruction;
-            this.bufferUnderConstruction = new RocfTransferBuffer();
+            RcfTransferBuffer bufferToSend = this.bufferUnderConstruction;
+            this.bufferUnderConstruction = new RcfTransferBuffer();
             boolean discarded = trySendBuffer(bufferToSend);
             // If discarded, add a sync notification about it
             if (discarded) {
@@ -374,9 +335,9 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     }
 
     // Under sync on this.bufferMutex
-    private boolean trySendBuffer(RocfTransferBuffer bufferToSend) {
+    private boolean trySendBuffer(RcfTransferBuffer bufferToSend) {
         // Here we check the delivery mode
-        if (getRocfConfiguration().getDeliveryMode() == DeliveryModeEnum.TIMELY_ONLINE) {
+        if (getRcfConfiguration().getDeliveryMode() == DeliveryModeEnum.TIMELY_ONLINE) {
             // Timely mode: if there is a buffer in transmission, you have to discard the buffer
             if (this.bufferUnderTransmission) {
                 return true;
@@ -396,7 +357,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
             // Set transmission flag
             this.bufferUnderTransmission = true;
             // Send the buffer
-            dispatchFromProvider(() -> doHandleRocfTransferBufferInvocation(bufferToSend));
+            dispatchFromProvider(() -> doHandleRcfTransferBufferInvocation(bufferToSend));
             // Not discarded
             return false;
         } else {
@@ -404,7 +365,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    private void doHandleRocfTransferBufferInvocation(RocfTransferBuffer bufferToSend) {
+    private void doHandleRcfTransferBufferInvocation(RcfTransferBuffer bufferToSend) {
         clearError();
 
         // Validate state
@@ -435,9 +396,9 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
-        RocfSyncNotifyInvocation in = new RocfSyncNotifyInvocation();
+        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
         in.setNotification(new Notification());
-        in.getNotification().setProductionStatusChange(new RocfProductionStatus(productionStatus.ordinal()));
+        in.getNotification().setProductionStatusChange(new RcfProductionStatus(productionStatus.ordinal()));
         finalizeAndAddNotification(in);
     }
 
@@ -446,7 +407,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
-        RocfSyncNotifyInvocation in = new RocfSyncNotifyInvocation();
+        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
         in.setNotification(new Notification());
         in.getNotification().setExcessiveDataBacklog(new BerNull());
         finalizeAndAddNotification(in);
@@ -457,7 +418,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
-        RocfSyncNotifyInvocation in = new RocfSyncNotifyInvocation();
+        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
         in.setNotification(new Notification());
         in.getNotification().setLossFrameSync(new LockStatusReport());
         in.getNotification().getLossFrameSync().setCarrierLockStatus(new CarrierLockStatus(carrierLockStatus.ordinal()));
@@ -473,22 +434,22 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
-        RocfSyncNotifyInvocation in = new RocfSyncNotifyInvocation();
+        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
         in.setNotification(new Notification());
         in.getNotification().setEndOfData(new BerNull());
         finalizeAndAddNotification(in);
     }
 
-    private void finalizeAndAddNotification(RocfSyncNotifyInvocation in) {
+    private void finalizeAndAddNotification(RcfSyncNotifyInvocation in) {
         // Add credentials
         // From the API configuration (remote peers) and SI configuration (responder
         // id), check remote peer and check if authentication must be used.
         Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
         in.setInvokerCredentials(creds);
 
-        OcfOrNotification fon = new OcfOrNotification();
+        FrameOrNotification fon = new FrameOrNotification();
         fon.setSyncNotification(in);
-        this.bufferUnderConstruction.getOcfOrNotification().add(fon);
+        this.bufferUnderConstruction.getFrameOrNotification().add(fon);
     }
 
     // Under sync on this.bufferMutex
@@ -496,7 +457,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
-        RocfTransferDataInvocation td = new RocfTransferDataInvocation();
+        RcfTransferDataInvocation td = new RcfTransferDataInvocation();
         // Antenna ID
         td.setAntennaId(new AntennaId());
         if (globalAntennaId) {
@@ -514,7 +475,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
             td.getEarthReceiveTime().setCcsdsFormat(new TimeCCSDS(PduFactoryUtil.buildCDSTime(earthReceiveTime.toEpochMilli(), (earthReceiveTime.getNano() % 1000000) / 1000)));
         }
         // Private annotations
-        td.setPrivateAnnotation(new RocfTransferDataInvocation.PrivateAnnotation());
+        td.setPrivateAnnotation(new RcfTransferDataInvocation.PrivateAnnotation());
         if (privateAnnotations == null || privateAnnotations.length == 0) {
             td.getPrivateAnnotation().setNull(new BerNull());
         } else {
@@ -529,18 +490,18 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
         td.setInvokerCredentials(creds);
 
-        OcfOrNotification fon = new OcfOrNotification();
-        fon.setAnnotatedOcf(td);
-        this.bufferUnderConstruction.getOcfOrNotification().add(fon);
-        // Assumed delivered
-        ++this.deliveredOcfsNumber;
+        FrameOrNotification fon = new FrameOrNotification();
+        fon.setAnnotatedFrame(td);
+        this.bufferUnderConstruction.getFrameOrNotification().add(fon);
+        // Assume delivered
+        ++this.deliveredFrameNumber;
     }
 
-    private void handleRocfStartInvocation(RocfStartInvocation invocation) {
-        dispatchFromProvider(() -> doHandleRocfStartInvocation(invocation));
+    private void handleRcfStartInvocation(RcfStartInvocation invocation) {
+        dispatchFromProvider(() -> doHandleRcfStartInvocation(invocation));
     }
 
-    private void doHandleRocfStartInvocation(RocfStartInvocation invocation) {
+    private void doHandleRcfStartInvocation(RcfStartInvocation invocation) {
         clearError();
 
         // Validate state
@@ -569,55 +530,26 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         GVCID rfq = new GVCID(invocation.getRequestedGvcId().getSpacecraftId().intValue(),
                 invocation.getRequestedGvcId().getVersionNumber().intValue(),
                 invocation.getRequestedGvcId().getVcId().getMasterChannel() != null ? null : invocation.getRequestedGvcId().getVcId().getVirtualChannel().intValue());
-        boolean permittedOk = true;
-        if (!permittedGvcids.contains(rfq)) {
-            permittedOk = false;
-        }
-
-        // Validate the requested OCF type
-        RocfControlWordTypeEnum reqControlWordType;
-        if(invocation.getControlWordType().getAllControlWords() != null) {
-            reqControlWordType = RocfControlWordTypeEnum.ALL;
-        } else if(invocation.getControlWordType().getClcw() != null) {
-            reqControlWordType = RocfControlWordTypeEnum.CLCW;
-        } else {
-            reqControlWordType = RocfControlWordTypeEnum.NO_CLCW;
-        }
-        if(!permittedControlWordTypes.contains(reqControlWordType)) {
-            permittedOk = false;
-        }
-
-        // Validate the TC VC ID
-        if(reqControlWordType == RocfControlWordTypeEnum.CLCW) {
-            if(invocation.getControlWordType().getClcw().getNoTcVC() != null && !this.permittedTcVcid.isEmpty()) {
-                permittedOk = false;
-            }
-            if(invocation.getControlWordType().getClcw().getTcVcid() != null && !this.permittedTcVcid.contains(invocation.getControlWordType().getClcw().getTcVcid().intValue())) {
-                permittedOk = false;
-            }
-        }
-
-        // Validate the update type
-        RocfUpdateModeEnum reqUptMode = RocfUpdateModeEnum.values()[invocation.getUpdateMode().intValue()];
-        if(!permittedUpdateModes.contains(reqUptMode)) {
-            permittedOk = false;
+        boolean permittedOk = false;
+        if (permittedGvcids.contains(rfq)) {
+            permittedOk = true;
         }
 
         if (permittedOk) {
             // Ask the external handler if any
-            Function<RocfStartInvocation, Boolean> handler = this.startOperationHandler;
+            Function<RcfStartInvocation, Boolean> handler = this.startOperationHandler;
             if (handler != null) {
                 permittedOk = handler.apply(invocation);
             }
         }
 
-        RocfStartReturn pdu = new RocfStartReturn();
+        RcfStartReturn pdu = new RcfStartReturn();
         pdu.setInvokeId(invocation.getInvokeId());
-        pdu.setResult(new RocfStartReturn.Result());
+        pdu.setResult(new RcfStartReturn.Result());
         if (permittedOk) {
             pdu.getResult().setPositiveResult(new BerNull());
         } else {
-            pdu.getResult().setNegativeResult(new DiagnosticRocfStart());
+            pdu.getResult().setNegativeResult(new DiagnosticRcfStart());
             pdu.getResult().getNegativeResult().setSpecific(new BerInteger(1)); // Unable to comply
         }
         // Add credentials
@@ -637,14 +569,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
 
         if (resultOk) {
             if (permittedOk) {
-                // Set the requested items
+                // Set the requested GVCID
                 this.requestedGvcid = rfq;
-                this.requestedUpdateMode = reqUptMode;
-                this.requestedControlWordType = reqControlWordType;
-                this.requestedTcVcid = null;
-                if(reqControlWordType == RocfControlWordTypeEnum.CLCW && invocation.getControlWordType().getClcw().getTcVcid() != null) {
-                    this.requestedTcVcid = invocation.getControlWordType().getClcw().getTcVcid().intValue();
-                }
                 // Set times
                 this.startTime = PduFactoryUtil.toDate(invocation.getStartTime());
                 this.endTime = PduFactoryUtil.toDate(invocation.getStopTime());
@@ -653,7 +579,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                 try {
                     this.bufferActive = true;
                     this.bufferUnderTransmission = false;
-                    this.bufferUnderConstruction = new RocfTransferBuffer();
+                    this.bufferUnderConstruction = new RcfTransferBuffer();
                     this.bufferChangedCondition.signalAll();
                 } finally {
                     this.bufferMutex.unlock();
@@ -670,11 +596,11 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    private void handleRocfStopInvocation(SleStopInvocation invocation) {
-        dispatchFromProvider(() -> doHandleRocfStopInvocation(invocation));
+    private void handleRcfStopInvocation(SleStopInvocation invocation) {
+        dispatchFromProvider(() -> doHandleRcfStopInvocation(invocation));
     }
 
-    private void doHandleRocfStopInvocation(SleStopInvocation invocation) {
+    private void doHandleRcfStopInvocation(SleStopInvocation invocation) {
         clearError();
 
         // Validate state
@@ -746,11 +672,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
 
                 // If all fine, transition to new state: READY and notify PDU sent
                 setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
-                // Set the requested parameters
+                // Set the requested GVCID
                 this.requestedGvcid = null;
-                this.requestedTcVcid = null;
-                this.requestedControlWordType = null;
-                this.requestedUpdateMode = null;
                 // Set times
                 this.startTime = null;
                 this.endTime = null;
@@ -762,11 +685,11 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         });
     }
 
-    private void handleRocfScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
-        dispatchFromProvider(() -> doHandleRocfScheduleStatusReportInvocation(invocation));
+    private void handleRcfScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
+        dispatchFromProvider(() -> doHandleRcfScheduleStatusReportInvocation(invocation));
     }
 
-    private void doHandleRocfScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
+    private void doHandleRcfScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
         clearError();
 
         // Validate state
@@ -859,11 +782,11 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         this.reportingScheduler = null;
     }
 
-    private void handleRocfGetParameterInvocation(RocfGetParameterInvocation invocation) {
-        dispatchFromProvider(() -> doHandleRocfGetParameterInvocation(invocation));
+    private void handleRcfGetParameterInvocation(RcfGetParameterInvocation invocation) {
+        dispatchFromProvider(() -> doHandleRcfGetParameterInvocation(invocation));
     }
 
-    private void doHandleRocfGetParameterInvocation(RocfGetParameterInvocation invocation) {
+    private void doHandleRcfGetParameterInvocation(RcfGetParameterInvocation invocation) {
         clearError();
 
         // Validate state
@@ -890,7 +813,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
 
         BerType toSend;
         if (getSleVersion() <= 4) {
-            RocfGetParameterReturnV1toV4 pdu = new RocfGetParameterReturnV1toV4();
+            RcfGetParameterReturnV1toV4 pdu = new RcfGetParameterReturnV1toV4();
             pdu.setInvokeId(invocation.getInvokeId());
 
             // Add credentials
@@ -906,34 +829,34 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                 pdu.setPerformerCredentials(creds);
             }
             // Prepare for positive response
-            pdu.setResult(new RocfGetParameterReturnV1toV4.Result());
-            pdu.getResult().setPositiveResult(new RocfGetParameterV1toV4());
-            if (invocation.getRocfParameter().intValue() == RocfParameterEnum.BUFFER_SIZE.getCode()) {
-                pdu.getResult().getPositiveResult().setParBufferSize(new RocfGetParameterV1toV4.ParBufferSize());
-                pdu.getResult().getPositiveResult().getParBufferSize().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
+            pdu.setResult(new RcfGetParameterReturnV1toV4.Result());
+            pdu.getResult().setPositiveResult(new RcfGetParameterV1toV4());
+            if (invocation.getRcfParameter().intValue() == RcfParameterEnum.BUFFER_SIZE.getCode()) {
+                pdu.getResult().getPositiveResult().setParBufferSize(new RcfGetParameterV1toV4.ParBufferSize());
+                pdu.getResult().getPositiveResult().getParBufferSize().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParBufferSize().setParameterValue(new IntPosShort(this.transferBufferSize));
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.DELIVERY_MODE.getCode()) {
-                pdu.getResult().getPositiveResult().setParDeliveryMode(new RocfGetParameterV1toV4.ParDeliveryMode());
-                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterValue(new RocfDeliveryMode(this.deliveryMode.ordinal()));
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.LATENCY_LIMIT.getCode()) {
-                pdu.getResult().getPositiveResult().setParLatencyLimit(new RocfGetParameterV1toV4.ParLatencyLimit());
-                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterValue(new RocfGetParameterV1toV4.ParLatencyLimit.ParameterValue());
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.DELIVERY_MODE.getCode()) {
+                pdu.getResult().getPositiveResult().setParDeliveryMode(new RcfGetParameterV1toV4.ParDeliveryMode());
+                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterValue(new RcfDeliveryMode(this.deliveryMode.ordinal()));
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.LATENCY_LIMIT.getCode()) {
+                pdu.getResult().getPositiveResult().setParLatencyLimit(new RcfGetParameterV1toV4.ParLatencyLimit());
+                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterValue(new RcfGetParameterV1toV4.ParLatencyLimit.ParameterValue());
                 pdu.getResult().getPositiveResult().getParLatencyLimit().getParameterValue().setOnline(new IntPosShort(this.latencyLimit));
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.REPORTING_CYCLE.getCode()) {
-                pdu.getResult().getPositiveResult().setParReportingCycle(new RocfGetParameterV1toV4.ParReportingCycle());
-                pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.REPORTING_CYCLE.getCode()) {
+                pdu.getResult().getPositiveResult().setParReportingCycle(new RcfGetParameterV1toV4.ParReportingCycle());
+                pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
                 if (this.reportingScheduler != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
                 }
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.REQUESTED_GVCID.getCode()) {
-                pdu.getResult().getPositiveResult().setParReqGvcId(new RocfGetParameterV1toV4.ParReqGvcId());
-                pdu.getResult().getPositiveResult().getParReqGvcId().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParReqGvcId().setParameterValue(new RequestedGvcIdV1toV4());
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.REQUESTED_GVCID.getCode()) {
+                pdu.getResult().getPositiveResult().setParReqGvcId(new RcfGetParameterV1toV4.ParReqGvcId());
+                pdu.getResult().getPositiveResult().getParReqGvcId().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+                pdu.getResult().getPositiveResult().getParReqGvcId().setParameterValue(new RequestedGvcId());
                 if (this.requestedGvcid != null) {
                     pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setGvcid(new GvcId());
                     pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().setSpacecraftId(new BerInteger(this.requestedGvcid.getSpacecraftId()));
@@ -947,20 +870,20 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                 } else {
                     pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setUndefined(new BerNull());
                 }
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.RETURN_TIMEOUT_PERIOD.getCode()) {
-                pdu.getResult().getPositiveResult().setParReturnTimeout(new RocfGetParameterV1toV4.ParReturnTimeout());
-                pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.RETURN_TIMEOUT_PERIOD.getCode()) {
+                pdu.getResult().getPositiveResult().setParReturnTimeout(new RcfGetParameterV1toV4.ParReturnTimeout());
+                pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterValue(new TimeoutPeriod(this.returnTimeoutPeriod));
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.PERMITTED_GVCID_SET.getCode()) {
-                pdu.getResult().getPositiveResult().setParPermittedGvcidSet(new RocfGetParameterV1toV4.ParPermittedGvcidSet());
-                pdu.getResult().getPositiveResult().getParPermittedGvcidSet().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.PERMITTED_GVCID_SET.getCode()) {
+                pdu.getResult().getPositiveResult().setParPermittedGvcidSet(new RcfGetParameterV1toV4.ParPermittedGvcidSet());
+                pdu.getResult().getPositiveResult().getParPermittedGvcidSet().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParPermittedGvcidSet().setParameterValue(new GvcIdSetV1toV4());
                 for (GVCID permitted : this.permittedGvcids) {
                     MasterChannelCompositionV1toV4 entry = new MasterChannelCompositionV1toV4();
                     entry.setSpacecraftId(new BerInteger(permitted.getSpacecraftId()));
                     entry.setVersionNumber(new BerInteger(permitted.getTransferFrameVersionNumber()));
                     entry.setMcOrVcList(new MasterChannelCompositionV1toV4.McOrVcList());
-                    if (permitted.getVirtualChannelId() == null) {
+                    if(permitted.getVirtualChannelId() == null) {
                         entry.getMcOrVcList().setMasterChannel(new BerNull());
                     } else {
                         entry.getMcOrVcList().setVcList(new MasterChannelCompositionV1toV4.McOrVcList.VcList());
@@ -968,62 +891,14 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                     }
                     pdu.getResult().getPositiveResult().getParPermittedGvcidSet().getParameterValue().getMasterChannelCompositionV1toV4().add(entry);
                 }
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.PERMITTED_CONTROL_WORD_TYPE_SET.getCode()) {
-                pdu.getResult().getPositiveResult().setParPermittedRprtTypeSet(new RocfGetParameterV1toV4.ParPermittedRprtTypeSet());
-                pdu.getResult().getPositiveResult().getParPermittedRprtTypeSet().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParPermittedRprtTypeSet().setParameterValue(new RocfGetParameterV1toV4.ParPermittedRprtTypeSet.ParameterValue());
-                for(RocfControlWordTypeEnum en : this.permittedControlWordTypes) {
-                    pdu.getResult().getPositiveResult().getParPermittedRprtTypeSet().getParameterValue().getControlWordTypeNumber().add(new ControlWordTypeNumber(en.ordinal()));
-                }
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.PERMITTED_TC_VCID_SET.getCode()) {
-                pdu.getResult().getPositiveResult().setParPermittedTcVcidSet(new RocfGetParameterV1toV4.ParPermittedTcVcidSet());
-                pdu.getResult().getPositiveResult().getParPermittedTcVcidSet().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParPermittedTcVcidSet().setParameterValue(new TcVcidSet());
-                if(this.permittedTcVcid == null || this.permittedTcVcid.isEmpty()) {
-                    pdu.getResult().getPositiveResult().getParPermittedTcVcidSet().getParameterValue().setNoTcVC(new BerNull());
-                } else {
-                    pdu.getResult().getPositiveResult().getParPermittedTcVcidSet().getParameterValue().setTcVcids(new TcVcidSet.TcVcids());
-                    for (int i : this.permittedTcVcid) {
-                        pdu.getResult().getPositiveResult().getParPermittedTcVcidSet().getParameterValue().getTcVcids().getVcId().add(new VcId(i));
-                    }
-                }
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.PERMITTED_UPDATE_MODE_SET.getCode()) {
-                pdu.getResult().getPositiveResult().setParPermittedUpdModeSet(new RocfGetParameterV1toV4.ParPermittedUpdModeSet());
-                pdu.getResult().getPositiveResult().getParPermittedUpdModeSet().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParPermittedUpdModeSet().setParameterValue(new RocfGetParameterV1toV4.ParPermittedUpdModeSet.ParameterValue());
-                for (RocfUpdateModeEnum en : this.permittedUpdateModes) {
-                    pdu.getResult().getPositiveResult().getParPermittedUpdModeSet().getParameterValue().getUpdateMode().add(new UpdateMode(en.ordinal()));
-                }
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.REQUESTED_CONTROL_WORD_TYPE.getCode()) {
-                pdu.getResult().getPositiveResult().setParReqControlWordType(new RocfGetParameterV1toV4.ParReqControlWordType());
-                pdu.getResult().getPositiveResult().getParReqControlWordType().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParReqControlWordType().setParameterValue(new RequestedControlWordTypeNumberV1toV4(this.requestedControlWordType == null ? this.permittedControlWordTypes.get(0).ordinal() : this.requestedControlWordType.ordinal()));
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.REQUESTED_TC_VCID.getCode()) {
-                pdu.getResult().getPositiveResult().setParReqTcVcid(new RocfGetParameterV1toV4.ParReqTcVcid());
-                pdu.getResult().getPositiveResult().getParReqTcVcid().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParReqTcVcid().setParameterValue(new RequestedTcVcidV1toV4());
-                if(this.requestedControlWordType == RocfControlWordTypeEnum.CLCW) {
-                    pdu.getResult().getPositiveResult().getParReqTcVcid().getParameterValue().setTcVcid(new TcVcid());
-                    if(this.requestedTcVcid == null) {
-                        pdu.getResult().getPositiveResult().getParReqTcVcid().getParameterValue().getTcVcid().setNoTcVC(new BerNull());
-                    } else {
-                        pdu.getResult().getPositiveResult().getParReqTcVcid().getParameterValue().getTcVcid().setTcVcid(new VcId(this.requestedTcVcid));
-                    }
-                } else {
-                    pdu.getResult().getPositiveResult().getParReqTcVcid().getParameterValue().setUndefined(new BerNull());
-                }
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.REQUESTED_UPDATE_MODE.getCode()) {
-                pdu.getResult().getPositiveResult().setParReqUpdateMode(new RocfGetParameterV1toV4.ParReqUpdateMode());
-                pdu.getResult().getPositiveResult().getParReqUpdateMode().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParReqUpdateMode().setParameterValue(new RequestedUpdateModeV1toV4(this.requestedUpdateMode == null ? 3 : this.requestedUpdateMode.ordinal())); // 3 is undefined in old specs
             } else {
                 pdu.getResult().setPositiveResult(null);
-                pdu.getResult().setNegativeResult(new DiagnosticRocfGet());
+                pdu.getResult().setNegativeResult(new DiagnosticRcfGet());
                 pdu.getResult().getNegativeResult().setSpecific(new BerInteger(0)); // unknownParameter
             }
             toSend = pdu;
         } else {
-            RocfGetParameterReturn pdu = new RocfGetParameterReturn();
+            RcfGetParameterReturn pdu = new RcfGetParameterReturn();
             pdu.setInvokeId(invocation.getInvokeId());
 
             // Add credentials
@@ -1039,64 +914,58 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                 pdu.setPerformerCredentials(creds);
             }
             // Prepare for positive response
-            pdu.setResult(new RocfGetParameterReturn.Result());
-            pdu.getResult().setPositiveResult(new RocfGetParameter());
-            if (invocation.getRocfParameter().intValue() == RocfParameterEnum.BUFFER_SIZE.getCode()) {
-                pdu.getResult().getPositiveResult().setParBufferSize(new RocfGetParameter.ParBufferSize());
-                pdu.getResult().getPositiveResult().getParBufferSize().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
+            pdu.setResult(new RcfGetParameterReturn.Result());
+            pdu.getResult().setPositiveResult(new RcfGetParameter());
+            if (invocation.getRcfParameter().intValue() == RcfParameterEnum.BUFFER_SIZE.getCode()) {
+                pdu.getResult().getPositiveResult().setParBufferSize(new RcfGetParameter.ParBufferSize());
+                pdu.getResult().getPositiveResult().getParBufferSize().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParBufferSize().setParameterValue(new IntPosShort(this.transferBufferSize));
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.DELIVERY_MODE.getCode()) {
-                pdu.getResult().getPositiveResult().setParDeliveryMode(new RocfGetParameter.ParDeliveryMode());
-                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterValue(new RocfDeliveryMode(this.deliveryMode.ordinal()));
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.LATENCY_LIMIT.getCode()) {
-                pdu.getResult().getPositiveResult().setParLatencyLimit(new RocfGetParameter.ParLatencyLimit());
-                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterValue(new RocfGetParameter.ParLatencyLimit.ParameterValue());
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.DELIVERY_MODE.getCode()) {
+                pdu.getResult().getPositiveResult().setParDeliveryMode(new RcfGetParameter.ParDeliveryMode());
+                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterValue(new RcfDeliveryMode(this.deliveryMode.ordinal()));
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.LATENCY_LIMIT.getCode()) {
+                pdu.getResult().getPositiveResult().setParLatencyLimit(new RcfGetParameter.ParLatencyLimit());
+                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterValue(new RcfGetParameter.ParLatencyLimit.ParameterValue());
                 pdu.getResult().getPositiveResult().getParLatencyLimit().getParameterValue().setOnline(new IntPosShort(this.latencyLimit));
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.REPORTING_CYCLE.getCode()) {
-                pdu.getResult().getPositiveResult().setParReportingCycle(new RocfGetParameter.ParReportingCycle());
-                pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.REPORTING_CYCLE.getCode()) {
+                pdu.getResult().getPositiveResult().setParReportingCycle(new RcfGetParameter.ParReportingCycle());
+                pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
                 if (this.reportingScheduler != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
                 }
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.REQUESTED_GVCID.getCode()) {
-                pdu.getResult().getPositiveResult().setParReqGvcId(new RocfGetParameter.ParReqGvcId());
-                pdu.getResult().getPositiveResult().getParReqGvcId().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.REQUESTED_GVCID.getCode()) {
+                pdu.getResult().getPositiveResult().setParReqGvcId(new RcfGetParameter.ParReqGvcId());
+                pdu.getResult().getPositiveResult().getParReqGvcId().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReqGvcId().setParameterValue(new RequestedGvcId());
                 if (this.requestedGvcid != null) {
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setSpacecraftId(new BerInteger(this.requestedGvcid.getSpacecraftId()));
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setVersionNumber(new BerInteger(this.requestedGvcid.getTransferFrameVersionNumber()));
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setVcId(new GvcId.VcId());
+                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setGvcid(new GvcId());
+                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().setSpacecraftId(new BerInteger(this.requestedGvcid.getSpacecraftId()));
+                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().setVersionNumber(new BerInteger(this.requestedGvcid.getTransferFrameVersionNumber()));
+                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().setVcId(new GvcId.VcId());
                     if(this.requestedGvcid.getVirtualChannelId() == null) {
-                        pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getVcId().setMasterChannel(new BerNull());
+                        pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().getVcId().setMasterChannel(new BerNull());
                     } else {
-                        pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getVcId().setVirtualChannel(new VcId(this.requestedGvcid.getVirtualChannelId()));
+                        pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().getVcId().setVirtualChannel(new VcId(this.requestedGvcid.getVirtualChannelId()));
                     }
                 } else {
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setSpacecraftId(new BerInteger(this.permittedGvcids.get(0).getSpacecraftId()));
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setVersionNumber(new BerInteger(this.permittedGvcids.get(0).getTransferFrameVersionNumber()));
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setVcId(new GvcId.VcId());
-                    if(this.permittedGvcids.get(0).getVirtualChannelId() == null) {
-                        pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getVcId().setMasterChannel(new BerNull());
-                    } else {
-                        pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getVcId().setVirtualChannel(new VcId(this.permittedGvcids.get(0).getVirtualChannelId()));
-                    }
+                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setUndefined(new BerNull());
                 }
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.RETURN_TIMEOUT_PERIOD.getCode()) {
-                pdu.getResult().getPositiveResult().setParReturnTimeout(new RocfGetParameter.ParReturnTimeout());
-                pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.RETURN_TIMEOUT_PERIOD.getCode()) {
+                pdu.getResult().getPositiveResult().setParReturnTimeout(new RcfGetParameter.ParReturnTimeout());
+                pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterValue(new TimeoutPeriod(this.returnTimeoutPeriod));
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.MIN_REPORTING_CYCLE.getCode()) {
-                pdu.getResult().getPositiveResult().setParMinReportingCycle(new RocfGetParameter.ParMinReportingCycle());
-                pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.MIN_REPORTING_CYCLE.getCode()) {
+                pdu.getResult().getPositiveResult().setParMinReportingCycle(new RcfGetParameter.ParMinReportingCycle());
+                pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterValue(new IntPosShort(this.minReportingCycle != null ? this.minReportingCycle : 0));
-            } else if (invocation.getRocfParameter().intValue() == RocfParameterEnum.PERMITTED_GVCID_SET.getCode()) {
-                pdu.getResult().getPositiveResult().setParPermittedGvcidSet(new RocfGetParameter.ParPermittedGvcidSet());
-                pdu.getResult().getPositiveResult().getParPermittedGvcidSet().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
+            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.PERMITTED_GVCID_SET.getCode()) {
+                pdu.getResult().getPositiveResult().setParPermittedGvcidSet(new RcfGetParameter.ParPermittedGvcidSet());
+                pdu.getResult().getPositiveResult().getParPermittedGvcidSet().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParPermittedGvcidSet().setParameterValue(new GvcIdSet());
                 for (GVCID permitted : this.permittedGvcids) {
                     MasterChannelComposition entry = new MasterChannelComposition();
@@ -1111,52 +980,9 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                     }
                     pdu.getResult().getPositiveResult().getParPermittedGvcidSet().getParameterValue().getMasterChannelComposition().add(entry);
                 }
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.PERMITTED_CONTROL_WORD_TYPE_SET.getCode()) {
-                pdu.getResult().getPositiveResult().setParPermittedRprtTypeSet(new RocfGetParameter.ParPermittedRprtTypeSet());
-                pdu.getResult().getPositiveResult().getParPermittedRprtTypeSet().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParPermittedRprtTypeSet().setParameterValue(new RocfGetParameter.ParPermittedRprtTypeSet.ParameterValue());
-                for(RocfControlWordTypeEnum en : this.permittedControlWordTypes) {
-                    pdu.getResult().getPositiveResult().getParPermittedRprtTypeSet().getParameterValue().getControlWordTypeNumber().add(new ControlWordTypeNumber(en.ordinal()));
-                }
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.PERMITTED_TC_VCID_SET.getCode()) {
-                pdu.getResult().getPositiveResult().setParPermittedTcVcidSet(new RocfGetParameter.ParPermittedTcVcidSet());
-                pdu.getResult().getPositiveResult().getParPermittedTcVcidSet().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParPermittedTcVcidSet().setParameterValue(new TcVcidSet());
-                if(this.permittedTcVcid == null || this.permittedTcVcid.isEmpty()) {
-                    pdu.getResult().getPositiveResult().getParPermittedTcVcidSet().getParameterValue().setNoTcVC(new BerNull());
-                } else {
-                    pdu.getResult().getPositiveResult().getParPermittedTcVcidSet().getParameterValue().setTcVcids(new TcVcidSet.TcVcids());
-                    for (int i : this.permittedTcVcid) {
-                        pdu.getResult().getPositiveResult().getParPermittedTcVcidSet().getParameterValue().getTcVcids().getVcId().add(new VcId(i));
-                    }
-                }
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.PERMITTED_UPDATE_MODE_SET.getCode()) {
-                pdu.getResult().getPositiveResult().setParPermittedUpdModeSet(new RocfGetParameter.ParPermittedUpdModeSet());
-                pdu.getResult().getPositiveResult().getParPermittedUpdModeSet().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParPermittedUpdModeSet().setParameterValue(new RocfGetParameter.ParPermittedUpdModeSet.ParameterValue());
-                for (RocfUpdateModeEnum en : this.permittedUpdateModes) {
-                    pdu.getResult().getPositiveResult().getParPermittedUpdModeSet().getParameterValue().getUpdateMode().add(new UpdateMode(en.ordinal()));
-                }
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.REQUESTED_CONTROL_WORD_TYPE.getCode()) {
-                pdu.getResult().getPositiveResult().setParReqControlWordType(new RocfGetParameter.ParReqControlWordType());
-                pdu.getResult().getPositiveResult().getParReqControlWordType().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParReqControlWordType().setParameterValue(new RequestedControlWordTypeNumber(this.requestedControlWordType == null ? this.permittedControlWordTypes.get(0).ordinal() : this.requestedControlWordType.ordinal()));
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.REQUESTED_TC_VCID.getCode()) {
-                pdu.getResult().getPositiveResult().setParReqTcVcid(new RocfGetParameter.ParReqTcVcid());
-                pdu.getResult().getPositiveResult().getParReqTcVcid().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParReqTcVcid().setParameterValue(new RequestedTcVcid());
-                if(this.requestedTcVcid == null) {
-                    pdu.getResult().getPositiveResult().getParReqTcVcid().getParameterValue().setNoTcVC(new BerNull());
-                } else {
-                    pdu.getResult().getPositiveResult().getParReqTcVcid().getParameterValue().setTcVcid(new VcId(this.requestedTcVcid));
-                }
-            } else if(invocation.getRocfParameter().intValue() == RocfParameterEnum.REQUESTED_UPDATE_MODE.getCode()) {
-                pdu.getResult().getPositiveResult().setParReqUpdateMode(new RocfGetParameter.ParReqUpdateMode());
-                pdu.getResult().getPositiveResult().getParReqUpdateMode().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParReqUpdateMode().setParameterValue(new RequestedUpdateMode(this.requestedUpdateMode == null ? this.permittedUpdateModes.get(0).ordinal() : this.requestedUpdateMode.ordinal()));
             } else {
                 pdu.getResult().setPositiveResult(null);
-                pdu.getResult().setNegativeResult(new DiagnosticRocfGet());
+                pdu.getResult().setNegativeResult(new DiagnosticRcfGet());
                 pdu.getResult().getNegativeResult().setSpecific(new BerInteger(0)); // unknownParameter
             }
             toSend = pdu;
@@ -1176,44 +1002,76 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         if (!immediate && this.reportingScheduler == null) {
             return;
         }
+        if (getSleVersion() == 1) {
+            RcfStatusReportInvocationV1 pdu = new RcfStatusReportInvocationV1();
+            // Add credentials
+            Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
+            if (creds == null) {
+                // Error while generating credentials, set by generateCredentials()
+                notifyPduSentError(pdu, SleOperationNames.STATUS_REPORT_NAME, null);
+                notifyStateUpdate();
+                return;
+            } else {
+                pdu.setInvokerCredentials(creds);
+            }
+            //
+            this.statusMutex.lock();
+            try {
+                pdu.setCarrierLockStatus(new LockStatus(this.carrierLockStatus.ordinal()));
+                pdu.setFrameSyncLockStatus(new LockStatus(this.frameSyncLockStatus.ordinal()));
+                pdu.setDeliveredFrameNumber(new IntUnsignedLong(this.deliveredFrameNumber));
+                pdu.setProductionStatus(new RcfProductionStatus(this.productionStatus.ordinal()));
+                pdu.setSubcarrierLockStatus(new LockStatus(this.subcarrierLockStatus.ordinal()));
+                pdu.setSymbolSyncLockStatus(new LockStatus(this.symbolSyncLockStatus.ordinal()));
+            } finally {
+                this.statusMutex.unlock();
+            }
+            boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.STATUS_REPORT_NAME);
 
-        RocfStatusReportInvocation pdu = new RocfStatusReportInvocation();
-        // Add credentials
-        Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
-        if (creds == null) {
-            // Error while generating credentials, set by generateCredentials()
-            notifyPduSentError(pdu, SleOperationNames.STATUS_REPORT_NAME, null);
-            notifyStateUpdate();
-            return;
+            if (resultOk) {
+                // Notify PDU
+                notifyPduSent(pdu, SleOperationNames.STATUS_REPORT_NAME, getLastPduSent());
+                // Generate state and notify update
+                notifyStateUpdate();
+            }
         } else {
-            pdu.setInvokerCredentials(creds);
-        }
-        //
-        this.statusMutex.lock();
-        try {
-            pdu.setCarrierLockStatus(new CarrierLockStatus(this.carrierLockStatus.ordinal()));
-            pdu.setFrameSyncLockStatus(new FrameSyncLockStatus(this.frameSyncLockStatus.ordinal()));
-            pdu.setDeliveredOcfsNumber(new IntUnsignedLong(this.deliveredOcfsNumber));
-            pdu.setProcessedFrameNumber(new IntUnsignedLong(this.processedFrameNumber));
-            pdu.setProductionStatus(new RocfProductionStatus(this.productionStatus.ordinal()));
-            pdu.setSubcarrierLockStatus(new LockStatus(this.subcarrierLockStatus.ordinal()));
-            pdu.setSymbolSyncLockStatus(new SymbolLockStatus(this.symbolSyncLockStatus.ordinal()));
-        } finally {
-            this.statusMutex.unlock();
-        }
-        boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.STATUS_REPORT_NAME);
+            RcfStatusReportInvocation pdu = new RcfStatusReportInvocation();
+            // Add credentials
+            Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
+            if (creds == null) {
+                // Error while generating credentials, set by generateCredentials()
+                notifyPduSentError(pdu, SleOperationNames.STATUS_REPORT_NAME, null);
+                notifyStateUpdate();
+                return;
+            } else {
+                pdu.setInvokerCredentials(creds);
+            }
+            //
+            this.statusMutex.lock();
+            try {
+                pdu.setCarrierLockStatus(new CarrierLockStatus(this.carrierLockStatus.ordinal()));
+                pdu.setFrameSyncLockStatus(new FrameSyncLockStatus(this.frameSyncLockStatus.ordinal()));
+                pdu.setDeliveredFrameNumber(new IntUnsignedLong(this.deliveredFrameNumber));
+                pdu.setProductionStatus(new RcfProductionStatus(this.productionStatus.ordinal()));
+                pdu.setSubcarrierLockStatus(new LockStatus(this.subcarrierLockStatus.ordinal()));
+                pdu.setSymbolSyncLockStatus(new SymbolLockStatus(this.symbolSyncLockStatus.ordinal()));
+            } finally {
+                this.statusMutex.unlock();
+            }
+            boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.STATUS_REPORT_NAME);
 
-        if (resultOk) {
-            // Notify PDU
-            notifyPduSent(pdu, SleOperationNames.STATUS_REPORT_NAME, getLastPduSent());
-            // Generate state and notify update
-            notifyStateUpdate();
+            if (resultOk) {
+                // Notify PDU
+                notifyPduSent(pdu, SleOperationNames.STATUS_REPORT_NAME, getLastPduSent());
+                // Generate state and notify update
+                notifyStateUpdate();
+            }
         }
     }
 
     @Override
     protected ServiceInstanceState buildCurrentState() {
-        RocfServiceInstanceState state = new RocfServiceInstanceState();
+        RcfServiceInstanceState state = new RcfServiceInstanceState();
         copyCommonState(state);
         this.statusMutex.lock();
         try {
@@ -1228,16 +1086,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         state.setDeliveryMode(deliveryMode);
         state.setLatencyLimit(latencyLimit);
         state.setMinReportingCycle(minReportingCycle);
-        state.setDeliveredOcfsNumber(deliveredOcfsNumber);
-        state.setProcessedFrameNumber(processedFrameNumber);
+        state.setNumFramesDelivered(deliveredFrameNumber);
         state.setPermittedGvcid(new ArrayList<>(permittedGvcids));
-        state.setPermittedControlWordTypes(new ArrayList<>(permittedControlWordTypes));
-        state.setPermittedTcVcid(new ArrayList<>(permittedTcVcid));
-        state.setPermittedUpdateModes(new ArrayList<>(permittedUpdateModes));
-        state.setRequestedControlWordType(requestedControlWordType);
-        state.setRequestedGvcid(requestedGvcid);
-        state.setRequestedUpdateMode(requestedUpdateMode);
-        state.setRequestedTcVcid(requestedTcVcid);
         state.setReportingCycle(reportingCycle);
         state.setRequestedGvcid(requestedGvcid);
         state.setTransferBufferSize(transferBufferSize);
@@ -1259,7 +1109,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
 
     @Override
     public ApplicationIdentifierEnum getApplicationIdentifier() {
-        return ApplicationIdentifierEnum.ROCF;
+        return ApplicationIdentifierEnum.RCF;
     }
 
     @Override
@@ -1281,28 +1131,21 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
             this.bufferMutex.unlock();
         }
         // Read from configuration, updated via GET_PARAMETER
-        this.latencyLimit = getRocfConfiguration().getLatencyLimit();
-        this.permittedGvcids = getRocfConfiguration().getPermittedGvcid();
-        this.permittedUpdateModes = getRocfConfiguration().getPermittedUpdateModes();
-        this.permittedTcVcid = getRocfConfiguration().getPermittedTcVcids();
-        this.permittedControlWordTypes = getRocfConfiguration().getPermittedControlWordTypes();
-        this.minReportingCycle = getRocfConfiguration().getMinReportingCycle();
-        this.returnTimeoutPeriod = getRocfConfiguration().getReturnTimeoutPeriod();
-        this.transferBufferSize = getRocfConfiguration().getTransferBufferSize();
-        this.deliveryMode = getRocfConfiguration().getDeliveryMode();
+        this.latencyLimit = getRcfConfiguration().getLatencyLimit();
+        this.permittedGvcids = getRcfConfiguration().getPermittedGvcid();
+        this.minReportingCycle = getRcfConfiguration().getMinReportingCycle();
+        this.returnTimeoutPeriod = getRcfConfiguration().getReturnTimeoutPeriod();
+        this.transferBufferSize = getRcfConfiguration().getTransferBufferSize();
+        this.deliveryMode = getRcfConfiguration().getDeliveryMode();
 
         // Updated via START and GET_PARAMETER
         this.requestedGvcid = null;
-        this.requestedUpdateMode = null;
-        this.requestedTcVcid = null;
-        this.requestedControlWordType = null;
         this.startTime = null;
         this.endTime = null;
         this.reportingCycle = null; // NULL if off, otherwise a value
 
         // Updated via STATUS_REPORT
-        this.processedFrameNumber = 0;
-        this.deliveredOcfsNumber = 0;
+        this.deliveredFrameNumber = 0;
         this.statusMutex.lock();
         try {
             this.frameSyncLockStatus = LockStatusEnum.UNKNOWN;
@@ -1315,8 +1158,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    private RocfServiceInstanceConfiguration getRocfConfiguration() {
-        return (RocfServiceInstanceConfiguration) this.serviceInstanceConfiguration;
+    private RcfServiceInstanceConfiguration getRcfConfiguration() {
+        return (RcfServiceInstanceConfiguration) this.serviceInstanceConfiguration;
     }
 
     @Override

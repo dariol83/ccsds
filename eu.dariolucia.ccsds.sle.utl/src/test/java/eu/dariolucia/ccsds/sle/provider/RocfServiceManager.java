@@ -16,7 +16,7 @@
 
 package eu.dariolucia.ccsds.sle.provider;
 
-import eu.dariolucia.ccsds.sle.server.RocfServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.server.RocfServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rocf.RocfServiceInstanceConfiguration;

@@ -27,7 +27,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structur
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.RequestedFrameQuality;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
-import eu.dariolucia.ccsds.sle.utl.encdec.RafEncDec;
+import eu.dariolucia.ccsds.sle.utl.encdec.RafUserEncDec;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
 
@@ -72,7 +72,7 @@ public class RafServiceInstance extends ServiceInstance {
 	private ProductionStatusEnum productionStatus = ProductionStatusEnum.UNKNOWN;
 
 	// Encoder/decoder
-	private final RafEncDec encDec = new RafEncDec();
+	private final RafUserEncDec encDec = new RafUserEncDec();
 
 	public RafServiceInstance(PeerConfiguration apiConfiguration,
                               RafServiceInstanceConfiguration serviceInstanceConfiguration) {

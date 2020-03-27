@@ -35,13 +35,13 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class RocfEncDec extends CommonEncDec {
+public class RocfUserEncDec extends CommonEncDec {
 
 
 	private final List<Function<RocfProviderToUserPduV1toV4, BerType>> unwrapFunctionV1V4List;
 	private final List<Function<RocfProviderToUserPdu, BerType>> unwrapFunctionV5List;
 
-	public RocfEncDec() {
+	public RocfUserEncDec() {
 		register(1, RocfProviderToUserPduV1toV4::new);
 		register(2, RocfProviderToUserPduV1toV4::new);
 		register(3, RocfProviderToUserPduV1toV4::new);

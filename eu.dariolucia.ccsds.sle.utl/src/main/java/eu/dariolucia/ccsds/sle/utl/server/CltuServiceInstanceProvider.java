@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.server;
+package eu.dariolucia.ccsds.sle.utl.server;
 
 import com.beanit.jasn1.ber.types.BerInteger;
 import com.beanit.jasn1.ber.types.BerNull;
@@ -30,6 +30,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.*;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.cltu.CltuServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.encdec.CltuProviderEncDec;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuLastOk;
@@ -39,11 +40,14 @@ import eu.dariolucia.ccsds.sle.utl.si.cltu.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * One object of this class represents an RAF Service Instance (provider role).
+ * One object of this class represents a CLTU Service Instance (provider role).
  */
 public class CltuServiceInstanceProvider extends ServiceInstance {
 
@@ -91,20 +95,20 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     private final CltuProviderEncDec encDec = new CltuProviderEncDec();
 
     // Status report scheduler
-    private volatile Timer reportingScheduler = null;
+    private final AtomicReference<Timer> reportingScheduler = new AtomicReference<>();
 
     // Radiation notification request set
     private final Set<Long> radiationNotificationSet = new HashSet<>();
 
     // Operation extension handlers: they are called to drive the positive/negative response (where supported).
     // If it is not set, it means that there are no additional checks to be done.
-    private volatile Function<CltuStartInvocation, Boolean> startOperationHandler;
+    private final AtomicReference<Predicate<CltuStartInvocation>> startOperationHandler = new AtomicReference<>();
     // Return the remaining buffer if the CLTU is added to the buffer for processing, or a negative number if the CLTU must be discarded and was not added to the buffer.
     // The absolute value of the negative number is the specific diagnostic code to be sent back to the user, so make sure it is in line with the CCSDS specs.
-    private volatile Function<CltuTransferDataInvocation, Long> transferDataOperationHandler;
+    private final AtomicReference<Function<CltuTransferDataInvocation, Long>> transferDataOperationHandler = new AtomicReference<>();
     // Return null if the event invocation has been taken onboard, or a positive number if the throw event must be discarded and it will not be processed.
     // The value of the returned number is the specific diagnostic code to be sent back to the user, so make sure it is in line with the CCSDS specs.
-    private volatile Function<CltuThrowEventInvocation, Long> throwEventOperationHandler;
+    private final AtomicReference<Function<CltuThrowEventInvocation, Long>> throwEventOperationHandler = new AtomicReference<>();
 
     public CltuServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                        CltuServiceInstanceConfiguration serviceInstanceConfiguration) {
@@ -122,16 +126,16 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         registerPduReceptionHandler(CltuThrowEventInvocation.class, this::handleCltuThrowEventInvocation);
     }
 
-    public void setStartOperationHandler(Function<CltuStartInvocation, Boolean> handler) {
-        this.startOperationHandler = handler;
+    public void setStartOperationHandler(Predicate<CltuStartInvocation> handler) {
+        this.startOperationHandler.set(handler);
     }
 
     public void setTransferDataOperationHandler(Function<CltuTransferDataInvocation, Long> transferDataOperationHandler) {
-        this.transferDataOperationHandler = transferDataOperationHandler;
+        this.transferDataOperationHandler.set(transferDataOperationHandler);
     }
 
     public void setThrowEventOperationHandler(Function<CltuThrowEventInvocation, Long> throwEventOperationHandler) {
-        this.throwEventOperationHandler = throwEventOperationHandler;
+        this.throwEventOperationHandler.set(throwEventOperationHandler);
     }
 
     public void updateProductionStatus(CltuProductionStatusEnum productionStatus, CltuUplinkStatusEnum uplinkStatus, long bufferAvailable) {
@@ -215,6 +219,9 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     private void doSendAsyncNotify(CltuNotification.CltuNotificationTypeEnum notificationType, Long eventId) {
         clearError();
 
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
+        }
         // Validate state
         if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE && this.currentState != ServiceInstanceBindingStateEnum.READY) {
             setError("Async. notify discarded, service instance is in state "
@@ -357,7 +364,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         Long newBufferAvailable = null;
         if (permittedOk) {
             // Ask the external handler if any
-            Function<CltuTransferDataInvocation, Long> handler = this.transferDataOperationHandler;
+            Function<CltuTransferDataInvocation, Long> handler = this.transferDataOperationHandler.get(); // NOSONAR: null is a plausible value
             if (handler != null) {
                 newBufferAvailable = handler.apply(invocation);
                 permittedOk = newBufferAvailable != null && newBufferAvailable > 0;
@@ -450,7 +457,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         Long returnCode = null;
         if (permittedOk) {
             // Ask the external handler if any
-            Function<CltuThrowEventInvocation, Long> handler = this.throwEventOperationHandler;
+            Function<CltuThrowEventInvocation, Long> handler = this.throwEventOperationHandler.get(); // NOSONAR: null is a plausible value
             if (handler != null) {
                 returnCode = handler.apply(invocation);
                 permittedOk = returnCode == null;
@@ -534,9 +541,9 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
 
         if (permittedOk) {
             // Ask the external handler if any
-            Function<CltuStartInvocation, Boolean> handler = this.startOperationHandler;
+            Predicate<CltuStartInvocation> handler = this.startOperationHandler.get();
             if (handler != null) {
-                permittedOk = handler.apply(invocation);
+                permittedOk = handler.test(invocation);
             }
         }
 
@@ -679,7 +686,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
             sendStatusReport(true);
             pdu.getResult().setPositiveResult(new BerNull());
         } else if (invocation.getReportRequestType().getStop() != null) {
-            if (this.reportingScheduler != null) {
+            if (this.reportingScheduler.get() != null) {
                 stopStatusReport();
                 pdu.getResult().setPositiveResult(new BerNull());
             } else {
@@ -721,22 +728,28 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     }
 
     private void startStatusReport(int period) {
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.info(String.format("%s: Scheduling status report with period %d", getServiceInstanceIdentifier(), period));
+        }
         this.reportingCycle = period;
-        this.reportingScheduler = new Timer();
-        this.reportingScheduler.schedule(new TimerTask() {
+        this.reportingScheduler.set(new Timer());
+        this.reportingScheduler.get().schedule(new TimerTask() {
             @Override
             public void run() {
-                if (reportingScheduler != null) {
+                if (reportingScheduler.get() != null) {
                     dispatchFromProvider(() -> sendStatusReport(false));
                 }
             }
-        }, 0, period * 1000);
+        }, 0, period * 1000L);
     }
 
     private void stopStatusReport() {
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
+        }
         this.reportingCycle = null;
-        this.reportingScheduler.cancel();
-        this.reportingScheduler = null;
+        this.reportingScheduler.get().cancel();
+        this.reportingScheduler.set(null);
     }
 
     private void handleCltuGetParameterInvocation(CltuGetParameterInvocation invocation) {
@@ -828,7 +841,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
                 pdu.getResult().getPositiveResult().setParReportingCycle(new CltuGetParameterV1toV3.ParReportingCycle());
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getCltuParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
-                if (this.reportingScheduler != null && this.reportingCycle != null) {
+                if (this.reportingScheduler.get() != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
@@ -906,7 +919,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
                 pdu.getResult().getPositiveResult().setParReportingCycle(new CltuGetParameterV4.ParReportingCycle());
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getCltuParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
-                if (this.reportingScheduler != null && this.reportingCycle != null) {
+                if (this.reportingScheduler.get() != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
@@ -1008,7 +1021,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
                 pdu.getResult().getPositiveResult().setParReportingCycle(new CltuGetParameter.ParReportingCycle());
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getCltuParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
-                if (this.reportingScheduler != null && this.reportingCycle != null) {
+                if (this.reportingScheduler.get() != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
@@ -1086,7 +1099,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     }
 
     private void sendStatusReport(boolean immediate) {
-        if (!immediate && this.reportingScheduler == null) {
+        if (!immediate && this.reportingScheduler.get() == null) {
             return;
         }
 

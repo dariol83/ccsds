@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.server;
+package eu.dariolucia.ccsds.sle.utl.server;
 
 import com.beanit.jasn1.ber.types.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.*;
@@ -25,6 +25,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.*;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.encdec.RafProviderEncDec;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
@@ -35,9 +36,12 @@ import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstanceState;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -67,8 +71,8 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
     // Requested via STATUS_REPORT, updated externally (therefore they are protected via separate lock)
     private final ReentrantLock statusMutex = new ReentrantLock();
-    private volatile int errorFreeFrameNumber = 0;
-    private volatile int deliveredFrameNumber = 0;
+    private final AtomicInteger errorFreeFrameNumber = new AtomicInteger(0);
+    private final AtomicInteger deliveredFrameNumber = new AtomicInteger(0);
     private LockStatusEnum frameSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
     private LockStatusEnum symbolSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
     private LockStatusEnum subcarrierLockStatus = LockStatusEnum.OUT_OF_LOCK;
@@ -79,7 +83,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
     private final RafProviderEncDec encDec = new RafProviderEncDec();
 
     // Status report scheduler
-    private volatile Timer reportingScheduler = null;
+    private final AtomicReference<Timer> reportingScheduler = new AtomicReference<>();
 
     // Transfer buffer under construction
     private final ReentrantLock bufferMutex = new ReentrantLock();
@@ -90,10 +94,10 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
     // Latency timer
     private final Timer latencyTimer = new Timer();
-    private volatile TimerTask pendingLatencyTimeout = null;
+    private final AtomicReference<TimerTask> pendingLatencyTimeout = new AtomicReference<>();
 
     // Operation extension handlers: they are called to drive the positive/negative response (where supported)
-    private volatile Function<RafStartInvocation, Boolean> startOperationHandler;
+    private final AtomicReference<Predicate<RafStartInvocation>> startOperationHandler = new AtomicReference<>();
 
     public RafServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                       RafServiceInstanceConfiguration serviceInstanceConfiguration) {
@@ -109,8 +113,8 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         registerPduReceptionHandler(RafGetParameterInvocation.class, this::handleRafGetParameterInvocation);
     }
 
-    public void setStartOperationHandler(Function<RafStartInvocation, Boolean> handler) {
-        this.startOperationHandler = handler;
+    public void setStartOperationHandler(Predicate<RafStartInvocation> handler) {
+        this.startOperationHandler.set(handler);
     }
 
     public void updateProductionStatus(Instant time, LockStatusEnum carrier, LockStatusEnum subCarrier, LockStatusEnum symbol, LockStatusEnum frame, ProductionStatusEnum productionStatus) {
@@ -133,17 +137,14 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         currentBufferActive = this.bufferActive;
         this.bufferMutex.unlock();
 
-        if (previousFrameLockStatus == LockStatusEnum.IN_LOCK && frame != LockStatusEnum.IN_LOCK) {
-            // We lost the frame lock, we need to send a notification
-            if (currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
-                sendLossFrameNotification(time, carrier, subCarrier, symbol);
-            }
+        // We lost the frame lock, we need to send a notification
+        if (previousFrameLockStatus == LockStatusEnum.IN_LOCK && frame != LockStatusEnum.IN_LOCK &&
+                currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
+            sendLossFrameNotification(time, carrier, subCarrier, symbol);
         }
-        if (previousProductionStatus != productionStatus) {
-            // We changed production status, we need to send a notification
-            if (currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
-                sendProductionStatusChangeNotification(productionStatus);
-            }
+        // We changed production status, we need to send a notification
+        if (previousProductionStatus != productionStatus && currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
+            sendProductionStatusChangeNotification(productionStatus);
         }
     }
 
@@ -220,7 +221,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    public boolean transferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
+    public boolean transferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) { // NOSONAR: creation of an additional object is avoided for performance reasons
         this.bufferMutex.lock();
         try {
             // If the state is not correct, say bye
@@ -292,16 +293,16 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
         stopLatencyTimer();
 
-        this.pendingLatencyTimeout = new TimerTask() {
+        this.pendingLatencyTimeout.set(new TimerTask() {
             @Override
             public void run() {
-                if (pendingLatencyTimeout == this) {
+                if (pendingLatencyTimeout.get() == this) {
                     // Elapsed, send the buffer if needed
                     latencyElapsed();
                 }
             }
-        };
-        this.latencyTimer.schedule(this.pendingLatencyTimeout, this.latencyLimit * 1000L);
+        });
+        this.latencyTimer.schedule(this.pendingLatencyTimeout.get(), this.latencyLimit * 1000L);
     }
 
     private void latencyElapsed() {
@@ -315,9 +316,9 @@ public class RafServiceInstanceProvider extends ServiceInstance {
     }
 
     private void stopLatencyTimer() {
-        if (this.pendingLatencyTimeout != null) {
-            this.pendingLatencyTimeout.cancel();
-            this.pendingLatencyTimeout = null;
+        if (this.pendingLatencyTimeout.get() != null) {
+            this.pendingLatencyTimeout.get().cancel();
+            this.pendingLatencyTimeout.set(null);
         }
     }
 
@@ -334,7 +335,8 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             while (this.bufferActive && this.bufferUnderTransmission) {
                 try {
                     this.bufferChangedCondition.await();
-                } catch (InterruptedException e) {
+                } catch (InterruptedException e) { // NOSONAR: sorry to say, but this rule is pointless, to be disabled in the profile
+                    Thread.interrupted();
                     // Buffer discarded
                     return true;
                 }
@@ -440,7 +442,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
     }
 
     // Under sync on this.bufferMutex
-    private void addTransferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
+    private void addTransferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) { // NOSONAR: direct derivation from the rule on transferData() method.
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
@@ -484,9 +486,9 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         this.bufferUnderConstruction.getFrameOrNotification().add(fon);
 
         // Assumed delivered
-        ++this.deliveredFrameNumber;
+        this.deliveredFrameNumber.incrementAndGet();
         if(quality == FRAME_QUALITY_GOOD) {
-            ++this.errorFreeFrameNumber;
+            this.errorFreeFrameNumber.incrementAndGet();
         }
     }
 
@@ -531,9 +533,9 @@ public class RafServiceInstanceProvider extends ServiceInstance {
 
         if (permittedOk) {
             // Ask the external handler if any
-            Function<RafStartInvocation, Boolean> handler = this.startOperationHandler;
+            Predicate<RafStartInvocation> handler = this.startOperationHandler.get();
             if (handler != null) {
-                permittedOk = handler.apply(invocation);
+                permittedOk = handler.test(invocation);
             }
         }
 
@@ -717,7 +719,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             sendStatusReport(true);
             pdu.getResult().setPositiveResult(new BerNull());
         } else if (invocation.getReportRequestType().getStop() != null) {
-            if (this.reportingScheduler != null) {
+            if (this.reportingScheduler.get() != null) {
                 stopStatusReport();
                 pdu.getResult().setPositiveResult(new BerNull());
             } else {
@@ -759,22 +761,28 @@ public class RafServiceInstanceProvider extends ServiceInstance {
     }
 
     private void startStatusReport(int period) {
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.info(String.format("%s: Scheduling status report with period %d", getServiceInstanceIdentifier(), period));
+        }
         this.reportingCycle = period;
-        this.reportingScheduler = new Timer();
-        this.reportingScheduler.schedule(new TimerTask() {
+        this.reportingScheduler.set(new Timer());
+        this.reportingScheduler.get().schedule(new TimerTask() {
             @Override
             public void run() {
-                if (reportingScheduler != null) {
+                if (reportingScheduler.get() != null) {
                     dispatchFromProvider(() -> sendStatusReport(false));
                 }
             }
-        }, 0, period * 1000);
+        }, 0, period * 1000L);
     }
 
     private void stopStatusReport() {
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
+        }
         this.reportingCycle = null;
-        this.reportingScheduler.cancel();
-        this.reportingScheduler = null;
+        this.reportingScheduler.get().cancel();
+        this.reportingScheduler.set(null);
     }
 
     private void handleRafGetParameterInvocation(RafGetParameterInvocation invocation) {
@@ -843,7 +851,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
                 pdu.getResult().getPositiveResult().setParReportingCycle(new RafGetParameterV1toV4.ParReportingCycle());
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
-                if (this.reportingScheduler != null && this.reportingCycle != null) {
+                if (this.reportingScheduler.get() != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
@@ -902,7 +910,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
                 pdu.getResult().getPositiveResult().setParReportingCycle(new RafGetParameter.ParReportingCycle());
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
-                if (this.reportingScheduler != null && this.reportingCycle != null) {
+                if (this.reportingScheduler.get() != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
@@ -953,7 +961,7 @@ public class RafServiceInstanceProvider extends ServiceInstance {
     }
 
     private void sendStatusReport(boolean immediate) {
-        if (!immediate && this.reportingScheduler == null) {
+        if (!immediate && this.reportingScheduler.get() == null) {
             return;
         }
         if (getSleVersion() <= 2) {
@@ -973,8 +981,8 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             try {
                 pdu.setCarrierLockStatus(new LockStatus(this.carrierLockStatus.ordinal()));
                 pdu.setFrameSyncLockStatus(new LockStatus(this.frameSyncLockStatus.ordinal()));
-                pdu.setDeliveredFrameNumber(new IntUnsignedLong(this.deliveredFrameNumber));
-                pdu.setErrorFreeFrameNumber(new IntUnsignedLong(this.errorFreeFrameNumber));
+                pdu.setDeliveredFrameNumber(new IntUnsignedLong(this.deliveredFrameNumber.get()));
+                pdu.setErrorFreeFrameNumber(new IntUnsignedLong(this.errorFreeFrameNumber.get()));
                 pdu.setProductionStatus(new RafProductionStatus(this.productionStatus.ordinal()));
                 pdu.setSubcarrierLockStatus(new LockStatus(this.subcarrierLockStatus.ordinal()));
                 pdu.setSymbolSyncLockStatus(new LockStatus(this.symbolSyncLockStatus.ordinal()));
@@ -1006,8 +1014,8 @@ public class RafServiceInstanceProvider extends ServiceInstance {
             try {
                 pdu.setCarrierLockStatus(new CarrierLockStatus(this.carrierLockStatus.ordinal()));
                 pdu.setFrameSyncLockStatus(new FrameSyncLockStatus(this.frameSyncLockStatus.ordinal()));
-                pdu.setDeliveredFrameNumber(new IntUnsignedLong(this.deliveredFrameNumber));
-                pdu.setErrorFreeFrameNumber(new IntUnsignedLong(this.errorFreeFrameNumber));
+                pdu.setDeliveredFrameNumber(new IntUnsignedLong(this.deliveredFrameNumber.get()));
+                pdu.setErrorFreeFrameNumber(new IntUnsignedLong(this.errorFreeFrameNumber.get()));
                 pdu.setProductionStatus(new RafProductionStatus(this.productionStatus.ordinal()));
                 pdu.setSubcarrierLockStatus(new LockStatus(this.subcarrierLockStatus.ordinal()));
                 pdu.setSymbolSyncLockStatus(new SymbolLockStatus(this.symbolSyncLockStatus.ordinal()));
@@ -1042,8 +1050,8 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         state.setDeliveryMode(deliveryMode);
         state.setLatencyLimit(latencyLimit);
         state.setMinReportingCycle(minReportingCycle);
-        state.setDeliveredFrameNumber(deliveredFrameNumber);
-        state.setErrorFreeFrameNumber(errorFreeFrameNumber);
+        state.setDeliveredFrameNumber(deliveredFrameNumber.get());
+        state.setErrorFreeFrameNumber(errorFreeFrameNumber.get());
         state.setPermittedFrameQuality(new ArrayList<>(permittedFrameQuality));
         state.setReportingCycle(reportingCycle);
         state.setRequestedFrameQuality(requestedFrameQuality);
@@ -1102,8 +1110,8 @@ public class RafServiceInstanceProvider extends ServiceInstance {
         this.reportingCycle = null; // NULL if off, otherwise a value
 
         // Updated via STATUS_REPORT
-        this.errorFreeFrameNumber = 0;
-        this.deliveredFrameNumber = 0;
+        this.errorFreeFrameNumber.set(0);
+        this.deliveredFrameNumber.set(0);
         this.statusMutex.lock();
         try {
             this.frameSyncLockStatus = LockStatusEnum.UNKNOWN;

@@ -315,7 +315,7 @@ public abstract class TmlChannel {
 		try {
 			this.observer.onPduReceived(this, pdu);
 		} catch(Exception e) {
-			LOG.log(Level.SEVERE, "Exception while forwarding PDU from channel " + toString() + " to observer", e);
+			LOG.log(Level.SEVERE, String.format("Exception while forwarding PDU from channel %s to observer", toString()), e);
 		}
 	}
 

@@ -28,8 +28,8 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.outgoin
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.outgoing.pdus.RocfSyncNotifyInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.structures.DiagnosticRocfGet;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.structures.DiagnosticRocfStart;
-import eu.dariolucia.ccsds.sle.server.OperationRecorder;
-import eu.dariolucia.ccsds.sle.server.RocfServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
+import eu.dariolucia.ccsds.sle.utl.server.RocfServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.rocf.RocfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;

@@ -39,13 +39,13 @@ import java.util.function.Supplier;
 /**
  * RAF encoding/decoding extension class.
  */
-public class RafEncDec extends CommonEncDec {
+public class RafUserEncDec extends CommonEncDec {
 
 	private final List<Function<RafProviderToUserPduV1toV2, BerType>> unwrapFunctionV1V2List;
 	private final List<Function<RafProviderToUserPduV3toV4, BerType>> unwrapFunctionV3V4List;
 	private final List<Function<RafProviderToUserPdu, BerType>> unwrapFunctionV5List;
 
-	public RafEncDec() {
+	public RafUserEncDec() {
 		register(1, RafProviderToUserPduV1toV2::new);
 		register(2, RafProviderToUserPduV1toV2::new);
 		register(3, RafProviderToUserPduV3toV4::new);

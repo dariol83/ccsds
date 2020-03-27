@@ -18,20 +18,14 @@ package eu.dariolucia.ccsds.sle.provider;
 
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.incoming.pdus.CltuThrowEventInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.incoming.pdus.CltuTransferDataInvocation;
-import eu.dariolucia.ccsds.sle.server.CltuServiceInstanceProvider;
-import eu.dariolucia.ccsds.sle.server.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.cltu.CltuServiceInstanceConfiguration;
-import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
-import eu.dariolucia.ccsds.sle.utl.si.ServiceInstance;
-import eu.dariolucia.ccsds.sle.utl.si.ServiceInstanceBindingStateEnum;
-import eu.dariolucia.ccsds.sle.utl.si.ServiceInstanceState;
+import eu.dariolucia.ccsds.sle.utl.server.CltuServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuProductionStatusEnum;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuStatusEnum;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuUplinkStatusEnum;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.TimerTask;
 

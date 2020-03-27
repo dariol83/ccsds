@@ -32,7 +32,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.*;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.cltu.CltuServiceInstanceConfiguration;
-import eu.dariolucia.ccsds.sle.utl.encdec.CltuEncDec;
+import eu.dariolucia.ccsds.sle.utl.encdec.CltuUserEncDec;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuNotification.CltuNotificationTypeEnum;
@@ -89,7 +89,7 @@ public class CltuServiceInstance extends ServiceInstance {
 	private CltuNotification notification;
 
 	// Encoder/decoder
-	private final CltuEncDec encDec = new CltuEncDec();
+	private final CltuUserEncDec encDec = new CltuUserEncDec();
 
 	public CltuServiceInstance(PeerConfiguration apiConfiguration,
                                CltuServiceInstanceConfiguration serviceInstanceConfiguration) {
@@ -455,7 +455,7 @@ public class CltuServiceInstance extends ServiceInstance {
 		// check remote peer and check if authentication must be used.
 		// If so, verify credentials.
 		if (!authenticate(pdu.getPerformerCredentials(), AuthenticationModeEnum.ALL)) {
-			pduReceptionProcessingError("Get parameter return received, but wrong credentials", pdu, GET_PARAMETER_RETURN_NAME);
+			pduReceptionProcessingError("Get parameter return received, but wrong credentials", pdu, GET_PARAMETER_RETURN_NAME); // NOSONAR: constant for log text is not helpful
 			return;
 		}
 
@@ -545,11 +545,11 @@ public class CltuServiceInstance extends ServiceInstance {
 				this.subcarrierToBitRateRation = pdu.getResult().getPositiveResult().getParSubcarrierToBitRateRatio()
 						.getParameterValue().intValue();
 			} else {
-				LOG.warning(getServiceInstanceIdentifier() + ": Get parameter return received, positive result but unknown/unsupported parameter found");
+				LOG.warning(getServiceInstanceIdentifier() + ": Get parameter return received, positive result but unknown/unsupported parameter found"); // NOSONAR: constant for log text is not helpful
 			}
 		} else {
 			// Dump warning with diagnostic
-			LOG.warning(getServiceInstanceIdentifier() + ": Get parameter return received, negative result: "
+			LOG.warning(getServiceInstanceIdentifier() + ": Get parameter return received, negative result: " // NOSONAR: constant for log text is not helpful
 					+ CltuDiagnosticsStrings.getGetParameterDiagnostic(pdu.getResult().getNegativeResult()));
 
 		}

@@ -27,7 +27,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.*;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
-import eu.dariolucia.ccsds.sle.utl.encdec.RcfEncDec;
+import eu.dariolucia.ccsds.sle.utl.encdec.RcfUserEncDec;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
 
@@ -71,7 +71,7 @@ public class RcfServiceInstance extends ServiceInstance {
 	private ProductionStatusEnum productionStatus = ProductionStatusEnum.UNKNOWN;
 
 	// Encoder/decoder
-	private final RcfEncDec encDec = new RcfEncDec();
+	private final RcfUserEncDec encDec = new RcfUserEncDec();
 
 	public RcfServiceInstance(PeerConfiguration apiConfiguration,
                               RcfServiceInstanceConfiguration serviceInstanceConfiguration) {

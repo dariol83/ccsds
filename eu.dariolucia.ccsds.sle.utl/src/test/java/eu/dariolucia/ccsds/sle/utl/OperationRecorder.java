@@ -14,13 +14,12 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.server;
+package eu.dariolucia.ccsds.sle.utl;
 
 import eu.dariolucia.ccsds.sle.utl.si.IServiceInstanceListener;
 import eu.dariolucia.ccsds.sle.utl.si.ServiceInstance;
 import eu.dariolucia.ccsds.sle.utl.si.ServiceInstanceState;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 

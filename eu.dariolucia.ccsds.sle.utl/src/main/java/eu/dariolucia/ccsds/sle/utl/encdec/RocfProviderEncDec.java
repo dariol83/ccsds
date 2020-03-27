@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.server;
+package eu.dariolucia.ccsds.sle.utl.encdec;
 
 import com.beanit.jasn1.ber.types.BerType;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleBindInvocation;
@@ -25,9 +25,6 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.incoming.pdus.RocfUserToProviderPdu;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.outgoing.pdus.*;
-import eu.dariolucia.ccsds.sle.utl.encdec.CommonEncDec;
-import eu.dariolucia.ccsds.sle.utl.encdec.DecodingException;
-import eu.dariolucia.ccsds.sle.utl.encdec.EncodingException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,62 +72,66 @@ public class RocfProviderEncDec extends CommonEncDec {
 			case 2:
 			case 3:
 			case 4:
-			{
-				RocfProviderToUserPduV1toV4 wrapper = new RocfProviderToUserPduV1toV4();
-				if(toEncode instanceof SleBindInvocation) {
-					wrapper.setRocfBindInvocation((SleBindInvocation) toEncode);
-				} else if(toEncode instanceof SleUnbindInvocation) {
-					wrapper.setRocfUnbindInvocation((SleUnbindInvocation) toEncode);
-				} else if(toEncode instanceof SleUnbindReturn) {
-					wrapper.setRocfUnbindReturn((SleUnbindReturn) toEncode);
-				} else if(toEncode instanceof SleBindReturn) {
-					wrapper.setRocfBindReturn((SleBindReturn) toEncode);
-				} else if(toEncode instanceof SleScheduleStatusReportReturn) {
-					wrapper.setRocfScheduleStatusReportReturn((SleScheduleStatusReportReturn) toEncode);
-				} else if(toEncode instanceof RocfStatusReportInvocation) {
-					wrapper.setRocfStatusReportInvocation((RocfStatusReportInvocation) toEncode);
-				} else if(toEncode instanceof RocfStartReturn) {
-					wrapper.setRocfStartReturn((RocfStartReturn) toEncode);
-				} else if(toEncode instanceof SleAcknowledgement) {
-					wrapper.setRocfStopReturn((SleAcknowledgement) toEncode);
-				} else if(toEncode instanceof RocfGetParameterReturnV1toV4) {
-					wrapper.setRocfGetParameterReturn((RocfGetParameterReturnV1toV4) toEncode);
-				} else if(toEncode instanceof RocfTransferBuffer) {
-					wrapper.setRocfTransferBuffer((RocfTransferBuffer) toEncode);
-				} else {
-					throw new EncodingException("Type " + toEncode + " not supported by encoder " +getClass().getSimpleName());
-				}
-				return wrapper;
-			}
+				return wrapIntoV1toV4(toEncode);
 			default:
-			{
-				RocfProviderToUserPdu wrapper = new RocfProviderToUserPdu();
-				if(toEncode instanceof SleBindInvocation) {
-					wrapper.setRocfBindInvocation((SleBindInvocation) toEncode);
-				} else if(toEncode instanceof SleUnbindInvocation) {
-					wrapper.setRocfUnbindInvocation((SleUnbindInvocation) toEncode);
-				} else if(toEncode instanceof SleUnbindReturn) {
-					wrapper.setRocfUnbindReturn((SleUnbindReturn) toEncode);
-				} else if(toEncode instanceof SleBindReturn) {
-					wrapper.setRocfBindReturn((SleBindReturn) toEncode);
-				} else if(toEncode instanceof SleScheduleStatusReportReturn) {
-					wrapper.setRocfScheduleStatusReportReturn((SleScheduleStatusReportReturn) toEncode);
-				} else if(toEncode instanceof RocfStatusReportInvocation) {
-					wrapper.setRocfStatusReportInvocation((RocfStatusReportInvocation) toEncode);
-				} else if(toEncode instanceof RocfStartReturn) {
-					wrapper.setRocfStartReturn((RocfStartReturn) toEncode);
-				} else if(toEncode instanceof SleAcknowledgement) {
-					wrapper.setRocfStopReturn((SleAcknowledgement) toEncode);
-				} else if(toEncode instanceof RocfGetParameterReturn) {
-					wrapper.setRocfGetParameterReturn((RocfGetParameterReturn) toEncode);
-				} else if(toEncode instanceof RocfTransferBuffer) {
-					wrapper.setRocfTransferBuffer((RocfTransferBuffer) toEncode);
-				} else {
-					throw new EncodingException("Type " + toEncode + " not supported by encoder " +getClass().getSimpleName());
-				}
-				return wrapper;
-			}
+				return wrapIntoLatest(toEncode);
 		}
+	}
+
+	private BerType wrapIntoLatest(BerType toEncode) throws EncodingException {
+		RocfProviderToUserPdu wrapper = new RocfProviderToUserPdu();
+		if(toEncode instanceof SleBindInvocation) {
+			wrapper.setRocfBindInvocation((SleBindInvocation) toEncode);
+		} else if(toEncode instanceof SleUnbindInvocation) {
+			wrapper.setRocfUnbindInvocation((SleUnbindInvocation) toEncode);
+		} else if(toEncode instanceof SleUnbindReturn) {
+			wrapper.setRocfUnbindReturn((SleUnbindReturn) toEncode);
+		} else if(toEncode instanceof SleBindReturn) {
+			wrapper.setRocfBindReturn((SleBindReturn) toEncode);
+		} else if(toEncode instanceof SleScheduleStatusReportReturn) {
+			wrapper.setRocfScheduleStatusReportReturn((SleScheduleStatusReportReturn) toEncode);
+		} else if(toEncode instanceof RocfStatusReportInvocation) {
+			wrapper.setRocfStatusReportInvocation((RocfStatusReportInvocation) toEncode);
+		} else if(toEncode instanceof RocfStartReturn) {
+			wrapper.setRocfStartReturn((RocfStartReturn) toEncode);
+		} else if(toEncode instanceof SleAcknowledgement) {
+			wrapper.setRocfStopReturn((SleAcknowledgement) toEncode);
+		} else if(toEncode instanceof RocfGetParameterReturn) {
+			wrapper.setRocfGetParameterReturn((RocfGetParameterReturn) toEncode);
+		} else if(toEncode instanceof RocfTransferBuffer) {
+			wrapper.setRocfTransferBuffer((RocfTransferBuffer) toEncode);
+		} else {
+			throw new EncodingException("Type " + toEncode + " not supported by encoder " +getClass().getSimpleName());
+		}
+		return wrapper;
+	}
+
+	private BerType wrapIntoV1toV4(BerType toEncode) throws EncodingException {
+		RocfProviderToUserPduV1toV4 wrapper = new RocfProviderToUserPduV1toV4();
+		if(toEncode instanceof SleBindInvocation) {
+			wrapper.setRocfBindInvocation((SleBindInvocation) toEncode);
+		} else if(toEncode instanceof SleUnbindInvocation) {
+			wrapper.setRocfUnbindInvocation((SleUnbindInvocation) toEncode);
+		} else if(toEncode instanceof SleUnbindReturn) {
+			wrapper.setRocfUnbindReturn((SleUnbindReturn) toEncode);
+		} else if(toEncode instanceof SleBindReturn) {
+			wrapper.setRocfBindReturn((SleBindReturn) toEncode);
+		} else if(toEncode instanceof SleScheduleStatusReportReturn) {
+			wrapper.setRocfScheduleStatusReportReturn((SleScheduleStatusReportReturn) toEncode);
+		} else if(toEncode instanceof RocfStatusReportInvocation) {
+			wrapper.setRocfStatusReportInvocation((RocfStatusReportInvocation) toEncode);
+		} else if(toEncode instanceof RocfStartReturn) {
+			wrapper.setRocfStartReturn((RocfStartReturn) toEncode);
+		} else if(toEncode instanceof SleAcknowledgement) {
+			wrapper.setRocfStopReturn((SleAcknowledgement) toEncode);
+		} else if(toEncode instanceof RocfGetParameterReturnV1toV4) {
+			wrapper.setRocfGetParameterReturn((RocfGetParameterReturnV1toV4) toEncode);
+		} else if(toEncode instanceof RocfTransferBuffer) {
+			wrapper.setRocfTransferBuffer((RocfTransferBuffer) toEncode);
+		} else {
+			throw new EncodingException("Type " + toEncode + " not supported by encoder " +getClass().getSimpleName());
+		}
+		return wrapper;
 	}
 
 	@Override

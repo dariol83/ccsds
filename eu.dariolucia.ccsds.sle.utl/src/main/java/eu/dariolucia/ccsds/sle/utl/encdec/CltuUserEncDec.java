@@ -32,13 +32,13 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class CltuEncDec extends CommonEncDec {
+public class CltuUserEncDec extends CommonEncDec {
 
 	private final List<Function<CltuProviderToUserPduV1toV3, BerType>> unwrapFunctionV1V3List;
 	private final List<Function<CltuProviderToUserPduV4, BerType>> unwrapFunctionV4List;
 	private final List<Function<CltuProviderToUserPdu, BerType>> unwrapFunctionV5List;
 
-	public CltuEncDec() {
+	public CltuUserEncDec() {
 		register(1, CltuProviderToUserPduV1toV3::new);
 		register(2, CltuProviderToUserPduV1toV3::new);
 		register(3, CltuProviderToUserPduV1toV3::new);

@@ -16,13 +16,11 @@
 
 package eu.dariolucia.ccsds.sle.provider;
 
-import eu.dariolucia.ccsds.sle.server.RafServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.server.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuProductionStatusEnum;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuUplinkStatusEnum;
 
 import java.time.Instant;
 import java.util.TimerTask;
