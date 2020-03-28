@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.test;
+package eu.dariolucia.ccsds.sle.utl.test;
 
 import eu.dariolucia.ccsds.sle.utl.si.GVCID;
 import org.junit.jupiter.api.Test;

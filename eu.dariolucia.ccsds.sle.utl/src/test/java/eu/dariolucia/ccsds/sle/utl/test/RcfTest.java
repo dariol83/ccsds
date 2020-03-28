@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.test;
+package eu.dariolucia.ccsds.sle.utl.test;
 
 import com.beanit.jasn1.ber.types.BerInteger;
 import com.beanit.jasn1.ber.types.BerNull;
@@ -29,7 +29,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.DiagnosticRcfGet;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.DiagnosticRcfStart;
 import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
-import eu.dariolucia.ccsds.sle.utl.server.RcfServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
@@ -553,7 +553,21 @@ public class RcfTest {
     }
 
     @Test
-    void testTransferDataComplete() throws IOException, InterruptedException {
+    void testTransferDataCompleteV1() throws IOException, InterruptedException {
+        testTransferDataComplete(1);
+    }
+
+    @Test
+    void testTransferDataCompleteV2() throws IOException, InterruptedException {
+        testTransferDataComplete(2);
+    }
+
+    @Test
+    void testTransferDataCompleteV5() throws IOException, InterruptedException {
+        testTransferDataComplete(5);
+    }
+
+    private void testTransferDataComplete(int version) throws IOException, InterruptedException {
         // Provider
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
         UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
@@ -572,7 +586,7 @@ public class RcfTest {
         OperationRecorder recorder = new OperationRecorder();
         rafUser.register(recorder);
 
-        rafUser.bind(2);
+        rafUser.bind(version);
 
         // Check reported state
         AwaitUtil.await(2000);

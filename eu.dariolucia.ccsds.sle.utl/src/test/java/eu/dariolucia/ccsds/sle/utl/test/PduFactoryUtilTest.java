@@ -14,14 +14,12 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.test;
+package eu.dariolucia.ccsds.sle.utl.test;
 
-import com.beanit.jasn1.ber.types.BerInteger;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.ConditionalTime;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Credentials;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Time;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.TimeCCSDSpico;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.isp1.credentials.ISP1Credentials;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.service.instance.id.ServiceInstanceIdentifier;
 import eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;

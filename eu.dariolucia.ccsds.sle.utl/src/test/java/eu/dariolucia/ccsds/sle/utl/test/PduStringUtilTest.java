@@ -14,24 +14,21 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.test;
+package eu.dariolucia.ccsds.sle.utl.test;
 
-import java.util.function.Supplier;
+import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
+import org.junit.jupiter.api.Test;
 
-public class AwaitUtil {
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-    public static void awaitCondition(int maxMs, Supplier<Boolean> conditionChecker) throws InterruptedException {
-        while(!conditionChecker.get()) {
-            int minWait = Math.min(maxMs, 100);
-            Thread.sleep(minWait);
-            maxMs -= minWait;
-            if(maxMs == 0) {
-                break;
-            }
-        }
+public class PduStringUtilTest {
+
+    @Test
+    void testOIDStringConversion() {
+        String oid1 = "1.112.33.22.1.232.1.232";
+        String oid2 = "";
+        assertEquals(oid1, PduStringUtil.toOIDString(PduStringUtil.fromOIDString(oid1)));
+        assertEquals(oid2, PduStringUtil.toOIDString(PduStringUtil.fromOIDString(oid2)));
     }
 
-    public static void await(int ms) throws InterruptedException {
-        Thread.sleep(ms);
-    }
 }

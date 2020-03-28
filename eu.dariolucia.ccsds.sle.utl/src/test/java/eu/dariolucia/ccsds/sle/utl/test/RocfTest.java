@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.test;
+package eu.dariolucia.ccsds.sle.utl.test;
 
 import com.beanit.jasn1.ber.types.BerInteger;
 import com.beanit.jasn1.ber.types.BerNull;
@@ -29,7 +29,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.outgoin
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.structures.DiagnosticRocfGet;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.structures.DiagnosticRocfStart;
 import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
-import eu.dariolucia.ccsds.sle.utl.server.RocfServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.rocf.RocfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
@@ -485,7 +485,16 @@ public class RocfTest {
     }
 
     @Test
-    void testTransferDataComplete() throws IOException, InterruptedException {
+    void testTransferDataCompleteV2() throws IOException, InterruptedException {
+        testTransferDataComplete(2);
+    }
+
+    @Test
+    void testTransferDataCompleteV5() throws IOException, InterruptedException {
+        testTransferDataComplete(5);
+    }
+
+    private void testTransferDataComplete(int version) throws IOException, InterruptedException {
         // Provider
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
         UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
@@ -504,7 +513,7 @@ public class RocfTest {
         OperationRecorder recorder = new OperationRecorder();
         rocfUser.register(recorder);
 
-        rocfUser.bind(2);
+        rocfUser.bind(version);
 
         // Check reported state
         AwaitUtil.await(2000);

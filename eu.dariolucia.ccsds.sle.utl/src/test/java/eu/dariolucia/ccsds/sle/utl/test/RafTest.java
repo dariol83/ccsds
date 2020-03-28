@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.test;
+package eu.dariolucia.ccsds.sle.utl.test;
 
 import com.beanit.jasn1.ber.types.BerInteger;
 import com.beanit.jasn1.ber.types.BerNull;
@@ -30,7 +30,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.DiagnosticRafGet;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.DiagnosticRafStart;
 import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
-import eu.dariolucia.ccsds.sle.utl.server.RafServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
@@ -641,7 +641,21 @@ public class RafTest {
     }
 
     @Test
-    void testTransferDataComplete() throws IOException, InterruptedException {
+    private void testTransferDataCompleteV2() throws IOException, InterruptedException {
+        testTransferDataComplete(2);
+    }
+
+    @Test
+    private void testTransferDataCompleteV4() throws IOException, InterruptedException {
+        testTransferDataComplete(4);
+    }
+
+    @Test
+    private void testTransferDataCompleteV5() throws IOException, InterruptedException {
+        testTransferDataComplete(5);
+    }
+
+    private void testTransferDataComplete(int version) throws IOException, InterruptedException {
         // Provider
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
         UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
@@ -660,7 +674,7 @@ public class RafTest {
         OperationRecorder recorder = new OperationRecorder();
         rafUser.register(recorder);
 
-        rafUser.bind(2);
+        rafUser.bind(version);
 
         // Check reported state
         AwaitUtil.await(2000);

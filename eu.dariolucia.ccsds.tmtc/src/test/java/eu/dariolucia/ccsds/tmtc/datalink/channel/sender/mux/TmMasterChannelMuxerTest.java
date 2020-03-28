@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux;
 
+import eu.dariolucia.ccsds.tmtc.datalink.builder.TmTransferFrameBuilder;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.TmSenderVirtualChannel;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
@@ -98,5 +99,76 @@ class TmMasterChannelMuxerTest {
                 .setRetransmitFlag(false)
                 .setVirtualChannelId(1)
                 .build();
+    }
+
+    @Test
+    public void testVcMuxingNoOrder() throws InterruptedException {
+        // Create a sink consumer
+        List<TmTransferFrame> list = new LinkedList<>();
+        Consumer<TmTransferFrame> sink = list::add;
+        // Setup the muxer
+        TmMasterChannelMuxer mux = new TmMasterChannelMuxer(sink);
+        // Build frame with master channel counter 0 and send
+        {
+            TmTransferFrameBuilder b1 = TmTransferFrameBuilder.create(1115, 0, false, false);
+            b1.setMasterChannelFrameCount(0)
+                    .setVirtualChannelId(0)
+                    .setVirtualChannelFrameCount(0)
+                    .setPacketOrderFlag(true)
+                    .setSynchronisationFlag(true)
+                    .setSpacecraftId(123)
+                    .setSynchronisationFlag(true)
+                    .addData(new byte[b1.getFreeUserDataLength()]);
+            mux.accept(b1.build());
+        }
+        // Check output
+        assertEquals(1, list.size());
+        // Build frame with master channel counter 2 and send (use thread because it will block)
+        Thread t2 = new Thread(() -> {
+            TmTransferFrameBuilder b1 = TmTransferFrameBuilder.create(1115, 0, false, false);
+            b1.setMasterChannelFrameCount(2)
+                    .setVirtualChannelId(0)
+                    .setVirtualChannelFrameCount(1)
+                    .setPacketOrderFlag(true)
+                    .setSynchronisationFlag(true)
+                    .setSpacecraftId(123)
+                    .addData(new byte[b1.getFreeUserDataLength()]);
+            mux.accept(b1.build());
+        });
+        t2.start();
+        Thread.sleep(1000);
+        // Check output: still 1
+        assertEquals(1, list.size());
+        // Build frame with master channel counter 3 and send
+        Thread t3 = new Thread(() -> {
+            TmTransferFrameBuilder b1 = TmTransferFrameBuilder.create(1115, 0, false, false);
+            b1.setMasterChannelFrameCount(3)
+                    .setVirtualChannelId(0)
+                    .setVirtualChannelFrameCount(2)
+                    .setPacketOrderFlag(true)
+                    .setSynchronisationFlag(true)
+                    .setSpacecraftId(123)
+                    .addData(new byte[b1.getFreeUserDataLength()]);
+            mux.accept(b1.build());
+        });
+        t3.start();
+        Thread.sleep(1000);
+        // Check output: still 1
+        assertEquals(1, list.size());
+        // Build frame with master channel counter 1 and send
+        {
+            TmTransferFrameBuilder b1 = TmTransferFrameBuilder.create(1115, 0, false, false);
+            b1.setMasterChannelFrameCount(1)
+                    .setVirtualChannelId(1)
+                    .setVirtualChannelFrameCount(0)
+                    .setPacketOrderFlag(true)
+                    .setSynchronisationFlag(true)
+                    .setSpacecraftId(123)
+                    .addData(new byte[b1.getFreeUserDataLength()]);
+            mux.accept(b1.build());
+        }
+        Thread.sleep(1000);
+        // Check output
+        assertEquals(4, list.size());
     }
 }

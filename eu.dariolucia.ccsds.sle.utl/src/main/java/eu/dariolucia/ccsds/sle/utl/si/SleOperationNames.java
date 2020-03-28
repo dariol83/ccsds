@@ -16,10 +16,11 @@
 
 package eu.dariolucia.ccsds.sle.utl.si;
 
-public class SleOperationNames {
+public final class SleOperationNames {
 
     private SleOperationNames() {
         // Private constructor
+        throw new UnsupportedOperationException("Class not meant to be instantiated");
     }
 
     public static final String BIND_NAME = "BIND";

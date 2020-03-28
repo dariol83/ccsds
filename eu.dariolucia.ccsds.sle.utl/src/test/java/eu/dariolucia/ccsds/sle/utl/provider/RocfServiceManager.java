@@ -14,9 +14,9 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.provider;
+package eu.dariolucia.ccsds.sle.utl.provider;
 
-import eu.dariolucia.ccsds.sle.utl.server.RocfServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rocf.RocfServiceInstanceConfiguration;

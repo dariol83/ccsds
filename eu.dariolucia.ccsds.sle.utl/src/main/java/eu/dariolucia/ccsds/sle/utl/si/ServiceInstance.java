@@ -83,7 +83,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
     private volatile int initMode = SI_INIT_MODE_NOT_SELECTED;
     // Service instance state
-    protected volatile ServiceInstanceBindingStateEnum currentState = ServiceInstanceBindingStateEnum.UNBOUND;
+    protected volatile ServiceInstanceBindingStateEnum currentState = ServiceInstanceBindingStateEnum.UNBOUND; // NOSONAR enumeration is immutable
 
     private Integer sleVersion = null; // Set by the bind request
 
@@ -167,7 +167,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     }
 
     private final void setError(String message, Exception e) {
-        LOG.log(Level.SEVERE, getServiceInstanceIdentifier() + ": " + message, e);
+        LOG.log(Level.SEVERE, String.format("%s: %s", getServiceInstanceIdentifier(), message), e);
         this.lastErrorMessage = message;
         this.lastErrorException = e;
     }
@@ -253,7 +253,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                         l.onStateUpdated(this, state);
                     } catch (Exception e) {
                         LOG.log(Level.SEVERE,
-                                getServiceInstanceIdentifier() + ": Service instance cannot notify (state update) listener " + l, e);
+                                String.format("%s: Service instance cannot notify (state update) listener %s", getServiceInstanceIdentifier(), l), e);
                     }
                 }
             });
@@ -267,7 +267,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                     l.onPduSent(this, pdu, name, encodedOperation);
                 } catch (Exception e) {
                     LOG.log(Level.SEVERE,
-                            getServiceInstanceIdentifier() + ": Service instance cannot notify (PDU sent) listener " + l, e);
+                            String.format("%s: Service instance cannot notify (PDU sent) listener %s", getServiceInstanceIdentifier(), l), e);
                 }
             }
         });
@@ -280,7 +280,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                     l.onPduSentError(this, pdu, name, encodedOperation, getErrorMessage(), getErrorException());
                 } catch (Exception e) {
                     LOG.log(Level.SEVERE,
-                            getServiceInstanceIdentifier() + ": Service instance cannot notify (PDU sent error) listener " + l, e);
+                            String.format("%s: Service instance cannot notify (PDU sent error) listener %s", getServiceInstanceIdentifier(), l), e);
                 }
             }
         });
@@ -293,7 +293,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                     l.onPduReceived(this, pdu, name, encodedOperation);
                 } catch (Exception e) {
                     LOG.log(Level.SEVERE,
-                            getServiceInstanceIdentifier() + ": Service instance cannot notify (PDU received) listener " + l, e);
+                            String.format("%s: Service instance cannot notify (PDU received) listener %s", getServiceInstanceIdentifier(), l), e);
                 }
             }
         });
@@ -306,7 +306,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                     l.onPduDecodingError(this, encodedOperation);
                 } catch (Exception e) {
                     LOG.log(Level.SEVERE,
-                            getServiceInstanceIdentifier() + ": Service instance cannot notify (PDU decoding error) listener " + l, e);
+                            String.format("%s: Service instance cannot notify (PDU decoding error) listener %s", getServiceInstanceIdentifier(), l), e);
                 }
             }
         });
@@ -319,7 +319,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                     l.onPduHandlingError(this, pdu, encodedOperation);
                 } catch (Exception e) {
                     LOG.log(Level.SEVERE,
-                            getServiceInstanceIdentifier() + ": Service instance cannot notify (PDU handling error) listener " + l, e);
+                            String.format("%s: Service instance cannot notify (PDU handling error) listener %s", getServiceInstanceIdentifier(), l), e);
                 }
             }
         });
@@ -367,8 +367,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             this.sendPositiveBindReturn = sendPositiveBindReturn;
             this.negativeBindReturnDiagnostics = negativeBindReturnDiagnostics;
             LOG.log(Level.CONFIG,
-                    getServiceInstanceIdentifier() + ": BIND-RETURN behaviour updated: send positive BIND-RETURN="
-                            + sendPositiveBindReturn + ", negative diagnostics=" + negativeBindReturnDiagnostics);
+                    String.format("%s: BIND-RETURN behaviour updated: send positive BIND-RETURN=%s, negative diagnostics=%s", getServiceInstanceIdentifier(), sendPositiveBindReturn, negativeBindReturnDiagnostics));
         });
     }
 
@@ -382,8 +381,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         dispatchFromUser(() -> {
             this.sendPositiveUnbindReturn = sendPositiveUnbindReturn;
             LOG.log(Level.CONFIG,
-                    getServiceInstanceIdentifier() + ": UNBIND-RETURN behaviour updated: send positive BIND-RETURN="
-                            + sendPositiveUnbindReturn);
+                    String.format("%s: UNBIND-RETURN behaviour updated: send positive BIND-RETURN=%s", getServiceInstanceIdentifier(), sendPositiveUnbindReturn));
         });
     }
 
@@ -435,9 +433,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             // Create a new TML channel
             this.tmlChannel = TmlChannel.createServerTmlChannel(port.get().getRemotePort(), this, port.get().getTcpTxBufferSize(), port.get().getTcpRxBufferSize());
         } else {
-            setError("Foreign local port " + getResponderPortIdentifier()
-                    + " not found in the SLE configuration file for service instance "
-                    + getServiceInstanceIdentifier());
+            setError(String.format("Foreign local port %s not found in the SLE configuration file for service instance %s", getResponderPortIdentifier(), getServiceInstanceIdentifier()));
             notifyStateUpdate();
             return;
         }
@@ -452,9 +448,11 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         try {
             setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBOUND_WAIT);
             this.tmlChannel.connect();
-            LOG.log(Level.INFO, getServiceInstanceIdentifier() + ": Waiting for incoming connections");
+            if(LOG.isLoggable(Level.INFO)) {
+                LOG.log(Level.INFO, String.format("%s: Waiting for incoming connections", getServiceInstanceIdentifier()));
+            }
         } catch (TmlChannelException e) {
-            LOG.log(Level.SEVERE, getServiceInstanceIdentifier() + ": error when waiting for connection", e);
+            LOG.log(Level.SEVERE, String.format("%s: error when waiting for connection", getServiceInstanceIdentifier()), e);
             setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBOUND);
             disconnect("Cannot wait for connection", e, null);
         }
@@ -1034,14 +1032,15 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         this.dispatcher.shutdown();
         try {
             this.dispatcher.awaitTermination(5000L, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            LOG.log(Level.WARNING, getServiceInstanceIdentifier() + ": problem while waiting for full disposal", e);
+        } catch (InterruptedException e) { // NOSONAR rule to be disabled
+            Thread.interrupted();
+            LOG.log(Level.WARNING, String.format("%s: problem while waiting for full disposal", getServiceInstanceIdentifier()), e);
         }
     }
 
     private void doDispose() {
         if (LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, getServiceInstanceIdentifier() + ": Dispose requested");
+            LOG.log(Level.FINER, String.format("%s: Dispose requested", getServiceInstanceIdentifier()));
         }
         // Disconnect if UNBOUND/UNBOUND_WAIT, PEER-ABORT if !UNBOUND/UNBOUND_WAIT
         if (getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND ||
@@ -1051,7 +1050,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             doPeerAbort(PeerAbortReasonEnum.OPERATIONAL_REQUIREMENTS);
         }
         if (LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, getServiceInstanceIdentifier() + ": Dispose completed");
+            LOG.log(Level.FINER, String.format("%s: Dispose completed", getServiceInstanceIdentifier()));
         }
     }
 
@@ -1087,7 +1086,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
 
     private void disconnect(String reason, Exception e, PeerAbortReasonEnum peerAbortReason) {
         if (reason != null && LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, getServiceInstanceIdentifier() + ": Disconnection with reason detected: " + reason, e);
+            LOG.log(Level.FINER, String.format("%s: Disconnection with reason detected: %s", getServiceInstanceIdentifier(), reason), e);
         }
         setServiceInstanceState(ServiceInstanceBindingStateEnum.UNBOUND);
         this.expectConnectionToBeClosed = true;
@@ -1126,7 +1125,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             if (channel != tmlChannel) {
                 // Old event, to be ignored
                 if (LOG.isLoggable(Level.FINER)) {
-                    LOG.log(Level.FINER, getServiceInstanceIdentifier() + ": Ignoring disconnection of TML channel " + channel + ", not current channel");
+                    LOG.log(Level.FINER, String.format("%s: Ignoring disconnection of TML channel %s, not current channel", getServiceInstanceIdentifier(), channel));
                 }
                 return;
             }
@@ -1336,7 +1335,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         @Override
         protected void setException(Throwable t) {
             // Exception detected
-            LOG.log(Level.SEVERE, "Exception caught when running SleTask: " + t.getMessage(), t);
+            LOG.log(Level.SEVERE, String.format("Exception caught when running SleTask: %s", t.getMessage()), t);
             super.setException(t);
         }
 

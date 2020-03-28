@@ -14,14 +14,14 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.provider;
+package eu.dariolucia.ccsds.sle.utl.provider;
 
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.incoming.pdus.CltuThrowEventInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.incoming.pdus.CltuTransferDataInvocation;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.cltu.CltuServiceInstanceConfiguration;
-import eu.dariolucia.ccsds.sle.utl.server.CltuServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuProductionStatusEnum;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuStatusEnum;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuUplinkStatusEnum;

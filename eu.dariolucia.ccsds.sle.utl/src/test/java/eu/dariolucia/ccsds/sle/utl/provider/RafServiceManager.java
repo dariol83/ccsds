@@ -14,30 +14,29 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.provider;
+package eu.dariolucia.ccsds.sle.utl.provider;
 
-import eu.dariolucia.ccsds.sle.utl.server.RcfServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
-import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
 
-import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.TimerTask;
 
-public class RcfServiceManager extends ServiceInstanceManager<RcfServiceInstanceProvider> {
+public class RafServiceManager extends ServiceInstanceManager<RafServiceInstanceProvider> {
 
     private TimerTask frameGenerationTask;
     private byte[] frameToSend;
 
-    public RcfServiceManager(ServiceInstanceConfiguration configuration, PeerConfiguration peerConfiguration) {
+    public RafServiceManager(ServiceInstanceConfiguration configuration, PeerConfiguration peerConfiguration) {
         super(configuration, peerConfiguration);
     }
 
     @Override
-    protected RcfServiceInstanceProvider createServiceInstance(ServiceInstanceConfiguration configuration, PeerConfiguration peerConfiguration) {
-        return new RcfServiceInstanceProvider(peerConfiguration, (RcfServiceInstanceConfiguration) configuration);
+    protected RafServiceInstanceProvider createServiceInstance(ServiceInstanceConfiguration configuration, PeerConfiguration peerConfiguration) {
+        return new RafServiceInstanceProvider(peerConfiguration, (RafServiceInstanceConfiguration) configuration);
     }
 
     @Override
@@ -45,16 +44,6 @@ public class RcfServiceManager extends ServiceInstanceManager<RcfServiceInstance
         serviceInstance.setStartOperationHandler((o) -> true);
         serviceInstance.setUnbindReturnBehaviour(true);
         frameToSend = new byte[1115];
-        // Set the SCID: for VCID and TFVN use always 0
-        int scId = ((RcfServiceInstanceConfiguration)serviceInstance.getServiceInstanceConfiguration()).getPermittedGvcid().get(0).getSpacecraftId();
-        int tfvn = 0;
-        int vcid = 0;
-        ByteBuffer bb = ByteBuffer.wrap(frameToSend);
-        short toSet = (short) scId;
-        toSet <<= 4;
-        bb.putShort(toSet);
-        bb.flip();
-        frameToSend = bb.array();
         serviceInstance.updateProductionStatus(Instant.now(), LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, ProductionStatusEnum.RUNNING);
     }
 
@@ -82,7 +71,7 @@ public class RcfServiceManager extends ServiceInstanceManager<RcfServiceInstance
             frameGenerationTask = new TimerTask() {
                 @Override
                 public void run() {
-                    serviceInstance.transferData(frameToSend, 0, Instant.now(), false, "AABBCCDDEE", false, new byte[] { 0, 1, 2, 3 });
+                    serviceInstance.transferData(frameToSend, 0, 0, Instant.now(), false, "AABBCCDDEE", false, new byte[] { 0, 1, 2, 3 });
                 }
             };
             super.timer.schedule(frameGenerationTask, 0, 50); // 20 frames per second

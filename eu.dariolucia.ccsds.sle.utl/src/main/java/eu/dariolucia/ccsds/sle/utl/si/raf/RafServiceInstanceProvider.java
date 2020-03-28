@@ -14,57 +14,62 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.utl.server;
+package eu.dariolucia.ccsds.sle.utl.si.raf;
 
 import com.beanit.jasn1.ber.types.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.*;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.incoming.pdus.RcfGetParameterInvocation;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.incoming.pdus.RcfStartInvocation;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.outgoing.pdus.*;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.*;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafGetParameterInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.incoming.pdus.RafStartInvocation;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.*;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.*;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
-import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
-import eu.dariolucia.ccsds.sle.utl.encdec.RcfProviderEncDec;
+import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
+import eu.dariolucia.ccsds.sle.utl.encdec.RafProviderEncDec;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
-import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfParameterEnum;
-import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfServiceInstanceState;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * One object of this class represents an RCF Service Instance (provider role).
+ * One object of this class represents an RAF Service Instance (provider role).
  */
-public class RcfServiceInstanceProvider extends ServiceInstance {
+public class RafServiceInstanceProvider extends ServiceInstance {
 
-    private static final Logger LOG = Logger.getLogger(RcfServiceInstanceProvider.class.getName());
+    private static final Logger LOG = Logger.getLogger(RafServiceInstanceProvider.class.getName());
+
+    public static final int FRAME_QUALITY_GOOD = 0;
+    public static final int FRAME_QUALITY_ERRED = 1;
+    public static final int FRAME_QUALITY_UNDETERMINED = 2;
 
     // Read from configuration, retrieved via GET_PARAMETER
     private Integer latencyLimit; // NULL if offline, otherwise a value
-    private List<GVCID> permittedGvcids;
+    private List<RafRequestedFrameQualityEnum> permittedFrameQuality;
     private Integer minReportingCycle;
     private int returnTimeoutPeriod;
     private int transferBufferSize;
     private DeliveryModeEnum deliveryMode = null;
 
     // Updated via START and GET_PARAMETER
-    private volatile GVCID requestedGvcid = null;
+    private volatile RafRequestedFrameQualityEnum requestedFrameQuality = null; // NOSONAR immutable object
     private Integer reportingCycle = null; // NULL if off, otherwise a value
-    private volatile Date startTime = null;
-    private volatile Date endTime = null;
+    private volatile Date startTime = null; // NOSONAR no manipulation expected
+    private volatile Date endTime = null; // NOSONAR no manipulation expected
 
     // Requested via STATUS_REPORT, updated externally (therefore they are protected via separate lock)
     private final ReentrantLock statusMutex = new ReentrantLock();
-    private volatile int deliveredFrameNumber = 0;
+    private final AtomicInteger errorFreeFrameNumber = new AtomicInteger();
+    private final AtomicInteger deliveredFrameNumber = new AtomicInteger();
     private LockStatusEnum frameSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
     private LockStatusEnum symbolSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
     private LockStatusEnum subcarrierLockStatus = LockStatusEnum.OUT_OF_LOCK;
@@ -72,41 +77,41 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
     private ProductionStatusEnum productionStatus = ProductionStatusEnum.HALTED;
 
     // Encoder/decoder
-    private final RcfProviderEncDec encDec = new RcfProviderEncDec();
+    private final RafProviderEncDec encDec = new RafProviderEncDec();
 
     // Status report scheduler
-    private volatile Timer reportingScheduler = null;
+    private final AtomicReference<Timer> reportingScheduler = new AtomicReference<>();
 
     // Transfer buffer under construction
     private final ReentrantLock bufferMutex = new ReentrantLock();
     private final Condition bufferChangedCondition = bufferMutex.newCondition();
-    private RcfTransferBuffer bufferUnderConstruction = null;
+    private RafTransferBuffer bufferUnderConstruction = null;
     private boolean bufferUnderTransmission = false;
     private boolean bufferActive = false;
 
     // Latency timer
     private final Timer latencyTimer = new Timer();
-    private volatile TimerTask pendingLatencyTimeout = null;
+    private final AtomicReference<TimerTask> pendingLatencyTimeout = new AtomicReference<>();
 
     // Operation extension handlers: they are called to drive the positive/negative response (where supported)
-    private volatile Function<RcfStartInvocation, Boolean> startOperationHandler;
+    private final AtomicReference<Predicate<RafStartInvocation>> startOperationHandler = new AtomicReference<>();
 
-    public RcfServiceInstanceProvider(PeerConfiguration apiConfiguration,
-                                      RcfServiceInstanceConfiguration serviceInstanceConfiguration) {
+    public RafServiceInstanceProvider(PeerConfiguration apiConfiguration,
+                                      RafServiceInstanceConfiguration serviceInstanceConfiguration) {
         super(apiConfiguration, serviceInstanceConfiguration);
     }
 
     @Override
     protected void setup() {
         // Register handlers
-        registerPduReceptionHandler(RcfStartInvocation.class, this::handleRcfStartInvocation);
-        registerPduReceptionHandler(SleStopInvocation.class, this::handleRcfStopInvocation);
-        registerPduReceptionHandler(SleScheduleStatusReportInvocation.class, this::handleRcfScheduleStatusReportInvocation);
-        registerPduReceptionHandler(RcfGetParameterInvocation.class, this::handleRcfGetParameterInvocation);
+        registerPduReceptionHandler(RafStartInvocation.class, this::handleRafStartInvocation);
+        registerPduReceptionHandler(SleStopInvocation.class, this::handleRafStopInvocation);
+        registerPduReceptionHandler(SleScheduleStatusReportInvocation.class, this::handleRafScheduleStatusReportInvocation);
+        registerPduReceptionHandler(RafGetParameterInvocation.class, this::handleRafGetParameterInvocation);
     }
 
-    public void setStartOperationHandler(Function<RcfStartInvocation, Boolean> handler) {
-        this.startOperationHandler = handler;
+    public void setStartOperationHandler(Predicate<RafStartInvocation> handler) {
+        this.startOperationHandler.set(handler);
     }
 
     public void updateProductionStatus(Instant time, LockStatusEnum carrier, LockStatusEnum subCarrier, LockStatusEnum symbol, LockStatusEnum frame, ProductionStatusEnum productionStatus) {
@@ -129,17 +134,14 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         currentBufferActive = this.bufferActive;
         this.bufferMutex.unlock();
 
-        if (previousFrameLockStatus == LockStatusEnum.IN_LOCK && frame != LockStatusEnum.IN_LOCK) {
-            // We lost the frame lock, we need to send a notification
-            if (currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
-                sendLossFrameNotification(time, carrier, subCarrier, symbol);
-            }
+        // We lost the frame lock, we need to send a notification
+        if (previousFrameLockStatus == LockStatusEnum.IN_LOCK && frame != LockStatusEnum.IN_LOCK &&
+                currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
+            sendLossFrameNotification(time, carrier, subCarrier, symbol);
         }
-        if (previousProductionStatus != productionStatus) {
-            // We changed production status, we need to send a notification
-            if (currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
-                sendProductionStatusChangeNotification(productionStatus);
-            }
+        // We changed production status, we need to send a notification
+        if (previousProductionStatus != productionStatus && currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
+            sendProductionStatusChangeNotification(productionStatus);
         }
     }
 
@@ -180,7 +182,6 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-
     public boolean dataDiscarded() {
         this.bufferMutex.lock();
         try {
@@ -217,7 +218,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    public boolean transferData(byte[] spaceDataUnit, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
+    public boolean transferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) { // NOSONAR: creation of an additional object is avoided for performance reasons
         this.bufferMutex.lock();
         try {
             // If the state is not correct, say bye
@@ -226,9 +227,14 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
             }
             // Here we check immediately if the buffer is full: if so, we send it
             checkBuffer(false);
-            // If GVCID is not matching, say bye
-            if (!match(this.requestedGvcid, spaceDataUnit)) {
-                return false;
+            // If quality is not matching, say bye
+            if (this.requestedFrameQuality != RafRequestedFrameQualityEnum.ALL_FRAMES) {
+                if (this.requestedFrameQuality == RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY && quality != FRAME_QUALITY_GOOD) {
+                    return false;
+                }
+                if (this.requestedFrameQuality == RafRequestedFrameQualityEnum.BAD_FRAMES_ONLY && quality != FRAME_QUALITY_ERRED) {
+                    return false;
+                }
             }
             // If ERT is not matching, say bye
             if (this.startTime != null && earthReceiveTime.getEpochSecond() < this.startTime.getTime() / 1000) {
@@ -238,33 +244,12 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
                 return false;
             }
             // Add the PDU to the buffer, there must be free space by algorithm implementation
-            addTransferData(spaceDataUnit, linkContinuity, earthReceiveTime, isPico, antennaId, globalAntennaId, privateAnnotations);
+            addTransferData(spaceDataUnit, quality, linkContinuity, earthReceiveTime, isPico, antennaId, globalAntennaId, privateAnnotations);
             checkBuffer(false);
             return true;
         } finally {
             this.bufferMutex.unlock();
         }
-    }
-
-    private boolean match(GVCID requestedGvcid, byte[] spaceDataUnit) {
-        ByteBuffer bb = ByteBuffer.wrap(spaceDataUnit);
-        short header = bb.getShort();
-        // Extract TFVN, VCID and SCID from the frame
-        int tfvn = ((header & 0xC000) & 0xFFFF) >>> 14;
-        int scid = -1;
-        int vcid = -1;
-        if(tfvn == 0) {
-            // TM
-            scid = ((header & 0x3FF0) & 0xFFFF) >>> 4;
-            vcid = ((header & 0x000E) & 0xFFFF) >>> 1;
-        } else {
-            // AOS
-            scid = ((header & 0x3FC0) & 0xFFFF) >>> 6;
-            vcid = ((header & 0x003F) & 0xFFFF);
-        }
-        return requestedGvcid.getTransferFrameVersionNumber() == tfvn &&
-                requestedGvcid.getSpacecraftId() == scid &&
-                (requestedGvcid.getVirtualChannelId() == null || requestedGvcid.getVirtualChannelId() == vcid);
     }
 
     // Under sync on this.bufferMutex
@@ -280,8 +265,8 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
             // Stop the latency timer
             stopLatencyTimer();
             // Try to send the buffer: replace the buffer with a new one
-            RcfTransferBuffer bufferToSend = this.bufferUnderConstruction;
-            this.bufferUnderConstruction = new RcfTransferBuffer();
+            RafTransferBuffer bufferToSend = this.bufferUnderConstruction;
+            this.bufferUnderConstruction = new RafTransferBuffer();
             boolean discarded = trySendBuffer(bufferToSend);
             // If discarded, add a sync notification about it
             if (discarded) {
@@ -305,16 +290,16 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
 
         stopLatencyTimer();
 
-        this.pendingLatencyTimeout = new TimerTask() {
+        this.pendingLatencyTimeout.set(new TimerTask() {
             @Override
             public void run() {
-                if (pendingLatencyTimeout == this) {
+                if (pendingLatencyTimeout.get() == this) {
                     // Elapsed, send the buffer if needed
                     latencyElapsed();
                 }
             }
-        };
-        this.latencyTimer.schedule(this.pendingLatencyTimeout, this.latencyLimit * 1000L);
+        });
+        this.latencyTimer.schedule(this.pendingLatencyTimeout.get(), this.latencyLimit * 1000L);
     }
 
     private void latencyElapsed() {
@@ -328,16 +313,16 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
     }
 
     private void stopLatencyTimer() {
-        if (this.pendingLatencyTimeout != null) {
-            this.pendingLatencyTimeout.cancel();
-            this.pendingLatencyTimeout = null;
+        if (this.pendingLatencyTimeout.get() != null) {
+            this.pendingLatencyTimeout.get().cancel();
+            this.pendingLatencyTimeout.set(null);
         }
     }
 
     // Under sync on this.bufferMutex
-    private boolean trySendBuffer(RcfTransferBuffer bufferToSend) {
+    private boolean trySendBuffer(RafTransferBuffer bufferToSend) {
         // Here we check the delivery mode
-        if (getRcfConfiguration().getDeliveryMode() == DeliveryModeEnum.TIMELY_ONLINE) {
+        if (getRafConfiguration().getDeliveryMode() == DeliveryModeEnum.TIMELY_ONLINE) {
             // Timely mode: if there is a buffer in transmission, you have to discard the buffer
             if (this.bufferUnderTransmission) {
                 return true;
@@ -347,7 +332,8 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
             while (this.bufferActive && this.bufferUnderTransmission) {
                 try {
                     this.bufferChangedCondition.await();
-                } catch (InterruptedException e) {
+                } catch (InterruptedException e) { // NOSONAR: sorry to say, but this rule is pointless, to be disabled in the profile
+                    Thread.interrupted();
                     // Buffer discarded
                     return true;
                 }
@@ -357,7 +343,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
             // Set transmission flag
             this.bufferUnderTransmission = true;
             // Send the buffer
-            dispatchFromProvider(() -> doHandleRcfTransferBufferInvocation(bufferToSend));
+            dispatchFromProvider(() -> doHandleRafTransferBufferInvocation(bufferToSend));
             // Not discarded
             return false;
         } else {
@@ -365,7 +351,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    private void doHandleRcfTransferBufferInvocation(RcfTransferBuffer bufferToSend) {
+    private void doHandleRafTransferBufferInvocation(RafTransferBuffer bufferToSend) {
         clearError();
 
         // Validate state
@@ -396,9 +382,9 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
-        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
+        RafSyncNotifyInvocation in = new RafSyncNotifyInvocation();
         in.setNotification(new Notification());
-        in.getNotification().setProductionStatusChange(new RcfProductionStatus(productionStatus.ordinal()));
+        in.getNotification().setProductionStatusChange(new RafProductionStatus(productionStatus.ordinal()));
         finalizeAndAddNotification(in);
     }
 
@@ -407,7 +393,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
-        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
+        RafSyncNotifyInvocation in = new RafSyncNotifyInvocation();
         in.setNotification(new Notification());
         in.getNotification().setExcessiveDataBacklog(new BerNull());
         finalizeAndAddNotification(in);
@@ -418,7 +404,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
-        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
+        RafSyncNotifyInvocation in = new RafSyncNotifyInvocation();
         in.setNotification(new Notification());
         in.getNotification().setLossFrameSync(new LockStatusReport());
         in.getNotification().getLossFrameSync().setCarrierLockStatus(new CarrierLockStatus(carrierLockStatus.ordinal()));
@@ -434,13 +420,13 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
-        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
+        RafSyncNotifyInvocation in = new RafSyncNotifyInvocation();
         in.setNotification(new Notification());
         in.getNotification().setEndOfData(new BerNull());
         finalizeAndAddNotification(in);
     }
 
-    private void finalizeAndAddNotification(RcfSyncNotifyInvocation in) {
+    private void finalizeAndAddNotification(RafSyncNotifyInvocation in) {
         // Add credentials
         // From the API configuration (remote peers) and SI configuration (responder
         // id), check remote peer and check if authentication must be used.
@@ -453,11 +439,11 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
     }
 
     // Under sync on this.bufferMutex
-    private void addTransferData(byte[] spaceDataUnit, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
+    private void addTransferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) { // NOSONAR: direct derivation from the rule on transferData() method.
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
-        RcfTransferDataInvocation td = new RcfTransferDataInvocation();
+        RafTransferDataInvocation td = new RafTransferDataInvocation();
         // Antenna ID
         td.setAntennaId(new AntennaId());
         if (globalAntennaId) {
@@ -475,7 +461,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
             td.getEarthReceiveTime().setCcsdsFormat(new TimeCCSDS(PduFactoryUtil.buildCDSTime(earthReceiveTime.toEpochMilli(), (earthReceiveTime.getNano() % 1000000) / 1000)));
         }
         // Private annotations
-        td.setPrivateAnnotation(new RcfTransferDataInvocation.PrivateAnnotation());
+        td.setPrivateAnnotation(new RafTransferDataInvocation.PrivateAnnotation());
         if (privateAnnotations == null || privateAnnotations.length == 0) {
             td.getPrivateAnnotation().setNull(new BerNull());
         } else {
@@ -483,6 +469,8 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         }
         // Data link continuity
         td.setDataLinkContinuity(new BerInteger(linkContinuity));
+        // Quality
+        td.setDeliveredFrameQuality(new FrameQuality(quality));
 
         // Add credentials
         // From the API configuration (remote peers) and SI configuration (responder
@@ -493,15 +481,19 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         FrameOrNotification fon = new FrameOrNotification();
         fon.setAnnotatedFrame(td);
         this.bufferUnderConstruction.getFrameOrNotification().add(fon);
-        // Assume delivered
-        ++this.deliveredFrameNumber;
+
+        // Assumed delivered
+        this.deliveredFrameNumber.incrementAndGet();
+        if(quality == FRAME_QUALITY_GOOD) {
+            this.errorFreeFrameNumber.incrementAndGet();
+        }
     }
 
-    private void handleRcfStartInvocation(RcfStartInvocation invocation) {
-        dispatchFromProvider(() -> doHandleRcfStartInvocation(invocation));
+    private void handleRafStartInvocation(RafStartInvocation invocation) {
+        dispatchFromProvider(() -> doHandleRafStartInvocation(invocation));
     }
 
-    private void doHandleRcfStartInvocation(RcfStartInvocation invocation) {
+    private void doHandleRafStartInvocation(RafStartInvocation invocation) {
         clearError();
 
         // Validate state
@@ -526,30 +518,31 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
             return;
         }
 
-        // Validate the requested GVCID
-        GVCID rfq = new GVCID(invocation.getRequestedGvcId().getSpacecraftId().intValue(),
-                invocation.getRequestedGvcId().getVersionNumber().intValue(),
-                invocation.getRequestedGvcId().getVcId().getMasterChannel() != null ? null : invocation.getRequestedGvcId().getVcId().getVirtualChannel().intValue());
+        // Validate the requested frame quality
+        RequestedFrameQuality rfq = invocation.getRequestedFrameQuality();
         boolean permittedOk = false;
-        if (permittedGvcids.contains(rfq)) {
-            permittedOk = true;
+        for (RafRequestedFrameQualityEnum permitted : this.permittedFrameQuality) {
+            if (permitted.getCode() == rfq.intValue()) {
+                permittedOk = true;
+                break;
+            }
         }
 
         if (permittedOk) {
             // Ask the external handler if any
-            Function<RcfStartInvocation, Boolean> handler = this.startOperationHandler;
+            Predicate<RafStartInvocation> handler = this.startOperationHandler.get();
             if (handler != null) {
-                permittedOk = handler.apply(invocation);
+                permittedOk = handler.test(invocation);
             }
         }
 
-        RcfStartReturn pdu = new RcfStartReturn();
+        RafStartReturn pdu = new RafStartReturn();
         pdu.setInvokeId(invocation.getInvokeId());
-        pdu.setResult(new RcfStartReturn.Result());
+        pdu.setResult(new RafStartReturn.Result());
         if (permittedOk) {
             pdu.getResult().setPositiveResult(new BerNull());
         } else {
-            pdu.getResult().setNegativeResult(new DiagnosticRcfStart());
+            pdu.getResult().setNegativeResult(new DiagnosticRafStart());
             pdu.getResult().getNegativeResult().setSpecific(new BerInteger(1)); // Unable to comply
         }
         // Add credentials
@@ -569,8 +562,8 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
 
         if (resultOk) {
             if (permittedOk) {
-                // Set the requested GVCID
-                this.requestedGvcid = rfq;
+                // Set the requested frame quality
+                this.requestedFrameQuality = RafRequestedFrameQualityEnum.fromCode(invocation.getRequestedFrameQuality().intValue());
                 // Set times
                 this.startTime = PduFactoryUtil.toDate(invocation.getStartTime());
                 this.endTime = PduFactoryUtil.toDate(invocation.getStopTime());
@@ -579,7 +572,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
                 try {
                     this.bufferActive = true;
                     this.bufferUnderTransmission = false;
-                    this.bufferUnderConstruction = new RcfTransferBuffer();
+                    this.bufferUnderConstruction = new RafTransferBuffer();
                     this.bufferChangedCondition.signalAll();
                 } finally {
                     this.bufferMutex.unlock();
@@ -588,6 +581,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
                 startLatencyTimer();
                 // Transition to new state: ACTIVE and notify PDU sent
                 setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
+
             }
             // Notify PDU
             notifyPduSent(pdu, SleOperationNames.START_RETURN_NAME, getLastPduSent());
@@ -596,11 +590,11 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    private void handleRcfStopInvocation(SleStopInvocation invocation) {
-        dispatchFromProvider(() -> doHandleRcfStopInvocation(invocation));
+    private void handleRafStopInvocation(SleStopInvocation invocation) {
+        dispatchFromProvider(() -> doHandleRafStopInvocation(invocation));
     }
 
-    private void doHandleRcfStopInvocation(SleStopInvocation invocation) {
+    private void doHandleRafStopInvocation(SleStopInvocation invocation) {
         clearError();
 
         // Validate state
@@ -672,8 +666,8 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
 
                 // If all fine, transition to new state: READY and notify PDU sent
                 setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
-                // Set the requested GVCID
-                this.requestedGvcid = null;
+                // Set the requested frame quality
+                this.requestedFrameQuality = null;
                 // Set times
                 this.startTime = null;
                 this.endTime = null;
@@ -685,11 +679,11 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         });
     }
 
-    private void handleRcfScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
-        dispatchFromProvider(() -> doHandleRcfScheduleStatusReportInvocation(invocation));
+    private void handleRafScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
+        dispatchFromProvider(() -> doHandleRafScheduleStatusReportInvocation(invocation));
     }
 
-    private void doHandleRcfScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
+    private void doHandleRafScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
         clearError();
 
         // Validate state
@@ -722,7 +716,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
             sendStatusReport(true);
             pdu.getResult().setPositiveResult(new BerNull());
         } else if (invocation.getReportRequestType().getStop() != null) {
-            if (this.reportingScheduler != null) {
+            if (this.reportingScheduler.get() != null) {
                 stopStatusReport();
                 pdu.getResult().setPositiveResult(new BerNull());
             } else {
@@ -764,29 +758,35 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
     }
 
     private void startStatusReport(int period) {
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.info(String.format("%s: Scheduling status report with period %d", getServiceInstanceIdentifier(), period));
+        }
         this.reportingCycle = period;
-        this.reportingScheduler = new Timer();
-        this.reportingScheduler.schedule(new TimerTask() {
+        this.reportingScheduler.set(new Timer());
+        this.reportingScheduler.get().schedule(new TimerTask() {
             @Override
             public void run() {
-                if (reportingScheduler != null) {
+                if (reportingScheduler.get() != null) {
                     dispatchFromProvider(() -> sendStatusReport(false));
                 }
             }
-        }, 0, period * 1000);
+        }, 0, period * 1000L);
     }
 
     private void stopStatusReport() {
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
+        }
         this.reportingCycle = null;
-        this.reportingScheduler.cancel();
-        this.reportingScheduler = null;
+        this.reportingScheduler.get().cancel();
+        this.reportingScheduler.set(null);
     }
 
-    private void handleRcfGetParameterInvocation(RcfGetParameterInvocation invocation) {
-        dispatchFromProvider(() -> doHandleRcfGetParameterInvocation(invocation));
+    private void handleRafGetParameterInvocation(RafGetParameterInvocation invocation) {
+        dispatchFromProvider(() -> doHandleRafGetParameterInvocation(invocation));
     }
 
-    private void doHandleRcfGetParameterInvocation(RcfGetParameterInvocation invocation) {
+    private void doHandleRafGetParameterInvocation(RafGetParameterInvocation invocation) {
         clearError();
 
         // Validate state
@@ -813,7 +813,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
 
         BerType toSend;
         if (getSleVersion() <= 4) {
-            RcfGetParameterReturnV1toV4 pdu = new RcfGetParameterReturnV1toV4();
+            RafGetParameterReturnV1toV4 pdu = new RafGetParameterReturnV1toV4();
             pdu.setInvokeId(invocation.getInvokeId());
 
             // Add credentials
@@ -829,76 +829,50 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
                 pdu.setPerformerCredentials(creds);
             }
             // Prepare for positive response
-            pdu.setResult(new RcfGetParameterReturnV1toV4.Result());
-            pdu.getResult().setPositiveResult(new RcfGetParameterV1toV4());
-            if (invocation.getRcfParameter().intValue() == RcfParameterEnum.BUFFER_SIZE.getCode()) {
-                pdu.getResult().getPositiveResult().setParBufferSize(new RcfGetParameterV1toV4.ParBufferSize());
-                pdu.getResult().getPositiveResult().getParBufferSize().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+            pdu.setResult(new RafGetParameterReturnV1toV4.Result());
+            pdu.getResult().setPositiveResult(new RafGetParameterV1toV4());
+            if (invocation.getRafParameter().intValue() == RafParameterEnum.BUFFER_SIZE.getCode()) {
+                pdu.getResult().getPositiveResult().setParBufferSize(new RafGetParameterV1toV4.ParBufferSize());
+                pdu.getResult().getPositiveResult().getParBufferSize().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParBufferSize().setParameterValue(new IntPosShort(this.transferBufferSize));
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.DELIVERY_MODE.getCode()) {
-                pdu.getResult().getPositiveResult().setParDeliveryMode(new RcfGetParameterV1toV4.ParDeliveryMode());
-                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterValue(new RcfDeliveryMode(this.deliveryMode.ordinal()));
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.LATENCY_LIMIT.getCode()) {
-                pdu.getResult().getPositiveResult().setParLatencyLimit(new RcfGetParameterV1toV4.ParLatencyLimit());
-                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterValue(new RcfGetParameterV1toV4.ParLatencyLimit.ParameterValue());
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.DELIVERY_MODE.getCode()) {
+                pdu.getResult().getPositiveResult().setParDeliveryMode(new RafGetParameterV1toV4.ParDeliveryMode());
+                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
+                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterValue(new RafDeliveryMode(this.deliveryMode.ordinal()));
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.LATENCY_LIMIT.getCode()) {
+                pdu.getResult().getPositiveResult().setParLatencyLimit(new RafGetParameterV1toV4.ParLatencyLimit());
+                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
+                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterValue(new RafGetParameterV1toV4.ParLatencyLimit.ParameterValue());
                 pdu.getResult().getPositiveResult().getParLatencyLimit().getParameterValue().setOnline(new IntPosShort(this.latencyLimit));
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.REPORTING_CYCLE.getCode()) {
-                pdu.getResult().getPositiveResult().setParReportingCycle(new RcfGetParameterV1toV4.ParReportingCycle());
-                pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.REPORTING_CYCLE.getCode()) {
+                pdu.getResult().getPositiveResult().setParReportingCycle(new RafGetParameterV1toV4.ParReportingCycle());
+                pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
-                if (this.reportingScheduler != null && this.reportingCycle != null) {
+                if (this.reportingScheduler.get() != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
                 }
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.REQUESTED_GVCID.getCode()) {
-                pdu.getResult().getPositiveResult().setParReqGvcId(new RcfGetParameterV1toV4.ParReqGvcId());
-                pdu.getResult().getPositiveResult().getParReqGvcId().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParReqGvcId().setParameterValue(new RequestedGvcId());
-                if (this.requestedGvcid != null) {
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setGvcid(new GvcId());
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().setSpacecraftId(new BerInteger(this.requestedGvcid.getSpacecraftId()));
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().setVersionNumber(new BerInteger(this.requestedGvcid.getTransferFrameVersionNumber()));
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().setVcId(new GvcId.VcId());
-                    if(this.requestedGvcid.getVirtualChannelId() == null) {
-                        pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().getVcId().setMasterChannel(new BerNull());
-                    } else {
-                        pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().getVcId().setVirtualChannel(new VcId(this.requestedGvcid.getVirtualChannelId()));
-                    }
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.REQUESTED_FRAME_QUALITY.getCode()) {
+                pdu.getResult().getPositiveResult().setParReqFrameQuality(new RafGetParameterV1toV4.ParReqFrameQuality());
+                pdu.getResult().getPositiveResult().getParReqFrameQuality().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
+                if (this.requestedFrameQuality != null) {
+                    pdu.getResult().getPositiveResult().getParReqFrameQuality().setParameterValue(new BerInteger(this.requestedFrameQuality.getCode()));
                 } else {
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setUndefined(new BerNull());
+                    pdu.getResult().getPositiveResult().getParReqFrameQuality().setParameterValue(new BerInteger(0)); // as per standard
                 }
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.RETURN_TIMEOUT_PERIOD.getCode()) {
-                pdu.getResult().getPositiveResult().setParReturnTimeout(new RcfGetParameterV1toV4.ParReturnTimeout());
-                pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.RETURN_TIMEOUT_PERIOD.getCode()) {
+                pdu.getResult().getPositiveResult().setParReturnTimeout(new RafGetParameterV1toV4.ParReturnTimeout());
+                pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterValue(new TimeoutPeriod(this.returnTimeoutPeriod));
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.PERMITTED_GVCID_SET.getCode()) {
-                pdu.getResult().getPositiveResult().setParPermittedGvcidSet(new RcfGetParameterV1toV4.ParPermittedGvcidSet());
-                pdu.getResult().getPositiveResult().getParPermittedGvcidSet().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParPermittedGvcidSet().setParameterValue(new GvcIdSetV1toV4());
-                for (GVCID permitted : this.permittedGvcids) {
-                    MasterChannelCompositionV1toV4 entry = new MasterChannelCompositionV1toV4();
-                    entry.setSpacecraftId(new BerInteger(permitted.getSpacecraftId()));
-                    entry.setVersionNumber(new BerInteger(permitted.getTransferFrameVersionNumber()));
-                    entry.setMcOrVcList(new MasterChannelCompositionV1toV4.McOrVcList());
-                    if(permitted.getVirtualChannelId() == null) {
-                        entry.getMcOrVcList().setMasterChannel(new BerNull());
-                    } else {
-                        entry.getMcOrVcList().setVcList(new MasterChannelCompositionV1toV4.McOrVcList.VcList());
-                        entry.getMcOrVcList().getVcList().getVcId().add(new VcId(permitted.getVirtualChannelId()));
-                    }
-                    pdu.getResult().getPositiveResult().getParPermittedGvcidSet().getParameterValue().getMasterChannelCompositionV1toV4().add(entry);
-                }
             } else {
                 pdu.getResult().setPositiveResult(null);
-                pdu.getResult().setNegativeResult(new DiagnosticRcfGet());
+                pdu.getResult().setNegativeResult(new DiagnosticRafGet());
                 pdu.getResult().getNegativeResult().setSpecific(new BerInteger(0)); // unknownParameter
             }
             toSend = pdu;
         } else {
-            RcfGetParameterReturn pdu = new RcfGetParameterReturn();
+            RafGetParameterReturn pdu = new RafGetParameterReturn();
             pdu.setInvokeId(invocation.getInvokeId());
 
             // Add credentials
@@ -914,75 +888,60 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
                 pdu.setPerformerCredentials(creds);
             }
             // Prepare for positive response
-            pdu.setResult(new RcfGetParameterReturn.Result());
-            pdu.getResult().setPositiveResult(new RcfGetParameter());
-            if (invocation.getRcfParameter().intValue() == RcfParameterEnum.BUFFER_SIZE.getCode()) {
-                pdu.getResult().getPositiveResult().setParBufferSize(new RcfGetParameter.ParBufferSize());
-                pdu.getResult().getPositiveResult().getParBufferSize().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+            pdu.setResult(new RafGetParameterReturn.Result());
+            pdu.getResult().setPositiveResult(new RafGetParameter());
+            if (invocation.getRafParameter().intValue() == RafParameterEnum.BUFFER_SIZE.getCode()) {
+                pdu.getResult().getPositiveResult().setParBufferSize(new RafGetParameter.ParBufferSize());
+                pdu.getResult().getPositiveResult().getParBufferSize().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParBufferSize().setParameterValue(new IntPosShort(this.transferBufferSize));
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.DELIVERY_MODE.getCode()) {
-                pdu.getResult().getPositiveResult().setParDeliveryMode(new RcfGetParameter.ParDeliveryMode());
-                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterValue(new RcfDeliveryMode(this.deliveryMode.ordinal()));
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.LATENCY_LIMIT.getCode()) {
-                pdu.getResult().getPositiveResult().setParLatencyLimit(new RcfGetParameter.ParLatencyLimit());
-                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterValue(new RcfGetParameter.ParLatencyLimit.ParameterValue());
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.DELIVERY_MODE.getCode()) {
+                pdu.getResult().getPositiveResult().setParDeliveryMode(new RafGetParameter.ParDeliveryMode());
+                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
+                pdu.getResult().getPositiveResult().getParDeliveryMode().setParameterValue(new RafDeliveryMode(this.deliveryMode.ordinal()));
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.LATENCY_LIMIT.getCode()) {
+                pdu.getResult().getPositiveResult().setParLatencyLimit(new RafGetParameter.ParLatencyLimit());
+                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
+                pdu.getResult().getPositiveResult().getParLatencyLimit().setParameterValue(new RafGetParameter.ParLatencyLimit.ParameterValue());
                 pdu.getResult().getPositiveResult().getParLatencyLimit().getParameterValue().setOnline(new IntPosShort(this.latencyLimit));
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.REPORTING_CYCLE.getCode()) {
-                pdu.getResult().getPositiveResult().setParReportingCycle(new RcfGetParameter.ParReportingCycle());
-                pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.REPORTING_CYCLE.getCode()) {
+                pdu.getResult().getPositiveResult().setParReportingCycle(new RafGetParameter.ParReportingCycle());
+                pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
-                if (this.reportingScheduler != null && this.reportingCycle != null) {
+                if (this.reportingScheduler.get() != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
                 }
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.REQUESTED_GVCID.getCode()) {
-                pdu.getResult().getPositiveResult().setParReqGvcId(new RcfGetParameter.ParReqGvcId());
-                pdu.getResult().getPositiveResult().getParReqGvcId().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParReqGvcId().setParameterValue(new RequestedGvcId());
-                if (this.requestedGvcid != null) {
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setGvcid(new GvcId());
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().setSpacecraftId(new BerInteger(this.requestedGvcid.getSpacecraftId()));
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().setVersionNumber(new BerInteger(this.requestedGvcid.getTransferFrameVersionNumber()));
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().setVcId(new GvcId.VcId());
-                    if(this.requestedGvcid.getVirtualChannelId() == null) {
-                        pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().getVcId().setMasterChannel(new BerNull());
-                    } else {
-                        pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid().getVcId().setVirtualChannel(new VcId(this.requestedGvcid.getVirtualChannelId()));
-                    }
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.REQUESTED_FRAME_QUALITY.getCode()) {
+                pdu.getResult().getPositiveResult().setParReqFrameQuality(new RafGetParameter.ParReqFrameQuality());
+                pdu.getResult().getPositiveResult().getParReqFrameQuality().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
+                if (this.requestedFrameQuality != null) {
+                    pdu.getResult().getPositiveResult().getParReqFrameQuality().setParameterValue(new BerInteger(this.requestedFrameQuality.getCode()));
                 } else {
-                    pdu.getResult().getPositiveResult().getParReqGvcId().getParameterValue().setUndefined(new BerNull());
+                    pdu.getResult().getPositiveResult().getParReqFrameQuality().setParameterValue(new BerInteger(0)); // as per standard
                 }
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.RETURN_TIMEOUT_PERIOD.getCode()) {
-                pdu.getResult().getPositiveResult().setParReturnTimeout(new RcfGetParameter.ParReturnTimeout());
-                pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.RETURN_TIMEOUT_PERIOD.getCode()) {
+                pdu.getResult().getPositiveResult().setParReturnTimeout(new RafGetParameter.ParReturnTimeout());
+                pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReturnTimeout().setParameterValue(new TimeoutPeriod(this.returnTimeoutPeriod));
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.MIN_REPORTING_CYCLE.getCode()) {
-                pdu.getResult().getPositiveResult().setParMinReportingCycle(new RcfGetParameter.ParMinReportingCycle());
-                pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterValue(new IntPosShort(this.minReportingCycle != null ? this.minReportingCycle : 0));
-            } else if (invocation.getRcfParameter().intValue() == RcfParameterEnum.PERMITTED_GVCID_SET.getCode()) {
-                pdu.getResult().getPositiveResult().setParPermittedGvcidSet(new RcfGetParameter.ParPermittedGvcidSet());
-                pdu.getResult().getPositiveResult().getParPermittedGvcidSet().setParameterName(new ParameterName(invocation.getRcfParameter().intValue()));
-                pdu.getResult().getPositiveResult().getParPermittedGvcidSet().setParameterValue(new GvcIdSet());
-                for (GVCID permitted : this.permittedGvcids) {
-                    MasterChannelComposition entry = new MasterChannelComposition();
-                    entry.setSpacecraftId(new BerInteger(permitted.getSpacecraftId()));
-                    entry.setVersionNumber(new BerInteger(permitted.getTransferFrameVersionNumber()));
-                    entry.setMcOrVcList(new MasterChannelComposition.McOrVcList());
-                    if(permitted.getVirtualChannelId() == null) {
-                        entry.getMcOrVcList().setMasterChannel(new BerNull());
-                    } else {
-                        entry.getMcOrVcList().setVcList(new MasterChannelComposition.McOrVcList.VcList());
-                        entry.getMcOrVcList().getVcList().getVcId().add(new VcId(permitted.getVirtualChannelId()));
-                    }
-                    pdu.getResult().getPositiveResult().getParPermittedGvcidSet().getParameterValue().getMasterChannelComposition().add(entry);
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.MIN_REPORTING_CYCLE.getCode()) {
+                pdu.getResult().getPositiveResult().setParMinReportingCycle(new RafGetParameter.ParMinReportingCycle());
+                pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
+                if (this.minReportingCycle != null) {
+                    pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterValue(new IntPosShort(this.minReportingCycle));
+                } else {
+                    pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterValue(new IntPosShort(0));
+                }
+            } else if (invocation.getRafParameter().intValue() == RafParameterEnum.PERMITTED_FRAME_QUALITY.getCode()) {
+                pdu.getResult().getPositiveResult().setParPermittedFrameQuality(new RafGetParameter.ParPermittedFrameQuality());
+                pdu.getResult().getPositiveResult().getParPermittedFrameQuality().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
+                pdu.getResult().getPositiveResult().getParPermittedFrameQuality().setParameterValue(new PermittedFrameQualitySet());
+                for (RafRequestedFrameQualityEnum permitted : this.permittedFrameQuality) {
+                    pdu.getResult().getPositiveResult().getParPermittedFrameQuality().getParameterValue().getRequestedFrameQuality().add(new RequestedFrameQuality(permitted.getCode()));
                 }
             } else {
                 pdu.getResult().setPositiveResult(null);
-                pdu.getResult().setNegativeResult(new DiagnosticRcfGet());
+                pdu.getResult().setNegativeResult(new DiagnosticRafGet());
                 pdu.getResult().getNegativeResult().setSpecific(new BerInteger(0)); // unknownParameter
             }
             toSend = pdu;
@@ -999,11 +958,11 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
     }
 
     private void sendStatusReport(boolean immediate) {
-        if (!immediate && this.reportingScheduler == null) {
+        if (!immediate && this.reportingScheduler.get() == null) {
             return;
         }
-        if (getSleVersion() == 1) {
-            RcfStatusReportInvocationV1 pdu = new RcfStatusReportInvocationV1();
+        if (getSleVersion() <= 2) {
+            RafStatusReportInvocationV1toV2 pdu = new RafStatusReportInvocationV1toV2();
             // Add credentials
             Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
             if (creds == null) {
@@ -1019,8 +978,9 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
             try {
                 pdu.setCarrierLockStatus(new LockStatus(this.carrierLockStatus.ordinal()));
                 pdu.setFrameSyncLockStatus(new LockStatus(this.frameSyncLockStatus.ordinal()));
-                pdu.setDeliveredFrameNumber(new IntUnsignedLong(this.deliveredFrameNumber));
-                pdu.setProductionStatus(new RcfProductionStatus(this.productionStatus.ordinal()));
+                pdu.setDeliveredFrameNumber(new IntUnsignedLong(this.deliveredFrameNumber.get()));
+                pdu.setErrorFreeFrameNumber(new IntUnsignedLong(this.errorFreeFrameNumber.get()));
+                pdu.setProductionStatus(new RafProductionStatus(this.productionStatus.ordinal()));
                 pdu.setSubcarrierLockStatus(new LockStatus(this.subcarrierLockStatus.ordinal()));
                 pdu.setSymbolSyncLockStatus(new LockStatus(this.symbolSyncLockStatus.ordinal()));
             } finally {
@@ -1035,7 +995,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
                 notifyStateUpdate();
             }
         } else {
-            RcfStatusReportInvocation pdu = new RcfStatusReportInvocation();
+            RafStatusReportInvocation pdu = new RafStatusReportInvocation();
             // Add credentials
             Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
             if (creds == null) {
@@ -1051,8 +1011,9 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
             try {
                 pdu.setCarrierLockStatus(new CarrierLockStatus(this.carrierLockStatus.ordinal()));
                 pdu.setFrameSyncLockStatus(new FrameSyncLockStatus(this.frameSyncLockStatus.ordinal()));
-                pdu.setDeliveredFrameNumber(new IntUnsignedLong(this.deliveredFrameNumber));
-                pdu.setProductionStatus(new RcfProductionStatus(this.productionStatus.ordinal()));
+                pdu.setDeliveredFrameNumber(new IntUnsignedLong(this.deliveredFrameNumber.get()));
+                pdu.setErrorFreeFrameNumber(new IntUnsignedLong(this.errorFreeFrameNumber.get()));
+                pdu.setProductionStatus(new RafProductionStatus(this.productionStatus.ordinal()));
                 pdu.setSubcarrierLockStatus(new LockStatus(this.subcarrierLockStatus.ordinal()));
                 pdu.setSymbolSyncLockStatus(new SymbolLockStatus(this.symbolSyncLockStatus.ordinal()));
             } finally {
@@ -1071,7 +1032,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
 
     @Override
     protected ServiceInstanceState buildCurrentState() {
-        RcfServiceInstanceState state = new RcfServiceInstanceState();
+        RafServiceInstanceState state = new RafServiceInstanceState();
         copyCommonState(state);
         this.statusMutex.lock();
         try {
@@ -1086,10 +1047,11 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         state.setDeliveryMode(deliveryMode);
         state.setLatencyLimit(latencyLimit);
         state.setMinReportingCycle(minReportingCycle);
-        state.setNumFramesDelivered(deliveredFrameNumber);
-        state.setPermittedGvcid(new ArrayList<>(permittedGvcids));
+        state.setDeliveredFrameNumber(deliveredFrameNumber.get());
+        state.setErrorFreeFrameNumber(errorFreeFrameNumber.get());
+        state.setPermittedFrameQuality(new ArrayList<>(permittedFrameQuality));
         state.setReportingCycle(reportingCycle);
-        state.setRequestedGvcid(requestedGvcid);
+        state.setRequestedFrameQuality(requestedFrameQuality);
         state.setTransferBufferSize(transferBufferSize);
         state.setReturnTimeoutPeriod(returnTimeoutPeriod);
         state.setStartTime(startTime);
@@ -1109,7 +1071,7 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
 
     @Override
     public ApplicationIdentifierEnum getApplicationIdentifier() {
-        return ApplicationIdentifierEnum.RCF;
+        return ApplicationIdentifierEnum.RAF;
     }
 
     @Override
@@ -1131,21 +1093,22 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
             this.bufferMutex.unlock();
         }
         // Read from configuration, updated via GET_PARAMETER
-        this.latencyLimit = getRcfConfiguration().getLatencyLimit();
-        this.permittedGvcids = getRcfConfiguration().getPermittedGvcid();
-        this.minReportingCycle = getRcfConfiguration().getMinReportingCycle();
-        this.returnTimeoutPeriod = getRcfConfiguration().getReturnTimeoutPeriod();
-        this.transferBufferSize = getRcfConfiguration().getTransferBufferSize();
-        this.deliveryMode = getRcfConfiguration().getDeliveryMode();
+        this.latencyLimit = getRafConfiguration().getLatencyLimit();
+        this.permittedFrameQuality = getRafConfiguration().getPermittedFrameQuality();
+        this.minReportingCycle = getRafConfiguration().getMinReportingCycle();
+        this.returnTimeoutPeriod = getRafConfiguration().getReturnTimeoutPeriod();
+        this.transferBufferSize = getRafConfiguration().getTransferBufferSize();
+        this.deliveryMode = getRafConfiguration().getDeliveryMode();
 
         // Updated via START and GET_PARAMETER
-        this.requestedGvcid = null;
+        this.requestedFrameQuality = null;
         this.startTime = null;
         this.endTime = null;
         this.reportingCycle = null; // NULL if off, otherwise a value
 
         // Updated via STATUS_REPORT
-        this.deliveredFrameNumber = 0;
+        this.errorFreeFrameNumber.set(0);
+        this.deliveredFrameNumber.set(0);
         this.statusMutex.lock();
         try {
             this.frameSyncLockStatus = LockStatusEnum.UNKNOWN;
@@ -1158,8 +1121,8 @@ public class RcfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    private RcfServiceInstanceConfiguration getRcfConfiguration() {
-        return (RcfServiceInstanceConfiguration) this.serviceInstanceConfiguration;
+    private RafServiceInstanceConfiguration getRafConfiguration() {
+        return (RafServiceInstanceConfiguration) this.serviceInstanceConfiguration;
     }
 
     @Override

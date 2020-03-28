@@ -34,7 +34,6 @@ open module eu.dariolucia.ccsds.sle.utl {
     exports eu.dariolucia.ccsds.sle.utl.encdec;
     exports eu.dariolucia.ccsds.sle.utl.network.tml;
     exports eu.dariolucia.ccsds.sle.utl.pdu;
-    exports eu.dariolucia.ccsds.sle.utl.server;
     exports eu.dariolucia.ccsds.sle.utl.si;
     exports eu.dariolucia.ccsds.sle.utl.si.cltu;
     exports eu.dariolucia.ccsds.sle.utl.si.raf;

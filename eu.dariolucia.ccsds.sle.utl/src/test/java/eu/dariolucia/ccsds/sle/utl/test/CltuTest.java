@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.test;
+package eu.dariolucia.ccsds.sle.utl.test;
 
 import com.beanit.jasn1.ber.types.BerInteger;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types.SleBindReturn;
@@ -27,7 +27,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleAcknowledgement;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.SleScheduleStatusReportReturn;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.Diagnostics;
-import eu.dariolucia.ccsds.sle.utl.server.CltuServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.cltu.CltuServiceInstanceConfiguration;
@@ -785,16 +785,36 @@ public class CltuTest {
     }
 
     @Test
-    void testTransferDataThrowEventNoAuth() throws IOException, InterruptedException {
-        performTransferDataThrowEvent("configuration_test_user.xml","configuration_test_provider.xml");
+    void testTransferDataThrowEventNoAuthV2() throws IOException, InterruptedException {
+        performTransferDataThrowEvent("configuration_test_user.xml","configuration_test_provider.xml", 2);
     }
 
     @Test
-    void testTransferDataWithAuthorization() throws IOException, InterruptedException {
-        performTransferDataThrowEvent("configuration_test_user_auth.xml","configuration_test_provider_auth.xml");
+    void testTransferDataWithAuthorizationV2() throws IOException, InterruptedException {
+        performTransferDataThrowEvent("configuration_test_user_auth.xml","configuration_test_provider_auth.xml", 2);
     }
 
-    private void performTransferDataThrowEvent(String userConf, String providerConf) throws IOException, InterruptedException {
+    @Test
+    void testTransferDataThrowEventNoAuthV4() throws IOException, InterruptedException {
+        performTransferDataThrowEvent("configuration_test_user.xml","configuration_test_provider.xml", 4);
+    }
+
+    @Test
+    void testTransferDataWithAuthorizationV4() throws IOException, InterruptedException {
+        performTransferDataThrowEvent("configuration_test_user_auth.xml","configuration_test_provider_auth.xml", 4);
+    }
+
+    @Test
+    void testTransferDataThrowEventNoAuthV5() throws IOException, InterruptedException {
+        performTransferDataThrowEvent("configuration_test_user.xml","configuration_test_provider.xml", 5);
+    }
+
+    @Test
+    void testTransferDataWithAuthorizationV5() throws IOException, InterruptedException {
+        performTransferDataThrowEvent("configuration_test_user_auth.xml","configuration_test_provider_auth.xml", 5);
+    }
+
+    private void performTransferDataThrowEvent(String userConf, String providerConf, int bind) throws IOException, InterruptedException {
         // Provider
         InputStream in = this.getClass().getClassLoader().getResourceAsStream(providerConf);
         UtlConfigurationFile providerFile = UtlConfigurationFile.load(in);
@@ -813,7 +833,7 @@ public class CltuTest {
         OperationRecorder recorder = new OperationRecorder();
         cltuUser.register(recorder);
 
-        cltuUser.bind(2);
+        cltuUser.bind(bind);
 
         // Check reported state
         AwaitUtil.await(2000);

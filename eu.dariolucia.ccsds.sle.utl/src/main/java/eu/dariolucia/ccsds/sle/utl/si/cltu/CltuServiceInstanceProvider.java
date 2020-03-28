@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.utl.server;
+package eu.dariolucia.ccsds.sle.utl.si.cltu;
 
 import com.beanit.jasn1.ber.types.BerInteger;
 import com.beanit.jasn1.ber.types.BerNull;
@@ -33,10 +33,6 @@ import eu.dariolucia.ccsds.sle.utl.config.cltu.CltuServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.encdec.CltuProviderEncDec;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuLastOk;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuLastProcessed;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuNotification;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.*;
 
 import java.io.IOException;
 import java.util.*;
@@ -102,13 +98,13 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
 
     // Operation extension handlers: they are called to drive the positive/negative response (where supported).
     // If it is not set, it means that there are no additional checks to be done.
-    private final AtomicReference<Predicate<CltuStartInvocation>> startOperationHandler = new AtomicReference<>();
+    private volatile Predicate<CltuStartInvocation> startOperationHandler; // NOSONAR function pointer
     // Return the remaining buffer if the CLTU is added to the buffer for processing, or a negative number if the CLTU must be discarded and was not added to the buffer.
     // The absolute value of the negative number is the specific diagnostic code to be sent back to the user, so make sure it is in line with the CCSDS specs.
-    private final AtomicReference<Function<CltuTransferDataInvocation, Long>> transferDataOperationHandler = new AtomicReference<>();
+    private volatile Function<CltuTransferDataInvocation, Long> transferDataOperationHandler; // NOSONAR function pointer
     // Return null if the event invocation has been taken onboard, or a positive number if the throw event must be discarded and it will not be processed.
     // The value of the returned number is the specific diagnostic code to be sent back to the user, so make sure it is in line with the CCSDS specs.
-    private final AtomicReference<Function<CltuThrowEventInvocation, Long>> throwEventOperationHandler = new AtomicReference<>();
+    private volatile Function<CltuThrowEventInvocation, Long> throwEventOperationHandler; // NOSONAR function pointer
 
     public CltuServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                        CltuServiceInstanceConfiguration serviceInstanceConfiguration) {
@@ -127,15 +123,15 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     }
 
     public void setStartOperationHandler(Predicate<CltuStartInvocation> handler) {
-        this.startOperationHandler.set(handler);
+        this.startOperationHandler = handler;
     }
 
     public void setTransferDataOperationHandler(Function<CltuTransferDataInvocation, Long> transferDataOperationHandler) {
-        this.transferDataOperationHandler.set(transferDataOperationHandler);
+        this.transferDataOperationHandler = transferDataOperationHandler;
     }
 
     public void setThrowEventOperationHandler(Function<CltuThrowEventInvocation, Long> throwEventOperationHandler) {
-        this.throwEventOperationHandler.set(throwEventOperationHandler);
+        this.throwEventOperationHandler = throwEventOperationHandler;
     }
 
     public void updateProductionStatus(CltuProductionStatusEnum productionStatus, CltuUplinkStatusEnum uplinkStatus, long bufferAvailable) {
@@ -364,7 +360,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         Long newBufferAvailable = null;
         if (permittedOk) {
             // Ask the external handler if any
-            Function<CltuTransferDataInvocation, Long> handler = this.transferDataOperationHandler.get(); // NOSONAR: null is a plausible value
+            Function<CltuTransferDataInvocation, Long> handler = this.transferDataOperationHandler; // NOSONAR: null is a plausible value
             if (handler != null) {
                 newBufferAvailable = handler.apply(invocation);
                 permittedOk = newBufferAvailable != null && newBufferAvailable > 0;
@@ -457,7 +453,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         Long returnCode = null;
         if (permittedOk) {
             // Ask the external handler if any
-            Function<CltuThrowEventInvocation, Long> handler = this.throwEventOperationHandler.get(); // NOSONAR: null is a plausible value
+            Function<CltuThrowEventInvocation, Long> handler = this.throwEventOperationHandler; // NOSONAR: null is a plausible value
             if (handler != null) {
                 returnCode = handler.apply(invocation);
                 permittedOk = returnCode == null;
@@ -541,7 +537,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
 
         if (permittedOk) {
             // Ask the external handler if any
-            Predicate<CltuStartInvocation> handler = this.startOperationHandler.get();
+            Predicate<CltuStartInvocation> handler = this.startOperationHandler;
             if (handler != null) {
                 permittedOk = handler.test(invocation);
             }

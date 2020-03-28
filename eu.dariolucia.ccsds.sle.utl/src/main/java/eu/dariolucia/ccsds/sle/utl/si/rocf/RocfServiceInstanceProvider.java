@@ -14,7 +14,7 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.sle.utl.server;
+package eu.dariolucia.ccsds.sle.utl.si.rocf;
 
 import com.beanit.jasn1.ber.types.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.*;
@@ -29,18 +29,17 @@ import eu.dariolucia.ccsds.sle.utl.encdec.RocfProviderEncDec;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
-import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfControlWordTypeEnum;
-import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfParameterEnum;
-import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfServiceInstanceState;
-import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfUpdateModeEnum;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -62,18 +61,18 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     private DeliveryModeEnum deliveryMode = null;
 
     // Updated via START and GET_PARAMETER
-    private volatile GVCID requestedGvcid = null;
+    private volatile GVCID requestedGvcid = null; // NOSONAR not expected to be changed
     private volatile Integer requestedTcVcid = null;
-    private volatile RocfControlWordTypeEnum requestedControlWordType = null;
-    private volatile RocfUpdateModeEnum requestedUpdateMode = null;
+    private volatile RocfControlWordTypeEnum requestedControlWordType = null; // NOSONAR enumeration is immutable
+    private volatile RocfUpdateModeEnum requestedUpdateMode = null; // NOSONAR enumeration is immutable
     private Integer reportingCycle = null; // NULL if off, otherwise a value
-    private volatile Date startTime = null;
-    private volatile Date endTime = null;
+    private volatile Date startTime = null; // NOSONAR not expected to be changed
+    private volatile Date endTime = null; // NOSONAR no change expected
 
     // Requested via STATUS_REPORT, updated externally (therefore they are protected via separate lock)
     private final ReentrantLock statusMutex = new ReentrantLock();
-    private volatile int processedFrameNumber = 0;
-    private volatile int deliveredOcfsNumber = 0;
+    private final AtomicInteger processedFrameNumber = new AtomicInteger();
+    private final AtomicInteger deliveredOcfsNumber = new AtomicInteger();
     private LockStatusEnum frameSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
     private LockStatusEnum symbolSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
     private LockStatusEnum subcarrierLockStatus = LockStatusEnum.OUT_OF_LOCK;
@@ -84,7 +83,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     private final RocfProviderEncDec encDec = new RocfProviderEncDec();
 
     // Status report scheduler
-    private volatile Timer reportingScheduler = null;
+    private final AtomicReference<Timer> reportingScheduler = new AtomicReference<>();
 
     // Transfer buffer under construction
     private final ReentrantLock bufferMutex = new ReentrantLock();
@@ -95,13 +94,13 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
 
     // Latency timer
     private final Timer latencyTimer = new Timer();
-    private volatile TimerTask pendingLatencyTimeout = null;
+    private final AtomicReference<TimerTask> pendingLatencyTimeout = new AtomicReference<>();
 
     // Last recorded OCF per TC VC ID
     private final Map<Integer, Integer> tcVcId2lastClcw = new HashMap<>();
 
     // Operation extension handlers: they are called to drive the positive/negative response (where supported)
-    private volatile Function<RocfStartInvocation, Boolean> startOperationHandler;
+    private volatile Predicate<RocfStartInvocation> startOperationHandler; // NOSONAR function pointer
 
     public RocfServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                        RocfServiceInstanceConfiguration serviceInstanceConfiguration) {
@@ -117,7 +116,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         registerPduReceptionHandler(RocfGetParameterInvocation.class, this::handleRocfGetParameterInvocation);
     }
 
-    public void setStartOperationHandler(Function<RocfStartInvocation, Boolean> handler) {
+    public void setStartOperationHandler(Predicate<RocfStartInvocation> handler) {
         this.startOperationHandler = handler;
     }
 
@@ -141,17 +140,15 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         currentBufferActive = this.bufferActive;
         this.bufferMutex.unlock();
 
-        if (previousFrameLockStatus == LockStatusEnum.IN_LOCK && frame != LockStatusEnum.IN_LOCK) {
-            // We lost the frame lock, we need to send a notification
-            if (currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
-                sendLossFrameNotification(time, carrier, subCarrier, symbol);
-            }
+        // We lost the frame lock, we need to send a notification
+        if (previousFrameLockStatus == LockStatusEnum.IN_LOCK && frame != LockStatusEnum.IN_LOCK &&
+                currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
+            sendLossFrameNotification(time, carrier, subCarrier, symbol);
         }
-        if (previousProductionStatus != productionStatus) {
-            // We changed production status, we need to send a notification
-            if (currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
-                sendProductionStatusChangeNotification(productionStatus);
-            }
+        // We changed production status, we need to send a notification
+        if (previousProductionStatus != productionStatus &&
+                currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
+            sendProductionStatusChangeNotification(productionStatus);
         }
     }
 
@@ -249,7 +246,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                 return false;
             }
             // So we are processing the frame
-            ++this.processedFrameNumber;
+            this.processedFrameNumber.incrementAndGet();
             // Extract and check the OCF (selected TC VC ID, on-change/continuous, report type)
             int ocfAsInt = ByteBuffer.wrap(spaceDataUnit, spaceDataUnit.length - 4, 4).getInt();
             boolean isClcw = (ocfAsInt & 0x80000000) == 0;
@@ -345,16 +342,16 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
 
         stopLatencyTimer();
 
-        this.pendingLatencyTimeout = new TimerTask() {
+        this.pendingLatencyTimeout.set(new TimerTask() {
             @Override
             public void run() {
-                if (pendingLatencyTimeout == this) {
+                if (pendingLatencyTimeout.get() == this) {
                     // Elapsed, send the buffer if needed
                     latencyElapsed();
                 }
             }
-        };
-        this.latencyTimer.schedule(this.pendingLatencyTimeout, this.latencyLimit * 1000L);
+        });
+        this.latencyTimer.schedule(this.pendingLatencyTimeout.get(), this.latencyLimit * 1000L);
     }
 
     private void latencyElapsed() {
@@ -368,9 +365,9 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     }
 
     private void stopLatencyTimer() {
-        if (this.pendingLatencyTimeout != null) {
-            this.pendingLatencyTimeout.cancel();
-            this.pendingLatencyTimeout = null;
+        if (this.pendingLatencyTimeout.get() != null) {
+            this.pendingLatencyTimeout.get().cancel();
+            this.pendingLatencyTimeout.set(null);
         }
     }
 
@@ -387,7 +384,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
             while (this.bufferActive && this.bufferUnderTransmission) {
                 try {
                     this.bufferChangedCondition.await();
-                } catch (InterruptedException e) {
+                } catch (InterruptedException e) { // NOSONAR: sorry to say, but this rule is pointless, to be disabled in the profile
+                    Thread.interrupted();
                     // Buffer discarded
                     return true;
                 }
@@ -534,7 +532,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         fon.setAnnotatedOcf(td);
         this.bufferUnderConstruction.getOcfOrNotification().add(fon);
         // Assumed delivered
-        ++this.deliveredOcfsNumber;
+        this.deliveredOcfsNumber.incrementAndGet();
     }
 
     private void handleRocfStartInvocation(RocfStartInvocation invocation) {
@@ -606,9 +604,9 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
 
         if (permittedOk) {
             // Ask the external handler if any
-            Function<RocfStartInvocation, Boolean> handler = this.startOperationHandler;
+            Predicate<RocfStartInvocation> handler = this.startOperationHandler;
             if (handler != null) {
-                permittedOk = handler.apply(invocation);
+                permittedOk = handler.test(invocation);
             }
         }
 
@@ -800,7 +798,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
             sendStatusReport(true);
             pdu.getResult().setPositiveResult(new BerNull());
         } else if (invocation.getReportRequestType().getStop() != null) {
-            if (this.reportingScheduler != null) {
+            if (this.reportingScheduler.get() != null) {
                 stopStatusReport();
                 pdu.getResult().setPositiveResult(new BerNull());
             } else {
@@ -841,24 +839,32 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
+
     private void startStatusReport(int period) {
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.info(String.format("%s: Scheduling status report with period %d", getServiceInstanceIdentifier(), period));
+        }
         this.reportingCycle = period;
-        this.reportingScheduler = new Timer();
-        this.reportingScheduler.schedule(new TimerTask() {
+        this.reportingScheduler.set(new Timer());
+        this.reportingScheduler.get().schedule(new TimerTask() {
             @Override
             public void run() {
-                if (reportingScheduler != null) {
+                if (reportingScheduler.get() != null) {
                     dispatchFromProvider(() -> sendStatusReport(false));
                 }
             }
-        }, 0, period * 1000);
+        }, 0, period * 1000L);
     }
 
     private void stopStatusReport() {
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
+        }
         this.reportingCycle = null;
-        this.reportingScheduler.cancel();
-        this.reportingScheduler = null;
+        this.reportingScheduler.get().cancel();
+        this.reportingScheduler.set(null);
     }
+
 
     private void handleRocfGetParameterInvocation(RocfGetParameterInvocation invocation) {
         dispatchFromProvider(() -> doHandleRocfGetParameterInvocation(invocation));
@@ -926,7 +932,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                 pdu.getResult().getPositiveResult().setParReportingCycle(new RocfGetParameterV1toV4.ParReportingCycle());
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
-                if (this.reportingScheduler != null && this.reportingCycle != null) {
+                if (this.reportingScheduler.get() != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
@@ -1059,7 +1065,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                 pdu.getResult().getPositiveResult().setParReportingCycle(new RocfGetParameter.ParReportingCycle());
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterName(new ParameterName(invocation.getRocfParameter().intValue()));
                 pdu.getResult().getPositiveResult().getParReportingCycle().setParameterValue(new CurrentReportingCycle());
-                if (this.reportingScheduler != null && this.reportingCycle != null) {
+                if (this.reportingScheduler.get() != null && this.reportingCycle != null) {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOn(new ReportingCycle(this.reportingCycle));
                 } else {
                     pdu.getResult().getPositiveResult().getParReportingCycle().getParameterValue().setPeriodicReportingOff(new BerNull());
@@ -1174,7 +1180,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     }
 
     private void sendStatusReport(boolean immediate) {
-        if (!immediate && this.reportingScheduler == null) {
+        if (!immediate && this.reportingScheduler.get() == null) {
             return;
         }
 
@@ -1194,8 +1200,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         try {
             pdu.setCarrierLockStatus(new CarrierLockStatus(this.carrierLockStatus.ordinal()));
             pdu.setFrameSyncLockStatus(new FrameSyncLockStatus(this.frameSyncLockStatus.ordinal()));
-            pdu.setDeliveredOcfsNumber(new IntUnsignedLong(this.deliveredOcfsNumber));
-            pdu.setProcessedFrameNumber(new IntUnsignedLong(this.processedFrameNumber));
+            pdu.setDeliveredOcfsNumber(new IntUnsignedLong(this.deliveredOcfsNumber.get()));
+            pdu.setProcessedFrameNumber(new IntUnsignedLong(this.processedFrameNumber.get()));
             pdu.setProductionStatus(new RocfProductionStatus(this.productionStatus.ordinal()));
             pdu.setSubcarrierLockStatus(new LockStatus(this.subcarrierLockStatus.ordinal()));
             pdu.setSymbolSyncLockStatus(new SymbolLockStatus(this.symbolSyncLockStatus.ordinal()));
@@ -1229,8 +1235,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         state.setDeliveryMode(deliveryMode);
         state.setLatencyLimit(latencyLimit);
         state.setMinReportingCycle(minReportingCycle);
-        state.setDeliveredOcfsNumber(deliveredOcfsNumber);
-        state.setProcessedFrameNumber(processedFrameNumber);
+        state.setDeliveredOcfsNumber(deliveredOcfsNumber.get());
+        state.setProcessedFrameNumber(processedFrameNumber.get());
         state.setPermittedGvcid(new ArrayList<>(permittedGvcids));
         state.setPermittedControlWordTypes(new ArrayList<>(permittedControlWordTypes));
         state.setPermittedTcVcid(new ArrayList<>(permittedTcVcid));
@@ -1302,8 +1308,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         this.reportingCycle = null; // NULL if off, otherwise a value
 
         // Updated via STATUS_REPORT
-        this.processedFrameNumber = 0;
-        this.deliveredOcfsNumber = 0;
+        this.processedFrameNumber.set(0);
+        this.deliveredOcfsNumber.set(0);
         this.statusMutex.lock();
         try {
             this.frameSyncLockStatus = LockStatusEnum.UNKNOWN;
