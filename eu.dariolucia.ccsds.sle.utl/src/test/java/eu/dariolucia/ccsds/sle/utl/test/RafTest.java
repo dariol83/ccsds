@@ -744,8 +744,15 @@ public class RafTest {
         rafProvider.updateProductionStatus(Instant.now(), LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, ProductionStatusEnum.INTERRUPTED);
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
-        assertEquals(LockStatusEnum.OUT_OF_LOCK.ordinal(), ((RafSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getLossFrameSync().getSymbolSyncLockStatus().intValue());
-        assertEquals(ProductionStatusEnum.INTERRUPTED.ordinal(), ((RafSyncNotifyInvocation) recorder.getPduReceived().get(1)).getNotification().getProductionStatusChange().intValue());
+
+        for(Object o : recorder.getPduReceived()) {
+            RafSyncNotifyInvocation op = (RafSyncNotifyInvocation) o;
+            if(op.getNotification().getLossFrameSync() != null) {
+                assertEquals(LockStatusEnum.OUT_OF_LOCK.ordinal(), op.getNotification().getLossFrameSync().getSymbolSyncLockStatus().intValue());
+            } else if(op.getNotification().getProductionStatusChange() != null) {
+                assertEquals(ProductionStatusEnum.INTERRUPTED.ordinal(), op.getNotification().getProductionStatusChange().intValue());
+            }
+        }
 
         // Simulate halt production status
         recorder.getPduReceived().clear();
