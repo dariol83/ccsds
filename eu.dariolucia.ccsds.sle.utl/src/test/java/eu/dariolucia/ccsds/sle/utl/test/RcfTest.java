@@ -612,8 +612,11 @@ public class RcfTest {
         rafUser.getParameter(RcfParameterEnum.REQUESTED_GVCID);
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
-        assertNotNull(((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid());
-
+        if(version <= 4) {
+            assertNotNull(((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid());
+        } else {
+            assertNotNull(((RcfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid());
+        }
         // Send 100 transfer data, fast
         byte[] frame = new byte[]{0x06, (byte) 0x42, 0x00, 0x00}; // TFVN 0, SCID 100, VCID 1
         byte[] badFrame = new byte[]{0x06, (byte) 0x92, 0x00, 0x00}; // TFVN 0, SCID wrong, VCID 1

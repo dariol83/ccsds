@@ -143,7 +143,7 @@ public class TcPusHeader {
      * @param offset the offset, the writing will start from
      * @param sourceIdLength the encoded length in bits of the source ID (used only if the source ID is present)
      * @param spare the number of spare bits to be added at the end of the encoding process (0 if unused)
-     * return number of encoded bytes
+     * @return number of encoded bytes
      */
     public int encodeTo(byte[] output, int offset, int sourceIdLength, int spare) {
         BitEncoderDecoder encoder = new BitEncoderDecoder(output, offset, output.length - offset);
