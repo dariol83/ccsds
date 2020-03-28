@@ -17,7 +17,7 @@
 package eu.dariolucia.ccsds.sle.utl.si.rocf;
 
 import com.beanit.jasn1.ber.types.*;
-import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.*;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus.ReportingCycle;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types.*;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.incoming.pdus.RocfGetParameterInvocation;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.incoming.pdus.RocfStartInvocation;
@@ -30,71 +30,32 @@ import eu.dariolucia.ccsds.sle.utl.pdu.PduFactoryUtil;
 import eu.dariolucia.ccsds.sle.utl.pdu.PduStringUtil;
 import eu.dariolucia.ccsds.sle.utl.si.*;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * One object of this class represents an ROCF Service Instance (provider role).
  */
-public class RocfServiceInstanceProvider extends ServiceInstance {
-
-    private static final Logger LOG = Logger.getLogger(RocfServiceInstanceProvider.class.getName());
+public class RocfServiceInstanceProvider extends ReturnServiceInstanceProvider<RocfProviderEncDec, RocfTransferBuffer, RocfServiceInstanceConfiguration> {
 
     // Read from configuration, retrieved via GET_PARAMETER
-    private Integer latencyLimit; // NULL if offline, otherwise a value
     private List<GVCID> permittedGvcids;
     private List<Integer> permittedTcVcid;
     private List<RocfControlWordTypeEnum> permittedControlWordTypes;
     private List<RocfUpdateModeEnum> permittedUpdateModes;
-    private Integer minReportingCycle;
-    private int returnTimeoutPeriod;
-    private int transferBufferSize;
-    private DeliveryModeEnum deliveryMode = null;
 
     // Updated via START and GET_PARAMETER
     private volatile GVCID requestedGvcid = null; // NOSONAR not expected to be changed
     private volatile Integer requestedTcVcid = null;
     private volatile RocfControlWordTypeEnum requestedControlWordType = null; // NOSONAR enumeration is immutable
     private volatile RocfUpdateModeEnum requestedUpdateMode = null; // NOSONAR enumeration is immutable
-    private Integer reportingCycle = null; // NULL if off, otherwise a value
-    private volatile Date startTime = null; // NOSONAR not expected to be changed
-    private volatile Date endTime = null; // NOSONAR no change expected
 
     // Requested via STATUS_REPORT, updated externally (therefore they are protected via separate lock)
-    private final ReentrantLock statusMutex = new ReentrantLock();
     private final AtomicInteger processedFrameNumber = new AtomicInteger();
     private final AtomicInteger deliveredOcfsNumber = new AtomicInteger();
-    private LockStatusEnum frameSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
-    private LockStatusEnum symbolSyncLockStatus = LockStatusEnum.OUT_OF_LOCK;
-    private LockStatusEnum subcarrierLockStatus = LockStatusEnum.OUT_OF_LOCK;
-    private LockStatusEnum carrierLockStatus = LockStatusEnum.OUT_OF_LOCK;
-    private ProductionStatusEnum productionStatus = ProductionStatusEnum.HALTED;
-
-    // Encoder/decoder
-    private final RocfProviderEncDec encDec = new RocfProviderEncDec();
-
-    // Status report scheduler
-    private final AtomicReference<Timer> reportingScheduler = new AtomicReference<>();
-
-    // Transfer buffer under construction
-    private final ReentrantLock bufferMutex = new ReentrantLock();
-    private final Condition bufferChangedCondition = bufferMutex.newCondition();
-    private RocfTransferBuffer bufferUnderConstruction = null;
-    private boolean bufferUnderTransmission = false;
-    private boolean bufferActive = false;
-
-    // Latency timer
-    private final Timer latencyTimer = new Timer();
-    private final AtomicReference<TimerTask> pendingLatencyTimeout = new AtomicReference<>();
 
     // Last recorded OCF per TC VC ID
     private final Map<Integer, Integer> tcVcId2lastClcw = new HashMap<>();
@@ -104,15 +65,13 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
 
     public RocfServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                        RocfServiceInstanceConfiguration serviceInstanceConfiguration) {
-        super(apiConfiguration, serviceInstanceConfiguration);
+        super(apiConfiguration, serviceInstanceConfiguration, new RocfProviderEncDec());
     }
 
     @Override
-    protected void setup() {
+    protected void doCustomSetup() {
         // Register handlers
         registerPduReceptionHandler(RocfStartInvocation.class, this::handleRocfStartInvocation);
-        registerPduReceptionHandler(SleStopInvocation.class, this::handleRocfStopInvocation);
-        registerPduReceptionHandler(SleScheduleStatusReportInvocation.class, this::handleRocfScheduleStatusReportInvocation);
         registerPduReceptionHandler(RocfGetParameterInvocation.class, this::handleRocfGetParameterInvocation);
     }
 
@@ -120,167 +79,55 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         this.startOperationHandler = handler;
     }
 
-    public void updateProductionStatus(Instant time, LockStatusEnum carrier, LockStatusEnum subCarrier, LockStatusEnum symbol, LockStatusEnum frame, ProductionStatusEnum productionStatus) {
-        ProductionStatusEnum previousProductionStatus;
-        LockStatusEnum previousFrameLockStatus;
-        this.statusMutex.lock();
-        try {
-            previousProductionStatus = this.productionStatus;
-            previousFrameLockStatus = this.frameSyncLockStatus;
-            this.carrierLockStatus = carrier;
-            this.subcarrierLockStatus = subCarrier;
-            this.symbolSyncLockStatus = symbol;
-            this.frameSyncLockStatus = frame;
-            this.productionStatus = productionStatus;
-        } finally {
-            this.statusMutex.unlock();
+    @Override
+    protected boolean checkAndAddTransferData(byte[] spaceDataUnit, int quality, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
+        // If quality is not GOOD, bye
+        if(quality != FRAME_QUALITY_GOOD) {
+            return false;
         }
-        boolean currentBufferActive;
-        this.bufferMutex.lock();
-        currentBufferActive = this.bufferActive;
-        this.bufferMutex.unlock();
-
-        // We lost the frame lock, we need to send a notification
-        if (previousFrameLockStatus == LockStatusEnum.IN_LOCK && frame != LockStatusEnum.IN_LOCK &&
-                currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
-            sendLossFrameNotification(time, carrier, subCarrier, symbol);
+        // If ERT is not matching, say bye
+        if (this.startTime != null && earthReceiveTime.getEpochSecond() < this.startTime.getTime() / 1000) {
+            return false;
         }
-        // We changed production status, we need to send a notification
-        if (previousProductionStatus != productionStatus &&
-                currentBufferActive && this.deliveryMode != DeliveryModeEnum.OFFLINE) {
-            sendProductionStatusChangeNotification(productionStatus);
+        if (this.endTime != null && earthReceiveTime.getEpochSecond() > this.endTime.getTime() / 1000) {
+            return false;
         }
-    }
-
-    private boolean sendProductionStatusChangeNotification(ProductionStatusEnum productionStatus) {
-        this.bufferMutex.lock();
-        try {
-            // If the state is not correct, say bye
-            if (!this.bufferActive) {
-                return false;
-            }
-            // Here we check immediately if the buffer is full: if so, we send it
-            checkBuffer(false);
-            // Add the PDU to the buffer, there must be free space by algorithm implementation
-            addProductionStatusChangeNotification(productionStatus);
-            checkBuffer(true); // We send it immediately
-            return true;
-        } finally {
-            this.bufferChangedCondition.signalAll();
-            this.bufferMutex.unlock();
+        // If GVCID is not matching, say bye
+        if (!match(this.requestedGvcid, spaceDataUnit)) {
+            return false;
         }
-    }
-
-    private boolean sendLossFrameNotification(Instant time, LockStatusEnum carrierLockStatus, LockStatusEnum subcarrierLockStatus, LockStatusEnum symbolSyncLockStatus) {
-        this.bufferMutex.lock();
-        try {
-            // If the state is not correct, say bye
-            if (!this.bufferActive) {
-                return false;
-            }
-            // Here we check immediately if the buffer is full: if so, we send it
-            checkBuffer(false);
-            // Add the PDU to the buffer, there must be free space by algorithm implementation
-            addLossFrameSyncNotification(time, carrierLockStatus, subcarrierLockStatus, symbolSyncLockStatus);
-            checkBuffer(true); // We send it immediately
-            return true;
-        } finally {
-            this.bufferMutex.unlock();
+        // So we are processing the frame
+        this.processedFrameNumber.incrementAndGet();
+        // Extract and check the OCF (selected TC VC ID, on-change/continuous, report type)
+        int ocfAsInt = ByteBuffer.wrap(spaceDataUnit, spaceDataUnit.length - 4, 4).getInt();
+        boolean isClcw = (ocfAsInt & 0x80000000) == 0;
+        // CLCW and requesting no CLCW -> skip
+        if(this.requestedControlWordType == RocfControlWordTypeEnum.NO_CLCW && isClcw) {
+            return false;
         }
-    }
-
-    public boolean dataDiscarded() {
-        this.bufferMutex.lock();
-        try {
-            // If the state is not correct, say bye
-            if (!this.bufferActive) {
-                return false;
-            }
-            // Here we check immediately if the buffer is full: if so, we send it
-            checkBuffer(false);
-            // Add the PDU to the buffer, there must be free space by algorithm implementation
-            addDataDiscardedNotification();
-            checkBuffer(false); // No need to send it immediately
-            return true;
-        } finally {
-            this.bufferMutex.unlock();
+        // Not a CLCW and requesting CLCW only -> skip
+        if(this.requestedControlWordType == RocfControlWordTypeEnum.CLCW && !isClcw) {
+            return false;
         }
-    }
-
-    public boolean endOfData() {
-        this.bufferMutex.lock();
-        try {
-            // If the state is not correct, say bye
-            if (!this.bufferActive) {
-                return false;
-            }
-            // Here we check immediately if the buffer is full: if so, we send it
-            checkBuffer(false);
-            // Add the PDU to the buffer, there must be free space by algorithm implementation
-            addEndOfDataNotification();
-            checkBuffer(true); // We send it immediately
-            return true;
-        } finally {
-            this.bufferMutex.unlock();
+        // If it is not a CLCW, we need to ignore the TC VC ID and the update mode (we use -1 for that)
+        int tcVcId = !isClcw ? -1 : (ocfAsInt & 0x00FC0000) >>> 18;
+        // Check if the TC VC ID is the requested one (only is it is a CLCW)
+        if(isClcw && this.requestedTcVcid != null && this.requestedTcVcid != tcVcId) {
+            return false;
         }
-    }
-
-    public boolean transferData(byte[] spaceDataUnit, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
-        this.bufferMutex.lock();
-        try {
-            // If the state is not correct, say bye
-            if (!this.bufferActive) {
+        // Change based or continuous?
+        if(this.requestedUpdateMode == RocfUpdateModeEnum.CHANGE_BASED) {
+            Integer lastOcf = this.tcVcId2lastClcw.get(tcVcId);
+            if (lastOcf != null &&
+                    lastOcf == ocfAsInt) {
                 return false;
             }
-            // Here we check immediately if the buffer is full: if so, we send it
-            checkBuffer(false);
-            // If ERT is not matching, say bye
-            if (this.startTime != null && earthReceiveTime.getEpochSecond() < this.startTime.getTime() / 1000) {
-                return false;
-            }
-            if (this.endTime != null && earthReceiveTime.getEpochSecond() > this.endTime.getTime() / 1000) {
-                return false;
-            }
-            // If GVCID is not matching, say bye
-            if (!match(this.requestedGvcid, spaceDataUnit)) {
-                return false;
-            }
-            // So we are processing the frame
-            this.processedFrameNumber.incrementAndGet();
-            // Extract and check the OCF (selected TC VC ID, on-change/continuous, report type)
-            int ocfAsInt = ByteBuffer.wrap(spaceDataUnit, spaceDataUnit.length - 4, 4).getInt();
-            boolean isClcw = (ocfAsInt & 0x80000000) == 0;
-            // CLCW and requesting no CLCW -> skip
-            if(this.requestedControlWordType == RocfControlWordTypeEnum.NO_CLCW && isClcw) {
-                return false;
-            }
-            // Not a CLCW and requesting CLCW only -> skip
-            if(this.requestedControlWordType == RocfControlWordTypeEnum.CLCW && !isClcw) {
-                return false;
-            }
-            // If it is not a CLCW, we need to ignore the TC VC ID and the update mode (we use -1 for that)
-            int tcVcId = !isClcw ? -1 : (ocfAsInt & 0x00FC0000) >>> 18;
-            // Check if the TC VC ID is the requested one (only is it is a CLCW)
-            if(isClcw && this.requestedTcVcid != null && this.requestedTcVcid != tcVcId) {
-                return false;
-            }
-            // Change based or continuous?
-            if(this.requestedUpdateMode == RocfUpdateModeEnum.CHANGE_BASED) {
-                Integer lastOcf = this.tcVcId2lastClcw.get(tcVcId);
-                if (lastOcf != null &&
-                        lastOcf == ocfAsInt) {
-                    return false;
-                }
-            }
-            // Remember the OCF
-            this.tcVcId2lastClcw.put(tcVcId, ocfAsInt);
-            // Add the PDU to the buffer, there must be free space by algorithm implementation
-            addTransferData(Arrays.copyOfRange(spaceDataUnit, spaceDataUnit.length - 4, spaceDataUnit.length), linkContinuity, earthReceiveTime, isPico, antennaId, globalAntennaId, privateAnnotations);
-            checkBuffer(false);
-            return true;
-        } finally {
-            this.bufferMutex.unlock();
         }
+        // Remember the OCF
+        this.tcVcId2lastClcw.put(tcVcId, ocfAsInt);
+        // Add the PDU to the buffer, there must be free space by algorithm implementation
+        addTransferData(Arrays.copyOfRange(spaceDataUnit, spaceDataUnit.length - 4, spaceDataUnit.length), linkContinuity, earthReceiveTime, isPico, antennaId, globalAntennaId, privateAnnotations);
+        return true;
     }
 
     private boolean match(GVCID requestedGvcid, byte[] spaceDataUnit) {
@@ -288,8 +135,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         short header = bb.getShort();
         // Extract TFVN, VCID and SCID from the frame
         int tfvn = ((header & 0xC000) & 0xFFFF) >>> 14;
-        int scid = -1;
-        int vcid = -1;
+        int scid;
+        int vcid;
         if(tfvn == 0) {
             // TM
             scid = ((header & 0x3FF0) & 0xFFFF) >>> 4;
@@ -304,106 +151,23 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                 (requestedGvcid.getVirtualChannelId() == null || requestedGvcid.getVirtualChannelId() == vcid);
     }
 
-    // Under sync on this.bufferMutex
-    private void checkBuffer(boolean forceSend) {
-        if(!bufferActive) {
-            return;
-        }
-        if (this.bufferUnderConstruction == null || this.bufferUnderConstruction.getOcfOrNotification().isEmpty()) {
-            // No data, nothing to do
-            return;
-        }
-        if (this.bufferUnderConstruction.getOcfOrNotification().size() == this.transferBufferSize || forceSend) {
-            // Stop the latency timer
-            stopLatencyTimer();
-            // Try to send the buffer: replace the buffer with a new one
-            RocfTransferBuffer bufferToSend = this.bufferUnderConstruction;
-            this.bufferUnderConstruction = new RocfTransferBuffer();
-            boolean discarded = trySendBuffer(bufferToSend);
-            // If discarded, add a sync notification about it
-            if (discarded) {
-                addDataDiscardedNotification();
-            }
-            // I do not call this recursively, we are under lock: if there transfer buffer is set with 1 item, anyway go out
-            // and at the next call, it will be sent ... or not
-
-            // Start the latency timer
-            startLatencyTimer();
-
-            // Signal the change
-            this.bufferChangedCondition.signalAll();
-        }
+    @Override
+    protected RocfTransferBuffer createCurrentBuffer() {
+        return new RocfTransferBuffer();
     }
 
-    private void startLatencyTimer() {
-        if (this.latencyLimit == null) {
-            return; // No timer
-        }
-
-        stopLatencyTimer();
-
-        this.pendingLatencyTimeout.set(new TimerTask() {
-            @Override
-            public void run() {
-                if (pendingLatencyTimeout.get() == this) {
-                    // Elapsed, send the buffer if needed
-                    latencyElapsed();
-                }
-            }
-        });
-        this.latencyTimer.schedule(this.pendingLatencyTimeout.get(), this.latencyLimit * 1000L);
+    @Override
+    protected int getCurrentBufferItems(RocfTransferBuffer bufferUnderConstruction) {
+        return super.bufferUnderConstruction != null ? super.bufferUnderConstruction.getOcfOrNotification().size() : 0;
     }
 
-    private void latencyElapsed() {
-        // Add the PDU to the buffer, there must be free space by algorithm implementation
-        this.bufferMutex.lock();
-        try {
-            checkBuffer(true);
-        } finally {
-            this.bufferMutex.unlock();
-        }
+    @Override
+    protected boolean isCurrentBufferEmpty(RocfTransferBuffer bufferUnderConstruction) {
+        return super.bufferUnderConstruction == null || super.bufferUnderConstruction.getOcfOrNotification().isEmpty();
     }
 
-    private void stopLatencyTimer() {
-        if (this.pendingLatencyTimeout.get() != null) {
-            this.pendingLatencyTimeout.get().cancel();
-            this.pendingLatencyTimeout.set(null);
-        }
-    }
-
-    // Under sync on this.bufferMutex
-    private boolean trySendBuffer(RocfTransferBuffer bufferToSend) {
-        // Here we check the delivery mode
-        if (getRocfConfiguration().getDeliveryMode() == DeliveryModeEnum.TIMELY_ONLINE) {
-            // Timely mode: if there is a buffer in transmission, you have to discard the buffer
-            if (this.bufferUnderTransmission) {
-                return true;
-            }
-        } else {
-            // Complete mode: wait
-            while (this.bufferActive && this.bufferUnderTransmission) {
-                try {
-                    this.bufferChangedCondition.await();
-                } catch (InterruptedException e) { // NOSONAR: sorry to say, but this rule is pointless, to be disabled in the profile
-                    Thread.interrupted();
-                    // Buffer discarded
-                    return true;
-                }
-            }
-        }
-        if (bufferActive) {
-            // Set transmission flag
-            this.bufferUnderTransmission = true;
-            // Send the buffer
-            dispatchFromProvider(() -> doHandleRocfTransferBufferInvocation(bufferToSend));
-            // Not discarded
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    private void doHandleRocfTransferBufferInvocation(RocfTransferBuffer bufferToSend) {
+    @Override
+    protected void doHandleTransferBufferInvocation(RocfTransferBuffer bufferToSend) {
         clearError();
 
         // Validate state
@@ -429,8 +193,14 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
+    @Override
+    protected DeliveryModeEnum getConfiguredDeliveryMode() {
+        return getRocfConfiguration().getDeliveryMode();
+    }
+
     // Under sync on this.bufferMutex
-    private void addProductionStatusChangeNotification(ProductionStatusEnum productionStatus) {
+    @Override
+    protected void addProductionStatusChangeNotification(ProductionStatusEnum productionStatus) {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
@@ -441,7 +211,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     }
 
     // Under sync on this.bufferMutex
-    private void addDataDiscardedNotification() {
+    @Override
+    protected void addDataDiscardedNotification() {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
@@ -452,7 +223,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     }
 
     // Under sync on this.bufferMutex
-    private void addLossFrameSyncNotification(Instant time, LockStatusEnum carrierLockStatus, LockStatusEnum subcarrierLockStatus, LockStatusEnum symbolSyncLockStatus) {
+    @Override
+    protected void addLossFrameSyncNotification(Instant time, LockStatusEnum carrierLockStatus, LockStatusEnum subcarrierLockStatus, LockStatusEnum symbolSyncLockStatus) {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
@@ -468,7 +240,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     }
 
     // Under sync on this.bufferMutex
-    private void addEndOfDataNotification() {
+    @Override
+    protected void addEndOfDataNotification() {
         if(!bufferActive || bufferUnderConstruction == null) {
             return;
         }
@@ -476,6 +249,15 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         in.setNotification(new Notification());
         in.getNotification().setEndOfData(new BerNull());
         finalizeAndAddNotification(in);
+    }
+
+    @Override
+    protected void resetStartArgumentsOnStop() {
+        // Set the requested parameters
+        this.requestedGvcid = null;
+        this.requestedTcVcid = null;
+        this.requestedControlWordType = null;
+        this.requestedUpdateMode = null;
     }
 
     private void finalizeAndAddNotification(RocfSyncNotifyInvocation in) {
@@ -644,19 +426,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
                 if(reqControlWordType == RocfControlWordTypeEnum.CLCW && invocation.getControlWordType().getClcw().getTcVcid() != null) {
                     this.requestedTcVcid = invocation.getControlWordType().getClcw().getTcVcid().intValue();
                 }
-                // Set times
-                this.startTime = PduFactoryUtil.toDate(invocation.getStartTime());
-                this.endTime = PduFactoryUtil.toDate(invocation.getStopTime());
-                // Activate capability to send frames and notifications
-                this.bufferMutex.lock();
-                try {
-                    this.bufferActive = true;
-                    this.bufferUnderTransmission = false;
-                    this.bufferUnderConstruction = new RocfTransferBuffer();
-                    this.bufferChangedCondition.signalAll();
-                } finally {
-                    this.bufferMutex.unlock();
-                }
+                // Init start activation
+                initialiseTransferBufferActivation(PduFactoryUtil.toDate(invocation.getStartTime()), PduFactoryUtil.toDate(invocation.getStopTime()));
                 // Start the latency timer
                 startLatencyTimer();
                 // Transition to new state: ACTIVE and notify PDU sent
@@ -668,203 +439,6 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
             notifyStateUpdate();
         }
     }
-
-    private void handleRocfStopInvocation(SleStopInvocation invocation) {
-        dispatchFromProvider(() -> doHandleRocfStopInvocation(invocation));
-    }
-
-    private void doHandleRocfStopInvocation(SleStopInvocation invocation) {
-        clearError();
-
-        // Validate state
-        if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
-            setError("Stop received from user, but service instance is in state "
-                    + this.currentState);
-            notifyStateUpdate();
-            peerAbort(PeerAbortReasonEnum.PROTOCOL_ERROR);
-            return;
-        }
-
-        // Process the STOP
-
-        // Validate credentials
-        // From the API configuration (remote peers) and SI configuration (remote peer),
-        // check remote peer and check if authentication must be used.
-        // If so, verify credentials.
-        if (!authenticate(invocation.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
-            disconnect("Stop invocation received, but wrong credentials");
-            notifyPduReceived(invocation, SleOperationNames.STOP_NAME, getLastPduReceived());
-            notifyStateUpdate();
-            return;
-        }
-
-        SleAcknowledgement pdu = new SleAcknowledgement();
-        pdu.setInvokeId(invocation.getInvokeId());
-        pdu.setResult(new SleAcknowledgement.Result());
-        pdu.getResult().setPositiveResult(new BerNull());
-
-        // Add credentials
-        // From the API configuration (remote peers) and SI configuration (responder
-        // id), check remote peer and check if authentication must be used.
-        Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
-        if (creds == null) {
-            // Error while generating credentials, set by generateCredentials()
-            notifyPduSentError(pdu, SleOperationNames.STOP_RETURN_NAME, null);
-            notifyStateUpdate();
-            return;
-        } else {
-            pdu.setCredentials(creds);
-        }
-
-        // Stop the ability to add transfer frames: pending buffers in the executor queue will still be processed
-        // and sent. As soon as the STOP-RETURN is sent, the state will go to READY and pending buffers will be discarded.
-        this.bufferMutex.lock();
-        try {
-            this.bufferActive = false;
-            this.bufferChangedCondition.signalAll();
-        } finally {
-            this.bufferMutex.unlock();
-        }
-
-        dispatchFromProvider(() -> {
-            boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.STOP_RETURN_NAME);
-
-            if (resultOk) {
-                // Stop the latency timer
-                stopLatencyTimer();
-                // Schedule this last part in the management thread
-                this.bufferMutex.lock();
-                try {
-                    this.bufferActive = false;
-                    this.bufferUnderTransmission = false;
-                    this.bufferUnderConstruction = null;
-                    this.bufferChangedCondition.signalAll();
-                } finally {
-                    this.bufferMutex.unlock();
-                }
-
-                // If all fine, transition to new state: READY and notify PDU sent
-                setServiceInstanceState(ServiceInstanceBindingStateEnum.READY);
-                // Set the requested parameters
-                this.requestedGvcid = null;
-                this.requestedTcVcid = null;
-                this.requestedControlWordType = null;
-                this.requestedUpdateMode = null;
-                // Set times
-                this.startTime = null;
-                this.endTime = null;
-                // Notify PDU
-                notifyPduSent(pdu, SleOperationNames.STOP_RETURN_NAME, getLastPduSent());
-                // Generate state and notify update
-                notifyStateUpdate();
-            }
-        });
-    }
-
-    private void handleRocfScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
-        dispatchFromProvider(() -> doHandleRocfScheduleStatusReportInvocation(invocation));
-    }
-
-    private void doHandleRocfScheduleStatusReportInvocation(SleScheduleStatusReportInvocation invocation) {
-        clearError();
-
-        // Validate state
-        if (this.currentState != ServiceInstanceBindingStateEnum.READY && this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
-            setError("Schedule status report received from user, but service instance is in state "
-                    + this.currentState);
-            notifyStateUpdate();
-            peerAbort(PeerAbortReasonEnum.PROTOCOL_ERROR);
-            return;
-        }
-
-        // Process the SCHEDULE-STATUS-REPORT
-
-        // Validate credentials
-        // From the API configuration (remote peers) and SI configuration (remote peer),
-        // check remote peer and check if authentication must be used.
-        // If so, verify credentials.
-        if (!authenticate(invocation.getInvokerCredentials(), AuthenticationModeEnum.ALL)) {
-            disconnect("Schedule status report received, but wrong credentials");
-            notifyPduReceived(invocation, SleOperationNames.SCHEDULE_STATUS_REPORT_NAME, getLastPduReceived());
-            notifyStateUpdate();
-            return;
-        }
-
-        SleScheduleStatusReportReturn pdu = new SleScheduleStatusReportReturn();
-        pdu.setInvokeId(invocation.getInvokeId());
-        pdu.setResult(new SleScheduleStatusReportReturn.Result());
-
-        if (invocation.getReportRequestType().getImmediately() != null) {
-            sendStatusReport(true);
-            pdu.getResult().setPositiveResult(new BerNull());
-        } else if (invocation.getReportRequestType().getStop() != null) {
-            if (this.reportingScheduler.get() != null) {
-                stopStatusReport();
-                pdu.getResult().setPositiveResult(new BerNull());
-            } else {
-                pdu.getResult().setNegativeResult(new DiagnosticScheduleStatusReport());
-                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(1)); // Already stopped
-            }
-        } else if (invocation.getReportRequestType().getPeriodically() != null) {
-            int period = invocation.getReportRequestType().getPeriodically().intValue();
-            if (this.minReportingCycle == null || period > this.minReportingCycle) {
-                startStatusReport(period);
-                pdu.getResult().setPositiveResult(new BerNull());
-            } else {
-                pdu.getResult().setNegativeResult(new DiagnosticScheduleStatusReport());
-                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(2)); // Invalid reporting cycle
-            }
-        }
-
-        // Add credentials
-        // From the API configuration (remote peers) and SI configuration (responder
-        // id), check remote peer and check if authentication must be used.
-        Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
-        if (creds == null) {
-            // Error while generating credentials, set by generateCredentials()
-            notifyPduSentError(pdu, SleOperationNames.SCHEDULE_STATUS_REPORT_RETURN_NAME, null);
-            notifyStateUpdate();
-            return;
-        } else {
-            pdu.setPerformerCredentials(creds);
-        }
-
-        boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.SCHEDULE_STATUS_REPORT_RETURN_NAME);
-
-        if (resultOk) {
-            // Notify PDU
-            notifyPduSent(pdu, SleOperationNames.SCHEDULE_STATUS_REPORT_RETURN_NAME, getLastPduSent());
-            // Generate state and notify update
-            notifyStateUpdate();
-        }
-    }
-
-
-    private void startStatusReport(int period) {
-        if(LOG.isLoggable(Level.INFO)) {
-            LOG.info(String.format("%s: Scheduling status report with period %d", getServiceInstanceIdentifier(), period));
-        }
-        this.reportingCycle = period;
-        this.reportingScheduler.set(new Timer());
-        this.reportingScheduler.get().schedule(new TimerTask() {
-            @Override
-            public void run() {
-                if (reportingScheduler.get() != null) {
-                    dispatchFromProvider(() -> sendStatusReport(false));
-                }
-            }
-        }, 0, period * 1000L);
-    }
-
-    private void stopStatusReport() {
-        if(LOG.isLoggable(Level.INFO)) {
-            LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
-        }
-        this.reportingCycle = null;
-        this.reportingScheduler.get().cancel();
-        this.reportingScheduler.set(null);
-    }
-
 
     private void handleRocfGetParameterInvocation(RocfGetParameterInvocation invocation) {
         dispatchFromProvider(() -> doHandleRocfGetParameterInvocation(invocation));
@@ -1179,11 +753,8 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         }
     }
 
-    private void sendStatusReport(boolean immediate) {
-        if (!immediate && this.reportingScheduler.get() == null) {
-            return;
-        }
-
+    @Override
+    protected BerType buildStatusReportPdu() {
         RocfStatusReportInvocation pdu = new RocfStatusReportInvocation();
         // Add credentials
         Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
@@ -1191,7 +762,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
             // Error while generating credentials, set by generateCredentials()
             notifyPduSentError(pdu, SleOperationNames.STATUS_REPORT_NAME, null);
             notifyStateUpdate();
-            return;
+            return null;
         } else {
             pdu.setInvokerCredentials(creds);
         }
@@ -1208,14 +779,7 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         } finally {
             this.statusMutex.unlock();
         }
-        boolean resultOk = encodeAndSend(null, pdu, SleOperationNames.STATUS_REPORT_NAME);
-
-        if (resultOk) {
-            // Notify PDU
-            notifyPduSent(pdu, SleOperationNames.STATUS_REPORT_NAME, getLastPduSent());
-            // Generate state and notify update
-            notifyStateUpdate();
-        }
+        return pdu;
     }
 
     @Override
@@ -1255,39 +819,12 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
     }
 
     @Override
-    protected Object decodePdu(byte[] pdu) throws IOException {
-        return this.encDec.decode(pdu);
-    }
-
-    @Override
-    protected byte[] encodePdu(BerType pdu) throws IOException {
-        return this.encDec.encode(pdu);
-    }
-
-    @Override
     public ApplicationIdentifierEnum getApplicationIdentifier() {
         return ApplicationIdentifierEnum.ROCF;
     }
 
     @Override
-    protected void updateHandlersForVersion(int version) {
-        this.encDec.useSleVersion(version);
-    }
-
-    @Override
-    protected void resetState() {
-        stopLatencyTimer();
-
-        this.bufferMutex.lock();
-        try {
-            this.bufferActive = false;
-            this.bufferUnderTransmission = false;
-            this.bufferUnderConstruction = null;
-            this.bufferChangedCondition.signalAll();
-        } finally {
-            this.bufferMutex.unlock();
-        }
-        // Read from configuration, updated via GET_PARAMETER
+    protected void doResetState() {
         this.latencyLimit = getRocfConfiguration().getLatencyLimit();
         this.permittedGvcids = getRocfConfiguration().getPermittedGvcid();
         this.permittedUpdateModes = getRocfConfiguration().getPermittedUpdateModes();
@@ -1296,38 +833,15 @@ public class RocfServiceInstanceProvider extends ServiceInstance {
         this.minReportingCycle = getRocfConfiguration().getMinReportingCycle();
         this.returnTimeoutPeriod = getRocfConfiguration().getReturnTimeoutPeriod();
         this.transferBufferSize = getRocfConfiguration().getTransferBufferSize();
-        this.deliveryMode = getRocfConfiguration().getDeliveryMode();
-
-        // Updated via START and GET_PARAMETER
         this.requestedGvcid = null;
         this.requestedUpdateMode = null;
         this.requestedTcVcid = null;
         this.requestedControlWordType = null;
-        this.startTime = null;
-        this.endTime = null;
-        this.reportingCycle = null; // NULL if off, otherwise a value
-
-        // Updated via STATUS_REPORT
         this.processedFrameNumber.set(0);
         this.deliveredOcfsNumber.set(0);
-        this.statusMutex.lock();
-        try {
-            this.frameSyncLockStatus = LockStatusEnum.UNKNOWN;
-            this.symbolSyncLockStatus = LockStatusEnum.UNKNOWN;
-            this.subcarrierLockStatus = LockStatusEnum.UNKNOWN;
-            this.carrierLockStatus = LockStatusEnum.UNKNOWN;
-            this.productionStatus = ProductionStatusEnum.UNKNOWN;
-        } finally {
-            this.statusMutex.unlock();
-        }
     }
 
     private RocfServiceInstanceConfiguration getRocfConfiguration() {
         return (RocfServiceInstanceConfiguration) this.serviceInstanceConfiguration;
-    }
-
-    @Override
-    protected boolean isUserSide() {
-        return false;
     }
 }

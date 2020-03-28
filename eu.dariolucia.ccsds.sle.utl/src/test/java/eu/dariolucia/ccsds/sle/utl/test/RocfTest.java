@@ -29,6 +29,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.outgoin
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.structures.DiagnosticRocfGet;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rocf.structures.DiagnosticRocfStart;
 import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
+import eu.dariolucia.ccsds.sle.utl.si.ReturnServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.rocf.RocfServiceInstanceConfiguration;
@@ -96,6 +97,9 @@ public class RocfTest {
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND_WAIT, rocfUser.getCurrentBindingState());
         AwaitUtil.awaitCondition(2000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfProvider.getCurrentBindingState());
+
+        assertFalse(recorder.getStates().isEmpty());
+        assertNotNull(recorder.getStates().get(0).toString());
 
         rocfUser.dispose();
         rocfProvider.dispose();
@@ -579,7 +583,7 @@ public class RocfTest {
         byte[] badFrame = new byte[]{0x06, (byte) 0x92, 0x00, 0x00,     0x00, 0x04, 0x00, 0x00}; // TFVN 0, SCID wrong, VCID 1 -- CLCW, TC VC ID 1
         recorder.getPduReceived().clear();
         for (int i = 0; i < 100; ++i) {
-            rocfProvider.transferData(frame, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
+            rocfProvider.transferData(frame, ReturnServiceInstanceProvider.FRAME_QUALITY_GOOD, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
         }
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 100);
         assertEquals(100, recorder.getPduReceived().size());
@@ -588,9 +592,9 @@ public class RocfTest {
         recorder.getPduReceived().clear();
         for (int i = 0; i < 5; ++i) {
             if (i == 0) {
-                rocfProvider.transferData(badFrame, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
+                rocfProvider.transferData(badFrame, ReturnServiceInstanceProvider.FRAME_QUALITY_GOOD, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
             } else {
-                rocfProvider.transferData(frame, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
+                rocfProvider.transferData(frame, ReturnServiceInstanceProvider.FRAME_QUALITY_GOOD, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
             }
         }
         AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 4);
@@ -702,7 +706,7 @@ public class RocfTest {
 
         recorder.getPduReceived().clear();
         for (int i = 0; i < 500; ++i) {
-            rocfProvider.transferData(frame, 0, Instant.now(), true, "AABBCCDD", false, new byte[10]);
+            rocfProvider.transferData(frame, ReturnServiceInstanceProvider.FRAME_QUALITY_GOOD, 0, Instant.now(), true, "AABBCCDD", false, new byte[10]);
         }
         // One data discarded
         rocfProvider.dataDiscarded();
@@ -716,9 +720,9 @@ public class RocfTest {
         recorder.getPduReceived().clear();
         for (int i = 0; i < 5; ++i) {
             if (i == 0) {
-                rocfProvider.transferData(badFrame, 0, Instant.now(), true, "AABBCCDD", false, new byte[10]);
+                rocfProvider.transferData(badFrame, ReturnServiceInstanceProvider.FRAME_QUALITY_GOOD, 0, Instant.now(), true, "AABBCCDD", false, new byte[10]);
             } else {
-                rocfProvider.transferData(frame, 0, Instant.now(), true, "AABBCCDD", false, new byte[10]);
+                rocfProvider.transferData(frame, ReturnServiceInstanceProvider.FRAME_QUALITY_GOOD, 0, Instant.now(), true, "AABBCCDD", false, new byte[10]);
             }
         }
         // AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 5);

@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.sle.utl.provider;
 
+import eu.dariolucia.ccsds.sle.utl.si.ReturnServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
@@ -87,7 +88,7 @@ public class RocfServiceManager extends ServiceInstanceManager<RocfServiceInstan
             frameGenerationTask = new TimerTask() {
                 @Override
                 public void run() {
-                    serviceInstance.transferData(frameToSend, 0, Instant.now(), false, "AABBCCDDEE", false, new byte[] { 0, 1, 2, 3 });
+                    serviceInstance.transferData(frameToSend, ReturnServiceInstanceProvider.FRAME_QUALITY_GOOD, 0, Instant.now(), false, "AABBCCDDEE", false, new byte[] { 0, 1, 2, 3 });
                 }
             };
             super.timer.schedule(frameGenerationTask, 0, 50); // 20 frames per second

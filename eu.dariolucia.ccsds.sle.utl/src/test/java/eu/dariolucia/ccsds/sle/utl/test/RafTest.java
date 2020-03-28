@@ -150,6 +150,9 @@ public class RafTest {
         AwaitUtil.awaitCondition(2000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
 
+        assertFalse(recorder.getStates().isEmpty());
+        assertNotNull(recorder.getStates().get(0).toString());
+
         rafUser.dispose();
         rafProvider.dispose();
     }
@@ -641,17 +644,17 @@ public class RafTest {
     }
 
     @Test
-    private void testTransferDataCompleteV2() throws IOException, InterruptedException {
+    public void testTransferDataCompleteV2() throws IOException, InterruptedException {
         testTransferDataComplete(2);
     }
 
     @Test
-    private void testTransferDataCompleteV4() throws IOException, InterruptedException {
+    public void testTransferDataCompleteV4() throws IOException, InterruptedException {
         testTransferDataComplete(4);
     }
 
     @Test
-    private void testTransferDataCompleteV5() throws IOException, InterruptedException {
+    public void testTransferDataCompleteV5() throws IOException, InterruptedException {
         testTransferDataComplete(5);
     }
 
