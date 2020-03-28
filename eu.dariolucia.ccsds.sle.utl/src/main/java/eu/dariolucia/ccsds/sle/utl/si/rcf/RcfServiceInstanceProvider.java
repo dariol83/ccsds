@@ -129,30 +129,6 @@ public class RcfServiceInstanceProvider extends ReturnServiceInstanceProvider<Rc
     }
 
     @Override
-    protected void doHandleTransferBufferInvocation(RcfTransferBuffer bufferToSend) {
-        clearError();
-
-        // Validate state
-        if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
-            setError("Transfer buffer in transmission discarded, service instance is in state "
-                    + this.currentState);
-            notifyStateUpdate();
-            return;
-        }
-
-        boolean resultOk = encodeAndSend(null, bufferToSend, SleOperationNames.TRANSFER_BUFFER_NAME);
-
-        if (resultOk) {
-            // Clear buffer transmission flag
-            clearBufferTransmissionFlag();
-            // Notify PDU
-            notifyPduSent(bufferToSend, SleOperationNames.TRANSFER_BUFFER_NAME, getLastPduSent());
-            // Generate state and notify update
-            notifyStateUpdate();
-        }
-    }
-
-    @Override
     protected DeliveryModeEnum getConfiguredDeliveryMode() {
         return getRcfConfiguration().getDeliveryMode();
     }
@@ -160,54 +136,50 @@ public class RcfServiceInstanceProvider extends ReturnServiceInstanceProvider<Rc
     // Under sync on this.bufferMutex
     @Override
     protected void addProductionStatusChangeNotification(ProductionStatusEnum productionStatus) {
-        if(!bufferActive || bufferUnderConstruction == null) {
-            return;
+        if(bufferActive && bufferUnderConstruction != null) {
+            RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
+            in.setNotification(new Notification());
+            in.getNotification().setProductionStatusChange(new RcfProductionStatus(productionStatus.ordinal()));
+            finalizeAndAddNotification(in);
         }
-        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
-        in.setNotification(new Notification());
-        in.getNotification().setProductionStatusChange(new RcfProductionStatus(productionStatus.ordinal()));
-        finalizeAndAddNotification(in);
     }
 
     // Under sync on this.bufferMutex
     @Override
     protected void addDataDiscardedNotification() {
-        if(!bufferActive || bufferUnderConstruction == null) {
-            return;
+        if(bufferActive && bufferUnderConstruction != null) {
+            RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
+            in.setNotification(new Notification());
+            in.getNotification().setExcessiveDataBacklog(new BerNull());
+            finalizeAndAddNotification(in);
         }
-        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
-        in.setNotification(new Notification());
-        in.getNotification().setExcessiveDataBacklog(new BerNull());
-        finalizeAndAddNotification(in);
     }
 
     // Under sync on this.bufferMutex
     @Override
     protected void addLossFrameSyncNotification(Instant time, LockStatusEnum carrierLockStatus, LockStatusEnum subcarrierLockStatus, LockStatusEnum symbolSyncLockStatus) {
-        if(!bufferActive || bufferUnderConstruction == null) {
-            return;
+        if(bufferActive && bufferUnderConstruction != null) {
+            RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
+            in.setNotification(new Notification());
+            in.getNotification().setLossFrameSync(new LockStatusReport());
+            in.getNotification().getLossFrameSync().setCarrierLockStatus(new CarrierLockStatus(carrierLockStatus.ordinal()));
+            in.getNotification().getLossFrameSync().setSubcarrierLockStatus(new LockStatus(subcarrierLockStatus.ordinal()));
+            in.getNotification().getLossFrameSync().setSymbolSyncLockStatus(new SymbolLockStatus(symbolSyncLockStatus.ordinal()));
+            in.getNotification().getLossFrameSync().setTime(new Time());
+            in.getNotification().getLossFrameSync().getTime().setCcsdsFormat(new TimeCCSDS(PduFactoryUtil.buildCDSTime(time.toEpochMilli(), (time.getNano() % 1000000) / 1000)));
+            finalizeAndAddNotification(in);
         }
-        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
-        in.setNotification(new Notification());
-        in.getNotification().setLossFrameSync(new LockStatusReport());
-        in.getNotification().getLossFrameSync().setCarrierLockStatus(new CarrierLockStatus(carrierLockStatus.ordinal()));
-        in.getNotification().getLossFrameSync().setSubcarrierLockStatus(new LockStatus(subcarrierLockStatus.ordinal()));
-        in.getNotification().getLossFrameSync().setSymbolSyncLockStatus(new SymbolLockStatus(symbolSyncLockStatus.ordinal()));
-        in.getNotification().getLossFrameSync().setTime(new Time());
-        in.getNotification().getLossFrameSync().getTime().setCcsdsFormat(new TimeCCSDS(PduFactoryUtil.buildCDSTime(time.toEpochMilli(), (time.getNano() % 1000000) / 1000)));
-        finalizeAndAddNotification(in);
     }
 
     // Under sync on this.bufferMutex
     @Override
     protected void addEndOfDataNotification() {
-        if(!bufferActive || bufferUnderConstruction == null) {
-            return;
+        if(bufferActive && bufferUnderConstruction != null) {
+            RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
+            in.setNotification(new Notification());
+            in.getNotification().setEndOfData(new BerNull());
+            finalizeAndAddNotification(in);
         }
-        RcfSyncNotifyInvocation in = new RcfSyncNotifyInvocation();
-        in.setNotification(new Notification());
-        in.getNotification().setEndOfData(new BerNull());
-        finalizeAndAddNotification(in);
     }
 
     @Override
@@ -229,47 +201,46 @@ public class RcfServiceInstanceProvider extends ReturnServiceInstanceProvider<Rc
 
     // Under sync on this.bufferMutex
     private void addTransferData(byte[] spaceDataUnit, int linkContinuity, Instant earthReceiveTime, boolean isPico, String antennaId, boolean globalAntennaId, byte[] privateAnnotations) {
-        if(!bufferActive || bufferUnderConstruction == null) {
-            return;
-        }
-        RcfTransferDataInvocation td = new RcfTransferDataInvocation();
-        // Antenna ID
-        td.setAntennaId(new AntennaId());
-        if (globalAntennaId) {
-            td.getAntennaId().setGlobalForm(new BerObjectIdentifier(PduStringUtil.fromOIDString(antennaId)));
-        } else {
-            td.getAntennaId().setLocalForm(new BerOctetString(PduStringUtil.fromHexDump(antennaId)));
-        }
-        // Data
-        td.setData(new SpaceLinkDataUnit(spaceDataUnit));
-        // Time
-        td.setEarthReceiveTime(new Time());
-        if (isPico) {
-            td.getEarthReceiveTime().setCcsdsPicoFormat(new TimeCCSDSpico(PduFactoryUtil.buildCDSTimePico(earthReceiveTime.toEpochMilli(), (earthReceiveTime.getNano() % 1000000) * 1000L)));
-        } else {
-            td.getEarthReceiveTime().setCcsdsFormat(new TimeCCSDS(PduFactoryUtil.buildCDSTime(earthReceiveTime.toEpochMilli(), (earthReceiveTime.getNano() % 1000000) / 1000)));
-        }
-        // Private annotations
-        td.setPrivateAnnotation(new RcfTransferDataInvocation.PrivateAnnotation());
-        if (privateAnnotations == null || privateAnnotations.length == 0) {
-            td.getPrivateAnnotation().setNull(new BerNull());
-        } else {
-            td.getPrivateAnnotation().setNotNull(new BerOctetString(privateAnnotations));
-        }
-        // Data link continuity
-        td.setDataLinkContinuity(new BerInteger(linkContinuity));
+        if(bufferActive && bufferUnderConstruction != null) {
+            RcfTransferDataInvocation td = new RcfTransferDataInvocation();
+            // Antenna ID
+            td.setAntennaId(new AntennaId());
+            if (globalAntennaId) {
+                td.getAntennaId().setGlobalForm(new BerObjectIdentifier(PduStringUtil.fromOIDString(antennaId)));
+            } else {
+                td.getAntennaId().setLocalForm(new BerOctetString(PduStringUtil.fromHexDump(antennaId)));
+            }
+            // Data
+            td.setData(new SpaceLinkDataUnit(spaceDataUnit));
+            // Time
+            td.setEarthReceiveTime(new Time());
+            if (isPico) {
+                td.getEarthReceiveTime().setCcsdsPicoFormat(new TimeCCSDSpico(PduFactoryUtil.buildCDSTimePico(earthReceiveTime.toEpochMilli(), (earthReceiveTime.getNano() % 1000000) * 1000L)));
+            } else {
+                td.getEarthReceiveTime().setCcsdsFormat(new TimeCCSDS(PduFactoryUtil.buildCDSTime(earthReceiveTime.toEpochMilli(), (earthReceiveTime.getNano() % 1000000) / 1000)));
+            }
+            // Private annotations
+            td.setPrivateAnnotation(new RcfTransferDataInvocation.PrivateAnnotation());
+            if (privateAnnotations == null || privateAnnotations.length == 0) {
+                td.getPrivateAnnotation().setNull(new BerNull());
+            } else {
+                td.getPrivateAnnotation().setNotNull(new BerOctetString(privateAnnotations));
+            }
+            // Data link continuity
+            td.setDataLinkContinuity(new BerInteger(linkContinuity));
 
-        // Add credentials
-        // From the API configuration (remote peers) and SI configuration (responder
-        // id), check remote peer and check if authentication must be used.
-        Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
-        td.setInvokerCredentials(creds);
+            // Add credentials
+            // From the API configuration (remote peers) and SI configuration (responder
+            // id), check remote peer and check if authentication must be used.
+            Credentials creds = generateCredentials(getInitiatorIdentifier(), AuthenticationModeEnum.ALL);
+            td.setInvokerCredentials(creds);
 
-        FrameOrNotification fon = new FrameOrNotification();
-        fon.setAnnotatedFrame(td);
-        this.bufferUnderConstruction.getFrameOrNotification().add(fon);
-        // Assume delivered
-        this.deliveredFrameNumber.incrementAndGet();
+            FrameOrNotification fon = new FrameOrNotification();
+            fon.setAnnotatedFrame(td);
+            this.bufferUnderConstruction.getFrameOrNotification().add(fon);
+            // Assume delivered
+            this.deliveredFrameNumber.incrementAndGet();
+        }
     }
 
     private void handleRcfStartInvocation(RcfStartInvocation invocation) {

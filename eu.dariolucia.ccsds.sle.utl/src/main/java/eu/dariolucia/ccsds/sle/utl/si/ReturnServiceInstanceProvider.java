@@ -265,6 +265,29 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
 
     protected abstract boolean isCurrentBufferEmpty(K bufferUnderConstruction);
 
+    protected void doHandleTransferBufferInvocation(K bufferToSend) {
+        clearError();
+
+        // Validate state
+        if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
+            setError("Transfer buffer in transmission discarded, service instance is in state "
+                    + this.currentState);
+            notifyStateUpdate();
+            return;
+        }
+
+        boolean resultOk = encodeAndSend(null, bufferToSend, SleOperationNames.TRANSFER_BUFFER_NAME);
+
+        if (resultOk) {
+            // Clear buffer transmission flag
+            clearBufferTransmissionFlag();
+            // Notify PDU
+            notifyPduSent(bufferToSend, SleOperationNames.TRANSFER_BUFFER_NAME, getLastPduSent());
+            // Generate state and notify update
+            notifyStateUpdate();
+        }
+    }
+
     protected void startLatencyTimer() {
         if (this.latencyLimit == null) {
             return; // No timer
@@ -339,8 +362,6 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
         this.bufferChangedCondition.signalAll();
         this.bufferMutex.unlock();
     }
-
-    protected abstract void doHandleTransferBufferInvocation(K bufferToSend);
 
     protected abstract DeliveryModeEnum getConfiguredDeliveryMode();
 
