@@ -94,6 +94,10 @@ Too often we give things for granted, forgetting the amazing amount of work that
 - The StackOverflow community;
 - ... and many many others.
 
+A special mention goes to the people that took some of their time to contribute to this project by providing improvements via Pull Requests:
+- Alessio Di Fazio, for the POM update to generate OSGi compliant bundles;
+- Javier Peña, for the POM update to improve the support in Eclipse IDE.  
+
 # Contributions
 If you find any issue with the provided code or you would like to see a specific feature implemented, please raise a request on GitHub.
 If you spot and fix any issue by using the provided code, please consider contributing back to the project, by raising the issue on 

@@ -539,29 +539,41 @@ public class RocfTest {
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_GVCID);
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
-        assertNotNull(((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid());
-
+        if(version <= 4) {
+            assertNotNull(((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid());
+        } else {
+            assertNotNull(((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue());
+        }
         // Ask for parameter requested TC VC ID, expected positive return, 1
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_TC_VCID);
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
-        assertEquals(1, ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqTcVcid().getParameterValue().getTcVcid().getTcVcid().intValue());
-
+        if(version <= 4) {
+            assertEquals(1, ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqTcVcid().getParameterValue().getTcVcid().getTcVcid().intValue());
+        } else {
+            assertEquals(1, ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqTcVcid().getParameterValue().getTcVcid().intValue());
+        }
         // Ask for parameter requested OCF type, expected positive return, CLCW
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_CONTROL_WORD_TYPE);
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
-        assertEquals(RocfControlWordTypeEnum.CLCW.ordinal(), ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqControlWordType().getParameterValue().intValue());
-
+        if(version <= 4) {
+            assertEquals(RocfControlWordTypeEnum.CLCW.ordinal(), ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqControlWordType().getParameterValue().intValue());
+        } else {
+            assertEquals(RocfControlWordTypeEnum.CLCW.ordinal(), ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqControlWordType().getParameterValue().intValue());
+        }
         // Ask for parameter requested update mode, expected positive return, continuous
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_UPDATE_MODE);
         AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
-        assertEquals(RocfUpdateModeEnum.CONTINUOUS.ordinal(), ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqUpdateMode().getParameterValue().intValue());
-
+        if(version <= 4) {
+            assertEquals(RocfUpdateModeEnum.CONTINUOUS.ordinal(), ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqUpdateMode().getParameterValue().intValue());
+        } else {
+            assertEquals(RocfUpdateModeEnum.CONTINUOUS.ordinal(), ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqUpdateMode().getParameterValue().intValue());
+        }
         // Send 100 transfer data, fast
         byte[] frame = new byte[]{0x06, (byte) 0x42, 0x00, 0x00,     0x00, 0x04, 0x00, 0x00}; // TFVN 0, SCID 100, VCID 1 -- CLCW, TC VC ID 1
         byte[] badFrame = new byte[]{0x06, (byte) 0x92, 0x00, 0x00,     0x00, 0x04, 0x00, 0x00}; // TFVN 0, SCID wrong, VCID 1 -- CLCW, TC VC ID 1
