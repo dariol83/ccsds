@@ -584,7 +584,9 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
             LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
         }
         this.reportingCycle = null;
-        this.reportingScheduler.get().cancel();
+        if (reportingScheduler.get() != null) {
+            this.reportingScheduler.get().cancel();
+        }
         this.reportingScheduler.set(null);
     }
 
@@ -628,6 +630,7 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
 
     @Override
     protected void resetState() {
+        stopStatusReport();
         stopLatencyTimer();
 
         this.bufferMutex.lock();
