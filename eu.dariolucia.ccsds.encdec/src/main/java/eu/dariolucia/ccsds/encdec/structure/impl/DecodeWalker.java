@@ -111,7 +111,7 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
         if(ei.getLinkedParameter() != null) {
             AbstractLinkedParameter linkedParameter = ei.getLinkedParameter();
             if(linkedParameter instanceof FixedLinkedParameter) {
-                decodedParameters.add(new ParameterValue(((FixedLinkedParameter) linkedParameter).getParameter().getId(), ((FixedLinkedParameter) linkedParameter).getParameter().getExternalId(), value));
+                decodedParameters.add(new ParameterValue(((FixedLinkedParameter) linkedParameter).getParameter().getId(), ((FixedLinkedParameter) linkedParameter).getParameter().getExternalId(), value, genTime));
             } else if(linkedParameter instanceof ReferenceLinkedParameter) {
                 // Look up for the reference encoded parameter
                 String refItem = ((ReferenceLinkedParameter) linkedParameter).getReference();
@@ -127,7 +127,7 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
                 if(pd == null) {
                     throw new DecodingException(String.format("No parameter with ID %d found as specified by encoded item %s connected to encoded parameter %s as linked parameter", ((Number) linkedParamValue).intValue(), refItem, ei.getId()));
                 } else {
-                    decodedParameters.add(new ParameterValue(pd.getId(), pd.getExternalId(), value));
+                    decodedParameters.add(new ParameterValue(pd.getId(), pd.getExternalId(), value, genTime));
                 }
             }
 
