@@ -1,128 +1,151 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~  Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
-  ~   
-  ~  Licensed under the Apache License, Version 2.0 (the "License");
-  ~  you may not use this file except in compliance with the License.
-  ~  You may obtain a copy of the License at
-  ~  
-  ~       http://www.apache.org/licenses/LICENSE-2.0
-  ~  
-  ~  Unless required by applicable law or agreed to in writing, software
-  ~  distributed under the License is distributed on an "AS IS" BASIS,
-  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~  See the License for the specific language governing permissions and
-  ~  limitations under the License.
-  -->
+<!-- ~ Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu) ~ ~ Licensed 
+	under the Apache License, Version 2.0 (the "License"); ~ you may not use 
+	this file except in compliance with the License. ~ You may obtain a copy 
+	of the License at ~ ~ http://www.apache.org/licenses/LICENSE-2.0 ~ ~ Unless 
+	required by applicable law or agreed to in writing, software ~ distributed 
+	under the License is distributed on an "AS IS" BASIS, ~ WITHOUT WARRANTIES 
+	OR CONDITIONS OF ANY KIND, either express or implied. ~ See the License for 
+	the specific language governing permissions and ~ limitations under the License. -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <!--The identifier of the parent POM-->
-    <parent>
-        <groupId>eu.dariolucia.ccsds</groupId>
-        <artifactId>eu.dariolucia.ccsds</artifactId>
-        <version>0.3.0-SNAPSHOT</version>
-    </parent>
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<!--The identifier of the parent POM -->
+	<parent>
+		<groupId>eu.dariolucia.ccsds</groupId>
+		<artifactId>eu.dariolucia.ccsds</artifactId>
+		<version>0.3.0-SNAPSHOT</version>
+	</parent>
 
-    <modelVersion>4.0.0</modelVersion>
-    <artifactId>eu.dariolucia.ccsds.sle.utl</artifactId>
-    <packaging>bundle</packaging>
-    <name>CCSDS SLE User Library</name>
-    <description>Library implementing the user role of the CCSDS SLE standards RAF, RCF, ROCF, CLTU.</description>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>eu.dariolucia.ccsds.sle.utl</artifactId>
+	<packaging>bundle</packaging>
+	<name>CCSDS SLE User Library</name>
+	<description>Library implementing the user role of the CCSDS SLE standards RAF, RCF, ROCF, CLTU.</description>
 
-    <build>
-        <plugins>
-            <!-- ASN.1 generation -->
-            <plugin>
-                <artifactId>exec-maven-plugin</artifactId>
-                <groupId>org.codehaus.mojo</groupId>
-                <version>1.6.0</version>
-                <executions>
-                    <execution>
-                        <id>Generate ASN.1</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                        <configuration>
-                            <mainClass>com.beanit.jasn1.compiler.Compiler</mainClass>
-                            <arguments>
-                                <argument>-f</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-CLTU-INCOMING-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-CLTU-OUTGOING-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-CLTU-STRUCTURES.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-FSP-INCOMING-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-FSP-OUTGOING-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-FSP-STRUCTURES.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RAF-INCOMING-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RAF-OUTGOING-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RAF-STRUCTURES.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RCF-INCOMING-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RCF-OUTGOING-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RCF-STRUCTURES.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-ROCF-INCOMING-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-ROCF-OUTGOING-PDUS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-ROCF-STRUCTURES.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-ISP1-CREDENTIALS.asn</argument>
-                                <argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-SERVICE-INSTANCE-ID.asn</argument>
-                                <argument>-o</argument>
-                                <argument>${basedir}/target/generated-sources</argument>
-                                <argument>-p</argument>
-                                <argument>eu.dariolucia.ccsds.sle.generated</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- Add generated sources to the build path -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>build-helper-maven-plugin</artifactId>
-                <version>3.0.0</version>
-                <executions>
-                    <execution>
-                        <id>add-source</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                        </goals>
-                        <configuration>
-                            <sources>
-                                <source>${project.build.directory}/generated-sources</source>
-                            </sources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+	<build>
+		<plugins>
+			<!-- ASN.1 generation -->
+			<plugin>
+				<artifactId>exec-maven-plugin</artifactId>
+				<groupId>org.codehaus.mojo</groupId>
+				<version>1.6.0</version>
+				<executions>
+					<execution>
+						<id>Generate ASN.1</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						<configuration>
+							<mainClass>com.beanit.jasn1.compiler.Compiler</mainClass>
+							<arguments>
+								<argument>-f</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-BIND-TYPES.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-CLTU-INCOMING-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-CLTU-OUTGOING-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-CLTU-STRUCTURES.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-COMMON-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-COMMON-TYPES.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-FSP-INCOMING-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-FSP-OUTGOING-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-FSP-STRUCTURES.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RAF-INCOMING-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RAF-OUTGOING-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RAF-STRUCTURES.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RCF-INCOMING-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RCF-OUTGOING-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-RCF-STRUCTURES.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-ROCF-INCOMING-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-ROCF-OUTGOING-PDUS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-ROCF-STRUCTURES.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-ISP1-CREDENTIALS.asn</argument>
+								<argument>${basedir}/asn1/CCSDS-SLE-TRANSFER-SERVICE-SERVICE-INSTANCE-ID.asn</argument>
+								<argument>-o</argument>
+								<argument>${basedir}/target/generated-sources</argument>
+								<argument>-p</argument>
+								<argument>eu.dariolucia.ccsds.sle.generated</argument>
+							</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Add generated sources to the build path -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<id>add-source</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>add-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>${project.build.directory}/generated-sources</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.codehaus.mojo</groupId>
+										<artifactId>exec-maven-plugin</artifactId>
+										<versionRange>[1.6.0,)</versionRange>
+										<goals>
+											<goal>java</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute />
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
 
-    <dependencies>
-        <dependency>
-            <groupId>antlr</groupId>
-            <artifactId>antlr</artifactId>
-            <version>${antlr.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.beanit</groupId>
-            <artifactId>jasn1-compiler</artifactId>
-            <version>${jasn1.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.beanit</groupId>
-            <artifactId>jasn1</artifactId>
-            <version>${jasn1.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jaxb</groupId>
-            <artifactId>jaxb-runtime</artifactId>
-            <version>${jaxb.version}</version>
-        </dependency>
-    </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>antlr</groupId>
+			<artifactId>antlr</artifactId>
+			<version>${antlr.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.beanit</groupId>
+			<artifactId>jasn1-compiler</artifactId>
+			<version>${jasn1.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.beanit</groupId>
+			<artifactId>jasn1</artifactId>
+			<version>${jasn1.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+			<version>${jaxb.version}</version>
+		</dependency>
+	</dependencies>
 </project>
