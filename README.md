@@ -5,6 +5,8 @@
 [<img src="https://img.shields.io/sonar/quality_gate/eu.dariolucia.ccsds:eu.dariolucia.ccsds?server=https%3A%2F%2Fsonarcloud.io&style=flat">](https://sonarcloud.io/dashboard?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds)
 
 # An open source implementation of CCSDS protocols and formats in Java 11
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdariol83%2Fccsds.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdariol83%2Fccsds?ref=badge_shield)
+
 This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS, Space Packet) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
 
 Stable releases are published on Maven Central. The latest code version is always available on the master branch here on GitHub.
@@ -79,6 +81,9 @@ A copy of the relevant licenses must be provided: I usually include the relevant
 
 If by any chance I forgot/missed to provide due credits to authors or I made inappropriate use of any license terms, please contact me here on GitHub.
 
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fdariol83%2Fccsds.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fdariol83%2Fccsds?ref=badge_large)
+
 # Acknowledgements
 I would like to thank the people behind the following technologies/libraries, which the code in this repository depends on. 
 Too often we give things for granted, forgetting the amazing amount of work that people spend everyday to deliver good resources, efficient code and effective solutions to everybody free of charge:
@@ -103,4 +108,4 @@ If you find any issue with the provided code or you would like to see a specific
 If you spot and fix any issue by using the provided code, please consider contributing back to the project, by raising the issue on 
 GitHub, hopefully with your solution attached and/or a pull request :)
 
-I am not looking for active contributors, because I would pretend from them the same goals I set a few paragraphs above. However, if you want to actively contribute to this project and you think you can accept my way of dealing with the code, please contact me :) 
+I am not looking for active contributors, because I would pretend from them the same goals I set a few paragraphs above. However, if you want to actively contribute to this project and you think you can accept my way of dealing with the code, please contact me :)
