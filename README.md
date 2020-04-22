@@ -3,6 +3,7 @@
 [<img src="https://img.shields.io/sonar/violations/eu.dariolucia.ccsds:eu.dariolucia.ccsds?format=long&server=https%3A%2F%2Fsonarcloud.io&style=flat">](https://sonarcloud.io/project/issues?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds&resolved=false)
 [<img src="https://img.shields.io/sonar/coverage/eu.dariolucia.ccsds:eu.dariolucia.ccsds?server=https%3A%2F%2Fsonarcloud.io&style=flat">](https://sonarcloud.io/component_measures?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds&metric=coverage&view=list)
 [<img src="https://img.shields.io/sonar/quality_gate/eu.dariolucia.ccsds:eu.dariolucia.ccsds?server=https%3A%2F%2Fsonarcloud.io&style=flat">](https://sonarcloud.io/dashboard?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fdariol83%2Fccsds.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fdariol83%2Fccsds?ref=badge_shield)
 
 # An open source implementation of CCSDS protocols and formats in Java 11
 This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS, Space Packet) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
