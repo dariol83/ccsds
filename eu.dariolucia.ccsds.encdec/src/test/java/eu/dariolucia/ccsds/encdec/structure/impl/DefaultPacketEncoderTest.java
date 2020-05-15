@@ -19,10 +19,8 @@ package eu.dariolucia.ccsds.encdec.structure.impl;
 import eu.dariolucia.ccsds.encdec.bit.BitEncoderDecoder;
 import eu.dariolucia.ccsds.encdec.definition.Definition;
 import eu.dariolucia.ccsds.encdec.structure.EncodingException;
-import eu.dariolucia.ccsds.encdec.structure.resolvers.DefaultNullBasedResolver;
-import eu.dariolucia.ccsds.encdec.structure.resolvers.DefinitionValueBasedResolver;
-import eu.dariolucia.ccsds.encdec.structure.resolvers.IdentificationFieldBasedResolver;
-import eu.dariolucia.ccsds.encdec.structure.resolvers.PathLocationBasedResolver;
+import eu.dariolucia.ccsds.encdec.structure.PathLocation;
+import eu.dariolucia.ccsds.encdec.structure.resolvers.*;
 import eu.dariolucia.ccsds.encdec.value.BitString;
 import eu.dariolucia.ccsds.encdec.value.MilUtil;
 import eu.dariolucia.ccsds.encdec.value.TimeUtil;
@@ -31,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
@@ -549,5 +548,164 @@ class DefaultPacketEncoderTest {
 
         // First 12 bytes all zeroes
         assertArrayEquals(new byte[12], Arrays.copyOfRange(encoded, 0, 12));
+    }
+
+    @Test
+    public void testDefinitionWithDefaultFallback() throws IOException, EncodingException {
+        InputStream defStr = this.getClass().getClassLoader().getResourceAsStream("definitions10.xml");
+        assertNotNull(defStr);
+        Definition d = Definition.load(defStr);
+
+        DefaultPacketEncoder encoder = new DefaultPacketEncoder(d);
+        // Define the resolver map
+        Map<String, Object> map = new TreeMap<>();
+        map.put("DEF1.PARAM1", 2);
+        map.put("DEF1.PARAM2", 124.25f);
+        map.put("DEF1.PARAM3", 61);
+        map.put("DEF1.PARAM4", true);
+        map.put("DEF1.PARAM5", false);
+        map.put("DEF1.PARAM6", new BitString(new byte[] {0x05, 0x51}, 13));
+        map.put("DEF1.PARAM7", new byte[] {0x23, 0x12, (byte) 0x92});
+        map.put("DEF1.PARAM8", "Hello01");
+        map.put("DEF1.PARAM9", true);
+        map.put("DEF1.PARAM10", Instant.ofEpochSecond(123456789, 123456789));
+        map.put("DEF1.PARAM11", Duration.ofSeconds(1234, 91156789));
+        map.put("DEF1.PARAM12", 7);
+        // Now we can encode
+        byte[] encoded = encoder.encode("DEF1", new DefaultValueFallbackResolver(new PathLocationBasedResolver(map)));
+        assertEquals(26, encoded.length);
+
+        // The final byte array should be the following
+        byte[] expected = new byte[] {
+                0b01001000, // 3 bits int + float
+                0b01011111, // float
+                0b00010000, // float
+                0b00000000, // float
+                0b00011110, // float + 6 bits (5) uint
+                (byte) 0b11000000, // 6 bits (1) unit + bool + bool + bitstring
+                (byte) 0b10101010, // bitstring
+                0b00100011, // byte string
+                0b00010010, // byte string
+                (byte) 0b10010010, // byte string
+                0x48, // char string
+                0x65, // char string
+                0x6c, // char string
+                0x6c, // char string
+                0x6f, // char string
+                0x30, // char string
+                0x31, // char string
+                (byte) 0b10001011, // absolute time
+                0b01011001, // absolute time
+                (byte) 0b10000010, // absolute time
+                0b01001111, // absolute time
+                (byte) 0b11110101, // absolute time
+                0b01000001, // absolute time
+                (byte) 0b11101001, // boolean bit + bit at idx 1 and the next 15 bits are the duration
+                0b00001011, // duration
+                (byte) 0b11110000 // duration + uint 3 bits + padding
+        };
+
+        assertArrayEquals(expected, encoded);
+
+        // Define the resolver map
+        map.clear();
+        map.put("DEF1.PARAM2", 124.25f);
+        map.put("DEF1.PARAM3", 61);
+        map.put("DEF1.PARAM4", true);
+        map.put("DEF1.PARAM5", false);
+        map.put("DEF1.PARAM6", new BitString(new byte[] {0x05, 0x51}, 13));
+        map.put("DEF1.PARAM7", new byte[] {0x23, 0x12, (byte) 0x92});
+        map.put("DEF1.PARAM9", true);
+        map.put("DEF1.PARAM10", Instant.ofEpochSecond(123456789, 123456789));
+        map.put("DEF1.PARAM11", Duration.ofSeconds(1234, 91156789));
+        map.put("DEF1.PARAM12", 7);
+        // Now we can encode, not checking, just the length
+        encoded = encoder.encode("DEF1", new DefaultValueFallbackResolver(new PathLocationBasedResolver(map)));
+        assertEquals(26, encoded.length);
+
+        // Define the resolver map
+        map.clear();
+        map.put("DEF1.PARAM2", 124.25f);
+        map.put("DEF1.PARAM3", 61);
+        map.put("DEF1.PARAM4", true);
+        map.put("DEF1.PARAM5", false);
+        map.put("DEF1.PARAM6", new BitString(new byte[] {0x05, 0x51}, 13));
+        map.put("DEF1.PARAM7", new byte[] {0x23, 0x12, (byte) 0x92});
+        map.put("DEF1.PARAM8", "Hello01");
+        map.put("DEF1.PARAM9", true);
+        map.put("DEF1.PARAM10", Instant.ofEpochSecond(123456789, 123456789));
+        map.put("DEF1.PARAM11", Duration.ofSeconds(1234, 91156789));
+        // Now we can encode, error expected
+        try {
+            encoded = encoder.encode("DEF1", new DefaultValueFallbackResolver(new PathLocationBasedResolver(map)));
+            fail("EncodingException expected");
+        } catch (EncodingException e) {
+            // good
+        }
+
+        // Define the resolver map
+        map.clear();
+        map.put("DEF1.PARAM2", 124.25f);
+        map.put("DEF1.PARAM3", 61);
+        map.put("DEF1.PARAM4", true);
+        map.put("DEF1.PARAM5", false);
+        map.put("DEF1.PARAM8", "Hello01");
+        map.put("DEF1.PARAM9", true);
+        map.put("DEF1.PARAM10", Instant.ofEpochSecond(123456789, 123456789));
+        map.put("DEF1.PARAM11", Duration.ofSeconds(1234, 91156789));
+        map.put("DEF1.PARAM12", 7);
+        // Now we can encode, error expected
+        try {
+            encoded = encoder.encode("DEF1", new DefaultValueFallbackResolver(new PathLocationBasedResolver(map)));
+            fail("EncodingException expected");
+        } catch (EncodingException e) {
+            // good
+        }
+
+        // Define the resolver map
+        map.clear();
+        map.put("DEF1.PARAM3", 61);
+        map.put("DEF1.PARAM4", true);
+        map.put("DEF1.PARAM5", false);
+        map.put("DEF1.PARAM6", new BitString(new byte[] {0x05, 0x51}, 13));
+        map.put("DEF1.PARAM7", new byte[] {0x23, 0x12, (byte) 0x92});
+        map.put("DEF1.PARAM8", "Hello01");
+        map.put("DEF1.PARAM9", true);
+        map.put("DEF1.PARAM10", Instant.ofEpochSecond(123456789, 123456789));
+        map.put("DEF1.PARAM11", Duration.ofSeconds(1234, 91156789));
+        map.put("DEF1.PARAM12", 7);
+        // Now we can encode, error expected
+        try {
+            encoded = encoder.encode("DEF1", new DefaultValueFallbackResolver(new PathLocationBasedResolver(map)));
+            fail("EncodingException expected");
+        } catch (EncodingException e) {
+            // good
+        }
+
+        // Define the resolver map
+        map.clear();
+        map.put("DEF1.PARAM2", 124.25f);
+        map.put("DEF1.PARAM3", 61);
+        map.put("DEF1.PARAM4", true);
+        map.put("DEF1.PARAM5", false);
+        map.put("DEF1.PARAM6", new BitString(new byte[] {0x05, 0x51}, 13));
+        map.put("DEF1.PARAM8", "Hello01");
+        map.put("DEF1.PARAM9", true);
+        map.put("DEF1.PARAM10", Instant.ofEpochSecond(123456789, 123456789));
+        map.put("DEF1.PARAM11", Duration.ofSeconds(1234, 91156789));
+        map.put("DEF1.PARAM12", 7);
+        map.put("hello", 133);
+        // Now we can encode, error expected
+        try {
+            encoded = encoder.encode("DEF1", new DefaultValueFallbackResolver(new PathLocationBasedResolver(map)));
+            fail("EncodingException expected");
+        } catch (EncodingException e) {
+            // good
+        }
+
+        DefaultValueFallbackResolver rs = new DefaultValueFallbackResolver(new PathLocationBasedResolver(map));
+        rs.getAbsoluteTimeDescriptor(null, PathLocation.of("hello"), Instant.now());
+        rs.getRelativeTimeDescriptor(null, PathLocation.of("hello"), Duration.parse("PT9M"));
+        rs.getExtensionValue(null, PathLocation.of("hello"));
     }
 }

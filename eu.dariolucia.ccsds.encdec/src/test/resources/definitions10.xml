@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  ~   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~   Licensed under the Apache License, Version 2.0 (the "License");
+  ~   you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  -->
+
+<ns1:packet_definitions xmlns:ns1="http://dariolucia.eu/ccsds/encdec">
+    <packets>
+        <packet id="DEF1">
+            <structure>
+                <!-- Signed integer 3 bits: 3 -->
+                <parameter id="PARAM1">
+                    <type_fixed type="SIGNED_INTEGER" length="3" />
+                    <value>2</value>
+                </parameter>
+                <!-- Float 32 bits: 35 -->
+                <parameter id="PARAM2">
+                    <type_fixed type="REAL" length="1" />
+                    <value>13.3aaaaad</value>
+                </parameter>
+                <!-- Unsigned integer 6 bits: 41 -->
+                <parameter id="PARAM3">
+                    <type_fixed type="UNSIGNED_INTEGER" length="6" />
+                    <value>20</value>
+                </parameter>
+                <!-- Boolean 1 bit: 42 -->
+                <parameter id="PARAM4">
+                    <type_fixed type="BOOLEAN" length="0" />
+                    <value>false</value>
+                </parameter>
+                <!-- Boolean 1 bit: 43 -->
+                <parameter id="PARAM5">
+                    <type_fixed type="BOOLEAN" length="0" />
+                    <value>true</value>
+                </parameter>
+                <!-- Bitstring 13 bits: 56 -->
+                <parameter id="PARAM6">
+                    <type_fixed type="BIT_STRING" length="13" />
+                </parameter>
+                <!-- Octet string 3 bytes: 80 -->
+                <parameter id="PARAM7">
+                    <type_fixed type="OCTET_STRING" length="3" />
+                    <value>AABBCCk</value>
+                </parameter>
+                <!-- Char string 7 bytes: 136 -->
+                <parameter id="PARAM8">
+                    <type_fixed type="CHARACTER_STRING" length="7" />
+                    <value>abcdefg</value>
+                </parameter>
+                <!-- Boolean 1 bit: 137 -->
+                <parameter id="PARAM9">
+                    <type_fixed type="BOOLEAN" length="0" />
+                    <value>true</value>
+                </parameter>
+                <!-- Absolute time 6 bytes: 185 -->
+                <parameter id="PARAM10">
+                    <type_fixed type="ABSOLUTE_TIME" length="1" />
+                    <value>2020-10-10T06:08:19.83Z</value>
+                </parameter>
+                <!-- Relative time 2 bytes: 201 -->
+                <parameter id="PARAM11">
+                    <type_fixed type="RELATIVE_TIME" length="2" />
+                    <value>PT10M</value>
+                </parameter>
+                <!-- Signed integer 3 bits: 204 -->
+                <parameter id="PARAM12">
+                    <type_fixed type="UNSIGNED_INTEGER" length="3" />
+                </parameter>
+            </structure>
+        </packet>
+    </packets>
+
+    <parameters>
+        <parameter id="PARAM001" external_id="1234" description="Sample Parameter 1">
+            <type type="UNSIGNED_INTEGER" length="7" />
+        </parameter>
+        <parameter id="PARAM002" external_id="1235" description="Sample Parameter 2">
+            <type type="SIGNED_INTEGER" length="3" />
+        </parameter>
+        <parameter id="PARAM002" external_id="1236" description="Sample Parameter 3">
+            <type type="REAL" length="1" />
+        </parameter>
+    </parameters>
+
+</ns1:packet_definitions>
