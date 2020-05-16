@@ -81,7 +81,7 @@ public class CltuTest {
         // Bind
         cltuUser.bind(2);
         AwaitUtil.await(2000);
-        AwaitUtil.awaitCondition(2000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuUser.getCurrentBindingState());
         assertEquals(1, recorder.getPduReceived().size());
         assertTrue(recorder.getPduReceived().get(0) instanceof SleBindReturn);
@@ -185,97 +185,97 @@ public class CltuTest {
 
         // Ask for schedule status report (immediate): expect a positive return and a report
         cltuUser.scheduleStatusReport(false, null);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
         // Ask for parameter bit lock required: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.BIT_LOCK_REQUIRED);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParBitLockRequired().getParameterValue().intValue());
 
         // Ask for parameter rf available required: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.RF_AVAILABLE_REQUIRED);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParRfAvailableRequired().getParameterValue().intValue());
 
         // Ask for parameter delivery mode: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.DELIVERY_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(3, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParDeliveryMode().getParameterValue().intValue());
 
         // Ask for parameter expected SLDU ID: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.EXPECTED_SLDU_IDENTIFICATION);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParCltuIdentification().getParameterValue().intValue());
 
         // Ask for parameter expected event ID: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.EXPECTED_EVENT_INVOCATION_IDENTIFICATION);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParEventInvocationIdentification().getParameterValue().intValue());
 
         // Ask for parameter max CLTU length: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MAXIMUM_SLDU_LENGTH);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1000, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParMaximumCltuLength().getParameterValue().intValue());
 
         // Ask for parameter modulation frequency: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MODULATION_FREQUENCY);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(700, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParModulationFrequency().getParameterValue().intValue());
 
         // Ask for parameter modulation index: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MODULATION_INDEX);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(10, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParModulationIndex().getParameterValue().intValue());
 
         // Ask for parameter PLOP in effect: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.PLOP_IN_EFFECT);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPlopInEffect().getParameterValue().intValue());
 
         // Ask for parameter subcarrier to bitrate ratio: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.SUBCARRIER_TO_BITRATE_RATIO);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParSubcarrierToBitRateRatio().getParameterValue().intValue());
 
         // Ask for parameter return timeout: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.RETURN_TIMEOUT_PERIOD);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(120, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue());
 
         // Ask for parameter reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOff());
 
         // Ask for parameter min reporting cycle: expect negative return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MIN_REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getNegativeResult().getSpecific().intValue());
 
@@ -283,7 +283,7 @@ public class CltuTest {
         recorder.getPduReceived().clear();
         cltuUser.scheduleStatusReport(false, 5);
 
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
         AwaitUtil.awaitCondition(6000, () -> recorder.getPduReceived().size() == 3);
@@ -292,23 +292,23 @@ public class CltuTest {
         // Ask for parameter reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(5, ((CltuGetParameterReturnV1toV3) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOn().intValue());
 
         // Stop status report
         recorder.getPduReceived().clear();
         cltuUser.scheduleStatusReport(true, null);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
         cltuUser.unbind(UnbindReasonEnum.END);
 
-        AwaitUtil.awaitCondition(2000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuProvider.getCurrentBindingState());
 
         cltuUser.dispose();
@@ -341,140 +341,140 @@ public class CltuTest {
 
         // Ask for schedule status report (immediate): expect a positive return and a report
         cltuUser.scheduleStatusReport(false, null);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
 
         // Ask for parameter bit lock required: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.BIT_LOCK_REQUIRED);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParBitLockRequired().getParameterValue().intValue());
 
         // Ask for parameter rf available required: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.RF_AVAILABLE_REQUIRED);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParRfAvailableRequired().getParameterValue().intValue());
 
         // Ask for parameter delivery mode: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.DELIVERY_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(3, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParDeliveryMode().getParameterValue().intValue());
 
         // Ask for parameter expected SLDU ID: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.EXPECTED_SLDU_IDENTIFICATION);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParCltuIdentification().getParameterValue().intValue());
 
         // Ask for parameter expected event ID: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.EXPECTED_EVENT_INVOCATION_IDENTIFICATION);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParEventInvocationIdentification().getParameterValue().intValue());
 
         // Ask for parameter max CLTU length: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MAXIMUM_SLDU_LENGTH);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1000, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParMaximumCltuLength().getParameterValue().intValue());
 
         // Ask for parameter modulation frequency: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MODULATION_FREQUENCY);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(700, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParModulationFrequency().getParameterValue().intValue());
 
         // Ask for parameter modulation index: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MODULATION_INDEX);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(10, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParModulationIndex().getParameterValue().intValue());
 
         // Ask for parameter PLOP in effect: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.PLOP_IN_EFFECT);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPlopInEffect().getParameterValue().intValue());
 
         // Ask for parameter subcarrier to bitrate ratio: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.SUBCARRIER_TO_BITRATE_RATIO);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParSubcarrierToBitRateRatio().getParameterValue().intValue());
 
         // Ask for parameter return timeout: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.RETURN_TIMEOUT_PERIOD);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(120, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue());
 
         // Ask for parameter reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOff());
 
         // Ask for parameter acquisition sequence length: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.ACQUISITION_SEQUENCE_LENGTH);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(100, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParAcquisitionSequenceLength().getParameterValue().intValue());
 
         // Ask for parameter CLCW physical channel: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.CLCW_PHYSICAL_CHANNEL);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals("CLCW_PH_CH", ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParClcwPhysicalChannel().getParameterValue().toString());
 
         // Ask for parameter minimum delay: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MINIMUM_DELAY_TIME);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(5000, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParMinimumDelayTime().getParameterValue().intValue());
 
         // Ask for parameter notification mode: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.NOTIFICATION_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(CltuNotificationModeEnum.IMMEDIATE.ordinal(), ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParNotificationMode().getParameterValue().intValue());
 
         // Ask for parameter PLOP1 idle sequence length: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.PLOP1_IDLE_SEQUENCE_LENGTH);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(40, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPlop1IdleSequenceLength().getParameterValue().intValue());
 
         // Ask for parameter protocol abort mode: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.PROTOCOL_ABORT_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(CltuProtocolAbortModeEnum.ABORT_MODE.ordinal(), ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParProtocolAbortMode().getParameterValue().intValue());
 
         // Ask for parameter min reporting cycle: expect negative return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MIN_REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getNegativeResult().getSpecific().intValue());
 
@@ -482,7 +482,7 @@ public class CltuTest {
         recorder.getPduReceived().clear();
         cltuUser.scheduleStatusReport(false, 5);
 
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
         AwaitUtil.awaitCondition(6000, () -> recorder.getPduReceived().size() == 3);
@@ -491,23 +491,23 @@ public class CltuTest {
         // Ask for parameter reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(5, ((CltuGetParameterReturnV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOn().intValue());
 
         // Stop status report
         recorder.getPduReceived().clear();
         cltuUser.scheduleStatusReport(true, null);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
         cltuUser.unbind(UnbindReasonEnum.END);
 
-        AwaitUtil.awaitCondition(2000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuProvider.getCurrentBindingState());
 
         assertDoesNotThrow(() -> recorder.getStates().get(0).toString());
@@ -542,140 +542,140 @@ public class CltuTest {
 
         // Ask for schedule status report (immediate): expect a positive return and a report
         cltuUser.scheduleStatusReport(false, null);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
 
         // Ask for parameter bit lock required: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.BIT_LOCK_REQUIRED);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParBitLockRequired().getParameterValue().intValue());
 
         // Ask for parameter rf available required: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.RF_AVAILABLE_REQUIRED);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParRfAvailableRequired().getParameterValue().intValue());
 
         // Ask for parameter delivery mode: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.DELIVERY_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(3, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParDeliveryMode().getParameterValue().intValue());
 
         // Ask for parameter expected SLDU ID: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.EXPECTED_SLDU_IDENTIFICATION);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParCltuIdentification().getParameterValue().intValue());
 
         // Ask for parameter expected event ID: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.EXPECTED_EVENT_INVOCATION_IDENTIFICATION);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParEventInvocationIdentification().getParameterValue().intValue());
 
         // Ask for parameter max CLTU length: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MAXIMUM_SLDU_LENGTH);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1000, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParMaximumCltuLength().getParameterValue().intValue());
 
         // Ask for parameter modulation frequency: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MODULATION_FREQUENCY);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(700, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParModulationFrequency().getParameterValue().intValue());
 
         // Ask for parameter modulation index: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MODULATION_INDEX);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(10, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParModulationIndex().getParameterValue().intValue());
 
         // Ask for parameter PLOP in effect: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.PLOP_IN_EFFECT);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPlopInEffect().getParameterValue().intValue());
 
         // Ask for parameter subcarrier to bitrate ratio: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.SUBCARRIER_TO_BITRATE_RATIO);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParSubcarrierToBitRateRatio().getParameterValue().intValue());
 
         // Ask for parameter return timeout: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.RETURN_TIMEOUT_PERIOD);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(120, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue());
 
         // Ask for parameter reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOff());
 
         // Ask for parameter acquisition sequence length: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.ACQUISITION_SEQUENCE_LENGTH);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(100, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParAcquisitionSequenceLength().getParameterValue().intValue());
 
         // Ask for parameter CLCW physical channel: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.CLCW_PHYSICAL_CHANNEL);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals("CLCW_PH_CH", ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParClcwPhysicalChannel().getParameterValue().getConfigured().toString());
 
         // Ask for parameter minimum delay: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MINIMUM_DELAY_TIME);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(5000, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParMinimumDelayTime().getParameterValue().intValue());
 
         // Ask for parameter notification mode: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.NOTIFICATION_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(CltuNotificationModeEnum.IMMEDIATE.ordinal(), ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParNotificationMode().getParameterValue().intValue());
 
         // Ask for parameter PLOP1 idle sequence length: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.PLOP1_IDLE_SEQUENCE_LENGTH);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(40, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPlop1IdleSequenceLength().getParameterValue().intValue());
 
         // Ask for parameter protocol abort mode: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.PROTOCOL_ABORT_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(CltuProtocolAbortModeEnum.ABORT_MODE.ordinal(), ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParProtocolAbortMode().getParameterValue().intValue());
 
         // Ask for parameter CLCW global VC ID: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.CLCW_GLOBAL_VCID);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParClcwGlobalVcId().getParameterValue().getCongigured());
         assertEquals(100, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParClcwGlobalVcId().getParameterValue().getCongigured().getSpacecraftId().intValue());
@@ -685,7 +685,7 @@ public class CltuTest {
         // Ask for parameter min reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.MIN_REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParMinReportingCycle().getParameterValue().intValue());
 
@@ -693,7 +693,7 @@ public class CltuTest {
         recorder.getPduReceived().clear();
         cltuUser.scheduleStatusReport(false, 5);
 
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
         AwaitUtil.awaitCondition(6000, () -> recorder.getPduReceived().size() == 3);
@@ -702,23 +702,23 @@ public class CltuTest {
         // Ask for parameter reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         cltuUser.getParameter(CltuParameterEnum.REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(5, ((CltuGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOn().intValue());
 
         // Stop status report
         recorder.getPduReceived().clear();
         cltuUser.scheduleStatusReport(true, null);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
         cltuUser.unbind(UnbindReasonEnum.END);
 
-        AwaitUtil.awaitCondition(2000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuProvider.getCurrentBindingState());
 
         cltuUser.dispose();
@@ -757,7 +757,7 @@ public class CltuTest {
         recorder.getPduSent().clear();
         recorder.getPduReceived().clear();
         cltuUser.start(1);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, recorder.getPduSent().size());
         assertNotNull(((CltuStartReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
@@ -766,7 +766,7 @@ public class CltuTest {
         recorder.getPduSent().clear();
         recorder.getPduReceived().clear();
         cltuUser.scheduleStatusReport(true, 20);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, recorder.getPduSent().size());
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
@@ -775,9 +775,9 @@ public class CltuTest {
         recorder.getPduSent().clear();
         recorder.getPduReceived().clear();
         cltuUser.unbind(UnbindReasonEnum.END);
-        AwaitUtil.awaitCondition(2000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuProvider.getCurrentBindingState());
 
         cltuUser.dispose();
@@ -846,14 +846,14 @@ public class CltuTest {
         // Start
         recorder.getPduReceived().clear();
         cltuUser.start(1);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((CltuStartReturn)recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Simulate lock and production status change
         recorder.getPduReceived().clear();
         cltuProvider.updateProductionStatus(CltuProductionStatusEnum.OPERATIONAL, CltuUplinkStatusEnum.NOMINAL, 16000);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(CltuProductionStatusEnum.OPERATIONAL.ordinal(), ((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getProductionStatus().intValue());
         assertNotNull(((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getCltuNotification().getProductionOperational());
@@ -861,7 +861,7 @@ public class CltuTest {
         // Send a transfer data (it will fail because there is no handler)
         recorder.getPduReceived().clear();
         cltuUser.transferData(1, new Date(), new Date(System.currentTimeMillis() + 300000), 50000, true, new byte[] {0x00, 0x00, 0x00, 0x00});
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
         assertEquals(16000, ((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getCltuBufferAvailable().intValue());
@@ -889,7 +889,7 @@ public class CltuTest {
         // Send a transfer data (it will succeed): you will get positive return, async notify and buffer empty notification
         recorder.getPduReceived().clear();
         cltuUser.transferData(1, new Date(), new Date(System.currentTimeMillis() + 300000), 50000, true, new byte[] {0x00, 0x00, 0x00, 0x00});
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 3);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 3);
         assertEquals(3, recorder.getPduReceived().size());
         assertNotNull(((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
         assertEquals(15400, ((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getCltuBufferAvailable().intValue());
@@ -918,7 +918,7 @@ public class CltuTest {
         // Send a transfer data (it will succeed): you will get positive return, async notify and buffer empty notification
         recorder.getPduReceived().clear();
         cltuUser.transferData(2, new Date(), new Date(System.currentTimeMillis() + 1000), 50000, true, new byte[] {0x00, 0x00, 0x00, 0x00});
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 3);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 3);
         assertEquals(3, recorder.getPduReceived().size());
         assertNotNull(((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
         assertEquals(15400, ((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getCltuBufferAvailable().intValue());
@@ -929,7 +929,7 @@ public class CltuTest {
         // Send production status update
         recorder.getPduReceived().clear();
         cltuProvider.updateProductionStatus(CltuProductionStatusEnum.INTERRUPTED, CltuUplinkStatusEnum.NO_BIT_LOCK, 16000);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(CltuProductionStatusEnum.INTERRUPTED.ordinal(), ((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getProductionStatus().intValue());
         assertNotNull(((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getCltuNotification().getProductionInterrupted());
@@ -937,7 +937,7 @@ public class CltuTest {
         // Send production status update
         recorder.getPduReceived().clear();
         cltuProvider.updateProductionStatus(CltuProductionStatusEnum.HALTED, CltuUplinkStatusEnum.NO_RF_AVAILABLE, 16000);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(CltuProductionStatusEnum.HALTED.ordinal(), ((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getProductionStatus().intValue());
         assertNotNull(((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getCltuNotification().getProductionHalted());
@@ -945,14 +945,14 @@ public class CltuTest {
         // Stop
         recorder.getPduReceived().clear();
         cltuUser.stop();
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((SleAcknowledgement)recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Throw event (it will fail because of no handler)
         recorder.getPduReceived().clear();
         cltuUser.throwEvent(0, 100, new byte[] { 0x00, 0x00 });
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
         assertEquals(0, ((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getEventInvocationIdentification().intValue());
@@ -974,7 +974,7 @@ public class CltuTest {
         // Throw event (it will succeed)
         recorder.getPduReceived().clear();
         cltuUser.throwEvent(0, 100, new byte[] { 0x00, 0x00 });
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
         assertNotNull(((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
         assertEquals(1, ((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getEventInvocationIdentification().intValue());
@@ -997,7 +997,7 @@ public class CltuTest {
         // Throw event (it will succeed)
         recorder.getPduReceived().clear();
         cltuUser.throwEvent(1, 100, new byte[] { 0x00, 0x00 });
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
         assertNotNull(((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
         assertEquals(2, ((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getEventInvocationIdentification().intValue());
@@ -1020,7 +1020,7 @@ public class CltuTest {
         // Throw event (it will succeed)
         recorder.getPduReceived().clear();
         cltuUser.throwEvent(2, 100, new byte[] { 0x00, 0x00 });
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
         assertNotNull(((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
         assertEquals(3, ((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getEventInvocationIdentification().intValue());
@@ -1029,9 +1029,9 @@ public class CltuTest {
         // Unbind
         cltuUser.unbind(UnbindReasonEnum.END);
 
-        AwaitUtil.awaitCondition(2000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuProvider.getCurrentBindingState());
 
         cltuUser.dispose();

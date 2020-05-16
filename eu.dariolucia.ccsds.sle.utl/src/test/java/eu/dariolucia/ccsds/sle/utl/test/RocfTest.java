@@ -80,9 +80,9 @@ public class RocfTest {
 
         rocfProvider.bind(2);
 
-        AwaitUtil.awaitCondition(2000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
+        AwaitUtil.awaitCondition(4000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
         assertEquals(ServiceInstanceBindingStateEnum.READY, rocfUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
+        AwaitUtil.awaitCondition(4000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.READY);
         assertEquals(ServiceInstanceBindingStateEnum.READY, rocfProvider.getCurrentBindingState());
 
         // The next two calls must be ignored by the implementation
@@ -93,9 +93,9 @@ public class RocfTest {
 
         rocfProvider.unbind(UnbindReasonEnum.SUSPEND);
 
-        AwaitUtil.awaitCondition(2000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND_WAIT);
+        AwaitUtil.awaitCondition(4000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND_WAIT);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND_WAIT, rocfUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfProvider.getCurrentBindingState());
 
         assertFalse(recorder.getStates().isEmpty());
@@ -185,76 +185,76 @@ public class RocfTest {
 
         // Ask for schedule status report (immediate): expect a positive return and a report
         rocfUser.scheduleStatusReport(false, null);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
         // Ask for parameter transfer buffer size: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.BUFFER_SIZE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(10, ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParBufferSize().getParameterValue().intValue());
 
         // Ask for parameter delivery mode: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.DELIVERY_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(DeliveryModeEnum.TIMELY_ONLINE.ordinal(), ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParDeliveryMode().getParameterValue().intValue());
 
         // Ask for parameter latency limit: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.LATENCY_LIMIT);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(3, ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOnline().intValue());
 
         // Ask for parameter requested GVCID: expect positive return, undefined result
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_GVCID);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue().getUndefined());
 
         // Ask for parameter permitted GVCID: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.PERMITTED_GVCID_SET);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPermittedGvcidSet().getParameterValue());
 
         // Ask for parameter return timeout: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.RETURN_TIMEOUT_PERIOD);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(120, ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue());
 
         // Ask for parameter min reporting cycle: expect negative return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.MIN_REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getNegativeResult().getSpecific().intValue());
 
         // Ask for parameter permitted control word type: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.PERMITTED_CONTROL_WORD_TYPE_SET);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPermittedRprtTypeSet().getParameterValue());
 
         // Ask for parameter permitted update mode: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.PERMITTED_UPDATE_MODE_SET);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPermittedUpdModeSet().getParameterValue());
 
         // Ask for parameter permitted TC VC ID: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.PERMITTED_TC_VCID_SET);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPermittedTcVcidSet().getParameterValue());
 
@@ -262,7 +262,7 @@ public class RocfTest {
         recorder.getPduReceived().clear();
         rocfUser.scheduleStatusReport(false, 5);
 
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
         AwaitUtil.awaitCondition(6000, () -> recorder.getPduReceived().size() == 3);
@@ -271,23 +271,23 @@ public class RocfTest {
         // Ask for parameter reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(5, ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOn().intValue());
 
         // Stop status report
         recorder.getPduReceived().clear();
         rocfUser.scheduleStatusReport(true, null);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
         rocfUser.unbind(UnbindReasonEnum.END);
 
-        AwaitUtil.awaitCondition(2000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfProvider.getCurrentBindingState());
 
         rocfUser.dispose();
@@ -320,76 +320,76 @@ public class RocfTest {
 
         // Ask for schedule status report (immediate): expect a positive return and a report
         rocfUser.scheduleStatusReport(false, null);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
         // Ask for parameter transfer buffer size: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.BUFFER_SIZE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(10, ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParBufferSize().getParameterValue().intValue());
 
         // Ask for parameter delivery mode: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.DELIVERY_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(DeliveryModeEnum.TIMELY_ONLINE.ordinal(), ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParDeliveryMode().getParameterValue().intValue());
 
         // Ask for parameter latency limit: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.LATENCY_LIMIT);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(3, ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOnline().intValue());
 
         // Ask for parameter requested GVCID: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_GVCID);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue());
 
         // Ask for parameter permitted GVCID: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.PERMITTED_GVCID_SET);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPermittedGvcidSet().getParameterValue());
 
         // Ask for parameter return timeout: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.RETURN_TIMEOUT_PERIOD);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(120, ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue());
 
         // Ask for parameter min reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.MIN_REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParMinReportingCycle().getParameterValue().intValue());
 
         // Ask for parameter permitted control word type: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.PERMITTED_CONTROL_WORD_TYPE_SET);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPermittedRprtTypeSet().getParameterValue());
 
         // Ask for parameter permitted update mode: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.PERMITTED_UPDATE_MODE_SET);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPermittedUpdModeSet().getParameterValue());
 
         // Ask for parameter permitted TC VC ID: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.PERMITTED_TC_VCID_SET);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPermittedTcVcidSet().getParameterValue());
 
@@ -397,7 +397,7 @@ public class RocfTest {
         recorder.getPduReceived().clear();
         rocfUser.scheduleStatusReport(false, 5);
 
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
         AwaitUtil.awaitCondition(6000, () -> recorder.getPduReceived().size() == 3);
@@ -406,23 +406,23 @@ public class RocfTest {
         // Ask for parameter reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(5, ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOn().intValue());
 
         // Stop status report
         recorder.getPduReceived().clear();
         rocfUser.scheduleStatusReport(true, null);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
         rocfUser.unbind(UnbindReasonEnum.END);
 
-        AwaitUtil.awaitCondition(2000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfProvider.getCurrentBindingState());
 
         rocfUser.dispose();
@@ -461,7 +461,7 @@ public class RocfTest {
         recorder.getPduSent().clear();
         recorder.getPduReceived().clear();
         rocfUser.start(null, null, new GVCID(100, 0, 1), 1, RocfControlWordTypeEnum.CLCW, RocfUpdateModeEnum.CONTINUOUS);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, recorder.getPduSent().size());
         assertNotNull(((RocfStartReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
@@ -470,7 +470,7 @@ public class RocfTest {
         recorder.getPduSent().clear();
         recorder.getPduReceived().clear();
         rocfUser.scheduleStatusReport(true, 20);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, recorder.getPduSent().size());
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
@@ -479,9 +479,9 @@ public class RocfTest {
         recorder.getPduSent().clear();
         recorder.getPduReceived().clear();
         rocfUser.unbind(UnbindReasonEnum.END);
-        AwaitUtil.awaitCondition(2000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfProvider.getCurrentBindingState());
 
         rocfUser.dispose();
@@ -527,21 +527,21 @@ public class RocfTest {
         // Start
         recorder.getPduReceived().clear();
         rocfUser.start(null, null, new GVCID(100, 0, 1), 1, RocfControlWordTypeEnum.CLCW, RocfUpdateModeEnum.CONTINUOUS);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(new BerNull().toString(), ((RocfStartReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().toString());
 
         // Simulate lock and production status change
         recorder.getPduReceived().clear();
         rocfProvider.updateProductionStatus(Instant.now(), LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, ProductionStatusEnum.RUNNING);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(ProductionStatusEnum.RUNNING.ordinal(), ((RocfSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getProductionStatusChange().intValue());
 
         // Ask for parameter requested GVCID: expect positive return, good result
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_GVCID);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         if(version <= 4) {
             assertNotNull(((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue().getGvcid());
@@ -551,7 +551,7 @@ public class RocfTest {
         // Ask for parameter requested TC VC ID, expected positive return, 1
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_TC_VCID);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         if(version <= 4) {
             assertEquals(1, ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqTcVcid().getParameterValue().getTcVcid().getTcVcid().intValue());
@@ -561,7 +561,7 @@ public class RocfTest {
         // Ask for parameter requested OCF type, expected positive return, CLCW
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_CONTROL_WORD_TYPE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         if(version <= 4) {
             assertEquals(RocfControlWordTypeEnum.CLCW.ordinal(), ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqControlWordType().getParameterValue().intValue());
@@ -571,7 +571,7 @@ public class RocfTest {
         // Ask for parameter requested update mode, expected positive return, continuous
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_UPDATE_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         if(version <= 4) {
             assertEquals(RocfUpdateModeEnum.CONTINUOUS.ordinal(), ((RocfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqUpdateMode().getParameterValue().intValue());
@@ -585,7 +585,7 @@ public class RocfTest {
         for (int i = 0; i < 100; ++i) {
             rocfProvider.transferData(frame, ReturnServiceInstanceProvider.FRAME_QUALITY_GOOD, 0, Instant.now(), false, "AABBCCDD", false, new byte[10]);
         }
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 100);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 100);
         assertEquals(100, recorder.getPduReceived().size());
 
         // Send 5 transfer data now, fast, one not in the GVCID, then wait for the buffer anyway (latency)
@@ -617,30 +617,30 @@ public class RocfTest {
         // Send end of data
         recorder.getPduReceived().clear();
         rocfProvider.endOfData();
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RocfSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getEndOfData());
 
         // Simulate unlock
         recorder.getPduReceived().clear();
         rocfProvider.updateProductionStatus(Instant.now(), LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.OUT_OF_LOCK, LockStatusEnum.OUT_OF_LOCK, ProductionStatusEnum.RUNNING);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(LockStatusEnum.OUT_OF_LOCK.ordinal(), ((RocfSyncNotifyInvocation) recorder.getPduReceived().get(0)).getNotification().getLossFrameSync().getSymbolSyncLockStatus().intValue());
 
         // Stop
         recorder.getPduReceived().clear();
         rocfUser.stop();
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((SleAcknowledgement) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
         rocfUser.unbind(UnbindReasonEnum.END);
 
-        AwaitUtil.awaitCondition(2000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfProvider.getCurrentBindingState());
 
         rocfUser.dispose();
@@ -674,28 +674,28 @@ public class RocfTest {
         // Start
         recorder.getPduReceived().clear();
         rocfUser.start(new Date(1000000), new Date(System.currentTimeMillis() + 1000000000), new GVCID(100, 0, 1), 1, RocfControlWordTypeEnum.CLCW, RocfUpdateModeEnum.CONTINUOUS);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(new BerNull().toString(), ((RocfStartReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().toString());
 
         // Ask for parameter requested TC VC ID, expected positive return, 1
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_TC_VCID);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(1, ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqTcVcid().getParameterValue().getTcVcid().intValue());
 
         // Ask for parameter requested OCF type, expected positive return, CLCW
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_CONTROL_WORD_TYPE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(RocfControlWordTypeEnum.CLCW.ordinal(), ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqControlWordType().getParameterValue().intValue());
 
         // Ask for parameter requested update mode, expected positive return, continuous
         recorder.getPduReceived().clear();
         rocfUser.getParameter(RocfParameterEnum.REQUESTED_UPDATE_MODE);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(RocfUpdateModeEnum.CONTINUOUS.ordinal(), ((RocfGetParameterReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqUpdateMode().getParameterValue().intValue());
 
@@ -711,7 +711,7 @@ public class RocfTest {
         // One data discarded
         rocfProvider.dataDiscarded();
 
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() > 100);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() > 100);
         assertTrue(recorder.getPduReceived().size() <= 501);
         assertTrue(recorder.getPduReceived().size() > 0);
         // Wait the final delivery
@@ -731,7 +731,7 @@ public class RocfTest {
         // Stop
         recorder.getPduReceived().clear();
         rocfUser.stop();
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(new BerNull().toString(), ((SleAcknowledgement) recorder.getPduReceived().get(0)).getResult().getPositiveResult().toString());
         assertNotNull(recorder.getStates().get(0).toString());
@@ -739,9 +739,9 @@ public class RocfTest {
         // Unbind
         rocfUser.peerAbort(PeerAbortReasonEnum.OPERATIONAL_REQUIREMENTS);
 
-        AwaitUtil.awaitCondition(2000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(2000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(4000, () -> rocfProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rocfProvider.getCurrentBindingState());
 
         rocfUser.dispose();
