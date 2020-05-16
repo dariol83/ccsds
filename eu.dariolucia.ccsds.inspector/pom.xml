@@ -32,6 +32,36 @@
     <description>Graphical tool to read and process TM/TC data with extension capabilities, to allow implementation and
         provision of different connectors.</description>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>target/deps</outputDirectory>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <excludeGroupIds>
+                                org.junit.jupiter,org.apiguardian,org.junit.platform,org.opentest4j
+                            </excludeGroupIds>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <verbose>true</verbose>
+                    <detail>true</detail>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>eu.dariolucia.ccsds</groupId>
