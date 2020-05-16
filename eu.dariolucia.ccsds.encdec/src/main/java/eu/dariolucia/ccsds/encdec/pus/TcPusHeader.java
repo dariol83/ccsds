@@ -157,13 +157,32 @@ public class TcPusHeader {
         firstThreeOctets <<= 8;
         firstThreeOctets |= Short.toUnsignedInt(serviceSubType);
         encoder.setNextIntegerUnsigned(firstThreeOctets, 24);
-        if(isSourceIdSet()) {
+        if(isSourceIdSet() && sourceIdLength > 0) {
             encoder.setNextIntegerUnsigned(sourceId, sourceIdLength);
         }
         encoder.setNextIntegerUnsigned(0, spare);
 
         int finalBitNumber = encoder.getCurrentBitIndex();
         return (int) Math.ceil((finalBitNumber - startBitNumber) / (double) Byte.SIZE);
+    }
+
+    /**
+     * Encode the contents of this TC PUS Header into a new byte buffer.
+     *
+     * @param sourceIdLength the encoded length in bits of the source ID (used only if the source ID is present)
+     * @param spare the number of spare bits to be added at the end of the encoding process (0 if unused)
+     * @return the encoded PUS header
+     */
+    public byte[] encode(int sourceIdLength, int spare) {
+        int size;
+        if(isSourceIdSet()) {
+            size = (sourceIdLength + spare) / 8 + ((sourceIdLength + spare) % 8 == 0 ? 0 : 1);
+        } else {
+            size = spare / 8 + (spare % 8 == 0 ? 0 : 1);
+        }
+        byte[] output = new byte[3 + size];
+        encodeTo(output, 0, sourceIdLength, spare);
+        return output;
     }
 
     /**

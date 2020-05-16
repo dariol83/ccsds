@@ -238,5 +238,25 @@ public class PusHeaderTest {
             assertEquals(h1.getSourceId(), readBack.getSourceId());
             assertEquals(h1.getAckField(), readBack.getAckField());
         }
+        {
+            TcPusHeader h1 = new TcPusHeader((short) 200,(short) 200);
+            byte[] encodedHeader = h1.encode(0, 0);
+            TcPusHeader readBack = TcPusHeader.decodeFrom(encodedHeader, 0, 0);
+            assertEquals(h1.getVersion(), readBack.getVersion());
+            assertEquals(h1.getServiceType(), readBack.getServiceType());
+            assertEquals(h1.getServiceSubType(), readBack.getServiceSubType());
+            assertEquals(h1.getSourceId(), readBack.getSourceId());
+            assertEquals(h1.getAckField(), readBack.getAckField());
+        }
+        {
+            TcPusHeader h1 = new TcPusHeader((byte) 1, new AckField(true, false, false, true), (short) 3, (short) 25, 13, null);
+            byte[] encodedHeader = h1.encode(8, 0);
+            TcPusHeader readBack = TcPusHeader.decodeFrom(encodedHeader, 0, 8);
+            assertEquals(h1.getVersion(), readBack.getVersion());
+            assertEquals(h1.getServiceType(), readBack.getServiceType());
+            assertEquals(h1.getServiceSubType(), readBack.getServiceSubType());
+            assertEquals(h1.getSourceId(), readBack.getSourceId());
+            assertEquals(h1.getAckField(), readBack.getAckField());
+        }
     }
 }
