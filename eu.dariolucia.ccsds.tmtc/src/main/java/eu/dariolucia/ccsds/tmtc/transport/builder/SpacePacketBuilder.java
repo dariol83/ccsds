@@ -24,12 +24,50 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * This class allows to build a CCSDS space packet using a typical Builder pattern. Once a packet is built, the builder should
- * not be re-used, as the internals (such as the payload data) are not cleaned up upon build.
+ * This class allows to build a CCSDS space packet using a typical Builder pattern. Once a packet is built, the builder
+ * can be re-used to create additional packets: the payload data shall be explicitly cleared, as this is not done upon
+ * build().
  *
  * This class is not thread-safe.
  */
 public class SpacePacketBuilder {
+
+    /**
+     * This method creates an instance of this class, initialising only the header fields from the provided {@link SpacePacket}.
+     * The quality indicator is retrieved from the provided packet, the packet data field is not copied.
+     *
+     * @param initialiser the space packet initialiser.
+     * @return the builder object
+     */
+    public static SpacePacketBuilder create(SpacePacket initialiser) {
+        return create(initialiser, false, initialiser.isQualityIndicator());
+    }
+
+    /**
+     * This method creates an instance of this class, initialising the header fields from the provided {@link SpacePacket}.
+     * The quality indicator is retrieved from the provided packet.
+     *
+     * @param initialiser the space packet initialiser
+     * @param copyDataField true if the packet data field should be copied over, otherwise false
+     * @param qualityIndicator true if the quality is good, false otherwise
+     * @return the builder object
+     */
+    public static SpacePacketBuilder create(SpacePacket initialiser, boolean copyDataField, boolean qualityIndicator) {
+        SpacePacketBuilder spb = create(qualityIndicator)
+            .setApid(initialiser.getApid())
+            .setPacketSequenceCount(initialiser.getPacketSequenceCount())
+            .setSecondaryHeaderFlag(initialiser.isSecondaryHeaderFlag())
+            .setSequenceFlag(initialiser.getSequenceFlag());
+        if(initialiser.isTelemetryPacket()) {
+            spb.setTelemetryPacket();
+        } else {
+            spb.setTelecommandPacket();
+        }
+        if(copyDataField) {
+            spb.addData(initialiser.getPacket(), SpacePacket.SP_PRIMARY_HEADER_LENGTH, initialiser.getPacketDataLength());
+        }
+        return spb;
+    }
 
     /**
      * This method creates an instance of this class.
@@ -117,6 +155,20 @@ public class SpacePacketBuilder {
         return this;
     }
 
+    public SpacePacketBuilder incrementPacketSequenceCount() {
+        this.packetSequenceCount = (short) (this.packetSequenceCount == 16383 ? 0 : this.packetSequenceCount + 1);
+        return this;
+    }
+
+    /**
+     * Add the provided data to the packet data field. The data is copied to an intermediate buffer and further updates
+     * to the original byte array are not reflected in the generated packet data field.
+     *
+     * @param b the byte array containing the data to put in the packet data field
+     * @param offset the byte array start offset
+     * @param length the number of bytes to put in the packet data field
+     * @return the number of bytes that were required to be written but could not be written due to the maximum packet data field size
+     */
     public int addData(byte[] b, int offset, int length) {
         // Compute if you can add the requested amount
         int dataToBeWritten = Math.min(freeUserDataLength, length);
@@ -178,5 +230,11 @@ public class SpacePacketBuilder {
 
         // Return the packet
         return new SpacePacket(encodedPacket, qualityIndicator);
+    }
+
+    public SpacePacketBuilder clearUserData() {
+        this.payloadUnits.clear();
+        freeUserDataLength = SpacePacket.MAX_SPACE_PACKET_LENGTH - SpacePacket.SP_PRIMARY_HEADER_LENGTH;
+        return this;
     }
 }

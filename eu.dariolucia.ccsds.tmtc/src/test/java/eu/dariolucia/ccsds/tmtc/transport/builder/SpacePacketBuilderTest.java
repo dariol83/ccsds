@@ -107,6 +107,93 @@ class SpacePacketBuilderTest {
     }
 
     @Test
+    public void testBuilderReUsing() {
+        int userDataLength = 112;
+        SpacePacketBuilder builder = SpacePacketBuilder.create(true)
+                .setTelecommandPacket()
+                .setSequenceFlag(SpacePacket.SequenceFlagType.UNSEGMENTED)
+                .setApid(123)
+                .setPacketSequenceCount(2312)
+                .setSecondaryHeaderFlag(true);
+
+        builder.addData(new byte[] { 0x01, 0x01 });
+        int residual = builder.addData(new byte[userDataLength]);
+        assertEquals(0, residual);
+        assertEquals(SpacePacket.MAX_SPACE_PACKET_LENGTH - SpacePacket.SP_PRIMARY_HEADER_LENGTH - 2 - userDataLength, builder.getFreeUserDataLength());
+        SpacePacket ttf = builder.build();
+
+        builder.clearUserData().incrementPacketSequenceCount();
+        residual = builder.addData(new byte[] { 0x05, 0x05 });
+        assertEquals(0, residual);
+        assertEquals(SpacePacket.MAX_SPACE_PACKET_LENGTH - SpacePacket.SP_PRIMARY_HEADER_LENGTH - 2, builder.getFreeUserDataLength());
+        ttf = builder.build();
+
+        assertEquals(2313, ttf.getPacketSequenceCount());
+        assertEquals(SpacePacket.SequenceFlagType.UNSEGMENTED, ttf.getSequenceFlag());
+        assertEquals(123, ttf.getApid());
+        assertFalse(ttf.isTelemetryPacket());
+        assertFalse(ttf.isIdle());
+        assertTrue(ttf.isQualityIndicator());
+        assertTrue(ttf.isSecondaryHeaderFlag());
+        assertArrayEquals(new byte[] { 0x05, 0x05 }, ttf.getDataFieldCopy());
+
+        SpacePacket clone = SpacePacketBuilder.create(ttf, true, ttf.isQualityIndicator()).build();
+        assertEquals(ttf, clone);
+        assertEquals(ttf.hashCode(), clone.hashCode());
+    }
+
+    @Test
+    public void testPacketInitialisation() {
+        int userDataLength = 112;
+        SpacePacketBuilder builder = SpacePacketBuilder.create(true)
+                .setTelemetryPacket()
+                .setSequenceFlag(SpacePacket.SequenceFlagType.UNSEGMENTED)
+                .setApid(123)
+                .setPacketSequenceCount(2312)
+                .setSecondaryHeaderFlag(true);
+
+        builder.addData(new byte[] { 0x01, 0x01 });
+        int residual = builder.addData(new byte[userDataLength]);
+        assertEquals(0, residual);
+        assertEquals(SpacePacket.MAX_SPACE_PACKET_LENGTH - SpacePacket.SP_PRIMARY_HEADER_LENGTH - 2 - userDataLength, builder.getFreeUserDataLength());
+        SpacePacket ttf = builder.build();
+
+        builder = SpacePacketBuilder.create(ttf);
+        builder.clearUserData().incrementPacketSequenceCount();
+        residual = builder.addData(new byte[] { 0x05, 0x05 });
+        assertEquals(0, residual);
+        assertEquals(SpacePacket.MAX_SPACE_PACKET_LENGTH - SpacePacket.SP_PRIMARY_HEADER_LENGTH - 2, builder.getFreeUserDataLength());
+        ttf = builder.build();
+
+        assertEquals(2313, ttf.getPacketSequenceCount());
+        assertEquals(SpacePacket.SequenceFlagType.UNSEGMENTED, ttf.getSequenceFlag());
+        assertEquals(123, ttf.getApid());
+        assertTrue(ttf.isTelemetryPacket());
+        assertFalse(ttf.isIdle());
+        assertTrue(ttf.isQualityIndicator());
+        assertTrue(ttf.isSecondaryHeaderFlag());
+        assertArrayEquals(new byte[] { 0x05, 0x05 }, ttf.getDataFieldCopy());
+
+        builder = SpacePacketBuilder.create(ttf, true, false);
+        builder.incrementPacketSequenceCount();
+        builder.setQualityIndicator(true);
+        residual = builder.addData(new byte[] { 0x05, 0x05 });
+        assertEquals(0, residual);
+        assertEquals(SpacePacket.MAX_SPACE_PACKET_LENGTH - SpacePacket.SP_PRIMARY_HEADER_LENGTH - 4, builder.getFreeUserDataLength());
+        ttf = builder.build();
+
+        assertEquals(2314, ttf.getPacketSequenceCount());
+        assertEquals(SpacePacket.SequenceFlagType.UNSEGMENTED, ttf.getSequenceFlag());
+        assertEquals(123, ttf.getApid());
+        assertTrue(ttf.isTelemetryPacket());
+        assertFalse(ttf.isIdle());
+        assertTrue(ttf.isQualityIndicator());
+        assertTrue(ttf.isSecondaryHeaderFlag());
+        assertArrayEquals(new byte[] { 0x05, 0x05, 0x05, 0x05 }, ttf.getDataFieldCopy());
+        assertEquals(4, ttf.getPacketDataLength());
+    }
+
+    @Test
     public void testErrorCases() {
         // APID
         try {

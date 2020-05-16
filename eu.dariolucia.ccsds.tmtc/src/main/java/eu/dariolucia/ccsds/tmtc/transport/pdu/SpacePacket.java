@@ -243,4 +243,17 @@ public class SpacePacket extends AnnotatedObject {
                 ", packetDataLength=" + packetDataLength +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SpacePacket that = (SpacePacket) o;
+        return Arrays.equals(getPacket(), that.getPacket());
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(getPacket());
+    }
 }
