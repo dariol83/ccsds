@@ -433,6 +433,17 @@ public class PduFactoryUtil {
      * @return the corresponding Date object
      */
     public static Date toDate(ConditionalTime theTime) {
+        Instant instant = toInstant(theTime);
+        return instant == null ? null : new Date(instant.toEpochMilli());
+    }
+
+    /**
+     * Maps the provided ConditionalTime object into a Java Instant, or null if the time is not set.
+     *
+     * @param theTime the condition time to convert
+     * @return the corresponding Instant object
+     */
+    public static Instant toInstant(ConditionalTime theTime) {
         if(theTime == null || theTime.getUndefined() != null) {
             return null;
         } else {
@@ -440,11 +451,11 @@ public class PduFactoryUtil {
             if(t.getCcsdsFormat() != null) {
                 // Millisecond resolution
                 long[] components = buildTimeMillis(t.getCcsdsFormat().value);
-                return new Date(components[0]);
+                return Instant.ofEpochMilli(components[0]);
             } else if(t.getCcsdsPicoFormat() != null) {
                 // Picosecond resolution
                 long[] components = buildTimeMillisPico(t.getCcsdsPicoFormat().value);
-                return new Date(components[0]);
+                return Instant.ofEpochSecond(components[0]/1000, (components[1] % 1000) * 1000000L + components[0]/1000);
             } else {
                 // Problem
                 throw new IllegalArgumentException("ConditionalTime does not deliver any time!");

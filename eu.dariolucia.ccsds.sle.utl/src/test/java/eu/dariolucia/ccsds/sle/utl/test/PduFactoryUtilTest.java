@@ -46,6 +46,7 @@ public class PduFactoryUtilTest {
         assertThrows(IllegalArgumentException.class, () -> PduFactoryUtil.buildCDSTimePico(-10, 10));
         assertThrows(IllegalArgumentException.class, () -> PduFactoryUtil.buildCDSTime(-10, 10));
         assertArrayEquals(new long[] {3000, 3001}, PduFactoryUtil.buildTimeMillisPico(PduFactoryUtil.buildCDSTimePico(3000, 3001)));
+        assertNull(PduFactoryUtil.toDate(null));
     }
 
     @Test
