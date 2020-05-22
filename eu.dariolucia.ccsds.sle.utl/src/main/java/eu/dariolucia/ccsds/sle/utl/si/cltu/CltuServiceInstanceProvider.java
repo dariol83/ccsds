@@ -744,7 +744,9 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
             LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
         }
         this.reportingCycle = null;
-        this.reportingScheduler.get().cancel();
+        if (reportingScheduler.get() != null) {
+            this.reportingScheduler.get().cancel();
+        }
         this.reportingScheduler.set(null);
     }
 
