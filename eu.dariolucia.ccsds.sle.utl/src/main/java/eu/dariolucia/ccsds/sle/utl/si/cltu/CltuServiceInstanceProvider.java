@@ -1216,6 +1216,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
 
     @Override
     protected void resetState() {
+        stopStatusReport();
         // Read from configuration, updated via GET_PARAMETER
         this.maxCltuLength = getCltuConfiguration().getMaxCltuLength();
         this.minCltuDelay = getCltuConfiguration().getMinCltuDelay();
