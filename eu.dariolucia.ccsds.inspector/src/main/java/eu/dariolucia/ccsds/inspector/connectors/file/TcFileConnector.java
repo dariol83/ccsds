@@ -56,6 +56,6 @@ public class TcFileConnector extends AbstractFileConnector {
 		if(derandomize) {
 			RandomizerAlgorithm.randomizeFrameCltu(decodedFrame);
 		}
-		return new TcTransferFrame(decodedFrame, segmented, fecfPresent, secHeaderLength, secTrailerLength);
+		return new TcTransferFrame(decodedFrame, vc -> segmented, fecfPresent, secHeaderLength, secTrailerLength);
 	}
 }

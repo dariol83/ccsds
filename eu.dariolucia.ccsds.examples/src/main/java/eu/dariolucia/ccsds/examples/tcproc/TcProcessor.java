@@ -151,7 +151,7 @@ public class TcProcessor {
         }
 
         // Create the channel decoder with the specified options
-        ChannelDecoder<TcTransferFrame> channelDecoder = ChannelDecoder.create(TcTransferFrame.decodingFunction(this.useSegmentation, this.useFecf));
+        ChannelDecoder<TcTransferFrame> channelDecoder = ChannelDecoder.create(TcTransferFrame.decodingFunction((vc) -> this.useSegmentation, this.useFecf));
         if(this.type.equals(TYPE_CLTU)) {
             // Add CLTU decoding
             channelDecoder.addDecodingFunction(new CltuDecoder());

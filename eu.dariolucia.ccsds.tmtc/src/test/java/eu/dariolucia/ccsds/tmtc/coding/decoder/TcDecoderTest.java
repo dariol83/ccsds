@@ -53,7 +53,7 @@ public class TcDecoderTest {
         Optional<byte[]> decoded = List.of(input).stream().map(cltuDecoder).map(randomizer).findFirst();
         assertTrue(decoded.isPresent());
         // Use the decoding function to remove also the virtual fill, if any
-        TcTransferFrame frame = TcTransferFrame.decodingFunction(false, false).apply(decoded.get());
+        TcTransferFrame frame = TcTransferFrame.decodingFunction((vc) -> false, false).apply(decoded.get());
 
         assertEquals(tctf.getSpacecraftId(), frame.getSpacecraftId());
         assertEquals(tctf.isBypassFlag(), frame.isBypassFlag());

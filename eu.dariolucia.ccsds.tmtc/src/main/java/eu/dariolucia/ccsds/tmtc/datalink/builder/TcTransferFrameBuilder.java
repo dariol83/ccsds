@@ -266,7 +266,7 @@ public class TcTransferFrameBuilder implements ITransferFrameBuilder<TcTransferF
         }
 
         // Return the frame
-        return new TcTransferFrame(encodedFrame, segmented, fecfPresent,
+        return new TcTransferFrame(encodedFrame, vc -> segmented, fecfPresent,
                 (securityHeader != null ? securityHeader.length : 0), (securityTrailer != null ? securityTrailer.length : 0));
     }
 }

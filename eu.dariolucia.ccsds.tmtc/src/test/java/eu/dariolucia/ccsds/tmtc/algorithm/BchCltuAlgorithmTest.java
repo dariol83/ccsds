@@ -33,7 +33,7 @@ class BchCltuAlgorithmTest {
 
 		byte[] tcFrame = BchCltuAlgorithm.decode(cltuBytes);
 		assertNotNull(tcFrame);
-		TcTransferFrame tctf = new TcTransferFrame(tcFrame, true, false);
+		TcTransferFrame tctf = new TcTransferFrame(tcFrame, (vc) -> true, false);
 
 		assertTrue(tctf.isValid());
 
@@ -80,7 +80,7 @@ class BchCltuAlgorithmTest {
 		byte[] decodedWithFill = customAlgorithm.decodeCltu(encoded);
 		assertEquals(15 + 6, decodedWithFill.length);
 
-		TcTransferFrame decoded = TcTransferFrame.decodingFunction(false, false).apply(decodedWithFill);
+		TcTransferFrame decoded = TcTransferFrame.decodingFunction((vc) -> false, false).apply(decodedWithFill);
 		assertNotNull(decoded);
 		assertEquals(tctf.getSpacecraftId(), decoded.getSpacecraftId());
 		assertEquals(tctf.getVirtualChannelId(), decoded.getVirtualChannelId());

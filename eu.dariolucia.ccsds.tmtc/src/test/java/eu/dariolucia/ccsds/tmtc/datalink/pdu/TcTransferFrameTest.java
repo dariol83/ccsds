@@ -27,7 +27,7 @@ class TcTransferFrameTest {
 
     @Test
     public void testTcTransferFrameDecoding() {
-        TcTransferFrame tctf = new TcTransferFrame(FIRST_FRAME, true, true);
+        TcTransferFrame tctf = new TcTransferFrame(FIRST_FRAME, (vc) -> true, true);
 
         assertEquals(123, tctf.getSpacecraftId());
         assertEquals(0, tctf.getVirtualChannelId());

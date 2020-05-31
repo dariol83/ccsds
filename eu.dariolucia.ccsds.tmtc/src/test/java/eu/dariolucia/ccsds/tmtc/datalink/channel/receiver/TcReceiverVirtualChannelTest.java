@@ -77,7 +77,7 @@ class TcReceiverVirtualChannelTest {
         LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TC1));
         // Use stream approach: no need for decoder
         StreamUtil.from(reader) // Reads the TC frames
-                .map(TcTransferFrame.decodingFunction(true, false)) // Convert to TC frame, segmented, no FECF
+                .map(TcTransferFrame.decodingFunction((vc) -> true, false)) // Convert to TC frame, segmented, no FECF
                 .forEach(vc0);
         // Check the number of TC frames
         assertEquals(10, frameCounter.get());

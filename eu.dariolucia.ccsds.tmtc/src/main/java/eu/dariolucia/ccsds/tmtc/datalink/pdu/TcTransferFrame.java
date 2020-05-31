@@ -22,6 +22,7 @@ import eu.dariolucia.ccsds.tmtc.coding.IDecodingFunction;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.function.IntFunction;
 
 /**
  * This class is used to decode and manipulate a TC transfer frame, compliant to CCSDS 232.0-B-3. It includes also support
@@ -43,11 +44,13 @@ public class TcTransferFrame extends AbstractTransferFrame {
      * which converts bytes arrays into TC frames. The function can deal with virtual fill bytes as decoded from a
      * CLTU, i.e. virtual fill bytes are removed before calling the {@link TcTransferFrame} constructor.
      *
-     * @param segmented true if the TC frame contains TC segments
+     * Segmentation depends on VC, so hardcoding it here is wrong: use a Function TC VC ID to boolean
+     *
+     * @param segmented function that returns true if the TC frame contains TC segments
      * @param fecfPresent true if the FECF is present
      * @return the decoding function
      */
-    public static IDecodingFunction<TcTransferFrame> decodingFunction(boolean segmented, boolean fecfPresent) {
+    public static IDecodingFunction<TcTransferFrame> decodingFunction(IntFunction<Boolean> segmented, boolean fecfPresent) {
         return decodingFunction(segmented, fecfPresent, 0, 0);
     }
 
@@ -57,13 +60,15 @@ public class TcTransferFrame extends AbstractTransferFrame {
      * with virtual fill bytes as decoded from a CLTU, i.e. virtual fill bytes are removed before calling the
      * {@link TcTransferFrame} constructor.
      *
-     * @param segmented true if the TC frame contains TC segments
+     * Segmentation depends on VC, so hardcoding it here is wrong: use a Function TC VC ID to boolean
+     *
+     * @param segmented function that returns true if the TC frame contains TC segments
      * @param fecfPresent true if the FECF is present
      * @param secHeaderLength length of the security header
      * @param secTrailerLength length of the security trailer
      * @return the decoding function
      */
-    public static IDecodingFunction<TcTransferFrame> decodingFunction(boolean segmented, boolean fecfPresent, int secHeaderLength, int secTrailerLength) {
+    public static IDecodingFunction<TcTransferFrame> decodingFunction(IntFunction<Boolean> segmented, boolean fecfPresent, int secHeaderLength, int secTrailerLength) {
         return input -> {
             int length = readTcFrameLength(input);
             if(length == input.length) {
@@ -176,16 +181,15 @@ public class TcTransferFrame extends AbstractTransferFrame {
      * The static function readTcFrameLength(byte[]) can be used for this purpose.
      *
      * @param frame the byte array representing a TC frame.
-     * @param segmented true if TC segmentation is used
+     * @param segmented function that returns true if TC segmentation is used, it depends on the VC ID (CCSDS 232.0-B-3, 4.1.3.2.2.1.2)
      * @param fecfPresent true if FECF is present
      * @param securityHeaderLength length of the security header, 0 to disable
      * @param securityTrailerLength length of the security trailer, 0 to disable
      * @throws IllegalArgumentException if wrong TFVN or length is detected
      */
-    public TcTransferFrame(byte[] frame, boolean segmented, boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
+    public TcTransferFrame(byte[] frame, IntFunction<Boolean> segmented, boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
         super(frame, fecfPresent);
 
-        this.segmented = segmented;
         this.securityHeaderLength = securityHeaderLength;
         this.securityTrailerLength = securityTrailerLength;
 
@@ -208,6 +212,10 @@ public class TcTransferFrame extends AbstractTransferFrame {
         twoOctets = in.getShort();
 
         virtualChannelId = (short) ((twoOctets & (short) 0xFC00) >> 10);
+
+        // At this stage, you know if the TC frame has segmentation active
+        this.segmented = segmented.apply(virtualChannelId);
+
         // 4.1.2.7.2
         frameLength = (short) ((twoOctets & (short) 0x03FF) + 1);
 
@@ -221,7 +229,7 @@ public class TcTransferFrame extends AbstractTransferFrame {
 
         // If security is present, then the Transfer Frame Data Field is located as specified by CCSDS 232.0-B-3, 6.3.1.
         if(securityHeaderLength > 0) {
-            dataFieldStart = (short) (TC_PRIMARY_HEADER_LENGTH + (segmented ? 1 : 0) + securityHeaderLength);
+            dataFieldStart = (short) (TC_PRIMARY_HEADER_LENGTH + (this.segmented ? 1 : 0) + securityHeaderLength);
             dataFieldLength = frameLength - dataFieldStart - securityTrailerLength - (fecfPresent ? 2 : 0);
         } else {
             dataFieldStart = TC_PRIMARY_HEADER_LENGTH;
@@ -271,7 +279,7 @@ public class TcTransferFrame extends AbstractTransferFrame {
      * @param fecfPresent true if FECF is present
      * @throws IllegalArgumentException if wrong TFVN or length is detected
      */
-    public TcTransferFrame(byte[] frame, boolean segmented, boolean fecfPresent) {
+    public TcTransferFrame(byte[] frame, IntFunction<Boolean> segmented, boolean fecfPresent) {
         this(frame, segmented, fecfPresent, 0, 0);
     }
 
