@@ -21,14 +21,24 @@ import eu.dariolucia.ccsds.inspector.api.IConnectorObserver;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.util.AnnotatedObject;
 
-public class TmFileConnector extends AbstractFileConnector {
+import java.util.Arrays;
 
-	public TmFileConnector(String name, String description, String version, ConnectorConfiguration configuration, IConnectorObserver observer) {
+public class TmCaduFileConnector extends AbstractFileConnector {
+
+	public static final String CADU_ASM_LENGTH = "asm-length";
+	public static final String CADU_RS_LENGTH = "rs-length";
+
+	private final int asmLength;
+	private final int rsLength;
+
+	public TmCaduFileConnector(String name, String description, String version, ConnectorConfiguration configuration, IConnectorObserver observer) {
 		super(name, description, version, configuration, observer);
+		this.asmLength = configuration.getIntProperty(TmCaduFileConnector.CADU_ASM_LENGTH);
+		this.rsLength = configuration.getIntProperty(TmCaduFileConnector.CADU_RS_LENGTH);
 	}
 
 	@Override
 	protected AnnotatedObject getData(byte[] frame) {
-		return new TmTransferFrame(frame, this.fecfPresent);
+		return new TmTransferFrame(Arrays.copyOfRange(frame, asmLength, frame.length - rsLength), this.fecfPresent);
 	}
 }

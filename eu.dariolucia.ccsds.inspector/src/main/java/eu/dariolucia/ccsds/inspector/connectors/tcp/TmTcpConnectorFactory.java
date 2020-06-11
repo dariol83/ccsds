@@ -17,8 +17,6 @@
 package eu.dariolucia.ccsds.inspector.connectors.tcp;
 
 import eu.dariolucia.ccsds.inspector.api.*;
-import eu.dariolucia.ccsds.inspector.connectors.file.AbstractFileConnector;
-import eu.dariolucia.ccsds.inspector.connectors.file.TmFileConnector;
 
 public class TmTcpConnectorFactory implements IConnectorFactory {
 

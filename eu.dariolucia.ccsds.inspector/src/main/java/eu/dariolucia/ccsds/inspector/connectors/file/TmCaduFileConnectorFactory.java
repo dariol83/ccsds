@@ -18,21 +18,21 @@ package eu.dariolucia.ccsds.inspector.connectors.file;
 
 import eu.dariolucia.ccsds.inspector.api.*;
 
-public class TmFileConnectorFactory implements IConnectorFactory {
+public class TmCaduFileConnectorFactory implements IConnectorFactory {
 
 	@Override
 	public IConnector createConnector(IConnectorObserver observer, ConnectorConfiguration configuration) {
-		return new TmFileConnector(getName(), getDescription(), getVersion(), configuration, observer);
+		return new TmCaduFileConnector(getName(), getDescription(), getVersion(), configuration, observer);
 	}
 
 	@Override
 	public String getName() {
-		return "TM Frame File Connector";
+		return "TM CADU Frame File Connector";
 	}
 
 	@Override
 	public String getDescription() {
-		return "This connector reads TM frames from a file. The file shall contain the hex dump of the TM frame, one frame per line.";
+		return "This connector reads TM CADUs from a file. The file shall contain the hex dump of the TM CADUs, one frame per line.";
 	}
 
 	@Override
@@ -47,7 +47,9 @@ public class TmFileConnectorFactory implements IConnectorFactory {
 				ConnectorPropertyDescriptor.fileDescriptor(AbstractFileConnector.FILE_PATH_ID, "File Path", "Absolute path to the file containing the TM frames", null),
 				ConnectorPropertyDescriptor.booleanDescriptor(AbstractFileConnector.FECF_PRESENT_ID, "Presence of the FECF", "If selected, the FECF is part of the transfer frame", false),
 				ConnectorPropertyDescriptor.integerDescriptor(AbstractFileConnector.DATA_RATE_ID, "Bitrate (bps)", "Number of bits per second that must be read and distributed (approx) by the connector", 8192),
-				ConnectorPropertyDescriptor.booleanDescriptor(AbstractFileConnector.CYCLE_ID, "Cyclic read", "If selected, the connector will loop over the provided file. TM frames will not be updated (e.g. frame counters).", false)
+				ConnectorPropertyDescriptor.booleanDescriptor(AbstractFileConnector.CYCLE_ID, "Cyclic read", "If selected, the connector will loop over the provided file. TM frames will not be updated (e.g. frame counters).", false),
+				ConnectorPropertyDescriptor.integerDescriptor(TmCaduFileConnector.CADU_ASM_LENGTH, "ASM length", "Length of the Attached Sync Marker", 4),
+				ConnectorPropertyDescriptor.integerDescriptor(TmCaduFileConnector.CADU_RS_LENGTH, "Cyclic read", "Length of the RS codeblock", 160)
 		);
 		return ccd;
 	}
