@@ -17,17 +17,212 @@
 package eu.dariolucia.ccsds.tmtc.cop1.fop;
 
 public class S2FopState extends AbstractFopState {
+
     public S2FopState(FopEngine engine) {
         super(engine);
     }
 
     @Override
     protected void registerHandlers() {
-        // TODO
+        event2handler.put(FopEvent.EventNumber.E1, this::e1);
+        event2handler.put(FopEvent.EventNumber.E2, this::e2);
+        event2handler.put(FopEvent.EventNumber.E3, this::e3);
+        event2handler.put(FopEvent.EventNumber.E4, this::e4);
+        event2handler.put(FopEvent.EventNumber.E5, this::e5);
+        event2handler.put(FopEvent.EventNumber.E6, this::e6);
+        event2handler.put(FopEvent.EventNumber.E7, this::e7);
+        event2handler.put(FopEvent.EventNumber.E101, this::e101);
+        event2handler.put(FopEvent.EventNumber.E102, this::e102);
+        event2handler.put(FopEvent.EventNumber.E8, this::e8);
+        event2handler.put(FopEvent.EventNumber.E9, this::e9);
+        event2handler.put(FopEvent.EventNumber.E10, this::ignore);
+        event2handler.put(FopEvent.EventNumber.E11, this::e11);
+        event2handler.put(FopEvent.EventNumber.E12, this::e12);
+        event2handler.put(FopEvent.EventNumber.E103, this::e103);
+        event2handler.put(FopEvent.EventNumber.E13, this::e13);
+        event2handler.put(FopEvent.EventNumber.E14, this::e14);
+        event2handler.put(FopEvent.EventNumber.E15, this::e15);
+        event2handler.put(FopEvent.EventNumber.E16, this::e16);
+        event2handler.put(FopEvent.EventNumber.E104, this::e104);
+        event2handler.put(FopEvent.EventNumber.E17, this::e17);
+        event2handler.put(FopEvent.EventNumber.E18, this::e18);
+        event2handler.put(FopEvent.EventNumber.E19, this::e19);
+        event2handler.put(FopEvent.EventNumber.E20, this::reject);
+        event2handler.put(FopEvent.EventNumber.E21, this::e21);
+        event2handler.put(FopEvent.EventNumber.E22, this::reject);
+        event2handler.put(FopEvent.EventNumber.E23, this::reject);
+        event2handler.put(FopEvent.EventNumber.E24, this::reject);
+        event2handler.put(FopEvent.EventNumber.E25, this::reject);
+        event2handler.put(FopEvent.EventNumber.E26, this::reject);
+        event2handler.put(FopEvent.EventNumber.E27, this::reject);
+        event2handler.put(FopEvent.EventNumber.E28, this::reject);
+        event2handler.put(FopEvent.EventNumber.E29, this::e29);
+        event2handler.put(FopEvent.EventNumber.E30, this::reject);
+        event2handler.put(FopEvent.EventNumber.E35, this::reject);
+        event2handler.put(FopEvent.EventNumber.E36, this::e36);
+        event2handler.put(FopEvent.EventNumber.E37, this::e37);
+        event2handler.put(FopEvent.EventNumber.E38, this::e38);
+        event2handler.put(FopEvent.EventNumber.E39, this::e39);
+        event2handler.put(FopEvent.EventNumber.E40, this::reject);
+        event2handler.put(FopEvent.EventNumber.E41, this::e41);
+        event2handler.put(FopEvent.EventNumber.E42, this::e42);
+        event2handler.put(FopEvent.EventNumber.E43, this::e43);
+        event2handler.put(FopEvent.EventNumber.E44, this::e44);
+        event2handler.put(FopEvent.EventNumber.E45, this::e45);
+        event2handler.put(FopEvent.EventNumber.E46, this::e46);
+    }
+
+    private AbstractFopState reject(FopEvent fopEvent) {
+        engine.reject(fopEvent);
+        return this;
+    }
+
+    private AbstractFopState ignore(FopEvent fopEvent) {
+        // Ignore
+        return this;
+    }
+
+    private AbstractFopState e1(FopEvent fopEvent) {
+        engine.alert(FopAlertCode.SYNCH);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e2(FopEvent fopEvent) {
+        engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
+        engine.cancelTimer();
+        engine.lookForFrame();
+        return new S1FopState(engine);
+    }
+
+    private AbstractFopState e3(FopEvent fopEvent) {
+        engine.alert(FopAlertCode.CLCW);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e4(FopEvent fopEvent) {
+        engine.alert(FopAlertCode.SYNCH);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e5(FopEvent fopEvent) {
+        engine.alert(FopAlertCode.SYNCH);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e6(FopEvent fopEvent) {
+        engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
+        engine.lookForFrame();
+        return new S1FopState(engine);
+    }
+
+    private AbstractFopState e7(FopEvent fopEvent) {
+        engine.alert(FopAlertCode.CLCW);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e101(FopEvent fopEvent) {
+        engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
+        engine.alert(FopAlertCode.LIMIT);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e102(FopEvent fopEvent) {
+        engine.alert(FopAlertCode.LIMIT);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e8(FopEvent fopEvent) {
+        engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
+        engine.initiateAdRetransmission();
+        engine.lookForFrame();
+        return this;
+    }
+
+    private AbstractFopState e9(FopEvent fopEvent) {
+        engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
+        return new S3FopState(engine);
+    }
+
+    private AbstractFopState e11(FopEvent fopEvent) {
+        // Ignore
+        return new S3FopState(engine);
+    }
+
+    private AbstractFopState e12(FopEvent fopEvent) {
+        // Ignore
+        return this;
+    }
+
+    private AbstractFopState e103(FopEvent fopEvent) {
+        // Ignore
+        return new S3FopState(engine);
+    }
+
+    private AbstractFopState e13(FopEvent fopEvent) {
+        engine.alert(FopAlertCode.NN_R);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e14(FopEvent fopEvent) {
+        engine.alert(FopAlertCode.LOCKOUT);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e15(FopEvent fopEvent) {
+        engine.alert(FopAlertCode.CLCW);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e16(FopEvent fopEvent) {
+        engine.initiateAdRetransmission();
+        engine.lookForFrame();
+        return this;
+    }
+
+    private AbstractFopState e104(FopEvent fopEvent) {
+        engine.initiateAdRetransmission();
+        engine.lookForFrame();
+        return this;
+    }
+
+    private AbstractFopState e17(FopEvent fopEvent) {
+        engine.alert(FopAlertCode.T1);
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e18(FopEvent fopEvent) {
+        engine.setSuspendState(2);
+        engine.suspend();
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e19(FopEvent fopEvent) {
+        engine.addToWaitQueue(fopEvent);
+        engine.lookForFrame();
+        return this;
+    }
+
+    private AbstractFopState e29(FopEvent fopEvent) {
+        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
+        engine.alert(FopAlertCode.TERM);
+        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
+        return new S6FopState(engine);
+    }
+
+    private AbstractFopState e41(FopEvent fopEvent) {
+        engine.setAdOutReadyFlag(true);
+        engine.lookForFrame();
+        return this;
+    }
+
+    private AbstractFopState e43(FopEvent fopEvent) {
+        engine.setBcOutReadyFlag(true);
+        return this;
     }
 
     @Override
     public FopState getState() {
         return FopState.S2;
     }
+
 }

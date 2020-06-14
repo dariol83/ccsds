@@ -16,7 +16,6 @@
 
 package eu.dariolucia.ccsds.tmtc.cop1.fop;
 
-import eu.dariolucia.ccsds.tmtc.cop1.fop.FopDirective;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame;
 import eu.dariolucia.ccsds.tmtc.ocf.pdu.Clcw;
 
@@ -103,8 +102,22 @@ public final class FopEvent {
         return directiveQualifier;
     }
 
-    public int getSS() {
+    public int getSuspendState() {
         return this.ss;
+    }
+
+    @Override
+    public String toString() {
+        return "FopEvent{" +
+                "number=" + number +
+                ", clcw=" + clcw +
+                ", frame=" + frame +
+                ", directiveTag=" + directiveTag +
+                ", directiveId=" + directiveId +
+                ", directiveQualifier=" + directiveQualifier +
+                ", timerExpired=" + timerExpired +
+                ", ss=" + ss +
+                '}';
     }
 
     public enum EventNumber {

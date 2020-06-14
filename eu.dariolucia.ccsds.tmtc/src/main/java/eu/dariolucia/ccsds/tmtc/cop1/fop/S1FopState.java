@@ -28,10 +28,11 @@ public class S1FopState extends AbstractFopState {
         event2handler.put(FopEvent.EventNumber.E2, this::e2);
         event2handler.put(FopEvent.EventNumber.E3, this::e3);
         event2handler.put(FopEvent.EventNumber.E4, this::e4);
-        event2handler.put(FopEvent.EventNumber.E5, this::e4);
+        event2handler.put(FopEvent.EventNumber.E5, this::e5);
         event2handler.put(FopEvent.EventNumber.E6, this::e6);
         event2handler.put(FopEvent.EventNumber.E7, this::e7);
         event2handler.put(FopEvent.EventNumber.E101, this::e101);
+        event2handler.put(FopEvent.EventNumber.E102, this::e102);
         event2handler.put(FopEvent.EventNumber.E8, this::e8);
         event2handler.put(FopEvent.EventNumber.E9, this::e9);
         event2handler.put(FopEvent.EventNumber.E10, this::e10);
@@ -82,9 +83,9 @@ public class S1FopState extends AbstractFopState {
     }
 
     private AbstractFopState e2(FopEvent fopEvent) {
-        engine.removeAckFramesFromSentQueue();
+        engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
         engine.cancelTimer();
-        engine.lookForFrame(fopEvent);
+        engine.lookForFrame();
         return this;
     }
 
@@ -104,8 +105,8 @@ public class S1FopState extends AbstractFopState {
     }
 
     private AbstractFopState e6(FopEvent fopEvent) {
-        engine.removeAckFramesFromSentQueue();
-        engine.lookForFrame(fopEvent);
+        engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
+        engine.lookForFrame();
         return this;
     }
 
@@ -115,7 +116,7 @@ public class S1FopState extends AbstractFopState {
     }
 
     private AbstractFopState e101(FopEvent fopEvent) {
-        engine.removeAckFramesFromSentQueue();
+        engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
         engine.alert(FopAlertCode.LIMIT);
         return new S6FopState(engine);
     }
@@ -126,20 +127,20 @@ public class S1FopState extends AbstractFopState {
     }
 
     private AbstractFopState e8(FopEvent fopEvent) {
-        engine.removeAckFramesFromSentQueue();
-        engine.initiateRetransmission();
-        engine.lookForFrame(fopEvent);
+        engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
+        engine.initiateAdRetransmission();
+        engine.lookForFrame();
         return new S2FopState(engine);
     }
 
     private AbstractFopState e9(FopEvent fopEvent) {
-        engine.removeAckFramesFromSentQueue();
+        engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
         return new S3FopState(engine);
     }
 
     private AbstractFopState e10(FopEvent fopEvent) {
-        engine.initiateRetransmission();
-        engine.lookForFrame(fopEvent);
+        engine.initiateAdRetransmission();
+        engine.lookForFrame();
         return new S2FopState(engine);
     }
 
@@ -174,14 +175,14 @@ public class S1FopState extends AbstractFopState {
     }
 
     private AbstractFopState e16(FopEvent fopEvent) {
-        engine.initiateRetransmission();
-        engine.lookForFrame(fopEvent);
+        engine.initiateAdRetransmission();
+        engine.lookForFrame();
         return this;
     }
 
     private AbstractFopState e104(FopEvent fopEvent) {
-        engine.initiateRetransmission();
-        engine.lookForFrame(fopEvent);
+        engine.initiateAdRetransmission();
+        engine.lookForFrame();
         return this;
     }
 
@@ -191,26 +192,27 @@ public class S1FopState extends AbstractFopState {
     }
 
     private AbstractFopState e18(FopEvent fopEvent) {
-        engine.suspend(1);
+        engine.setSuspendState(1);
+        engine.suspend();
         return new S6FopState(engine);
     }
 
     private AbstractFopState e19(FopEvent fopEvent) {
         engine.addToWaitQueue(fopEvent);
-        engine.lookForFrame(fopEvent);
+        engine.lookForFrame();
         return this;
     }
 
     private AbstractFopState e29(FopEvent fopEvent) {
-        engine.accept(fopEvent);
+        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         engine.alert(FopAlertCode.TERM);
-        engine.confirm(FopOperationStatus.POSIIVE_CONFIRM, fopEvent);
+        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         return new S6FopState(engine);
     }
 
     private AbstractFopState e41(FopEvent fopEvent) {
         engine.setAdOutReadyFlag(true);
-        engine.lookForFrame(fopEvent);
+        engine.lookForFrame();
         return this;
     }
 

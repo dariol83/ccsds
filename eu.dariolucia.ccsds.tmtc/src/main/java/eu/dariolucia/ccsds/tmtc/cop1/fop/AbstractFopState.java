@@ -16,14 +16,14 @@
 
 package eu.dariolucia.ccsds.tmtc.cop1.fop;
 
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Function;
 
 public abstract class AbstractFopState {
 
     protected final FopEngine engine;
-    protected final Map<FopEvent.EventNumber, Function<FopEvent, AbstractFopState>> event2handler = new HashMap<>();
+    protected final Map<FopEvent.EventNumber, Function<FopEvent, AbstractFopState>> event2handler = new EnumMap<>(FopEvent.EventNumber.class);
 
     public AbstractFopState(FopEngine engine) {
         this.engine = engine;
@@ -45,36 +45,36 @@ public abstract class AbstractFopState {
 
 
     protected AbstractFopState e21(FopEvent fopEvent) {
-        engine.accept(fopEvent);
+        engine.accept(fopEvent.getFrame());
         engine.transmitTypeBdFrame(fopEvent.getFrame());
         return this;
     }
 
     protected AbstractFopState e36(FopEvent fopEvent) {
-        engine.accept(fopEvent);
+        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         engine.setFopSlidingWindow(fopEvent.getDirectiveQualifier());
-        engine.confirm(FopOperationStatus.POSIIVE_CONFIRM, fopEvent);
+        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         return this;
     }
 
     protected AbstractFopState e37(FopEvent fopEvent) {
-        engine.accept(fopEvent);
+        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         engine.setT1Initial(fopEvent.getDirectiveQualifier());
-        engine.confirm(FopOperationStatus.POSIIVE_CONFIRM, fopEvent);
+        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         return this;
     }
 
     protected AbstractFopState e38(FopEvent fopEvent) {
-        engine.accept(fopEvent);
+        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         engine.setTransmissionLimit(fopEvent.getDirectiveQualifier());
-        engine.confirm(FopOperationStatus.POSIIVE_CONFIRM, fopEvent);
+        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         return this;
     }
 
     protected AbstractFopState e39(FopEvent fopEvent) {
-        engine.accept(fopEvent);
+        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         engine.setTimeoutType(fopEvent.getDirectiveQualifier());
-        engine.confirm(FopOperationStatus.POSIIVE_CONFIRM, fopEvent);
+        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         return this;
     }
 
@@ -90,7 +90,7 @@ public abstract class AbstractFopState {
 
     protected AbstractFopState e45(FopEvent fopEvent) {
         engine.setBdOutReadyFlag(true);
-        engine.accept(fopEvent);
+        engine.accept(fopEvent.getFrame());
         return this;
     }
 
