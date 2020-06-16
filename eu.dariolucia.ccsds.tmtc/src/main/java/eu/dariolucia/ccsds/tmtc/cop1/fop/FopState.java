@@ -63,4 +63,8 @@ public enum FopState {
     FopState(String description) {
         this.description = description;
     }
+
+    public String getDescription() {
+        return this.name() + " - " + description;
+    }
 }

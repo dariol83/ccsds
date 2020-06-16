@@ -649,7 +649,7 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
     }
 
     // ---------------------------------------------------------------------------------------------------------
-    // FOP-1 class methods performed by the fopExecutor (thread confinement)
+    // FOP-1 methods performed by the fopExecutor (thread confinement)
     // ---------------------------------------------------------------------------------------------------------
 
     private void processClcw(Clcw clcw) {
