@@ -16,8 +16,6 @@
 
 package eu.dariolucia.ccsds.tmtc.cop1.farm;
 
-public interface IFarmObserver {
-
-    void statusUpdate(FarmStatus status);
-
+public class FarmStatus {
+    // TODO
 }

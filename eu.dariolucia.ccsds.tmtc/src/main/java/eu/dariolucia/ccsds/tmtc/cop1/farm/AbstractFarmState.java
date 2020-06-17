@@ -43,62 +43,17 @@ public abstract class AbstractFarmState {
         }
     }
 
+    protected AbstractFarmState e6(FarmEvent farmEvent) {
+        engine.accept(farmEvent.getFrame());
+        engine.increaseFarmB();
+        return this;
+    }
+
+    protected AbstractFarmState e9(FarmEvent farmEvent) {
+        engine.discard(farmEvent.getFrame());
+        return this;
+    }
+
     public abstract FarmState getState();
-
-
-    protected AbstractFarmState e21(FopEvent fopEvent) {
-        engine.accept(fopEvent.getFrame());
-        engine.transmitTypeBdFrame(fopEvent.getFrame());
-        return this;
-    }
-
-    protected AbstractFarmState e36(FopEvent fopEvent) {
-        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        engine.setFopSlidingWindow(fopEvent.getDirectiveQualifier());
-        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        return this;
-    }
-
-    protected AbstractFarmState e37(FopEvent fopEvent) {
-        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        engine.setT1Initial(fopEvent.getDirectiveQualifier());
-        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        return this;
-    }
-
-    protected AbstractFarmState e38(FopEvent fopEvent) {
-        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        engine.setTransmissionLimit(fopEvent.getDirectiveQualifier());
-        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        return this;
-    }
-
-    protected AbstractFarmState e39(FopEvent fopEvent) {
-        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        engine.setTimeoutType(fopEvent.getDirectiveQualifier());
-        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        return this;
-    }
-
-    protected AbstractFarmState e42(FopEvent fopEvent) {
-        engine.alert(FopAlertCode.LLIF);
-        return new S6FopState(engine);
-    }
-
-    protected AbstractFarmState e44(FopEvent fopEvent) {
-        engine.alert(FopAlertCode.LLIF);
-        return new S6FopState(engine);
-    }
-
-    protected AbstractFarmState e45(FopEvent fopEvent) {
-        engine.setBdOutReadyFlag(true);
-        engine.accept(fopEvent.getFrame());
-        return this;
-    }
-
-    protected AbstractFarmState e46(FopEvent fopEvent) {
-        engine.alert(FopAlertCode.LLIF);
-        return new S6FopState(engine);
-    }
 
 }

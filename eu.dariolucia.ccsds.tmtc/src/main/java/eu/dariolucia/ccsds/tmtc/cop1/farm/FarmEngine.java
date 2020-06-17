@@ -21,6 +21,7 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame;
 import eu.dariolucia.ccsds.tmtc.ocf.builder.ClcwBuilder;
 import eu.dariolucia.ccsds.tmtc.ocf.pdu.Clcw;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
@@ -76,14 +77,29 @@ public class FarmEngine implements Supplier<Clcw> {
      */
     private int receiverFrameSequenceNumber; // V(R)
 
-    private int farmSlidingWindowWidth; // W
+    private final int farmSlidingWindowWidth; // W
 
-    private int farmPositiveWindowWidth; // PW
+    private final LinkedHashSet<Integer> positiveWindow = new LinkedHashSet<>();
+    private final LinkedHashSet<Integer> negativeWindow = new LinkedHashSet<>();
 
-    private int farmNegativeWindowWidth; // NW
+    // These variable must be immediately reflected in the next CLCW
+    private volatile int statusField;
+    private volatile boolean noBitLockFlag;
+    private volatile boolean noRfAvailableFlag;
+    private volatile int reservedSpare;
 
-    public FarmEngine(TcReceiverVirtualChannel linkedTcVc, boolean retransmissionAllowed, int bufferSize) {
+    public FarmEngine(TcReceiverVirtualChannel linkedTcVc, boolean retransmissionAllowed, int bufferSize, int farmSlidingWindowWidth) {
+        if(retransmissionAllowed && (farmSlidingWindowWidth < 2 || farmSlidingWindowWidth > 254)) { // 6.1.8.2
+            throw new IllegalArgumentException("If retransmission is allowed, farmSlidingWindowWidth must be within 2 and 254 (included)");
+        }
+        if(retransmissionAllowed && farmSlidingWindowWidth % 2 != 0) { // 6.1.8.2
+            throw new IllegalArgumentException("If retransmission is allowed, farmSlidingWindowWidth must be an EVEN number");
+        }
+        if(!retransmissionAllowed && farmSlidingWindowWidth > 255) { // 6.1.8.3.2
+            throw new IllegalArgumentException("If retransmission is not allowed, farmSlidingWindowWidth must not exceed 255");
+        }
         this.retransmissionAllowed = retransmissionAllowed;
+        this.farmSlidingWindowWidth = farmSlidingWindowWidth;
         this.tcVc = linkedTcVc;
         this.farmExecutor = Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r);
@@ -102,22 +118,39 @@ public class FarmEngine implements Supplier<Clcw> {
         this.highLevelExecutor.submit(this::deliverFrames);
         //
         this.state = new S3FarmState(this); // The FARM starts in Lockout state
-        // Generate the first CLCW state based on the initialised state
+        // Set the initial VR to 0
+        try {
+            this.farmExecutor.submit(() -> setVr(0)).wait();
+        } catch (InterruptedException e) {
+            // TODO
+            e.printStackTrace();
+        }
         // Prepare the builder
         this.clcwBuilder = ClcwBuilder.create().setVirtualChannelId(tcVc.getVirtualChannelId());
+        // Generate the first CLCW state based on the initialised state
         try {
-            this.farmExecutor.submit(this::report).wait();
+            this.farmExecutor.submit(this::processReport).wait();
         } catch (InterruptedException e) {
             // TODO
             e.printStackTrace();
         }
     }
 
+    public void register(IFarmObserver observer) {
+        this.observers.add(observer);
+    }
+
+    public void deregister(IFarmObserver observer) {
+        this.observers.remove(observer);
+    }
+
     private void deliverFrames() {
-        while(!farmExecutor.isShutdown()) {
+        while(!highLevelExecutor.isShutdown()) {
             try {
                 TcTransferFrame frameToDeliver = this.framesToDeliver.take();
-                this.tcVc.accept(frameToDeliver);
+                if(!highLevelExecutor.isShutdown()) {
+                    this.tcVc.accept(frameToDeliver);
+                }
             } catch(InterruptedException e) {
                 // TODO
                 e.printStackTrace();
@@ -136,17 +169,90 @@ public class FarmEngine implements Supplier<Clcw> {
         farmExecutor.execute(() -> processFrame(frame));
     }
 
+    public void setStatusField(int statusField) {
+        if(statusField < 0 || statusField > 7) {
+            throw new IllegalArgumentException("Status field must be between 0 and 7 (inclusive), got " + statusField);
+        }
+        this.statusField = statusField;
+    }
+
+    public void setNoBitLockFlag(boolean noBitLockFlag) {
+        this.noBitLockFlag = noBitLockFlag;
+    }
+
+    public void setNoRfAvailableFlag(boolean noRfAvailableFlag) {
+        this.noRfAvailableFlag = noRfAvailableFlag;
+    }
+
+    public void setReservedSpare(int reservedSpare) {
+        if(reservedSpare < 0 || reservedSpare > 3) {
+            throw new IllegalArgumentException("Reserved Spare must be between 0 and 3 (inclusive), got " + reservedSpare);
+        }
+        this.reservedSpare = reservedSpare;
+    }
+
     // ---------------------------------------------------------------------------------------------------------
     // FARM-1 actions defined as per CCSDS definition. All these actions are performed by the state transitions
     // and executed by the farmExecutor service. Thread access is enforced to avoid misuse.
     // ---------------------------------------------------------------------------------------------------------
 
     void accept(TcTransferFrame frame) {
-        // TODO
+        checkThreadAccess();
+        boolean inBuffer = this.framesToDeliver.offer(frame);
+        if(!inBuffer) {
+            // State machine problem
+            // TODO
+        }
     }
 
     void discard(TcTransferFrame frame) {
+        checkThreadAccess();
         // Discard
+    }
+
+    void increaseVr() {
+        checkThreadAccess();
+        setVr((this.receiverFrameSequenceNumber + 1) % 256);
+    }
+
+    void resetRetransmitFlag() {
+        checkThreadAccess();
+        this.retransmitFlag = false;
+    }
+
+    void setRetransmitFlag() {
+        checkThreadAccess();
+        this.retransmitFlag = true;
+    }
+
+    void increaseFarmB() {
+        checkThreadAccess();
+        this.farmBCounter++;
+    }
+
+    void setVr(int setVrValue) {
+        checkThreadAccess();
+        this.receiverFrameSequenceNumber = setVrValue;
+        this.positiveWindow.clear();
+        this.negativeWindow.clear();
+        if(retransmissionAllowed) {
+            // Use approach as per 6.1.8.3.1
+            for (int i = 0; i < this.farmSlidingWindowWidth / 2 - 1; ++i) {
+                this.positiveWindow.add((this.receiverFrameSequenceNumber + 1 + i) % 256);
+            }
+            for (int i = 0; i < this.farmSlidingWindowWidth / 2; ++i) {
+                int pos = this.receiverFrameSequenceNumber - 1 - i;
+                if (pos < 0) {
+                    pos += 256;
+                }
+                this.negativeWindow.add(pos);
+            }
+        } else {
+            // Use approach as per 6.1.8.3.2, with PW = W
+            for (int i = 0; i < this.farmSlidingWindowWidth; ++i) {
+                this.positiveWindow.add((this.receiverFrameSequenceNumber + 1 + i) % 256);
+            }
+        }
     }
 
     // ---------------------------------------------------------------------------------------------------------
@@ -157,17 +263,40 @@ public class FarmEngine implements Supplier<Clcw> {
         FarmEvent event;
         if(frame.getFrameType() == TcTransferFrame.FrameType.AD) {
             if(frame.getVirtualChannelFrameCount() == this.receiverFrameSequenceNumber) {
-
+                if(this.framesToDeliver.remainingCapacity() > 0) {
+                    event = new FarmEvent(FarmEvent.EventNumber.E1, frame);
+                } else {
+                    event = new FarmEvent(FarmEvent.EventNumber.E2, frame);
+                }
+            } else if(insidePositivePart(frame)) {
+                event = new FarmEvent(FarmEvent.EventNumber.E3, frame);
+            } else if(insideNegativePart(frame)) {
+                event = new FarmEvent(FarmEvent.EventNumber.E4, frame);
+            } else {
+                event = new FarmEvent(FarmEvent.EventNumber.E5, frame);
             }
-            // TODO resume from here
         } else if(frame.getFrameType() == TcTransferFrame.FrameType.BD) {
-
+            event = new FarmEvent(FarmEvent.EventNumber.E6, frame);
         } else if(frame.getFrameType() == TcTransferFrame.FrameType.BC) {
-
+            if(frame.getControlCommandType() == TcTransferFrame.ControlCommandType.UNLOCK) {
+                event = new FarmEvent(FarmEvent.EventNumber.E7, frame);
+            } else if(frame.getControlCommandType() == TcTransferFrame.ControlCommandType.SET_VR) {
+                event = new FarmEvent(FarmEvent.EventNumber.E8, frame);
+            } else {
+                event = new FarmEvent(FarmEvent.EventNumber.E9, frame);
+            }
         } else {
-            event = new FarmEvent(FarmEvent.EventNumber.E9, null);
+            event = new FarmEvent(FarmEvent.EventNumber.E9, frame);
         }
         applyStateTransition(event);
+    }
+
+    private boolean insideNegativePart(TcTransferFrame frame) {
+        return negativeWindow.contains(frame.getVirtualChannelFrameCount());
+    }
+
+    private boolean insidePositivePart(TcTransferFrame frame) {
+        return positiveWindow.contains(frame.getVirtualChannelFrameCount());
     }
 
     private void processBufferRelease() {
@@ -175,13 +304,40 @@ public class FarmEngine implements Supplier<Clcw> {
         applyStateTransition(event);
     }
 
-    private Clcw report() {
-        // TODO
+    private Clcw processReport() {
+        this.clcwBuilder.setFarmBCounter((int) (farmBCounter % 4));
+        this.clcwBuilder.setRetransmitFlag(retransmitFlag);
+        this.clcwBuilder.setCopInEffect(true);
+        this.clcwBuilder.setLockoutFlag(state instanceof S3FarmState);
+        this.clcwBuilder.setWaitFlag(state instanceof S2FarmState);
+        this.clcwBuilder.setReportValue(receiverFrameSequenceNumber);
+        this.clcwBuilder.setStatusField(statusField);
+        this.clcwBuilder.setNoBitlockFlag(noBitLockFlag);
+        this.clcwBuilder.setNoRfAvailableFlag(noRfAvailableFlag);
+        this.clcwBuilder.setReservedSpare(reservedSpare);
         return this.clcwBuilder.build();
     }
 
     private void applyStateTransition(FarmEvent event) {
         this.state = this.state.event(event);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+    // Other members
+    // ---------------------------------------------------------------------------------------------------------
+
+    private void checkThreadAccess() {
+        if(Thread.currentThread() != this.confinementThread) {
+            throw new IllegalAccessError("Violation on thread confinement for class FopEngine: method can only be accessed by thread " + this.confinementThread.getName());
+        }
+    }
+
+    public void dispose() {
+        this.farmExecutor.shutdownNow();
+        this.highLevelExecutor.shutdownNow();
+        if(this.framesToDeliver.isEmpty()) {
+            // TODO: add sentry object?
+        }
     }
 
     /**
@@ -190,7 +346,7 @@ public class FarmEngine implements Supplier<Clcw> {
     @Override
     public Clcw get() {
         try {
-            return farmExecutor.submit(this::report).get();
+            return farmExecutor.submit(this::processReport).get();
         } catch (InterruptedException e) {
             // TODO
             e.printStackTrace();
