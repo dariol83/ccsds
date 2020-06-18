@@ -78,12 +78,12 @@ public abstract class AbstractFopState {
         return this;
     }
 
-    protected AbstractFopState e42(FopEvent fopEvent) {
+    protected AbstractFopState e42(FopEvent fopEvent) { // NOSONAR part of CCSDS standard
         engine.alert(FopAlertCode.LLIF);
         return new S6FopState(engine);
     }
 
-    protected AbstractFopState e44(FopEvent fopEvent) {
+    protected AbstractFopState e44(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
         engine.alert(FopAlertCode.LLIF);
         return new S6FopState(engine);
     }
@@ -94,7 +94,7 @@ public abstract class AbstractFopState {
         return this;
     }
 
-    protected AbstractFopState e46(FopEvent fopEvent) {
+    protected AbstractFopState e46(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
         engine.alert(FopAlertCode.LLIF);
         return new S6FopState(engine);
     }

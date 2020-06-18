@@ -16,6 +16,41 @@
 
 package eu.dariolucia.ccsds.tmtc.cop1.farm;
 
+import eu.dariolucia.ccsds.tmtc.ocf.pdu.Clcw;
+
 public class FarmStatus {
-    // TODO
+
+    private final int bufferedTcFrames;
+    private final Clcw lastClcw;
+    private final FarmState previousState;
+    private final FarmState currentState;
+    private final FarmEvent.EventNumber event;
+
+    public FarmStatus(int bufferedTcFrames, Clcw lastClcw, FarmState previousState, FarmState currentState, FarmEvent.EventNumber event) {
+        this.bufferedTcFrames = bufferedTcFrames;
+        this.lastClcw = lastClcw;
+        this.previousState = previousState;
+        this.currentState = currentState;
+        this.event = event;
+    }
+
+    public int getBufferedTcFrames() {
+        return bufferedTcFrames;
+    }
+
+    public Clcw getLastClcw() {
+        return lastClcw;
+    }
+
+    public FarmState getPreviousState() {
+        return previousState;
+    }
+
+    public FarmState getCurrentState() {
+        return currentState;
+    }
+
+    public FarmEvent.EventNumber getEvent() {
+        return event;
+    }
 }

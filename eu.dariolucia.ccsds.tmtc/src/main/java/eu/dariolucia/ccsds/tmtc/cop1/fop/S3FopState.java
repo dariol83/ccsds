@@ -94,12 +94,12 @@ public class S3FopState extends AbstractFopState {
         return new S6FopState(engine);
     }
 
-    private AbstractFopState e4(FopEvent fopEvent) {
+    private AbstractFopState e4(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
         engine.alert(FopAlertCode.SYNCH);
         return new S6FopState(engine);
     }
 
-    private AbstractFopState e5(FopEvent fopEvent) {
+    private AbstractFopState e5(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
         engine.alert(FopAlertCode.SYNCH);
         return new S6FopState(engine);
     }
@@ -110,7 +110,7 @@ public class S3FopState extends AbstractFopState {
         return new S1FopState(engine);
     }
 
-    private AbstractFopState e7(FopEvent fopEvent) {
+    private AbstractFopState e7(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
         engine.alert(FopAlertCode.CLCW);
         return new S6FopState(engine);
     }
@@ -168,7 +168,7 @@ public class S3FopState extends AbstractFopState {
         return new S6FopState(engine);
     }
 
-    private AbstractFopState e15(FopEvent fopEvent) {
+    private AbstractFopState e15(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
         engine.alert(FopAlertCode.CLCW);
         return new S6FopState(engine);
     }

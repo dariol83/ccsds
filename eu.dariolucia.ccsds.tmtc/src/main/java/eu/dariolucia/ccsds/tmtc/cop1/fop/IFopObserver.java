@@ -27,4 +27,6 @@ public interface IFopObserver {
     void alert(FopAlertCode code);
 
     void suspend();
+
+    void statusReport(FopStatus status);
 }

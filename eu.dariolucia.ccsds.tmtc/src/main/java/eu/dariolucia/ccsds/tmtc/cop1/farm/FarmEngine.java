@@ -37,7 +37,7 @@ public class FarmEngine implements Supplier<Clcw> {
 
     private final ExecutorService highLevelExecutor;
 
-    private volatile Thread confinementThread;
+    private volatile Thread confinementThread; // NOSONAR only used for thread equality
 
     private final BlockingQueue<TcTransferFrame> framesToDeliver;
 
@@ -89,6 +89,10 @@ public class FarmEngine implements Supplier<Clcw> {
     private volatile int reservedSpare;
 
     public FarmEngine(TcReceiverVirtualChannel linkedTcVc, boolean retransmissionAllowed, int bufferSize, int farmSlidingWindowWidth) {
+        this(linkedTcVc, retransmissionAllowed, bufferSize, farmSlidingWindowWidth, FarmState.S3, 0);
+    }
+
+    public FarmEngine(TcReceiverVirtualChannel linkedTcVc, boolean retransmissionAllowed, int bufferSize, int farmSlidingWindowWidth, FarmState initialState, int initialReceiverFrameSequenceNumber) {
         if(retransmissionAllowed && (farmSlidingWindowWidth < 2 || farmSlidingWindowWidth > 254)) { // 6.1.8.2
             throw new IllegalArgumentException("If retransmission is allowed, farmSlidingWindowWidth must be within 2 and 254 (included)");
         }
@@ -115,24 +119,38 @@ public class FarmEngine implements Supplier<Clcw> {
             t.setName("FARM Entity High Level for TC VC " + this.tcVc.getVirtualChannelId());
             return t;
         });
-        this.highLevelExecutor.submit(this::deliverFrames);
+        this.highLevelExecutor.execute(this::deliverFrames);
         //
-        this.state = new S3FarmState(this); // The FARM starts in Lockout state
+        switch (initialState) {
+            case S1:
+                this.state = new S1FarmState(this);
+                break;
+            case S2:
+                this.state = new S2FarmState(this);
+                break;
+            default:
+                this.state = new S3FarmState(this); // The FARM starts in Lockout state
+                break;
+        }
+        this.receiverFrameSequenceNumber = initialReceiverFrameSequenceNumber % 256;
+        if(this.receiverFrameSequenceNumber < 0) {
+            this.receiverFrameSequenceNumber += 256;
+        }
         // Set the initial VR to 0
         try {
-            this.farmExecutor.submit(() -> setVr(0)).wait();
-        } catch (InterruptedException e) {
-            // TODO
-            e.printStackTrace();
+            this.farmExecutor.submit(() -> setVr(this.receiverFrameSequenceNumber)).get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalArgumentException("Exception while setting V(R) during initialisation", e);
         }
         // Prepare the builder
         this.clcwBuilder = ClcwBuilder.create().setVirtualChannelId(tcVc.getVirtualChannelId());
         // Generate the first CLCW state based on the initialised state
         try {
-            this.farmExecutor.submit(this::processReport).wait();
-        } catch (InterruptedException e) {
-            // TODO
-            e.printStackTrace();
+            this.farmExecutor.submit(this::processReport).get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalArgumentException("Exception while creating first CLCW during initialisation", e);
         }
     }
 
@@ -148,12 +166,14 @@ public class FarmEngine implements Supplier<Clcw> {
         while(!highLevelExecutor.isShutdown()) {
             try {
                 TcTransferFrame frameToDeliver = this.framesToDeliver.take();
+                farmExecutor.execute(this::processBufferRelease);
                 if(!highLevelExecutor.isShutdown()) {
                     this.tcVc.accept(frameToDeliver);
                 }
             } catch(InterruptedException e) {
-                // TODO
-                e.printStackTrace();
+                // Nothing, about to be disposed
+                Thread.currentThread().interrupt();
+                return;
             }
         }
     }
@@ -201,11 +221,11 @@ public class FarmEngine implements Supplier<Clcw> {
         boolean inBuffer = this.framesToDeliver.offer(frame);
         if(!inBuffer) {
             // State machine problem
-            // TODO
+            throw new IllegalStateException("FARM buffer full but frame nevertheless accepted");
         }
     }
 
-    void discard(TcTransferFrame frame) {
+    void discard(TcTransferFrame frame) { // NOSONAR part of the standard
         checkThreadAccess();
         // Discard
     }
@@ -318,8 +338,16 @@ public class FarmEngine implements Supplier<Clcw> {
         return this.clcwBuilder.build();
     }
 
+    private void reportStatus(FarmState previousState, FarmState currentState, FarmEvent.EventNumber number) {
+        FarmStatus status = new FarmStatus(this.framesToDeliver.size(), processReport(), previousState, currentState, number);
+        observers.forEach(o -> o.statusUpdate(status));
+    }
+
     private void applyStateTransition(FarmEvent event) {
+        FarmState previousState = this.state.getState();
         this.state = this.state.event(event);
+        FarmState currentState = this.state.getState();
+        reportStatus(previousState, currentState, event.getNumber());
     }
 
     // ---------------------------------------------------------------------------------------------------------
@@ -328,32 +356,28 @@ public class FarmEngine implements Supplier<Clcw> {
 
     private void checkThreadAccess() {
         if(Thread.currentThread() != this.confinementThread) {
-            throw new IllegalAccessError("Violation on thread confinement for class FopEngine: method can only be accessed by thread " + this.confinementThread.getName());
+            throw new IllegalAccessError("Violation on thread confinement for class FarmEngine: method can only be accessed by thread " + this.confinementThread.getName());
         }
     }
 
     public void dispose() {
         this.farmExecutor.shutdownNow();
         this.highLevelExecutor.shutdownNow();
-        if(this.framesToDeliver.isEmpty()) {
-            // TODO: add sentry object?
-        }
     }
 
     /**
      * Generate and return the information to be placed in the CLCW based on the current status of FARM-1.
+     *
+     * @return the CLCW
+     * @throws IllegalStateException in case of interruptions or error in executing the construction of the CLCW
      */
     @Override
     public Clcw get() {
         try {
             return farmExecutor.submit(this::processReport).get();
-        } catch (InterruptedException e) {
-            // TODO
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            // TODO
-            e.printStackTrace();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Exception while retrieving CLCW from FARM for TC VC ID " + tcVc.getVirtualChannelId(), e);
         }
-        return null;
     }
 }

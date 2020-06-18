@@ -39,7 +39,7 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
 
     private final ExecutorService fopExecutor;
 
-    private volatile Thread confinementThread;
+    private volatile Thread confinementThread; // NOSONAR only used for reference equality comparison
 
     private final ExecutorService lowLevelExecutor;
 
@@ -371,7 +371,7 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
         if(!bcOutReadyFlag) { // a)
             // If not, no further processing can be performed for retransmitting the Type-BC Transfer Frame until
             // a 'BC_Accept' Response is received from the Lower Procedures for the outstanding 'Transmit
-            // Request for (BC) Frame', setting the BC_Out_Flag to 'Ready'.
+            // Request for (BC) Frame', setting the BC_Out_Flag to 'Ready'. // NOSONAR not a block of code
         } else { // b)
             Optional<TransferFrameStatus> optBcFrame = this.sentQueue.stream().filter(o -> o.getFrame().getFrameType() == TcTransferFrame.FrameType.BC).findFirst();
             if(optBcFrame.isPresent() && optBcFrame.get().isToBeRetransmitted()) {
@@ -388,12 +388,12 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
         checkThreadAccess();
         if(!adOutReadyFlag) { // a)
             // If not, no further processing can be performed for transmitting Type-AD Transfer Frames. In fact, when an 'AD_Accept'
-            // Response is received from the Lower Procedures for the outstanding 'Transmit Request for (AD) Frame', FOP-1 will set
+            // Response is received from the Lower Procedures for the outstanding 'Transmit Request for (AD) Frame', FOP-1 will set // NOSONAR not a block of code
             // the AD_Out_Flag to 'Ready' and execute a new 'Look for FDU'.
         } else {
             // Checking if a Type-AD Transfer Frame on the Sent_Queue is flagged 'To_Be_Retransmitted'. If so, the flag
             // is set to 'Not_Ready' and a copy of the first such AD Transfer Frame is passed to the Lower Procedures as a parameter
-            // of a 'Transmit Request for (AD) Frame' and the To_Be_Retransmitted_Flag for that Transfer Frame is reset.
+            // of a 'Transmit Request for (AD) Frame' and the To_Be_Retransmitted_Flag for that Transfer Frame is reset. // NOSONAR not a block of code
             Optional<TransferFrameStatus> optAdFrame = this.sentQueue.stream().filter(o -> o.getFrame().getFrameType() == TcTransferFrame.FrameType.AD).filter(TransferFrameStatus::isToBeRetransmitted).findFirst();
             if(optAdFrame.isPresent()) { // b)
                 setAdOutReadyFlag(false);
@@ -848,8 +848,16 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
         applyStateTransition(event);
     }
 
+    private void reportStatus(FopState previousState, FopState currentState, FopEvent.EventNumber number) {
+        FopStatus status = new FopStatus(expectedAckFrameSequenceNumber, sentQueue.size(), waitQueue.get() != null, adOutReadyFlag, bcOutReadyFlag, bdOutReadyFlag, previousState, currentState, number);
+        observers.forEach(o -> o.statusReport(status));
+    }
+
     private void applyStateTransition(FopEvent event) {
+        FopState previousState = this.state.getState();
         this.state = this.state.event(event);
+        FopState currentState = this.state.getState();
+        reportStatus(previousState, currentState, event.getNumber());
     }
 
     // ---------------------------------------------------------------------------------------------------------
