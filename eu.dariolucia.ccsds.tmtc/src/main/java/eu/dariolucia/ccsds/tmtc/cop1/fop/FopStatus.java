@@ -76,4 +76,19 @@ public class FopStatus {
     public FopEvent.EventNumber getEvent() {
         return event;
     }
+
+    @Override
+    public String toString() {
+        return "FopStatus{" +
+                "NN(R)=" + expectedAckFrameSequenceNumber +
+                ", previousState=" + previousState +
+                ", currentState=" + currentState +
+                ", event=" + event +
+                ", sentQueueItems=" + sentQueueItems +
+                ", waitQueueFull=" + waitQueueFull +
+                ", adOutReadyFlag=" + adOutReadyFlag +
+                ", bcOutReadyFlag=" + bcOutReadyFlag +
+                ", bdOutReadyFlag=" + bdOutReadyFlag +
+                '}';
+    }
 }
