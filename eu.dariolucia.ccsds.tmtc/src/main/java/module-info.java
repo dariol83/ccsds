@@ -22,4 +22,6 @@ open module eu.dariolucia.ccsds.tmtc {
 	exports eu.dariolucia.ccsds.tmtc.transport.pdu;
 	exports eu.dariolucia.ccsds.tmtc.util;
 	exports eu.dariolucia.ccsds.tmtc.util.processor;
+	exports eu.dariolucia.ccsds.tmtc.cop1.farm;
+	exports eu.dariolucia.ccsds.tmtc.cop1.fop;
 }
