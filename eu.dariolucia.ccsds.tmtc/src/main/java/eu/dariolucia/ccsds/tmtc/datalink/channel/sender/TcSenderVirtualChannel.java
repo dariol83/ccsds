@@ -160,7 +160,8 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
         TcTransferFrame tc = TcTransferFrameBuilder.create(isFecfPresent())
                 .setSpacecraftId(getSpacecraftId())
                 .setVirtualChannelId(getVirtualChannelId())
-                .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                // .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                .setFrameSequenceNumber(0) // As per 4.1.2.8 of CCSDS 232.0-B-3, point 3
                 .setBypassFlag(true)
                 .setControlCommandFlag(true)
                 .setSecurity(secH, secT)
@@ -182,7 +183,8 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
         TcTransferFrame tc = TcTransferFrameBuilder.create(isFecfPresent())
                 .setSpacecraftId(getSpacecraftId())
                 .setVirtualChannelId(getVirtualChannelId())
-                .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                // .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                .setFrameSequenceNumber(0) // As per 4.1.2.8 of CCSDS 232.0-B-3, point 3
                 .setBypassFlag(true)
                 .setControlCommandFlag(true)
                 .setSecurity(secH, secT)
@@ -233,7 +235,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
                     this.currentFrame = TcTransferFrameBuilder.create(isFecfPresent())
                             .setSpacecraftId(getSpacecraftId())
                             .setVirtualChannelId(getVirtualChannelId())
-                            .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                            .setFrameSequenceNumber(adMode ? incrementVirtualChannelFrameCounter(256) : 0)
                             .setBypassFlag(!adMode)
                             .setControlCommandFlag(false)
                             .setSecurity(secH, secT);
@@ -261,7 +263,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
                         this.currentFrame = TcTransferFrameBuilder.create(isFecfPresent())
                                 .setSpacecraftId(getSpacecraftId())
                                 .setVirtualChannelId(getVirtualChannelId())
-                                .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                                .setFrameSequenceNumber(adMode ? incrementVirtualChannelFrameCounter(256) : 0)
                                 .setBypassFlag(!adMode)
                                 .setControlCommandFlag(false)
                                 .setSecurity(secH, secT);
@@ -347,7 +349,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
             this.currentFrame = TcTransferFrameBuilder.create(isFecfPresent())
                     .setSpacecraftId(getSpacecraftId())
                     .setVirtualChannelId(getVirtualChannelId())
-                    .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                    .setFrameSequenceNumber(adMode ? incrementVirtualChannelFrameCounter(256) : 0)
                     .setBypassFlag(!adMode)
                     .setControlCommandFlag(false)
                     .setSecurity(secH, secT);
@@ -375,7 +377,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
                 this.currentFrame = TcTransferFrameBuilder.create(isFecfPresent())
                         .setSpacecraftId(getSpacecraftId())
                         .setVirtualChannelId(getVirtualChannelId())
-                        .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                        .setFrameSequenceNumber(adMode ? incrementVirtualChannelFrameCounter(256) : 0)
                         .setBypassFlag(!adMode)
                         .setControlCommandFlag(false)
                         .setSecurity(secH, secT);

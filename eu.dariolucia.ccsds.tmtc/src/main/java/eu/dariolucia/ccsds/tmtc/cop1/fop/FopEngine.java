@@ -92,17 +92,17 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
      */
     private AtomicReference<TcTransferFrame> waitQueue = new AtomicReference<>(null);
     /**
-     * Whether or not a ‘Transmit Request for Frame’ is outstanding for AD.
+     * Whether or not a ‘Transmit Request for Frame’ can be sent for AD. If true, means READY.
      */
-    private boolean adOutReadyFlag = false;
+    private boolean adOutReadyFlag = true;
     /**
-     * Whether or not a ‘Transmit Request for Frame’ is outstanding for BD.
+     * Whether or not a ‘Transmit Request for Frame’ can be sent for BD. If true, means READY.
      */
-    private boolean bdOutReadyFlag = false;
+    private boolean bdOutReadyFlag = true;
     /**
-     * Whether or not a ‘Transmit Request for Frame’ is outstanding for BC.
+     * Whether or not a ‘Transmit Request for Frame’ can be sent for BC. If true, means READY.
      */
-    private boolean bcOutReadyFlag = false;
+    private boolean bcOutReadyFlag = true;
     /**
      * The Sent_Queue is a Virtual Channel data structure in which the master copy of all Type-AD
      * and Type-BC Transfer Frames on a Virtual Channel is held between the time a copy of the
@@ -376,6 +376,7 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
             Optional<TransferFrameStatus> optBcFrame = this.sentQueue.stream().filter(o -> o.getFrame().getFrameType() == TcTransferFrame.FrameType.BC).findFirst();
             if(optBcFrame.isPresent() && optBcFrame.get().isToBeRetransmitted()) {
                 setBcOutReadyFlag(false);
+                optBcFrame.get().setToBeRetransmitted(false); // Not specified by the state machine, but if this is not done, the accept() of the lower procedure will trigger again a lookDirective that will send this
                 lowLevelExecutor.execute(() -> forwardToOutput(optBcFrame.get().getFrame()));
             }
         }
@@ -677,7 +678,7 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
                     // Retransmit == 1
                     event = new FopEvent(FopEvent.EventNumber.E4, clcw, this.suspendState);
                 }
-            } else if(clcw.getReportValue() < tcVc.getNextVirtualChannelFrameCounter() && clcw.getReportValue() >= this.expectedAckFrameSequenceNumber) {
+            } else if(clcw.getReportValue() < tcVc.getNextVirtualChannelFrameCounter() && clcw.getReportValue() >= this.expectedAckFrameSequenceNumber) { // FIXME: this is modulo 256!!
                 // Valid N(R) and some outstanding type AD frames not yet acknowledged
                 if(!clcw.isRetransmitFlag()) {
                     // Retransmit == 0

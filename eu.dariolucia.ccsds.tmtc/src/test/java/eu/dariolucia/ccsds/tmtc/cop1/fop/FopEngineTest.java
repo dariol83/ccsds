@@ -148,8 +148,116 @@ class FopEngineTest {
     }
 
     @Test
-    public void testInitAdWithUnlock() {
+    public void testInitAdWithUnlock() throws InterruptedException {
+        // Test sink
+        List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, true, false);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc, true, sink::add);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
 
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+
+        fop.clcw(clcw);
+
+        fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
+        fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
+        fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 1);
+        fop.directive(5, FopDirective.INIT_AD_WITH_UNLOCK, 0);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S5, 2000));
+
+        fop.clcw(clcw);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 2000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 2000));
+
+        fop.directive(6, FopDirective.TERMINATE, 0);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 2000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
+    }
+
+    @Test
+    public void testInitAdWithUnlockTimeoutAndRetransmission() throws InterruptedException {
+        // Test sink
+        List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, true, false);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc, true, sink::add);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
+
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(true)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+
+        fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
+        fop.directive(2, FopDirective.SET_T1_INITIAL, 5);
+        fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 2);
+        fop.directive(5, FopDirective.INIT_AD_WITH_UNLOCK, 0);
+
+        // Timeout in 5 seconds, add some margin
+        Thread.sleep(4000);
+
+        fop.clcw(clcw);
+
+        // Retransmission
+        Thread.sleep(3000);
+
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(1)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+
+        fop.clcw(clcw);
+
+        Thread.sleep(1000);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 2000));
+
+        fop.directive(6, FopDirective.TERMINATE, 0);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 2000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
     }
 
     @Test
@@ -170,6 +278,7 @@ class FopEngineTest {
 
         @Override
         public void directiveNotification(FopOperationStatus status, Object tag, FopDirective directive, int qualifier) {
+            System.out.println("Directive " + tag + ", directive " + " " + qualifier + ": " + status);
             synchronized (lastDirective) {
                 lastDirective.set(new Object[] {status, tag, directive, qualifier});
                 lastDirective.notifyAll();
@@ -200,27 +309,39 @@ class FopEngineTest {
         }
 
         public boolean waitForStatus(Function<FopStatus, Boolean> condition, int msTimeout) throws InterruptedException {
+            long waitUntil = System.currentTimeMillis() + msTimeout;
             synchronized (lastStatus) {
                 while(lastStatus.get() == null || !condition.apply(lastStatus.get())) {
                     lastStatus.wait(msTimeout);
+                    if(System.currentTimeMillis() > waitUntil) {
+                        break;
+                    }
                 }
                 return lastStatus.get() != null && condition.apply(lastStatus.get());
             }
         }
 
         public boolean waitForDirective(Function<Object[], Boolean> condition, int msTimeout) throws InterruptedException {
+            long waitUntil = System.currentTimeMillis() + msTimeout;
             synchronized (lastDirective) {
                 while(lastDirective.get() == null || !condition.apply(lastDirective.get())) {
                     lastDirective.wait(msTimeout);
+                    if(System.currentTimeMillis() > waitUntil) {
+                        break;
+                    }
                 }
                 return lastDirective.get() != null && condition.apply(lastDirective.get());
             }
         }
 
         public boolean waitForAlert(FopAlertCode code, int msTimeout) throws InterruptedException {
+            long waitUntil = System.currentTimeMillis() + msTimeout;
             synchronized (lastAlert) {
                 while(lastAlert.get() == null || lastAlert.get() != code) {
                     lastAlert.wait(msTimeout);
+                    if(System.currentTimeMillis() > waitUntil) {
+                        break;
+                    }
                 }
                 return lastAlert.get() != null && lastAlert.get() == code;
             }
