@@ -78,6 +78,9 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 2000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
+
+        fop.deregister(stub);
+        fop.dispose();
     }
 
     @Test
@@ -118,6 +121,9 @@ class FopEngineTest {
         fop.clcw(clcw);
         Thread.sleep(1000);
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
+
+        fop.deregister(stub);
+        fop.dispose();
     }
 
     @Test
@@ -145,6 +151,9 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 2000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
+
+        fop.deregister(stub);
+        fop.dispose();
     }
 
     @Test
@@ -192,6 +201,102 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 2000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
+        assertEquals(1, sink.size()); // 1 frames
+
+        fop.deregister(stub);
+        fop.dispose();
+    }
+
+    @Test
+    public void testBdReject() throws InterruptedException {
+        // Test sink
+        Function<TcTransferFrame, Boolean> sink = o -> false;
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, true, false);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc, false, sink);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
+
+        tcVc.dispatch(false, 0, new byte[200]);
+
+        assertTrue(stub.waitForAlert(FopAlertCode.LLIF, 2000));
+        assertTrue(stub.waitForStatus(o -> o.getEvent() == FopEvent.EventNumber.E46, 2000));
+
+        fop.deregister(stub);
+        fop.dispose();
+    }
+
+    @Test
+    public void testInitAdWithUnlockReject() throws InterruptedException {
+        // Test sink
+        Function<TcTransferFrame, Boolean> sink = o -> false;
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, true, false);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc, true, sink);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
+
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+
+        fop.clcw(clcw);
+
+        fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
+        fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
+        fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 1);
+        fop.directive(5, FopDirective.INIT_AD_WITH_UNLOCK, 0);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S5, 2000));
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.NEGATIVE_CONFIRM && Objects.equals(o[1], 5), 2000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
+        assertTrue(stub.waitForAlert(FopAlertCode.LLIF, 2000));
+
+        fop.deregister(stub);
+        fop.dispose();
+    }
+
+    @Test
+    public void testAdFrameBdFrameNoInit() throws InterruptedException {
+        // Test sink
+        List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, true, false);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc, false, sink::add);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
+
+        tcVc.dispatch(true, 0, new byte[300]);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
+
+        tcVc.dispatch(false, 0, new byte[200]);
+
+        assertTrue(stub.waitForStatus(o -> o.getEvent() == FopEvent.EventNumber.E45, 2000));
+        Thread.sleep(1000);
+
+        assertEquals(1, sink.size()); // 1 frame
+
+        fop.deregister(stub);
+        fop.dispose();
     }
 
     @Test
@@ -258,11 +363,137 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 2000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
+        assertEquals(2, sink.size()); // 2 frames
+
+        fop.deregister(stub);
+        fop.dispose();
     }
 
     @Test
-    public void testInitAdWithSetVr() {
+    public void testInitAdWithSetVr() throws InterruptedException {
+        // Test sink
+        List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, true, false);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc, true, sink::add);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
 
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(23)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+
+        fop.clcw(clcw);
+
+        fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
+        fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
+        fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 1);
+        fop.directive(5, FopDirective.INIT_AD_WITH_SET_V_R, 0);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S5, 2000));
+
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+
+        fop.clcw(clcw);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 2000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 2000));
+
+        fop.directive(6, FopDirective.TERMINATE, 0);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 2000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
+        assertEquals(1, sink.size()); // 1 frame
+
+        fop.deregister(stub);
+        fop.dispose();
+    }
+
+    @Test
+    public void testInitAdWithSetVrTimeout() throws InterruptedException {
+        // Test sink
+        List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, true, false);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc, true, sink::add);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
+
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(23)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+
+        fop.clcw(clcw);
+
+        fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
+        fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
+        fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 2);
+        fop.directive(5, FopDirective.INIT_AD_WITH_SET_V_R, 0);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S5, 2000));
+
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(20)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+
+        fop.clcw(clcw);
+
+        assertTrue(stub.waitForAlert(FopAlertCode.T1, 7000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.NEGATIVE_CONFIRM && Objects.equals(o[1], 5), 2000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 2000));
+
+        assertEquals(2, sink.size()); // 2 frames
+
+        fop.deregister(stub);
+        fop.dispose();
     }
 
     private static class FopListenerStub implements IFopObserver {
@@ -273,7 +504,7 @@ class FopEngineTest {
 
         @Override
         public void transferNotification(FopOperationStatus status, TcTransferFrame frame) {
-
+            System.out.println("Transfer frame - type " + frame.getFrameType() + ": " + status);
         }
 
         @Override

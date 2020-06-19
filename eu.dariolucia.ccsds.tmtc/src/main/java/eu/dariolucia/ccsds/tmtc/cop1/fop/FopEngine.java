@@ -26,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -232,7 +233,14 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
     void purgeSentQueue() {
         checkThreadAccess();
         for(TransferFrameStatus tfs : this.sentQueue) {
-            observers.forEach(o -> o.transferNotification(FopOperationStatus.NEGATIVE_CONFIRM, tfs.getFrame()));
+            if(tfs.getFrame().getFrameType() == TcTransferFrame.FrameType.BC && this.pendingInitAd.get() != null) {
+                // Directive: not on the standard
+                Object[] directive = this.pendingInitAd.getAndSet(null);
+                observers.forEach(o -> o.directiveNotification(FopOperationStatus.NEGATIVE_CONFIRM, directive[0], (FopDirective) directive[1], (int) directive[2]));
+            } else {
+                // Frame
+                observers.forEach(o -> o.transferNotification(FopOperationStatus.NEGATIVE_CONFIRM, tfs.getFrame()));
+            }
         }
         this.sentQueue.clear();
     }
@@ -903,11 +911,18 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
     }
 
     public void dispose() {
-        cancelTimer();
-        purgeWaitQueue();
-        purgeSentQueue();
-        this.tcVc.deregister(this);
-        this.fopExecutor.shutdownNow();
+        fopExecutor.submit(() -> {
+            cancelTimer();
+            purgeWaitQueue();
+            purgeSentQueue();
+            this.tcVc.deregister(this);
+        });
+        this.fopExecutor.shutdown();
+        try {
+            this.fopExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            // TODO
+        }
         this.lowLevelExecutor.shutdownNow();
     }
 
