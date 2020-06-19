@@ -686,7 +686,7 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
                     // Retransmit == 1
                     event = new FopEvent(FopEvent.EventNumber.E4, clcw, this.suspendState);
                 }
-            } else if(clcw.getReportValue() < tcVc.getNextVirtualChannelFrameCounter() && clcw.getReportValue() >= this.expectedAckFrameSequenceNumber) { // FIXME: this is modulo 256!!
+            } else if(lessThan(clcw.getReportValue(), tcVc.getNextVirtualChannelFrameCounter(), fopSlidingWindow) && (clcw.getReportValue() == this.expectedAckFrameSequenceNumber || greaterThan(clcw.getReportValue(), this.expectedAckFrameSequenceNumber, fopSlidingWindow))) {
                 // Valid N(R) and some outstanding type AD frames not yet acknowledged
                 if(!clcw.isRetransmitFlag()) {
                     // Retransmit == 0
@@ -740,6 +740,44 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
             event = new FopEvent(FopEvent.EventNumber.E14, clcw, this.suspendState);
         }
         applyStateTransition(event);
+    }
+
+    /**
+     * Perform comparison to check if num is less than otherNum mod 256, given the provided window.
+     * Basically, the window tells how much otherNum can be greater than num, including wrap around.
+     *
+     * @param num the first term to compare
+     * @param otherNum the second term to compare
+     * @param window the window size
+     * @return true if num is less than otherNum, otherwise false
+     */
+    private boolean lessThan(int num, int otherNum, int window) {
+        // Expand num to window elements
+        Set<Integer> expandedSet = new HashSet<>();
+        for(int i = 0; i < window; ++i) {
+            expandedSet.add((num + 1 + i) % 256);
+        }
+        // If otherNum is within the expanded set, return true, else return false
+        return expandedSet.contains(otherNum);
+    }
+
+    /**
+     * Perform comparison to check if num is greater than otherNum mod 256, given the provided window.
+     * Basically, the window tells how much num can be greater than otherNum, including wrap around.
+     *
+     * @param num the first term to compare
+     * @param otherNum the second term to compare
+     * @param window the window size
+     * @return true if num is greater than otherNum, otherwise false
+     */
+    private boolean greaterThan(int num, int otherNum, int window) {
+        // Expand otherNum to window elements
+        Set<Integer> expandedSet = new HashSet<>();
+        for(int i = 0; i < window; ++i) {
+            expandedSet.add((otherNum + 1 + i) % 256);
+        }
+        // If num is within the expanded set, return true, else return false
+        return expandedSet.contains(num);
     }
 
     private void processTimerExpired() {
