@@ -921,7 +921,7 @@ public class FopEngine implements IVirtualChannelSenderOutput<TcTransferFrame> {
         try {
             this.fopExecutor.awaitTermination(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            // TODO
+            Thread.currentThread().interrupt();
         }
         this.lowLevelExecutor.shutdownNow();
     }
