@@ -12,6 +12,7 @@ open module eu.dariolucia.ccsds.tmtc {
 	exports eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.function;
 	exports eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.processor;
 	exports eu.dariolucia.ccsds.tmtc.datalink.channel.sender;
+	exports eu.dariolucia.ccsds.tmtc.datalink.channel.sender.util;
 	exports eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux;
 	exports eu.dariolucia.ccsds.tmtc.datalink.channel.sender.function;
 	exports eu.dariolucia.ccsds.tmtc.datalink.channel.sender.processor;
