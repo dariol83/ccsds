@@ -30,10 +30,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class FopEngineTest {
 
@@ -138,6 +138,407 @@ class FopEngineTest {
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
 
         assertEquals(8, sink.size());
+
+        fop.deregister(stub);
+        fop.dispose();
+    }
+
+    @Test
+    public void testAdReject() throws InterruptedException {
+        // Test sink: takes one second to force race condition
+        Function<TcTransferFrame, Boolean> sink = o -> {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                //
+            }
+            return false;
+        };
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, true, false);
+        BcFrameCollector bcFactory = new BcFrameCollector(tcVc);
+        tcVc.register(bcFactory);
+        TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>(o -> o.getFrameType() == TcTransferFrame.FrameType.AD || o.getFrameType() == TcTransferFrame.FrameType.BD);
+        tcVc.register(collector);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc.getVirtualChannelId(), tcVc::getNextVirtualChannelFrameCounter, tcVc::setVirtualChannelFrameCounter, bcFactory, bcFactory, sink);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
+
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
+        fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
+        fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 3);
+        fop.directive(5, FopDirective.INIT_AD_WITH_CLCW, 0);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S4, 5000));
+
+        fop.clcw(clcw);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
+
+        // Send some frame and (later) check that it is sent with VCC 10
+        tcVc.dispatch(true, 0, new byte[200]);
+        TcTransferFrame frame = collector.retrieveFirst(true);
+        fop.transmit(frame);
+        tcVc.dispatch(true, 0, new byte[200]);
+        frame = collector.retrieveFirst(true);
+        fop.transmit(frame);
+
+        assertTrue(stub.waitForAlert(FopAlertCode.LLIF, 5000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
+
+        fop.deregister(stub);
+        fop.dispose();
+    }
+
+    @Test
+    public void testInitAdWithClcwWaitTransition() throws InterruptedException {
+        // Test sink
+        List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, true, false);
+        BcFrameCollector bcFactory = new BcFrameCollector(tcVc);
+        tcVc.register(bcFactory);
+        TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>(o -> o.getFrameType() == TcTransferFrame.FrameType.AD || o.getFrameType() == TcTransferFrame.FrameType.BD);
+        tcVc.register(collector);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc.getVirtualChannelId(), tcVc::getNextVirtualChannelFrameCounter, tcVc::setVirtualChannelFrameCounter, bcFactory, bcFactory, sink::add);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
+
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
+        fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
+        fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 3);
+        fop.directive(5, FopDirective.INIT_AD_WITH_CLCW, 0);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S4, 5000));
+
+        fop.clcw(clcw);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
+
+        // Send some frame and (later) check that it is sent with VCC 10
+        tcVc.dispatch(true, 0, new byte[200]);
+        TcTransferFrame frame = collector.retrieveFirst(true);
+        fop.transmit(frame, 2000); // 0
+        tcVc.dispatch(true, 0, new byte[200]);
+        frame = collector.retrieveFirst(true);
+        fop.transmit(frame, 2000); // 1
+        tcVc.dispatch(true, 0, new byte[200]);
+        frame = collector.retrieveFirst(true);
+        fop.transmit(frame, 2000); // 2
+        tcVc.dispatch(true, 0, new byte[200]);
+        frame = collector.retrieveFirst(true);
+        fop.transmit(frame, 2000); // 3
+
+        // Inform arrival of 0 and 1, activate retransmission and signal wait
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(true)
+                .setReportValue(2)
+                .setWaitFlag(true)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        // Wait 5 seconds to check that the timer expiry does not request retransmission at this stage
+        Thread.sleep(4000);
+        fop.clcw(clcw);
+        Thread.sleep(2000);
+
+        // Clear wait
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(true)
+                .setReportValue(2)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        Thread.sleep(5000);
+        // Notify 2 and 3
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(4)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        fop.directive(6, FopDirective.TERMINATE, 0);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
+
+        assertEquals(6, sink.size());
+
+        fop.deregister(stub);
+        fop.dispose();
+    }
+
+    @Test
+    public void testS1NnrAlarm() throws InterruptedException {
+        // Test sink
+        List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, true, false);
+        BcFrameCollector bcFactory = new BcFrameCollector(tcVc);
+        tcVc.register(bcFactory);
+        TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>(o -> o.getFrameType() == TcTransferFrame.FrameType.AD || o.getFrameType() == TcTransferFrame.FrameType.BD);
+        tcVc.register(collector);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc.getVirtualChannelId(), tcVc::getNextVirtualChannelFrameCounter, tcVc::setVirtualChannelFrameCounter, bcFactory, bcFactory, sink::add);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
+
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
+        fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
+        fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 3);
+        fop.directive(5, FopDirective.INIT_AD_WITH_CLCW, 0);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S4, 5000));
+
+        fop.clcw(clcw);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
+
+        // Retransmission and Wait at S1
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(true)
+                .setReportValue(2)
+                .setWaitFlag(true)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        // Timeout in 5 seconds, add some margin
+        assertTrue(stub.waitForAlert(FopAlertCode.NN_R, 5000));
+
+        fop.directive(6, FopDirective.TERMINATE, 0);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
+
+        fop.deregister(stub);
+        fop.dispose();
+    }
+
+    @Test
+    public void testS1NotExpectedWaitTransition() throws InterruptedException {
+        // Test sink
+        List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, true, false);
+        BcFrameCollector bcFactory = new BcFrameCollector(tcVc);
+        tcVc.register(bcFactory);
+        TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>(o -> o.getFrameType() == TcTransferFrame.FrameType.AD || o.getFrameType() == TcTransferFrame.FrameType.BD);
+        tcVc.register(collector);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc.getVirtualChannelId(), tcVc::getNextVirtualChannelFrameCounter, tcVc::setVirtualChannelFrameCounter, bcFactory, bcFactory, sink::add);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
+
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
+        fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
+        fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 3);
+        fop.directive(5, FopDirective.INIT_AD_WITH_CLCW, 0);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S4, 5000));
+
+        fop.clcw(clcw);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
+
+        // Retransmission and Wait at S1 with no outstanding AD
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(true)
+                .setReportValue(0)
+                .setWaitFlag(true)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        // Timeout in 5 seconds, add some margin
+        assertTrue(stub.waitForAlert(FopAlertCode.SYNCH, 5000));
+
+        fop.directive(6, FopDirective.TERMINATE, 0);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
+
+        fop.deregister(stub);
+        fop.dispose();
+    }
+
+    @Test
+    public void testS1Lockout() throws InterruptedException {
+        // Test sink
+        List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+        // VC
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, true, false);
+        BcFrameCollector bcFactory = new BcFrameCollector(tcVc);
+        tcVc.register(bcFactory);
+        TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>(o -> o.getFrameType() == TcTransferFrame.FrameType.AD || o.getFrameType() == TcTransferFrame.FrameType.BD);
+        tcVc.register(collector);
+        // Fop Engine
+        FopEngine fop = new FopEngine(tcVc.getVirtualChannelId(), tcVc::getNextVirtualChannelFrameCounter, tcVc::setVirtualChannelFrameCounter, bcFactory, bcFactory, sink::add);
+        // Observer stub
+        FopListenerStub stub = new FopListenerStub();
+        fop.register(stub);
+
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
+        fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
+        fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 3);
+        fop.directive(5, FopDirective.INIT_AD_WITH_CLCW, 0);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S4, 5000));
+
+        fop.clcw(clcw);
+
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
+
+        // Retransmission and Wait at S1 with no outstanding AD
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(true)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        // Timeout in 5 seconds, add some margin
+        assertTrue(stub.waitForAlert(FopAlertCode.LOCKOUT, 5000));
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
 
         fop.deregister(stub);
         fop.dispose();
