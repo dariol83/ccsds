@@ -74,10 +74,6 @@ public final class FopEvent {
         this.ss = ss;
     }
 
-    public boolean isTimerExpired() {
-        return timerExpired;
-    }
-
     public EventNumber getNumber() {
         return number;
     }
@@ -104,20 +100,6 @@ public final class FopEvent {
 
     public int getSuspendState() {
         return this.ss;
-    }
-
-    @Override
-    public String toString() {
-        return "FopEvent{" +
-                "number=" + number +
-                ", clcw=" + clcw +
-                ", frame=" + frame +
-                ", directiveTag=" + directiveTag +
-                ", directiveId=" + directiveId +
-                ", directiveQualifier=" + directiveQualifier +
-                ", timerExpired=" + timerExpired +
-                ", ss=" + ss +
-                '}';
     }
 
     public enum EventNumber {

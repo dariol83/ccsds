@@ -42,7 +42,7 @@ class FopEngineTest {
         // Test sink
         List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
         // VC
-        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, true, false);
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, true, false);
         BcFrameCollector bcFactory = new BcFrameCollector(tcVc);
         tcVc.register(bcFactory);
         TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>(o -> o.getFrameType() == TcTransferFrame.FrameType.AD || o.getFrameType() == TcTransferFrame.FrameType.BD);
@@ -66,13 +66,12 @@ class FopEngineTest {
                 .setReservedSpare(0)
                 .setStatusField(0)
                 .build();
-
         fop.clcw(clcw);
 
         fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
         fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
         fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
-        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 1);
+        fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 3);
         fop.directive(5, FopDirective.INIT_AD_WITH_CLCW, 0);
 
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S4, 5000));
@@ -82,10 +81,63 @@ class FopEngineTest {
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
+        // Send some frame and (later) check that it is sent with VCC 10
+        tcVc.dispatch(true, 0, new byte[200]);
+        TcTransferFrame frame = collector.retrieveFirst(true);
+        fop.transmit(frame, 2000); // 0
+        tcVc.dispatch(true, 0, new byte[200]);
+        frame = collector.retrieveFirst(true);
+        fop.transmit(frame, 2000); // 1
+        tcVc.dispatch(true, 0, new byte[200]);
+        frame = collector.retrieveFirst(true);
+        fop.transmit(frame, 2000); // 2
+        tcVc.dispatch(true, 0, new byte[200]);
+        frame = collector.retrieveFirst(true);
+        fop.transmit(frame, 2000); // 3
+
+        // Inform arrival of 0 and 1, activate retransmission
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(true)
+                .setReportValue(2)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        // Wait 5 seconds in total to fail also the second transmission
+        Thread.sleep(2000);
+        fop.clcw(clcw);
+        Thread.sleep(3000);
+
+        // Inform arrival of 2 and 3, clear retransmission
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(4)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
         fop.directive(6, FopDirective.TERMINATE, 0);
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
+
+        assertEquals(8, sink.size());
 
         fop.deregister(stub);
         fop.dispose();
@@ -143,7 +195,7 @@ class FopEngineTest {
         // Test sink
         List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
         // VC
-        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.PACKET, true, false);
+        TcSenderVirtualChannel tcVc = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.DATA, true, false);
         BcFrameCollector bcFactory = new BcFrameCollector(tcVc);
         tcVc.register(bcFactory);
         TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>(o -> o.getFrameType() == TcTransferFrame.FrameType.AD || o.getFrameType() == TcTransferFrame.FrameType.BD);
@@ -157,16 +209,90 @@ class FopEngineTest {
         fop.directive(1, FopDirective.SET_FOP_SLIDING_WINDOW, 5);
         fop.directive(2, FopDirective.SET_T1_INITIAL, 3);
         fop.directive(3, FopDirective.SET_TIMEOUT_TYPE, 0);
+        fop.directive(9, FopDirective.SET_V_S, 10);
         fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 1);
+        fop.directive(8, FopDirective.RESUME, 0);
         fop.directive(5, FopDirective.INIT_AD_WITHOUT_CLCW, 0);
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
+        // Send a frame and (later) check that it is sent with VCC 10
+        tcVc.dispatch(true, 0, new byte[200]);
+        final TcTransferFrame frame = collector.retrieveFirst(true);
+        fop.transmit(frame, 2000);
+
+        // Ack frame 10
+        Clcw clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(11)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+        assertTrue(stub.waitForFrame(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && o[1] == frame, 5000));
+
+        // Send 3 frames and then ack the first 2 frames
+        tcVc.dispatch(true, 0, new byte[200]);
+        TcTransferFrame frame2 = collector.retrieveFirst(true);
+        fop.transmit(frame2,2000);
+        tcVc.dispatch(true, 0, new byte[200]);
+        TcTransferFrame frame3 = collector.retrieveFirst(true);
+        fop.transmit(frame3,2000);
+        tcVc.dispatch(true, 0, new byte[200]);
+        TcTransferFrame frame4 = collector.retrieveFirst(true);
+        fop.transmit(frame4, 2000);
+
+        // Ack frame 11 and 12
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(13)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        Thread.sleep(500);
+
+        // Ack frame 13
+        clcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(14)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        fop.clcw(clcw);
+
+        assertTrue(stub.waitForFrame(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && o[1] == frame4, 5000));
+
         fop.directive(6, FopDirective.TERMINATE, 0);
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
+
+        assertEquals(4, sink.size());
+        assertEquals(10, sink.get(0).getVirtualChannelFrameCount());
 
         fop.deregister(stub);
         fop.dispose();
@@ -551,11 +677,16 @@ class FopEngineTest {
 
         private final List<FopStatus> lastStatus = new LinkedList<>();
         private final AtomicReference<Object[]> lastDirective = new AtomicReference<>();
+        private final AtomicReference<Object[]> lastFrame = new AtomicReference<>();
         private final AtomicReference<FopAlertCode> lastAlert = new AtomicReference<>();
 
         @Override
         public void transferNotification(FopOperationStatus status, TcTransferFrame frame) {
             System.out.println("Transfer frame - type " + frame.getFrameType() + ": " + status);
+            synchronized (lastFrame) {
+                lastFrame.set(new Object[] {status, frame});
+                lastFrame.notifyAll();
+            }
         }
 
         @Override
@@ -605,6 +736,19 @@ class FopEngineTest {
                     }
                 }
                 return lastExtracted != null && condition.apply(lastExtracted);
+            }
+        }
+
+        public boolean waitForFrame(Function<Object[], Boolean> condition, int msTimeout) throws InterruptedException {
+            long waitUntil = System.currentTimeMillis() + msTimeout;
+            synchronized (lastFrame) {
+                while(lastFrame.get() == null || !condition.apply(lastFrame.get())) {
+                    lastFrame.wait(msTimeout);
+                    if(System.currentTimeMillis() > waitUntil) {
+                        break;
+                    }
+                }
+                return lastFrame.get() != null && condition.apply(lastFrame.get());
             }
         }
 
