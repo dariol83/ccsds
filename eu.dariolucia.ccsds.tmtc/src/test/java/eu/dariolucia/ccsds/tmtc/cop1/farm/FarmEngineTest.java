@@ -116,8 +116,6 @@ class FarmEngineTest {
                 .build();
         assertEquals(expectedClcw, farm.get());
 
-        assertEquals(4, sink.size());
-
         farm.deregister(stub);
         farm.dispose();
     }
