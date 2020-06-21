@@ -808,10 +808,10 @@ public class FopEngine {
         FopEvent event;
         if(this.transmissionCount < this.transmissionLimit) {
             // Transmission count < Transmission limit
-            event = new FopEvent(timeoutType == 0 ? FopEvent.EventNumber.E16 : FopEvent.EventNumber.E104, true, this.suspendState);
+            event = new FopEvent(timeoutType == 0 ? FopEvent.EventNumber.E16 : FopEvent.EventNumber.E104, this.suspendState);
         } else {
             // Transmission count >= Transmission limit
-            event = new FopEvent(timeoutType == 0 ? FopEvent.EventNumber.E17 : FopEvent.EventNumber.E18, true, this.suspendState);
+            event = new FopEvent(timeoutType == 0 ? FopEvent.EventNumber.E17 : FopEvent.EventNumber.E18, this.suspendState);
         }
         applyStateTransition(event);
     }

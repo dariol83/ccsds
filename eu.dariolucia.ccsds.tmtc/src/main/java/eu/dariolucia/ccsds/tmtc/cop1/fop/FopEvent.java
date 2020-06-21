@@ -27,7 +27,6 @@ public final class FopEvent {
     private final Object directiveTag;
     private final FopDirective directiveId;
     private final int directiveQualifier;
-    private final boolean timerExpired;
     private final int ss;
 
     public FopEvent(EventNumber number, Clcw clcw, int ss) {
@@ -37,7 +36,6 @@ public final class FopEvent {
         this.directiveTag = null;
         this.directiveId = null;
         this.directiveQualifier = 0;
-        this.timerExpired = false;
         this.ss = ss;
     }
 
@@ -48,13 +46,11 @@ public final class FopEvent {
         this.directiveTag = null;
         this.directiveId = null;
         this.directiveQualifier = 0;
-        this.timerExpired = false;
         this.ss = ss;
     }
 
-    public FopEvent(EventNumber number, boolean timerExpired, int ss) {
+    public FopEvent(EventNumber number, int ss) {
         this.number = number;
-        this.timerExpired = timerExpired;
         this.clcw = null;
         this.frame = null;
         this.directiveTag = null;
@@ -70,7 +66,6 @@ public final class FopEvent {
         this.directiveTag = directiveTag;
         this.directiveId = directiveId;
         this.directiveQualifier = directiveQualifier;
-        this.timerExpired = false;
         this.ss = ss;
     }
 
