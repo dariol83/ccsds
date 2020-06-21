@@ -22,17 +22,14 @@ public final class FarmEvent {
 
     private final EventNumber number;
     private final TcTransferFrame frame;
-    private final boolean bufferReleaseSignal;
 
     public FarmEvent(EventNumber number, TcTransferFrame frame) {
         this.number = number;
         this.frame = frame;
-        this.bufferReleaseSignal = false;
     }
 
     public FarmEvent(EventNumber number) {
         this.number = number;
-        this.bufferReleaseSignal = true;
         this.frame = null;
     }
 
@@ -42,19 +39,6 @@ public final class FarmEvent {
 
     public TcTransferFrame getFrame() {
         return frame;
-    }
-
-    public boolean isBufferReleaseSignal() {
-        return bufferReleaseSignal;
-    }
-
-    @Override
-    public String toString() {
-        return "FarmEvent{" +
-                "number=" + number +
-                ", frame=" + frame +
-                ", bufferReleaseSignal=" + bufferReleaseSignal +
-                '}';
     }
 
     public enum EventNumber {

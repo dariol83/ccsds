@@ -53,4 +53,15 @@ public class FarmStatus {
     public FarmEvent.EventNumber getEvent() {
         return event;
     }
+
+    @Override
+    public String toString() {
+        return "FarmStatus{" +
+                "previousState=" + getPreviousState() +
+                ", currentState=" + getCurrentState() +
+                ", event=" + getEvent() +
+                ", bufferedTcFrames=" + getBufferedTcFrames() +
+                ", lastClcw=" + getLastClcw() +
+                '}';
+    }
 }

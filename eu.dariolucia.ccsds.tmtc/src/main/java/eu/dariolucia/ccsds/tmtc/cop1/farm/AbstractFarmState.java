@@ -16,8 +16,6 @@
 
 package eu.dariolucia.ccsds.tmtc.cop1.farm;
 
-import eu.dariolucia.ccsds.tmtc.cop1.fop.*;
-
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -43,14 +41,14 @@ public abstract class AbstractFarmState {
         }
     }
 
-    protected AbstractFarmState e6(FarmEvent farmEvent) {
-        engine.accept(farmEvent.getFrame());
-        engine.increaseFarmB();
+    protected AbstractFarmState discard(FarmEvent farmEvent) {
+        engine.discard(farmEvent.getFrame());
         return this;
     }
 
-    protected AbstractFarmState e9(FarmEvent farmEvent) {
-        engine.discard(farmEvent.getFrame());
+    protected AbstractFarmState e6(FarmEvent farmEvent) {
+        engine.accept(farmEvent.getFrame());
+        engine.increaseFarmB();
         return this;
     }
 

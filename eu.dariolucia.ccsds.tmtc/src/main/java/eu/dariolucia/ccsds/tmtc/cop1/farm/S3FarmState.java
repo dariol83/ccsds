@@ -24,42 +24,17 @@ public class S3FarmState extends AbstractFarmState {
 
     @Override
     protected void registerHandlers() {
-        event2handler.put(FarmEvent.EventNumber.E1, this::e1);
-        event2handler.put(FarmEvent.EventNumber.E2, this::e2);
-        event2handler.put(FarmEvent.EventNumber.E3, this::e3);
-        event2handler.put(FarmEvent.EventNumber.E4, this::e4);
-        event2handler.put(FarmEvent.EventNumber.E5, this::e5);
+        event2handler.put(FarmEvent.EventNumber.E1, this::discard);
+        event2handler.put(FarmEvent.EventNumber.E2, this::discard);
+        event2handler.put(FarmEvent.EventNumber.E3, this::discard);
+        event2handler.put(FarmEvent.EventNumber.E4, this::discard);
+        event2handler.put(FarmEvent.EventNumber.E5, this::discard);
         event2handler.put(FarmEvent.EventNumber.E6, this::e6);
         event2handler.put(FarmEvent.EventNumber.E7, this::e7);
         event2handler.put(FarmEvent.EventNumber.E8, this::e8);
-        event2handler.put(FarmEvent.EventNumber.E9, this::e9);
+        event2handler.put(FarmEvent.EventNumber.E9, this::discard);
         event2handler.put(FarmEvent.EventNumber.E10, this::e10);
         // Event E11 not handled here in this implementation
-    }
-
-    private AbstractFarmState e1(FarmEvent farmEvent) {
-        engine.discard(farmEvent.getFrame());
-        return this;
-    }
-
-    private AbstractFarmState e2(FarmEvent farmEvent) {
-        engine.discard(farmEvent.getFrame());
-        return this;
-    }
-
-    private AbstractFarmState e3(FarmEvent farmEvent) {
-        engine.discard(farmEvent.getFrame());
-        return this;
-    }
-
-    private AbstractFarmState e4(FarmEvent farmEvent) {
-        engine.discard(farmEvent.getFrame());
-        return this;
-    }
-
-    private AbstractFarmState e5(FarmEvent farmEvent) {
-        engine.discard(farmEvent.getFrame());
-        return this;
     }
 
     private AbstractFarmState e7(FarmEvent farmEvent) {
