@@ -16,7 +16,6 @@
 
 package eu.dariolucia.ccsds.tmtc.cop1.farm;
 
-import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.TcReceiverVirtualChannel;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame;
 import eu.dariolucia.ccsds.tmtc.ocf.builder.ClcwBuilder;
 import eu.dariolucia.ccsds.tmtc.ocf.pdu.Clcw;
@@ -90,10 +89,6 @@ public class FarmEngine implements Supplier<Clcw> {
     private volatile boolean noBitLockFlag = true; // No bit lock at construction
     private volatile boolean noRfAvailableFlag = true; // No RF at construction
     private volatile int reservedSpare;
-
-    public FarmEngine(TcReceiverVirtualChannel linkedTcVc, boolean retransmissionAllowed, int bufferSize, int farmSlidingWindowWidth) {
-        this(linkedTcVc.getVirtualChannelId(), linkedTcVc, retransmissionAllowed, bufferSize, farmSlidingWindowWidth, FarmState.S3, 0);
-    }
 
     public FarmEngine(int virtualChannelId, Consumer<TcTransferFrame> output, boolean retransmissionAllowed, int bufferSize, int farmSlidingWindowWidth, FarmState initialState, int initialReceiverFrameSequenceNumber) {
         if(retransmissionAllowed && (farmSlidingWindowWidth < 2 || farmSlidingWindowWidth > 254)) { // 6.1.8.2

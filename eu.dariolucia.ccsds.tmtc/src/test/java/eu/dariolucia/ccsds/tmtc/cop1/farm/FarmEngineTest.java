@@ -27,12 +27,471 @@ import org.junit.jupiter.api.Test;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Semaphore;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FarmEngineTest {
+
+    @Test
+    public void testFarmOpen() {
+        final List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+
+        FarmEngine farm = new FarmEngine(0, sink::add, true, 5, 10, FarmState.S1, 0);
+        FarmListenerStub stub = new FarmListenerStub();
+        farm.register(stub);
+
+        Clcw expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(true)
+                .setNoRfAvailableFlag(true)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        TcSenderVirtualChannel vc = new TcSenderVirtualChannel(321, 0 , VirtualChannelAccessMode.DATA, false, false);
+        TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>();
+        vc.register(collector);
+
+        farm.setNoBitLockFlag(false);
+        farm.setNoRfAvailableFlag(false);
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        // Send 4 AD frames
+        vc.dispatch(true, 0, new byte[200]);
+        TcTransferFrame fr = collector.retrieveFirst(true);
+        System.out.println("Frame 0");
+        farm.frameArrived(fr);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 1");
+        farm.frameArrived(fr);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 2");
+        farm.frameArrived(fr);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 3");
+        farm.frameArrived(fr);
+
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(4)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        assertEquals(4, sink.size());
+
+        farm.deregister(stub);
+        farm.dispose();
+    }
+
+    @Test
+    public void testFarmWaitLockout() throws InterruptedException {
+        final Semaphore flowControl = new Semaphore(0);
+        Consumer<TcTransferFrame> output = tcTransferFrame -> {
+            try {
+                flowControl.acquire();
+            } catch (InterruptedException e) {
+                // Not needed
+            }
+        };
+
+        FarmEngine farm = new FarmEngine(0, output, true, 2, 10, FarmState.S3, 0);
+        FarmListenerStub stub = new FarmListenerStub();
+        farm.register(stub);
+
+        Clcw expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(true)
+                .setNoBitlockFlag(true)
+                .setNoRfAvailableFlag(true)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        TcSenderVirtualChannel vc = new TcSenderVirtualChannel(321, 0 , VirtualChannelAccessMode.DATA, false, false);
+        TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>();
+        vc.register(collector);
+
+        // Send unlock
+        vc.dispatchUnlock();
+        TcTransferFrame fr = collector.retrieveFirst(true);
+        farm.frameArrived(fr);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S1, 5000));
+
+        farm.setNoBitLockFlag(false);
+        farm.setNoRfAvailableFlag(false);
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(1)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        // Send 4 AD frames
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 0");
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 1");
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 2");
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 3");
+        farm.frameArrived(fr);
+        Thread.sleep(2000);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S2, 5000));
+
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(1)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(true)
+                .setReportValue(3)
+                .setWaitFlag(true)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        // Send AD frame for lockout
+        vc.setVirtualChannelFrameCounter(100);
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 100");
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S3, 5000));
+
+        flowControl.release(1);
+        Thread.sleep(2000);
+        flowControl.release(1);
+
+        Thread.sleep(2000);
+
+        farm.deregister(stub);
+        farm.dispose();
+    }
+
+    @Test
+    public void testFarmWaitUnlock() throws InterruptedException {
+        final Semaphore flowControl = new Semaphore(0);
+        Consumer<TcTransferFrame> output = tcTransferFrame -> {
+            try {
+                flowControl.acquire();
+            } catch (InterruptedException e) {
+                // Not needed
+            }
+        };
+
+        FarmEngine farm = new FarmEngine(0, output, true, 2, 10, FarmState.S3, 0);
+        FarmListenerStub stub = new FarmListenerStub();
+        farm.register(stub);
+
+        Clcw expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(true)
+                .setNoBitlockFlag(true)
+                .setNoRfAvailableFlag(true)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        TcSenderVirtualChannel vc = new TcSenderVirtualChannel(321, 0 , VirtualChannelAccessMode.DATA, false, false);
+        TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>();
+        vc.register(collector);
+
+        // Send unlock
+        vc.dispatchUnlock();
+        TcTransferFrame fr = collector.retrieveFirst(true);
+        farm.frameArrived(fr);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S1, 5000));
+
+        farm.setNoBitLockFlag(false);
+        farm.setNoRfAvailableFlag(false);
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(1)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        // Send 4 AD frames
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 0");
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 1");
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 2");
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 3");
+        farm.frameArrived(fr);
+        Thread.sleep(2000);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S2, 5000));
+
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(1)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(true)
+                .setReportValue(3)
+                .setWaitFlag(true)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        // Send BC unlock
+        vc.dispatchUnlock();
+        fr = collector.retrieveFirst(true);
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S1, 5000));
+
+        flowControl.release(1);
+        Thread.sleep(2000);
+        flowControl.release(1);
+
+        Thread.sleep(2000);
+
+        farm.deregister(stub);
+        farm.dispose();
+    }
+
+    @Test
+    public void testFarmWaitSetVr() throws InterruptedException {
+        final Semaphore flowControl = new Semaphore(0);
+        Consumer<TcTransferFrame> output = tcTransferFrame -> {
+            try {
+                flowControl.acquire();
+            } catch (InterruptedException e) {
+                // Not needed
+            }
+        };
+
+        FarmEngine farm = new FarmEngine(0, output, true, 2, 10, FarmState.S3, 0);
+        FarmListenerStub stub = new FarmListenerStub();
+        farm.register(stub);
+
+        Clcw expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(true)
+                .setNoBitlockFlag(true)
+                .setNoRfAvailableFlag(true)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        TcSenderVirtualChannel vc = new TcSenderVirtualChannel(321, 0 , VirtualChannelAccessMode.DATA, false, false);
+        TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>();
+        vc.register(collector);
+
+        // Send unlock
+        vc.dispatchUnlock();
+        TcTransferFrame fr = collector.retrieveFirst(true);
+        farm.frameArrived(fr);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S1, 5000));
+
+        farm.setNoBitLockFlag(false);
+        farm.setNoRfAvailableFlag(false);
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(1)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        // Send 4 AD frames
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 0");
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 1");
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 2");
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        System.out.println("Frame 3");
+        farm.frameArrived(fr);
+        Thread.sleep(2000);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S2, 5000));
+
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(1)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(true)
+                .setReportValue(3)
+                .setWaitFlag(true)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        // Send BC Set VR
+        vc.dispatchSetVr(30);
+        fr = collector.retrieveFirst(true);
+        farm.frameArrived(fr);
+        Thread.sleep(1000);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S1, 5000));
+
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(2)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(30)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        flowControl.release(1);
+        Thread.sleep(2000);
+        flowControl.release(1);
+
+        Thread.sleep(2000);
+
+        farm.deregister(stub);
+        farm.dispose();
+    }
 
     @Test
     public void testFarmUnlock() throws InterruptedException {
@@ -423,6 +882,166 @@ class FarmEngineTest {
         farm.deregister(stub);
         farm.dispose();
     }
+
+
+    @Test
+    public void testFarmSetVrNoRetransmission() throws InterruptedException {
+
+        List<TcTransferFrame> sink = new CopyOnWriteArrayList<>();
+
+        FarmEngine farm = new FarmEngine(0, sink::add, false, 4, 10, FarmState.S3, 0);
+        FarmListenerStub stub = new FarmListenerStub();
+        farm.register(stub);
+
+        Clcw expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(true)
+                .setNoBitlockFlag(true)
+                .setNoRfAvailableFlag(true)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        TcSenderVirtualChannel vc = new TcSenderVirtualChannel(321, 0 , VirtualChannelAccessMode.DATA, false, false);
+        TransferFrameCollector<TcTransferFrame> collector = new TransferFrameCollector<>();
+        vc.register(collector);
+
+        // Send SetVR - No effect except FARM-B
+        vc.dispatchSetVr(12);
+        TcTransferFrame fr = collector.retrieveFirst(true);
+        farm.frameArrived(fr);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S3, 5000));
+
+        farm.setNoBitLockFlag(false);
+        farm.setNoRfAvailableFlag(false);
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(1)
+                .setLockoutFlag(true)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        assertEquals(0, sink.size());
+
+        // Send BD frame
+        vc.dispatch(false, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        farm.frameArrived(fr);
+
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(2)
+                .setLockoutFlag(true)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        Thread.sleep(2000);
+
+        assertEquals(1, sink.size());
+
+        // Send unlock - FARM open
+        vc.dispatchUnlock();
+        fr = collector.retrieveFirst(true);
+        farm.frameArrived(fr);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S1, 5000));
+
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(3)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(0)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        assertEquals(1, sink.size());
+
+        // Send again SetVr
+        vc.dispatchSetVr(12);
+        fr = collector.retrieveFirst(true);
+        farm.frameArrived(fr);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S1, 5000));
+
+        farm.setNoBitLockFlag(false);
+        farm.setNoRfAvailableFlag(false);
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(false)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(12)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        assertEquals(1, sink.size());
+
+        // Send AD frame very far away in terms of VCC (negative side) -> lockout
+        vc.dispatch(true, 0, new byte[200]);
+        fr = collector.retrieveFirst(true);
+        farm.frameArrived(fr);
+
+        assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FarmState.S3, 5000));
+
+        expectedClcw = ClcwBuilder.create()
+                .setCopInEffect(true)
+                .setFarmBCounter(0)
+                .setLockoutFlag(true)
+                .setNoBitlockFlag(false)
+                .setNoRfAvailableFlag(false)
+                .setRetransmitFlag(false)
+                .setReportValue(12)
+                .setWaitFlag(false)
+                .setVirtualChannelId(0)
+                .setReservedSpare(0)
+                .setStatusField(0)
+                .build();
+        assertEquals(expectedClcw, farm.get());
+
+        Thread.sleep(2000);
+
+        assertEquals(1, sink.size());
+
+        farm.deregister(stub);
+        farm.dispose();
+    }
+
 
     private static class FarmListenerStub implements IFarmObserver {
 
