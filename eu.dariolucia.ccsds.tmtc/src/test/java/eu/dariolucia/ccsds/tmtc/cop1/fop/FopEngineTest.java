@@ -287,7 +287,7 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
-
+        Thread.sleep(2000);
         assertEquals(8, sink.size());
 
         fop.deregister(stub);
@@ -379,7 +379,7 @@ class FopEngineTest {
 
         assertTrue(stub.waitForAlert(FopAlertCode.T1, 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
-
+        Thread.sleep(2000);
         assertEquals(8, sink.size());
 
         fop.deregister(stub);
@@ -475,7 +475,7 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
-
+        Thread.sleep(2000);
         assertEquals(4, sink.size());
 
         fop.deregister(stub);
@@ -592,7 +592,7 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
-
+        Thread.sleep(2000);
         assertEquals(8, sink.size());
 
         fop.deregister(stub);
@@ -924,7 +924,7 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
-
+        Thread.sleep(2000);
         assertEquals(6, sink.size());
 
         fop.deregister(stub);
@@ -1082,7 +1082,7 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
-
+        Thread.sleep(2000);
         assertEquals(4, sink.size());
 
         fop.deregister(stub);
@@ -1553,7 +1553,7 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
-
+        Thread.sleep(2000);
         assertEquals(4, sink.size());
         assertEquals(10, sink.get(0).getVirtualChannelFrameCount());
 
@@ -1698,6 +1698,7 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
+        Thread.sleep(2000);
         assertEquals(1, sink.size()); // 1 frames
 
         fop.deregister(stub);
@@ -1882,6 +1883,7 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
+        Thread.sleep(2000);
         assertEquals(2, sink.size()); // 2 frames
 
         fop.deregister(stub);
@@ -1951,6 +1953,8 @@ class FopEngineTest {
 
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
+
+        Thread.sleep(2000);
         assertEquals(1, sink.size()); // 1 frame
 
         fop.deregister(stub);
@@ -2017,7 +2021,7 @@ class FopEngineTest {
         assertTrue(stub.waitForAlert(FopAlertCode.T1, 7000));
         assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.NEGATIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
-
+        Thread.sleep(2000);
         assertEquals(2, sink.size()); // 2 frames
 
         fop.deregister(stub);
