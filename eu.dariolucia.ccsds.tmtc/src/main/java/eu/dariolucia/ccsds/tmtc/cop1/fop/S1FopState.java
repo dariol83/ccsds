@@ -24,13 +24,13 @@ public class S1FopState extends AbstractFopState {
 
     @Override
     protected void registerHandlers() {
-        event2handler.put(FopEvent.EventNumber.E1, this::e1);
+        event2handler.put(FopEvent.EventNumber.E1, this::ignore);
         event2handler.put(FopEvent.EventNumber.E2, this::e2);
-        event2handler.put(FopEvent.EventNumber.E3, this::e3);
+        event2handler.put(FopEvent.EventNumber.E3, this::e3e7e15);
         event2handler.put(FopEvent.EventNumber.E4, this::e4);
-        event2handler.put(FopEvent.EventNumber.E5, this::e5);
+        event2handler.put(FopEvent.EventNumber.E5, this::ignore);
         event2handler.put(FopEvent.EventNumber.E6, this::e6);
-        event2handler.put(FopEvent.EventNumber.E7, this::e7);
+        event2handler.put(FopEvent.EventNumber.E7, this::e3e7e15);
         event2handler.put(FopEvent.EventNumber.E101, this::e101);
         event2handler.put(FopEvent.EventNumber.E102, this::e102);
         event2handler.put(FopEvent.EventNumber.E8, this::e8);
@@ -41,9 +41,9 @@ public class S1FopState extends AbstractFopState {
         event2handler.put(FopEvent.EventNumber.E103, this::e103);
         event2handler.put(FopEvent.EventNumber.E13, this::e13);
         event2handler.put(FopEvent.EventNumber.E14, this::e14);
-        event2handler.put(FopEvent.EventNumber.E15, this::e15);
-        event2handler.put(FopEvent.EventNumber.E16, this::e16);
-        event2handler.put(FopEvent.EventNumber.E104, this::e104);
+        event2handler.put(FopEvent.EventNumber.E15, this::e3e7e15);
+        event2handler.put(FopEvent.EventNumber.E16, this::e16e104);
+        event2handler.put(FopEvent.EventNumber.E104, this::e16e104);
         event2handler.put(FopEvent.EventNumber.E17, this::e17);
         event2handler.put(FopEvent.EventNumber.E18, this::e18);
         event2handler.put(FopEvent.EventNumber.E19, this::e19);
@@ -72,16 +72,6 @@ public class S1FopState extends AbstractFopState {
         event2handler.put(FopEvent.EventNumber.E46, this::e46);
     }
 
-    private AbstractFopState reject(FopEvent fopEvent) {
-        engine.reject(fopEvent);
-        return this;
-    }
-
-    private AbstractFopState e1(FopEvent fopEvent) {
-        // Ignore
-        return this;
-    }
-
     private AbstractFopState e2(FopEvent fopEvent) {
         engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
         engine.cancelTimer();
@@ -89,7 +79,7 @@ public class S1FopState extends AbstractFopState {
         return this;
     }
 
-    private AbstractFopState e3(FopEvent fopEvent) {
+    private AbstractFopState e3e7e15(FopEvent fopEvent) {
         engine.alert(FopAlertCode.CLCW);
         return new S6FopState(engine);
     }
@@ -99,20 +89,10 @@ public class S1FopState extends AbstractFopState {
         return new S6FopState(engine);
     }
 
-    private AbstractFopState e5(FopEvent fopEvent) {
-        // Ignore
-        return this;
-    }
-
     private AbstractFopState e6(FopEvent fopEvent) {
         engine.removeAckFramesFromSentQueue(fopEvent.getClcw());
         engine.lookForFrame();
         return this;
-    }
-
-    private AbstractFopState e7(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
-        engine.alert(FopAlertCode.CLCW);
-        return new S6FopState(engine);
     }
 
     private AbstractFopState e101(FopEvent fopEvent) {
@@ -145,17 +125,17 @@ public class S1FopState extends AbstractFopState {
     }
 
     private AbstractFopState e11(FopEvent fopEvent) {
-        // Ignore
+        // No action
         return new S3FopState(engine);
     }
 
     private AbstractFopState e12(FopEvent fopEvent) {
-        // Ignore
+        // No action
         return new S2FopState(engine);
     }
 
     private AbstractFopState e103(FopEvent fopEvent) {
-        // Ignore
+        // No action
         return new S3FopState(engine);
     }
 
@@ -169,18 +149,7 @@ public class S1FopState extends AbstractFopState {
         return new S6FopState(engine);
     }
 
-    private AbstractFopState e15(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
-        engine.alert(FopAlertCode.CLCW);
-        return new S6FopState(engine);
-    }
-
-    private AbstractFopState e16(FopEvent fopEvent) {
-        engine.initiateAdRetransmission();
-        engine.lookForFrame();
-        return this;
-    }
-
-    private AbstractFopState e104(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
+    private AbstractFopState e16e104(FopEvent fopEvent) {
         engine.initiateAdRetransmission();
         engine.lookForFrame();
         return this;
@@ -201,13 +170,6 @@ public class S1FopState extends AbstractFopState {
         engine.addToWaitQueue(fopEvent);
         engine.lookForFrame();
         return this;
-    }
-
-    private AbstractFopState e29(FopEvent fopEvent) {
-        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        engine.alert(FopAlertCode.TERM);
-        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        return new S6FopState(engine);
     }
 
     private AbstractFopState e41(FopEvent fopEvent) {

@@ -25,15 +25,15 @@ public class S5FopState extends AbstractFopState {
     @Override
     protected void registerHandlers() {
         event2handler.put(FopEvent.EventNumber.E1, this::e1);
-        event2handler.put(FopEvent.EventNumber.E3, this::e3);
-        event2handler.put(FopEvent.EventNumber.E4, this::e4);
-        event2handler.put(FopEvent.EventNumber.E13, this::e13);
-        event2handler.put(FopEvent.EventNumber.E14, this::e14);
-        event2handler.put(FopEvent.EventNumber.E15, this::e15);
-        event2handler.put(FopEvent.EventNumber.E16, this::e16);
-        event2handler.put(FopEvent.EventNumber.E104, this::e104);
-        event2handler.put(FopEvent.EventNumber.E17, this::e17);
-        event2handler.put(FopEvent.EventNumber.E18, this::e18);
+        event2handler.put(FopEvent.EventNumber.E3, this::e3e15);
+        event2handler.put(FopEvent.EventNumber.E4, this::ignore);
+        event2handler.put(FopEvent.EventNumber.E13, this::ignore);
+        event2handler.put(FopEvent.EventNumber.E14, this::ignore);
+        event2handler.put(FopEvent.EventNumber.E15, this::e3e15);
+        event2handler.put(FopEvent.EventNumber.E16, this::e16e104);
+        event2handler.put(FopEvent.EventNumber.E104, this::e16e104);
+        event2handler.put(FopEvent.EventNumber.E17, this::e17e18);
+        event2handler.put(FopEvent.EventNumber.E18, this::e17e18);
         event2handler.put(FopEvent.EventNumber.E19, this::reject);
         event2handler.put(FopEvent.EventNumber.E20, this::reject);
         event2handler.put(FopEvent.EventNumber.E21, this::e21);
@@ -60,11 +60,6 @@ public class S5FopState extends AbstractFopState {
         event2handler.put(FopEvent.EventNumber.E46, this::e46);
     }
 
-    private AbstractFopState reject(FopEvent fopEvent) {
-        engine.reject(fopEvent);
-        return this;
-    }
-
     private AbstractFopState e1(FopEvent fopEvent) {
         engine.confirmPendingInitAdWithBcFrame();
         engine.releaseBcFrame();
@@ -72,57 +67,19 @@ public class S5FopState extends AbstractFopState {
         return new S1FopState(engine);
     }
 
-    private AbstractFopState e3(FopEvent fopEvent) {
+    private AbstractFopState e3e15(FopEvent fopEvent) {
         engine.alert(FopAlertCode.CLCW);
         return new S6FopState(engine);
     }
 
-    private AbstractFopState e4(FopEvent fopEvent) {
-        // Ignore
-        return this;
-    }
-
-    private AbstractFopState e13(FopEvent fopEvent) {
-        // Ignore
-        return this;
-    }
-
-    private AbstractFopState e14(FopEvent fopEvent) {
-        // Ignore
-        return this;
-    }
-
-    private AbstractFopState e15(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
-        engine.alert(FopAlertCode.CLCW);
-        return new S6FopState(engine);
-    }
-
-    private AbstractFopState e16(FopEvent fopEvent) {
+    private AbstractFopState e16e104(FopEvent fopEvent) {
         engine.initiateBcRetransmission();
         engine.lookForDirective();
         return this;
     }
 
-    private AbstractFopState e104(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
-        engine.initiateBcRetransmission();
-        engine.lookForDirective();
-        return this;
-    }
-
-    private AbstractFopState e17(FopEvent fopEvent) {
+    private AbstractFopState e17e18(FopEvent fopEvent) {
         engine.alert(FopAlertCode.T1);
-        return new S6FopState(engine);
-    }
-
-    private AbstractFopState e18(FopEvent fopEvent) { // NOSONAR part of CCSDS standard, separate event
-        engine.alert(FopAlertCode.T1);
-        return new S6FopState(engine);
-    }
-
-    private AbstractFopState e29(FopEvent fopEvent) {
-        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
-        engine.alert(FopAlertCode.TERM);
-        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         return new S6FopState(engine);
     }
 

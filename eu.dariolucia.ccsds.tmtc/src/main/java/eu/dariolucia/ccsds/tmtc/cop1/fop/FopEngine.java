@@ -737,13 +737,7 @@ public class FopEngine {
                     // Retransmit == 1
                     if(this.transmissionLimit == 1) {
                         // Transmission limit == 1
-                        if(clcw.getReportValue() != this.expectedAckFrameSequenceNumber) {
-                            // N(R) != NN(R)
-                            event = new FopEvent(FopEvent.EventNumber.E101, clcw, this.suspendState);
-                        } else {
-                            // N(R) == NN(R)
-                            event = new FopEvent(FopEvent.EventNumber.E102, clcw, this.suspendState);
-                        }
+                        event = new FopEvent(clcw.getReportValue() != this.expectedAckFrameSequenceNumber ? FopEvent.EventNumber.E101 : FopEvent.EventNumber.E102, clcw, this.suspendState);
                     } else {
                         // Transmission limit > 1 (cannot be <= 0)
                         if(clcw.getReportValue() != this.expectedAckFrameSequenceNumber) {

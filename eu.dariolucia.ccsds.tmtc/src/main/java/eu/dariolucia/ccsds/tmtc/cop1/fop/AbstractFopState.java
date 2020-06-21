@@ -43,11 +43,28 @@ public abstract class AbstractFopState {
 
     public abstract FopState getState();
 
+    protected AbstractFopState reject(FopEvent fopEvent) {
+        engine.reject(fopEvent);
+        return this;
+    }
+
+    protected AbstractFopState ignore(FopEvent fopEvent) { // NOSONAR event required to match event interface approach
+        // Ignore
+        return this;
+    }
 
     protected AbstractFopState e21(FopEvent fopEvent) {
         engine.accept(fopEvent.getFrame());
         engine.transmitTypeBdFrame(fopEvent.getFrame());
         return this;
+    }
+
+    // Except for S6
+    protected AbstractFopState e29(FopEvent fopEvent) {
+        engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
+        engine.alert(FopAlertCode.TERM);
+        engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
+        return new S6FopState(engine);
     }
 
     protected AbstractFopState e36(FopEvent fopEvent) {

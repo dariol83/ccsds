@@ -75,16 +75,6 @@ public class S6FopState extends AbstractFopState {
         event2handler.put(FopEvent.EventNumber.E46, this::e46);
     }
 
-    private AbstractFopState reject(FopEvent fopEvent) {
-        engine.reject(fopEvent);
-        return this;
-    }
-
-    private AbstractFopState ignore(FopEvent fopEvent) {
-        // Ignore
-        return this;
-    }
-
     private AbstractFopState e23(FopEvent fopEvent) {
         engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         engine.initialise();
@@ -117,7 +107,8 @@ public class S6FopState extends AbstractFopState {
         return new S5FopState(engine);
     }
 
-    private AbstractFopState e29(FopEvent fopEvent) {
+    @Override
+    protected AbstractFopState e29(FopEvent fopEvent) {
         engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         engine.confirm(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         return this;

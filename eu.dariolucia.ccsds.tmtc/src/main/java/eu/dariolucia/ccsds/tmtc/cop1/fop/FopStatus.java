@@ -80,15 +80,15 @@ public class FopStatus {
     @Override
     public String toString() {
         return "FopStatus{" +
-                "NN(R)=" + expectedAckFrameSequenceNumber +
-                ", previousState=" + previousState +
-                ", currentState=" + currentState +
-                ", event=" + event +
-                ", sentQueueItems=" + sentQueueItems +
-                ", waitQueueFull=" + waitQueueFull +
-                ", adOutReadyFlag=" + adOutReadyFlag +
-                ", bcOutReadyFlag=" + bcOutReadyFlag +
-                ", bdOutReadyFlag=" + bdOutReadyFlag +
+                "NN(R)=" + getExpectedAckFrameSequenceNumber() +
+                ", previousState=" + getPreviousState() +
+                ", currentState=" + getCurrentState() +
+                ", event=" + getEvent() +
+                ", sentQueueItems=" + getSentQueueItems() +
+                ", waitQueueFull=" + isWaitQueueFull() +
+                ", adOutReadyFlag=" + isAdOutReadyFlag() +
+                ", bcOutReadyFlag=" + isBcOutReadyFlag() +
+                ", bdOutReadyFlag=" + isBdOutReadyFlag() +
                 '}';
     }
 }
