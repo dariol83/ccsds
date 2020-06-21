@@ -19,7 +19,9 @@ package eu.dariolucia.ccsds.tmtc.ocf.pdu;
 import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.Objects;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class ClcwTest {
 
@@ -39,5 +41,10 @@ class ClcwTest {
         assertEquals(0, clcw.getStatusField());
         assertEquals(212, clcw.getReportValue());
         assertEquals(0, clcw.getFarmBCounter());
+
+        assertNotEquals(new Clcw(FIRST_CLCW), new Clcw(SECOND_CLCW));
+        assertEquals(new Clcw(FIRST_CLCW), new Clcw(FIRST_CLCW));
+        assertEquals(clcw, clcw);
+        assertEquals(clcw.hashCode(), new Clcw(SECOND_CLCW).hashCode());
     }
 }

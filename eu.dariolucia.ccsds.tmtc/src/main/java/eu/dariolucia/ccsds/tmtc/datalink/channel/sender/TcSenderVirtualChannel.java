@@ -160,7 +160,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
         TcTransferFrame tc = TcTransferFrameBuilder.create(isFecfPresent())
                 .setSpacecraftId(getSpacecraftId())
                 .setVirtualChannelId(getVirtualChannelId())
-                .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                .setFrameSequenceNumber(0) // As per 4.1.2.8 of CCSDS 232.0-B-3, point 3
                 .setBypassFlag(true)
                 .setControlCommandFlag(true)
                 .setSecurity(secH, secT)
@@ -182,7 +182,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
         TcTransferFrame tc = TcTransferFrameBuilder.create(isFecfPresent())
                 .setSpacecraftId(getSpacecraftId())
                 .setVirtualChannelId(getVirtualChannelId())
-                .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                .setFrameSequenceNumber(0) // As per 4.1.2.8 of CCSDS 232.0-B-3, point 3
                 .setBypassFlag(true)
                 .setControlCommandFlag(true)
                 .setSecurity(secH, secT)
@@ -233,7 +233,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
                     this.currentFrame = TcTransferFrameBuilder.create(isFecfPresent())
                             .setSpacecraftId(getSpacecraftId())
                             .setVirtualChannelId(getVirtualChannelId())
-                            .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                            .setFrameSequenceNumber(adMode ? incrementVirtualChannelFrameCounter(256) : 0)
                             .setBypassFlag(!adMode)
                             .setControlCommandFlag(false)
                             .setSecurity(secH, secT);
@@ -261,7 +261,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
                         this.currentFrame = TcTransferFrameBuilder.create(isFecfPresent())
                                 .setSpacecraftId(getSpacecraftId())
                                 .setVirtualChannelId(getVirtualChannelId())
-                                .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                                .setFrameSequenceNumber(adMode ? incrementVirtualChannelFrameCounter(256) : 0)
                                 .setBypassFlag(!adMode)
                                 .setControlCommandFlag(false)
                                 .setSecurity(secH, secT);
@@ -347,7 +347,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
             this.currentFrame = TcTransferFrameBuilder.create(isFecfPresent())
                     .setSpacecraftId(getSpacecraftId())
                     .setVirtualChannelId(getVirtualChannelId())
-                    .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                    .setFrameSequenceNumber(adMode ? incrementVirtualChannelFrameCounter(256) : 0)
                     .setBypassFlag(!adMode)
                     .setControlCommandFlag(false)
                     .setSecurity(secH, secT);
@@ -364,9 +364,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
         } else {
             // If the data does not fit in, remember that you created this frame now, so you have to segment it
             // across several frames. As it is either VCA access or MAP SDU access, we do not set any constraint.
-            byte[] packetToSend = userData;
-
-            int chunks = packetToSend.length / maxDataPerFrame + (packetToSend.length % maxDataPerFrame == 0 ? 0 : 1);
+            int chunks = userData.length / maxDataPerFrame + (userData.length % maxDataPerFrame == 0 ? 0 : 1);
             // Send the chunks
             for (int cki = 0; cki < chunks; ++cki) {
                 byte[] secH = secHeaderSupplier != null ? secHeaderSupplier.get() : new byte[0];
@@ -375,7 +373,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
                 this.currentFrame = TcTransferFrameBuilder.create(isFecfPresent())
                         .setSpacecraftId(getSpacecraftId())
                         .setVirtualChannelId(getVirtualChannelId())
-                        .setFrameSequenceNumber(incrementVirtualChannelFrameCounter(256))
+                        .setFrameSequenceNumber(adMode ? incrementVirtualChannelFrameCounter(256) : 0)
                         .setBypassFlag(!adMode)
                         .setControlCommandFlag(false)
                         .setSecurity(secH, secT);
@@ -392,10 +390,10 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
                     }
                 }
                 int currOffset = cki * maxDataPerFrame;
-                ((TcTransferFrameBuilder) this.currentFrame).addData(packetToSend, currOffset, cki == chunks - 1 ? packetToSend.length - currOffset : maxDataPerFrame);
+                ((TcTransferFrameBuilder) this.currentFrame).addData(userData, currOffset, cki == chunks - 1 ? userData.length - currOffset : maxDataPerFrame);
                 TcTransferFrame toSend = this.currentFrame.build();
                 this.currentFrame = null;
-                notifyTransferFrameGenerated(toSend, packetToSend.length - currOffset);
+                notifyTransferFrameGenerated(toSend, userData.length - currOffset);
             }
         }
         return 0;

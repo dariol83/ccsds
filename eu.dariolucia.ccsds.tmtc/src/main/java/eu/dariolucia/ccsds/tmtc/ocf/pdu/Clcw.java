@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.tmtc.ocf.pdu;
 
+import java.util.Arrays;
+
 /**
  * This class handles the Communications Link Control Word (CLCW) data, as per CCSDS 232.0-B-3.
  */
@@ -144,5 +146,20 @@ public class Clcw extends AbstractOcf {
                 ", farmBCounter=" + farmBCounter +
                 ", reportValue=" + reportValue +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return ((Clcw) o).ocf[0] == this.ocf[0] &&
+                ((Clcw) o).ocf[1] == this.ocf[1] &&
+                ((Clcw) o).ocf[2] == this.ocf[2] &&
+                ((Clcw) o).ocf[3] == this.ocf[3];
+    }
+
+    @Override
+    public int hashCode() {
+        return Arrays.hashCode(super.ocf);
     }
 }
