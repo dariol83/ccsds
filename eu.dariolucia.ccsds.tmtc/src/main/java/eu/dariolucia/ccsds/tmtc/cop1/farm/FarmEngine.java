@@ -28,6 +28,8 @@ import java.util.function.Supplier;
 
 /**
  * This class implements the FARM side of the COP-1 protocol, as defined by CCSDS 232.1-B-2 Cor. 1.
+ *
+ * This class is thread-safe.
  */
 public class FarmEngine implements Supplier<Clcw> {
 
@@ -90,6 +92,17 @@ public class FarmEngine implements Supplier<Clcw> {
     private volatile boolean noRfAvailableFlag = true; // No RF at construction
     private volatile int reservedSpare;
 
+    /**
+     * Constructor of the FARM engine.
+     *
+     * @param virtualChannelId the TC virtual channel ID controlled by this FARM entity
+     * @param output the {@link Consumer} to which accepted TC frames shall be forwarded
+     * @param retransmissionAllowed true if retransmission is allowed (ref. 6.1.8.2)
+     * @param bufferSize number of TC frames that can be accomodated in the buffer for forwarding to higher procedure
+     * @param farmSlidingWindowWidth width of the FARM sliding window
+     * @param initialState the initial state of the FARM, can be null. In such case, the FARM starts in LOCKOUT (S3)
+     * @param initialReceiverFrameSequenceNumber the initial V(R), typically 0
+     */
     public FarmEngine(int virtualChannelId, Consumer<TcTransferFrame> output, boolean retransmissionAllowed, int bufferSize, int farmSlidingWindowWidth, FarmState initialState, int initialReceiverFrameSequenceNumber) {
         if(retransmissionAllowed && (farmSlidingWindowWidth < 2 || farmSlidingWindowWidth > 254)) { // 6.1.8.2
             throw new IllegalArgumentException("If retransmission is allowed, farmSlidingWindowWidth must be within 2 and 254 (included)");
@@ -148,10 +161,20 @@ public class FarmEngine implements Supplier<Clcw> {
         }
     }
 
+    /**
+     * Register an {@link IFarmObserver} as listener to FARM state changes.
+     *
+     * @param observer the observer to register
+     */
     public void register(IFarmObserver observer) {
         this.observers.add(observer);
     }
 
+    /**
+     * Deregister an {@link IFarmObserver} listener.
+     *
+     * @param observer the observer to deregister
+     */
     public void deregister(IFarmObserver observer) {
         this.observers.remove(observer);
     }
@@ -176,6 +199,11 @@ public class FarmEngine implements Supplier<Clcw> {
     // FARM-1 public operations as per CCSDS definition for event injection
     // ---------------------------------------------------------------------------------------------------------
 
+    /**
+     * Signal the FARM that a new {@link TcTransferFrame} arrived.
+     *
+     * @param frame the frame to be accepted
+     */
     public void frameArrived(TcTransferFrame frame) {
         if(frame.getVirtualChannelId() != virtualChannelId) {
             throw new IllegalArgumentException("Injected TC frame does not match expected VC ID, expected " + virtualChannelId + ", arrived " + frame.getVirtualChannelId());
@@ -183,6 +211,11 @@ public class FarmEngine implements Supplier<Clcw> {
         farmExecutor.execute(() -> processFrame(frame));
     }
 
+    /**
+     * Set the status field value.
+     *
+     * @param statusField integer from 0 to 7
+     */
     public void setStatusField(int statusField) {
         if(statusField < 0 || statusField > 7) {
             throw new IllegalArgumentException("Status field must be between 0 and 7 (inclusive), got " + statusField);
@@ -190,19 +223,48 @@ public class FarmEngine implements Supplier<Clcw> {
         this.statusField = statusField;
     }
 
+    /**
+     * Set the no bit lock flag.
+     *
+     * @param noBitLockFlag true if flag is set (1), false otherwise (0)
+     */
     public void setNoBitLockFlag(boolean noBitLockFlag) {
         this.noBitLockFlag = noBitLockFlag;
     }
 
+    /**
+     * Set the no RF available flag.
+     *
+     * @param noRfAvailableFlag true if flag is set (1), false otherwise (0)
+     */
     public void setNoRfAvailableFlag(boolean noRfAvailableFlag) {
         this.noRfAvailableFlag = noRfAvailableFlag;
     }
 
+    /**
+     * Set the reserved spare value.
+     *
+     * @param reservedSpare integer from 0 to 3
+     */
     public void setReservedSpare(int reservedSpare) {
         if(reservedSpare < 0 || reservedSpare > 3) {
             throw new IllegalArgumentException("Reserved Spare must be between 0 and 3 (inclusive), got " + reservedSpare);
         }
         this.reservedSpare = reservedSpare;
+    }
+
+    /**
+     * Dispose the FARM entity. This operation has the following effects:
+     * <ul>
+     *     <li>the internal executors are shutdown</li>
+     * </ul>
+     *
+     * Calling other methods after that this method is invoked will likely cause the raising of {@link java.lang.reflect.InvocationTargetException}
+     * due to the fact that the executors are shut down.
+     */
+    public void dispose() {
+        this.farmExecutor.shutdownNow();
+        this.highLevelExecutor.shutdownNow();
     }
 
     // ---------------------------------------------------------------------------------------------------------
@@ -352,11 +414,6 @@ public class FarmEngine implements Supplier<Clcw> {
         if(Thread.currentThread() != this.confinementThread) {
             throw new IllegalAccessError("Violation on thread confinement for class FarmEngine: method can only be accessed by thread " + this.confinementThread.getName());
         }
-    }
-
-    public void dispose() {
-        this.farmExecutor.shutdownNow();
-        this.highLevelExecutor.shutdownNow();
     }
 
     /**

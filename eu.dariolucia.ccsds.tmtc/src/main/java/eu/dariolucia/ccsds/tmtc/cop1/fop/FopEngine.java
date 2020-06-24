@@ -32,6 +32,8 @@ import java.util.function.Supplier;
 
 /**
  * This class implements the FOP side of the COP-1 protocol, as defined by CCSDS 232.1-B-2 Cor. 1.
+ *
+ * This class is thread-safe.
  */
 @SuppressWarnings("StatementWithEmptyBody")
 public class FopEngine {
@@ -156,6 +158,19 @@ public class FopEngine {
      */
     private int fopSlidingWindow; // K
 
+    /**
+     * Constructor of the FOP engine.
+     *
+     * Being this class fully decoupled from the way {@link TcTransferFrame} are constructed and forwarded to the encoding
+     * layer, the constructor accepts functional objects for the operations to be delegated to the external interfaces.
+     *
+     * @param virtualChannelId the TC virtual channel ID controlled by this FOP entity
+     * @param nextVirtualChannelFrameCounterGetter a {@link Supplier} function to retrieve the next virtual channel frame counter
+     * @param nextVirtualChannelFrameCounterSetter a {@link Consumer} function to set the next virtual channel frame counter
+     * @param bcFrameUnlockFactory a {@link Function} to build a BC frame for FARM unlock
+     * @param bcFrameSetVrFactory a {@link Function} to build a BC frame for FARM Set_V(R)
+     * @param output a {@link Consumer} function to forward {@link TcTransferFrame} as output of the FOP engine
+     */
     public FopEngine(int virtualChannelId, Supplier<Integer> nextVirtualChannelFrameCounterGetter, Consumer<Integer> nextVirtualChannelFrameCounterSetter, Supplier<TcTransferFrame> bcFrameUnlockFactory, IntFunction<TcTransferFrame> bcFrameSetVrFactory, Function<TcTransferFrame, Boolean> output) {
         this.virtualChannelId = virtualChannelId;
         this.nextVirtualChannelFrameCounterGetter = nextVirtualChannelFrameCounterGetter;
@@ -182,10 +197,21 @@ public class FopEngine {
         this.fopTimer = new Timer("FOP TC VC " + virtualChannelId + " Timer");
     }
 
+    /**
+     * Register an {@link IFopObserver} as listener to FOP state changes, alerts and suspends notifications, as well as
+     * transfer frame and directive notifications.
+     *
+     * @param observer the observer to register
+     */
     public void register(IFopObserver observer) {
         this.observers.add(observer);
     }
 
+    /**
+     * Deregister an {@link IFopObserver} listener.
+     *
+     * @param observer the observer to deregister
+     */
     public void deregister(IFopObserver observer) {
         this.observers.remove(observer);
     }
@@ -194,10 +220,29 @@ public class FopEngine {
     // FOP-1 public operations as per CCSDS definition for event injection
     // ---------------------------------------------------------------------------------------------------------
 
+    /**
+     * Request the FOP engine to execute a COP-1 directive.
+     *
+     * @param tag the request tag, which will be returned in the callback on the {@link IFopObserver} interface
+     * @param directive the directive ID
+     * @param qualifier the directive qualifier: if not meaningful, this argument can assume any value
+     */
     public void directive(Object tag, FopDirective directive, int qualifier) {
         fopExecutor.execute(() -> processDirective(tag, directive, qualifier));
     }
 
+    /**
+     * Request the FOP engine to transmit a AD or BD frame. This operation allows simple flow control, as the method will
+     * return when the frame will be either accepted or rejected by the FOP engine.
+     *
+     * The use of this operation is a convenience operation and shall not be mixed with the other transmit operation. The
+     * behaviour of this class if the two operations are mixed is undefined.
+     *
+     * @param frame the frame to transmit
+     * @param timeoutMillis the timeout in milliseconds waiting for acceptance or rejection of the request
+     * @return true if the request was accepted, false it is was rejected or the timeout expired
+     * @throws InterruptedException in case the invoking thread is interrupted
+     */
     public boolean transmit(TcTransferFrame frame, int timeoutMillis) throws InterruptedException {
         long expirationTime = System.currentTimeMillis()+ timeoutMillis;
         synchronized (pendingAcceptRejectFrame) {
@@ -216,6 +261,16 @@ public class FopEngine {
         }
     }
 
+    /**
+     * Request the FOP engine to transmit a AD or BD frame. This operation is fully asynchronous and does not implement
+     * any flow control mechanism, as per COP-1 standard. Users of this method shall wait for the acceptance or rejection
+     * of the frame as reported by the callback method on the {@link IFopObserver} interface.
+     *
+     * The use of this operation shall not be mixed with the other transmit operation. The behaviour of this class if
+     * the two operations are mixed is undefined.
+     *
+     * @param frame the frame to transmit
+     */
     public void transmit(TcTransferFrame frame) {
         switch(frame.getFrameType()) {
             case AD:
@@ -229,10 +284,42 @@ public class FopEngine {
         }
     }
 
+    /**
+     * Inform the FOP entity about the arrival of a new CLCW. The CLCW is processed only if reports COP-1 in effect, and
+     * matches the TC VC specified at FOP engine construction time.
+     *
+     * @param clcw the CLCW to process
+     */
     public void clcw(Clcw clcw) {
         if(clcw.getCopInEffect() == Clcw.CopEffectType.COP1 && clcw.getVirtualChannelId() == virtualChannelId) {
             fopExecutor.execute(() -> processClcw(clcw));
         }
+    }
+
+    /**
+     * Dispose the FOP entity. This operation has the following effects:
+     * <ul>
+     *     <li>the timer is cancelled</li>
+     *     <li>the wait and the sent queues are purged and related notifications are provided</li>
+     *     <li>the internal executors are shutdown</li>
+     * </ul>
+     *
+     * Calling other methods after that this method is invoked will likely cause the raising of {@link java.lang.reflect.InvocationTargetException}
+     * due to the fact that the executors are shut down.
+     */
+    public void dispose() {
+        fopExecutor.submit(() -> {
+            cancelTimer();
+            purgeWaitQueue();
+            purgeSentQueue();
+        });
+        this.fopExecutor.shutdown();
+        try {
+            this.fopExecutor.awaitTermination(1, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        this.lowLevelExecutor.shutdownNow();
     }
 
     // ---------------------------------------------------------------------------------------------------------
@@ -963,21 +1050,6 @@ public class FopEngine {
                 fopExecutor.execute(this::processTimerExpired);
             }
         }
-    }
-
-    public void dispose() {
-        fopExecutor.submit(() -> {
-            cancelTimer();
-            purgeWaitQueue();
-            purgeSentQueue();
-        });
-        this.fopExecutor.shutdown();
-        try {
-            this.fopExecutor.awaitTermination(1, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        this.lowLevelExecutor.shutdownNow();
     }
 
     private static class TransferFrameStatus {

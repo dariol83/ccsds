@@ -6,11 +6,11 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fdariol83%2Fccsds.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fdariol83%2Fccsds?ref=badge_shield)
 
 # An open source implementation of CCSDS protocols and formats in Java 11
-This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS, Space Packet) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
+This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS, Space Packet, COP-1) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
 
 Stable releases are published on Maven Central. The latest code version is always available on the master branch here on GitHub.
 
-**Disclaimer: this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested). It is not endorsed by any organization, association or company. It is the result of my passion for software engineering and coding, and of hours spent developing during my evenings. I put the best of me into this, but compliance to the different standards as well as correct behaviour is not guaranteed. As the Apache License makes clear, use the modules of this repository at your own risk.**
+**Disclaimer: this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested). It is not endorsed by any organization, association or company. As such, strict compliance to the different standards as well as correct behaviour cannot be guaranteed. As the Apache License makes clear, use the modules of this repository at your own risk.**
 
 ## SLE
 The SLE User Test Library (eu.dariolucia.ccsds.sle.utl) is a test library that implements the user side (fully compliant) and provider side (partially compliant) of an SLE data exchange session. 
@@ -26,13 +26,18 @@ Highlights are:
 A simple but effective graphical interface to inspect the user-side peer is provided as separate module (eu.dariolucia.ccsds.sle.utlfx). 
 
 ## TM/TC
-The TM/TC Library (eu.dariolucia.ccsds.tmtc) is a library that provide support to parse and build CCSDS TM frames, TC frames, AOS frames, Space Packets. It allows encoding/decoding of space packets into TM frames, TC frames or AOS frames. It also provides some basic encodings (e.g. CLTU encoding/decoding, randomization, FECF encoding/checking, Reed-Solomon encoding/checking) but no error correction capabilities. 
+The TM/TC Library (eu.dariolucia.ccsds.tmtc) is a library that provide support to parse and build CCSDS TM frames, TC frames, AOS frames, Space Packets and full FARM/FOP implementation for COP-1. It allows encoding/decoding of space packets into TM frames, TC frames or AOS frames. It also provides some basic encodings (e.g. CLTU encoding/decoding, randomization, FECF encoding/checking, Reed-Solomon encoding/checking) but no error correction capabilities. 
 A simple graphical interface to inspect TM/TC/AOS/Space Packet data is provided as separate module (eu.dariolucia.ccsds.inspector). It is possible to implement custom connectors to allow inspection of data delivered from a custom source/protocol/format by providing a new 
 service (in Java 11 terms) implementing the interface eu.dariolucia.ccsds.inspector.api.IConnectorFactory. Some connectors to read data from file or socket are already available.
 
 ## ENC/DEC
 A packet identification/encoding/decoding library, which supports basic data types (integer, real, enumeration, CCSDS absolute and 
-relative time formats, strings, octet streams, bit streams), array structures, ECSS TM/TC PUS headers, as derived from the ECSS Packet Utilisation Standard (http://everyspec.com/ESA/download.php?spec=ECSS-E-70-41A.047794.pdf). The focus on this implementation is on reliable and efficient packet identification and decoding performance. Encoding performance has not been measured. 
+relative time formats, strings, octet streams, bit streams), array structures, ECSS TM/TC PUS headers, as derived from the ECSS Packet Utilisation Standard (http://everyspec.com/ESA/download.php?spec=ECSS-E-70-41A.047794.pdf). 
+
+The focus on this implementation is on reliable and efficient packet identification and decoding performance: on my Intel i5 2.67 GHz (year 2010), packet identification is ca. 7M packets per second (with ca. 72K different packet definitions), and parameter decoding speed is ca. 890K parameters per second.   
+
+Encoding performance has not been measured yet. 
+
 The packet structure is defined using a custom XML format definition, built by means of JAXB annotations.
 
 ## Examples

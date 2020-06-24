@@ -16,8 +16,16 @@
 
 package eu.dariolucia.ccsds.tmtc.cop1.farm;
 
+/**
+ * Listener interface for FARM status.
+ */
 public interface IFarmObserver {
 
+    /**
+     * Provide a status report of the internal FARM engine status.
+     *
+     * @param status the FARM status
+     */
     void statusReport(FarmStatus status);
 
 }
