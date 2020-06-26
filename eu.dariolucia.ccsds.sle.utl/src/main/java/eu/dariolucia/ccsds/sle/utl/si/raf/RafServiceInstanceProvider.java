@@ -33,9 +33,9 @@ import eu.dariolucia.ccsds.sle.utl.si.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Predicate;
+import java.util.function.Function;
 
 /**
  * One object of this class represents an RAF Service Instance (provider role).
@@ -53,7 +53,7 @@ public class RafServiceInstanceProvider extends ReturnServiceInstanceProvider<Ra
     private final AtomicInteger deliveredFrameNumber = new AtomicInteger();
 
     // Operation extension handlers: they are called to drive the positive/negative response (where supported)
-    private final AtomicReference<Predicate<RafStartInvocation>> startOperationHandler = new AtomicReference<>();
+    private volatile Function<RafStartInvocation, RafStartResult> startOperationHandler; // NOSONAR function pointer
 
     public RafServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                       RafServiceInstanceConfiguration serviceInstanceConfiguration) {
@@ -67,8 +67,8 @@ public class RafServiceInstanceProvider extends ReturnServiceInstanceProvider<Ra
         registerPduReceptionHandler(RafGetParameterInvocation.class, this::handleRafGetParameterInvocation);
     }
 
-    public void setStartOperationHandler(Predicate<RafStartInvocation> handler) {
-        this.startOperationHandler.set(handler);
+    public void setStartOperationHandler(Function<RafStartInvocation, RafStartResult>  handler) {
+        this.startOperationHandler = handler;
     }
 
     @Override
@@ -256,6 +256,7 @@ public class RafServiceInstanceProvider extends ReturnServiceInstanceProvider<Ra
 
         // Validate the requested frame quality
         RequestedFrameQuality rfq = invocation.getRequestedFrameQuality();
+        RafStartResult startResult = RafStartResult.noError();
         boolean permittedOk = false;
         for (RafRequestedFrameQualityEnum permitted : this.permittedFrameQuality) {
             if (permitted.getCode() == rfq.intValue()) {
@@ -266,10 +267,13 @@ public class RafServiceInstanceProvider extends ReturnServiceInstanceProvider<Ra
 
         if (permittedOk) {
             // Ask the external handler if any
-            Predicate<RafStartInvocation> handler = this.startOperationHandler.get();
+            Function<RafStartInvocation, RafStartResult> handler = this.startOperationHandler;
             if (handler != null) {
-                permittedOk = handler.test(invocation);
+                startResult = handler.apply(invocation);
+                permittedOk = !startResult.isError();
             }
+        } else {
+            startResult = RafStartResult.errorSpecific(RafStartDiagnosticsEnum.UNABLE_TO_COMPLY);
         }
 
         RafStartReturn pdu = new RafStartReturn();
@@ -279,7 +283,11 @@ public class RafServiceInstanceProvider extends ReturnServiceInstanceProvider<Ra
             pdu.getResult().setPositiveResult(new BerNull());
         } else {
             pdu.getResult().setNegativeResult(new DiagnosticRafStart());
-            pdu.getResult().getNegativeResult().setSpecific(new BerInteger(1)); // Unable to comply
+            if(startResult.getCommon() != null) {
+                pdu.getResult().getNegativeResult().setCommon(new Diagnostics(startResult.getCommon().getCode()));
+            } else {
+                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(startResult.getSpecific().getCode()));
+            }
         }
         // Add credentials
         // From the API configuration (remote peers) and SI configuration (responder
@@ -465,11 +473,7 @@ public class RafServiceInstanceProvider extends ReturnServiceInstanceProvider<Ra
             } else if (invocation.getRafParameter().intValue() == RafParameterEnum.MIN_REPORTING_CYCLE.getCode()) {
                 pdu.getResult().getPositiveResult().setParMinReportingCycle(new RafGetParameter.ParMinReportingCycle());
                 pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));
-                if (this.minReportingCycle != null) {
-                    pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterValue(new IntPosShort(this.minReportingCycle));
-                } else {
-                    pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterValue(new IntPosShort(0));
-                }
+                pdu.getResult().getPositiveResult().getParMinReportingCycle().setParameterValue(new IntPosShort(Objects.requireNonNullElse(this.minReportingCycle, 0)));
             } else if (invocation.getRafParameter().intValue() == RafParameterEnum.PERMITTED_FRAME_QUALITY.getCode()) {
                 pdu.getResult().getPositiveResult().setParPermittedFrameQuality(new RafGetParameter.ParPermittedFrameQuality());
                 pdu.getResult().getPositiveResult().getParPermittedFrameQuality().setParameterName(new ParameterName(invocation.getRafParameter().intValue()));

@@ -21,10 +21,7 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.incomin
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.cltu.CltuServiceInstanceConfiguration;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuServiceInstanceProvider;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuProductionStatusEnum;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuStatusEnum;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuUplinkStatusEnum;
+import eu.dariolucia.ccsds.sle.utl.si.cltu.*;
 
 import java.util.Date;
 import java.util.TimerTask;
@@ -46,7 +43,7 @@ public class CltuServiceManager extends ServiceInstanceManager<CltuServiceInstan
 
     @Override
     protected void postActivation() {
-        serviceInstance.setStartOperationHandler((o) -> true);
+        serviceInstance.setStartOperationHandler((o) -> CltuStartResult.noError());
         serviceInstance.setUnbindReturnBehaviour(true);
         serviceInstance.setThrowEventOperationHandler(this::throwEventHandler);
         serviceInstance.setTransferDataOperationHandler(this::transferDataHandler);
@@ -85,12 +82,12 @@ public class CltuServiceManager extends ServiceInstanceManager<CltuServiceInstan
         }
     }
 
-    private Long throwEventHandler(CltuThrowEventInvocation cltuThrowEventInvocation) {
+    private CltuThrowEventResult throwEventHandler(CltuThrowEventInvocation cltuThrowEventInvocation) {
         long event = cltuThrowEventInvocation.getEventIdentifier().longValue();
         long id = cltuThrowEventInvocation.getEventInvocationIdentification().longValue();
         LOG.info(serviceInstance.getServiceInstanceIdentifier() + ": Throw event received: " + event + " with id " + id);
         if(event > 10) {
-            return 1L; // Unknown event
+            return CltuThrowEventResult.errorSpecific(CltuThrowEventDiagnosticsEnum.NO_SUCH_EVENT); // Unknown event
         }
         // Schedule the execution
         this.timer.schedule(new TimerTask() {
@@ -99,6 +96,6 @@ public class CltuServiceManager extends ServiceInstanceManager<CltuServiceInstan
                 serviceInstance.eventProgress(id, false, true);
             }
         }, 1000); // 1000 ms for processing
-        return null;
+        return CltuThrowEventResult.noError();
     }
 }

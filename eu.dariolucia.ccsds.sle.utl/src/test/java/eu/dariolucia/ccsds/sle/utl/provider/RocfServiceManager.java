@@ -22,6 +22,7 @@ import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rocf.RocfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
+import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfStartResult;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -43,7 +44,7 @@ public class RocfServiceManager extends ServiceInstanceManager<RocfServiceInstan
 
     @Override
     protected void postActivation() {
-        serviceInstance.setStartOperationHandler((o) -> true);
+        serviceInstance.setStartOperationHandler((o) -> RocfStartResult.noError());
         serviceInstance.setUnbindReturnBehaviour(true);
         frameToSend = new byte[1115];
         // Set the SCID: for VCID and TFVN use always 0

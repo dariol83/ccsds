@@ -753,7 +753,7 @@ public class CltuTest {
         assertEquals(ServiceInstanceBindingStateEnum.READY, recorder.getStates().get(recorder.getStates().size() - 1).getState());
 
         // Test negative start
-        cltuProvider.setStartOperationHandler(o -> false);
+        cltuProvider.setStartOperationHandler(o -> CltuStartResult.errorSpecific(CltuStartDiagnosticsEnum.UNABLE_TO_COMPLY));
         recorder.getPduSent().clear();
         recorder.getPduReceived().clear();
         cltuUser.start(1);
@@ -968,7 +968,7 @@ public class CltuTest {
                     e.printStackTrace();
                 }
             }).start();
-            return null;
+            return CltuThrowEventResult.noError();
         });
 
         // Throw event (it will succeed)
@@ -991,7 +991,7 @@ public class CltuTest {
                     e.printStackTrace();
                 }
             }).start();
-            return null;
+            return CltuThrowEventResult.noError();
         });
 
         // Throw event (it will succeed)
@@ -1014,7 +1014,7 @@ public class CltuTest {
                     e.printStackTrace();
                 }
             }).start();
-            return null;
+            return CltuThrowEventResult.noError();
         });
 
         // Throw event (it will succeed)

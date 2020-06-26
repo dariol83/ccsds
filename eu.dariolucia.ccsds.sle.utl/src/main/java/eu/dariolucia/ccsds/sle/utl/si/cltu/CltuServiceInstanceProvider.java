@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -98,13 +97,12 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
 
     // Operation extension handlers: they are called to drive the positive/negative response (where supported).
     // If it is not set, it means that there are no additional checks to be done.
-    private volatile Predicate<CltuStartInvocation> startOperationHandler; // NOSONAR function pointer
+    private volatile Function<CltuStartInvocation, CltuStartResult> startOperationHandler; // NOSONAR function pointer
     // Return the remaining buffer if the CLTU is added to the buffer for processing, or a negative number if the CLTU must be discarded and was not added to the buffer.
     // The absolute value of the negative number is the specific diagnostic code to be sent back to the user, so make sure it is in line with the CCSDS specs.
     private volatile Function<CltuTransferDataInvocation, Long> transferDataOperationHandler; // NOSONAR function pointer
-    // Return null if the event invocation has been taken onboard, or a positive number if the throw event must be discarded and it will not be processed.
-    // The value of the returned number is the specific diagnostic code to be sent back to the user, so make sure it is in line with the CCSDS specs.
-    private volatile Function<CltuThrowEventInvocation, Long> throwEventOperationHandler; // NOSONAR function pointer
+    // Return CltuThrowEventResult.noError() if the event invocation has been taken onboard, or an error state if the throw event must be discarded and it will not be processed.
+    private volatile Function<CltuThrowEventInvocation, CltuThrowEventResult> throwEventOperationHandler; // NOSONAR function pointer
 
     public CltuServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                        CltuServiceInstanceConfiguration serviceInstanceConfiguration) {
@@ -122,7 +120,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         registerPduReceptionHandler(CltuThrowEventInvocation.class, this::handleCltuThrowEventInvocation);
     }
 
-    public void setStartOperationHandler(Predicate<CltuStartInvocation> handler) {
+    public void setStartOperationHandler(Function<CltuStartInvocation, CltuStartResult> handler) {
         this.startOperationHandler = handler;
     }
 
@@ -130,7 +128,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         this.transferDataOperationHandler = transferDataOperationHandler;
     }
 
-    public void setThrowEventOperationHandler(Function<CltuThrowEventInvocation, Long> throwEventOperationHandler) {
+    public void setThrowEventOperationHandler(Function<CltuThrowEventInvocation, CltuThrowEventResult> throwEventOperationHandler) {
         this.throwEventOperationHandler = throwEventOperationHandler;
     }
 
@@ -352,7 +350,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         // Latest transmission time
         if(invocation.getLatestTransmissionTime().getKnown() != null) {
             Date latestTransmissionTime = PduFactoryUtil.toDate(invocation.getLatestTransmissionTime());
-            if(latestTransmissionTime.getTime() < new Date().getTime()) {
+            if(latestTransmissionTime == null || latestTransmissionTime.getTime() < new Date().getTime()) {
                 permittedOk = false;
             }
         }
@@ -444,22 +442,24 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         }
 
         // Validate the request
+        CltuThrowEventResult teResult = CltuThrowEventResult.noError();
         boolean permittedOk = true;
         // Expected event identification
         if(invocation.getEventInvocationIdentification().intValue() != this.eventInvocationIdentification) {
             permittedOk = false;
+            teResult = CltuThrowEventResult.errorSpecific(CltuThrowEventDiagnosticsEnum.EVENT_INVOCATION_ID_OUT_OF_SEQUENCE);
         }
 
-        Long returnCode = null;
         if (permittedOk) {
             // Ask the external handler if any
-            Function<CltuThrowEventInvocation, Long> handler = this.throwEventOperationHandler; // NOSONAR: null is a plausible value
+            Function<CltuThrowEventInvocation, CltuThrowEventResult> handler = this.throwEventOperationHandler; // NOSONAR: null is a plausible value
             if (handler != null) {
-                returnCode = handler.apply(invocation);
-                permittedOk = returnCode == null;
+                teResult = handler.apply(invocation);
+                permittedOk = !teResult.isError();
             } else {
                 // If there is no handler for a throw event, the throw event cannot be performed, so fail by default
                 permittedOk = false;
+                teResult = CltuThrowEventResult.errorSpecific(CltuThrowEventDiagnosticsEnum.OPERATION_NOT_SUPPORTED);
             }
         }
 
@@ -471,13 +471,11 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
             ++this.eventInvocationIdentification;
         } else {
             pdu.getResult().setNegativeResult(new DiagnosticCltuThrowEvent());
-            // If you reach this point, it means that either there was a previous fail, or that the provider returned a negative or zero number
-            if(returnCode != null) {
-                // Code from the provider implementation
-                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(Math.abs(returnCode)));
+            // If you reach this point, it means that either there was a previous fail, or that the provider returned an error code
+            if(teResult.getCommon() != null) {
+                pdu.getResult().getNegativeResult().setCommon(new Diagnostics(teResult.getCommon().getCode()));
             } else {
-                // Other reason: not really according to the standard but good enough for testing
-                pdu.getResult().getNegativeResult().setCommon(new Diagnostics(127));
+                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(teResult.getSpecific().getCode()));
             }
         }
         pdu.setEventInvocationIdentification(new EventInvocationId(this.eventInvocationIdentification));
@@ -531,15 +529,21 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
 
         // Validate the current production status
         boolean permittedOk = true;
-        if(this.productionStatus == CltuProductionStatusEnum.HALTED || this.productionStatus == CltuProductionStatusEnum.INTERRUPTED) {
+        CltuStartResult startResult = CltuStartResult.noError();
+        if(this.productionStatus == CltuProductionStatusEnum.HALTED) {
             permittedOk = false;
+            startResult = CltuStartResult.errorSpecific(CltuStartDiagnosticsEnum.OUT_OF_SERVICE);
+        } else if(this.productionStatus == CltuProductionStatusEnum.INTERRUPTED) {
+            permittedOk = false;
+            startResult = CltuStartResult.errorSpecific(CltuStartDiagnosticsEnum.UNABLE_TO_COMPLY);
         }
 
         if (permittedOk) {
             // Ask the external handler if any
-            Predicate<CltuStartInvocation> handler = this.startOperationHandler;
+            Function<CltuStartInvocation, CltuStartResult> handler = this.startOperationHandler;
             if (handler != null) {
-                permittedOk = handler.test(invocation);
+                startResult = handler.apply(invocation);
+                permittedOk = !startResult.isError();
             }
         }
 
@@ -557,7 +561,11 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
             pdu.getResult().getPositiveResult().getStartRadiationTime().setCcsdsFormat(new TimeCCSDS(PduFactoryUtil.buildCDSTime(this.productionStatusOperationalTime.getTime(), 0)));
         } else {
             pdu.getResult().setNegativeResult(new DiagnosticCltuStart());
-            pdu.getResult().getNegativeResult().setSpecific(new BerInteger(1)); // Unable to comply: not really according to the standard, but good enough for testing
+            if(startResult.getCommon() != null) {
+                pdu.getResult().getNegativeResult().setCommon(new Diagnostics(startResult.getCommon().getCode()));
+            } else {
+                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(startResult.getSpecific().getCode()));
+            }
         }
         // Add credentials
         // From the API configuration (remote peers) and SI configuration (responder

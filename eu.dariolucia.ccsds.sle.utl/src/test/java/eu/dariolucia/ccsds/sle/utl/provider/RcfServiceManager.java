@@ -17,11 +17,13 @@
 package eu.dariolucia.ccsds.sle.utl.provider;
 
 import eu.dariolucia.ccsds.sle.utl.si.ReturnServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.si.raf.RafStartResult;
 import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
+import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfStartResult;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -43,7 +45,7 @@ public class RcfServiceManager extends ServiceInstanceManager<RcfServiceInstance
 
     @Override
     protected void postActivation() {
-        serviceInstance.setStartOperationHandler((o) -> true);
+        serviceInstance.setStartOperationHandler((o) -> RcfStartResult.noError());
         serviceInstance.setUnbindReturnBehaviour(true);
         frameToSend = new byte[1115];
         // Set the SCID: for VCID and TFVN use always 0

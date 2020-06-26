@@ -35,7 +35,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
+import java.util.function.Function;
 
 /**
  * One object of this class represents an RCF Service Instance (provider role).
@@ -52,7 +52,7 @@ public class RcfServiceInstanceProvider extends ReturnServiceInstanceProvider<Rc
     private final AtomicInteger deliveredFrameNumber = new AtomicInteger();
 
     // Operation extension handlers: they are called to drive the positive/negative response (where supported)
-    private volatile Predicate<RcfStartInvocation> startOperationHandler; // NOSONAR function pointer
+    private volatile Function<RcfStartInvocation, RcfStartResult> startOperationHandler; // NOSONAR function pointer
 
     public RcfServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                       RcfServiceInstanceConfiguration serviceInstanceConfiguration) {
@@ -66,7 +66,7 @@ public class RcfServiceInstanceProvider extends ReturnServiceInstanceProvider<Rc
         registerPduReceptionHandler(RcfGetParameterInvocation.class, this::handleRcfGetParameterInvocation);
     }
 
-    public void setStartOperationHandler(Predicate<RcfStartInvocation> handler) {
+    public void setStartOperationHandler(Function<RcfStartInvocation, RcfStartResult> handler) {
         this.startOperationHandler = handler;
     }
 
@@ -276,16 +276,21 @@ public class RcfServiceInstanceProvider extends ReturnServiceInstanceProvider<Rc
         GVCID rfq = new GVCID(invocation.getRequestedGvcId().getSpacecraftId().intValue(),
                 invocation.getRequestedGvcId().getVersionNumber().intValue(),
                 invocation.getRequestedGvcId().getVcId().getMasterChannel() != null ? null : invocation.getRequestedGvcId().getVcId().getVirtualChannel().intValue());
+        RcfStartResult startResult = RcfStartResult.noError();
         boolean permittedOk = false;
         if (permittedGvcids.contains(rfq)) {
             permittedOk = true;
+        } else {
+            startResult = RcfStartResult.errorSpecific(RcfStartDiagnosticsEnum.INVALID_GVCID);
         }
 
         if (permittedOk) {
+            startResult = RcfStartResult.noError();
             // Ask the external handler if any
-            Predicate<RcfStartInvocation> handler = this.startOperationHandler;
+            Function<RcfStartInvocation, RcfStartResult> handler = this.startOperationHandler;
             if (handler != null) {
-                permittedOk = handler.test(invocation);
+                startResult = handler.apply(invocation);
+                permittedOk = !startResult.isError();
             }
         }
 
@@ -296,7 +301,11 @@ public class RcfServiceInstanceProvider extends ReturnServiceInstanceProvider<Rc
             pdu.getResult().setPositiveResult(new BerNull());
         } else {
             pdu.getResult().setNegativeResult(new DiagnosticRcfStart());
-            pdu.getResult().getNegativeResult().setSpecific(new BerInteger(1)); // Unable to comply
+            if(startResult.getCommon() != null) {
+                pdu.getResult().getNegativeResult().setCommon(new Diagnostics(startResult.getCommon().getCode()));
+            } else {
+                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(startResult.getSpecific().getCode()));
+            }
         }
         // Add credentials
         // From the API configuration (remote peers) and SI configuration (responder

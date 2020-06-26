@@ -30,13 +30,10 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structur
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.rcf.structures.DiagnosticRcfStart;
 import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
 import eu.dariolucia.ccsds.sle.utl.si.ReturnServiceInstanceProvider;
-import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.si.rcf.*;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
-import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfDiagnosticsStrings;
-import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfParameterEnum;
-import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfServiceInstance;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -525,7 +522,7 @@ public class RcfTest {
         assertEquals(ServiceInstanceBindingStateEnum.READY, recorder.getStates().get(recorder.getStates().size() - 1).getState());
 
         // Test negative start
-        rafProvider.setStartOperationHandler(o -> false);
+        rafProvider.setStartOperationHandler(o -> RcfStartResult.errorSpecific(RcfStartDiagnosticsEnum.INVALID_STOP_TIME));
         recorder.getPduSent().clear();
         recorder.getPduReceived().clear();
         rafUser.start(null, null, new GVCID(100, 0, 1));

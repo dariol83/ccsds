@@ -457,7 +457,7 @@ public class RocfTest {
         assertEquals(ServiceInstanceBindingStateEnum.READY, recorder.getStates().get(recorder.getStates().size() - 1).getState());
 
         // Test negative start
-        rocfProvider.setStartOperationHandler(o -> false);
+        rocfProvider.setStartOperationHandler(o -> RocfStartResult.errorCommon(DiagnosticsEnum.OTHER_REASON));
         recorder.getPduSent().clear();
         recorder.getPduReceived().clear();
         rocfUser.start(null, null, new GVCID(100, 0, 1), 1, RocfControlWordTypeEnum.CLCW, RocfUpdateModeEnum.CONTINUOUS);

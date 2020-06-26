@@ -30,14 +30,10 @@ import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.DiagnosticRafGet;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.structures.DiagnosticRafStart;
 import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
-import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstanceProvider;
+import eu.dariolucia.ccsds.sle.utl.si.raf.*;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
-import eu.dariolucia.ccsds.sle.utl.si.raf.RafDiagnosticsStrings;
-import eu.dariolucia.ccsds.sle.utl.si.raf.RafParameterEnum;
-import eu.dariolucia.ccsds.sle.utl.si.raf.RafRequestedFrameQualityEnum;
-import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstance;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -612,7 +608,7 @@ public class RafTest {
         assertEquals(ServiceInstanceBindingStateEnum.READY, recorder.getStates().get(recorder.getStates().size() - 1).getState());
 
         // Test negative start
-        rafProvider.setStartOperationHandler(o -> false);
+        rafProvider.setStartOperationHandler(o -> RafStartResult.errorCommon(DiagnosticsEnum.OTHER_REASON));
         recorder.getPduSent().clear();
         recorder.getPduReceived().clear();
         rafUser.start(null, null, RafRequestedFrameQualityEnum.ALL_FRAMES);

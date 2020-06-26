@@ -34,7 +34,7 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
+import java.util.function.Function;
 
 /**
  * One object of this class represents an ROCF Service Instance (provider role).
@@ -61,7 +61,7 @@ public class RocfServiceInstanceProvider extends ReturnServiceInstanceProvider<R
     private final Map<Integer, Integer> tcVcId2lastClcw = new HashMap<>();
 
     // Operation extension handlers: they are called to drive the positive/negative response (where supported)
-    private volatile Predicate<RocfStartInvocation> startOperationHandler; // NOSONAR function pointer
+    private volatile Function<RocfStartInvocation, RocfStartResult> startOperationHandler; // NOSONAR function pointer
 
     public RocfServiceInstanceProvider(PeerConfiguration apiConfiguration,
                                        RocfServiceInstanceConfiguration serviceInstanceConfiguration) {
@@ -75,7 +75,7 @@ public class RocfServiceInstanceProvider extends ReturnServiceInstanceProvider<R
         registerPduReceptionHandler(RocfGetParameterInvocation.class, this::handleRocfGetParameterInvocation);
     }
 
-    public void setStartOperationHandler(Predicate<RocfStartInvocation> handler) {
+    public void setStartOperationHandler(Function<RocfStartInvocation, RocfStartResult>  handler) {
         this.startOperationHandler = handler;
     }
 
@@ -319,8 +319,10 @@ public class RocfServiceInstanceProvider extends ReturnServiceInstanceProvider<R
                 invocation.getRequestedGvcId().getVersionNumber().intValue(),
                 invocation.getRequestedGvcId().getVcId().getMasterChannel() != null ? null : invocation.getRequestedGvcId().getVcId().getVirtualChannel().intValue());
         boolean permittedOk = true;
+        RocfStartResult startResult = RocfStartResult.noError();
         if (!permittedGvcids.contains(rfq)) {
             permittedOk = false;
+            startResult = RocfStartResult.errorSpecific(RocfStartDiagnosticsEnum.INVALID_GVCID);
         }
 
         // Validate the requested OCF type
@@ -334,15 +336,18 @@ public class RocfServiceInstanceProvider extends ReturnServiceInstanceProvider<R
         }
         if(!permittedControlWordTypes.contains(reqControlWordType)) {
             permittedOk = false;
+            startResult = RocfStartResult.errorSpecific(RocfStartDiagnosticsEnum.INVALID_CONTROL_WORD_TYPE);
         }
 
         // Validate the TC VC ID
         if(reqControlWordType == RocfControlWordTypeEnum.CLCW) {
             if(invocation.getControlWordType().getClcw().getNoTcVC() != null && !this.permittedTcVcid.isEmpty()) {
                 permittedOk = false;
+                startResult = RocfStartResult.errorSpecific(RocfStartDiagnosticsEnum.INVALID_TC_VCID);
             }
             if(invocation.getControlWordType().getClcw().getTcVcid() != null && !this.permittedTcVcid.contains(invocation.getControlWordType().getClcw().getTcVcid().intValue())) {
                 permittedOk = false;
+                startResult = RocfStartResult.errorSpecific(RocfStartDiagnosticsEnum.INVALID_TC_VCID);
             }
         }
 
@@ -350,13 +355,15 @@ public class RocfServiceInstanceProvider extends ReturnServiceInstanceProvider<R
         RocfUpdateModeEnum reqUptMode = RocfUpdateModeEnum.values()[invocation.getUpdateMode().intValue()];
         if(!permittedUpdateModes.contains(reqUptMode)) {
             permittedOk = false;
+            startResult = RocfStartResult.errorSpecific(RocfStartDiagnosticsEnum.INVALID_UPDATE_MODE);
         }
 
         if (permittedOk) {
             // Ask the external handler if any
-            Predicate<RocfStartInvocation> handler = this.startOperationHandler;
+            Function<RocfStartInvocation, RocfStartResult>  handler = this.startOperationHandler;
             if (handler != null) {
-                permittedOk = handler.test(invocation);
+                startResult = handler.apply(invocation);
+                permittedOk = !startResult.isError();
             }
         }
 
@@ -367,7 +374,11 @@ public class RocfServiceInstanceProvider extends ReturnServiceInstanceProvider<R
             pdu.getResult().setPositiveResult(new BerNull());
         } else {
             pdu.getResult().setNegativeResult(new DiagnosticRocfStart());
-            pdu.getResult().getNegativeResult().setSpecific(new BerInteger(1)); // Unable to comply
+            if(startResult.getCommon() != null) {
+                pdu.getResult().getNegativeResult().setCommon(new Diagnostics(startResult.getCommon().getCode()));
+            } else {
+                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(startResult.getSpecific().getCode()));
+            }
         }
         // Add credentials
         // From the API configuration (remote peers) and SI configuration (responder

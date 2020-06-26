@@ -21,6 +21,7 @@ import eu.dariolucia.ccsds.sle.utl.config.PeerConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.ServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
+import eu.dariolucia.ccsds.sle.utl.si.raf.RafStartResult;
 
 import java.time.Instant;
 import java.util.TimerTask;
@@ -41,7 +42,7 @@ public class RafServiceManager extends ServiceInstanceManager<RafServiceInstance
 
     @Override
     protected void postActivation() {
-        serviceInstance.setStartOperationHandler((o) -> true);
+        serviceInstance.setStartOperationHandler((o) -> RafStartResult.noError());
         serviceInstance.setUnbindReturnBehaviour(true);
         frameToSend = new byte[1115];
         serviceInstance.updateProductionStatus(Instant.now(), LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, LockStatusEnum.IN_LOCK, ProductionStatusEnum.RUNNING);
