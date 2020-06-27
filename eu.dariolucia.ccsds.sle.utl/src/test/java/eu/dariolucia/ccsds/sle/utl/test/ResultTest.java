@@ -17,10 +17,7 @@
 package eu.dariolucia.ccsds.sle.utl.test;
 
 import eu.dariolucia.ccsds.sle.utl.si.DiagnosticsEnum;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuStartDiagnosticsEnum;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuStartResult;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuThrowEventDiagnosticsEnum;
-import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuThrowEventResult;
+import eu.dariolucia.ccsds.sle.utl.si.cltu.*;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafStartDiagnosticsEnum;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafStartResult;
 import eu.dariolucia.ccsds.sle.utl.si.rcf.RcfStartDiagnosticsEnum;
@@ -76,6 +73,15 @@ public class ResultTest {
         assertTrue(CltuThrowEventResult.errorSpecific(CltuThrowEventDiagnosticsEnum.EVENT_INVOCATION_ID_OUT_OF_SEQUENCE).isError());
         assertEquals(DiagnosticsEnum.OTHER_REASON, CltuThrowEventResult.errorCommon(DiagnosticsEnum.OTHER_REASON).getCommon());
         assertEquals(CltuThrowEventDiagnosticsEnum.EVENT_INVOCATION_ID_OUT_OF_SEQUENCE, CltuThrowEventResult.errorSpecific(CltuThrowEventDiagnosticsEnum.EVENT_INVOCATION_ID_OUT_OF_SEQUENCE).getSpecific());
+    }
+
+    @Test
+    public void testCltuTransferDataResult() {
+        assertFalse(CltuTransferDataResult.noError(2000).isError());
+        assertTrue(CltuTransferDataResult.errorCommon(DiagnosticsEnum.OTHER_REASON).isError());
+        assertTrue(CltuTransferDataResult.errorSpecific(CltuTransferDataDiagnosticsEnum.OUT_OF_SEQUENCE).isError());
+        assertEquals(DiagnosticsEnum.OTHER_REASON, CltuTransferDataResult.errorCommon(DiagnosticsEnum.OTHER_REASON).getCommon());
+        assertEquals(CltuTransferDataDiagnosticsEnum.INCONSISTENT_TIME_RANGE, CltuTransferDataResult.errorSpecific(CltuTransferDataDiagnosticsEnum.INCONSISTENT_TIME_RANGE).getSpecific());
     }
 
 }

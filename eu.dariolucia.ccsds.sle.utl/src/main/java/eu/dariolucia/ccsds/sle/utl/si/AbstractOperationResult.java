@@ -16,6 +16,12 @@
 
 package eu.dariolucia.ccsds.sle.utl.si;
 
+/**
+ * Extensions of this class are used by the service provider operation handlers to return the status of a specific
+ * user request.
+ *
+ * @param <T> the diagnostics enumeration (SLE type and operation specific)
+ */
 public abstract class AbstractOperationResult<T extends Enum<T>> {
 
     private final boolean error;
@@ -28,14 +34,29 @@ public abstract class AbstractOperationResult<T extends Enum<T>> {
         this.specific = specific;
     }
 
+    /**
+     * This method returns if the operation was not processed (i.e. negative response to be sent to the user).
+     *
+     * @return true if there was an error, otherwise false
+     */
     public boolean isError() {
         return error;
     }
 
+    /**
+     * This method returns the common diagnostic to be provided to the user in case of negative response.
+     *
+     * @return the common diagnostic, otherwise null if not set
+     */
     public DiagnosticsEnum getCommon() {
         return common;
     }
 
+    /**
+     * This method returns the specific diagnostic to be provided to the user in case of negative response.
+     *
+     * @return the specific diagnostic, otherwise null if not set
+     */
     public T getSpecific() {
         return specific;
     }

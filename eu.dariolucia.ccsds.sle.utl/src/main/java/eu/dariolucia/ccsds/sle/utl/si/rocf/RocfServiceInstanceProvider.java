@@ -75,6 +75,12 @@ public class RocfServiceInstanceProvider extends ReturnServiceInstanceProvider<R
         registerPduReceptionHandler(RocfGetParameterInvocation.class, this::handleRocfGetParameterInvocation);
     }
 
+    /**
+     * Register an handler to deal with the operation. Such handler is called when an operation goes through
+     * all the internal checks defined by this implementation. The handler shall not return a null result.
+     *
+     * @param handler the function reporting a {@link RocfStartResult} object
+     */
     public void setStartOperationHandler(Function<RocfStartInvocation, RocfStartResult>  handler) {
         this.startOperationHandler = handler;
     }

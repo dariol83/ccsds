@@ -119,30 +119,76 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         registerPduReceptionHandler(CltuThrowEventInvocation.class, this::handleCltuThrowEventInvocation);
     }
 
+    /**
+     * Register an handler to deal with the operation. Such handler is called when an operation goes through
+     * all the internal checks defined by this implementation. The handler shall not return a null result.
+     *
+     * @param handler the function reporting a {@link CltuStartResult} object
+     */
     public void setStartOperationHandler(Function<CltuStartInvocation, CltuStartResult> handler) {
         this.startOperationHandler = handler;
     }
 
-    public void setTransferDataOperationHandler(Function<CltuTransferDataInvocation, CltuTransferDataResult> transferDataOperationHandler) {
-        this.transferDataOperationHandler = transferDataOperationHandler;
+    /**
+     * Register an handler to deal with the operation. Such handler is called when an operation goes through
+     * all the internal checks defined by this implementation. The handler shall not return a null result.
+     *
+     * @param handler the function reporting a {@link CltuTransferDataResult} object
+     */
+    public void setTransferDataOperationHandler(Function<CltuTransferDataInvocation, CltuTransferDataResult> handler) {
+        this.transferDataOperationHandler = handler;
     }
 
-    public void setThrowEventOperationHandler(Function<CltuThrowEventInvocation, CltuThrowEventResult> throwEventOperationHandler) {
-        this.throwEventOperationHandler = throwEventOperationHandler;
+    /**
+     * Register an handler to deal with the operation. Such handler is called when an operation goes through
+     * all the internal checks defined by this implementation. The handler shall not return a null result.
+     *
+     * @param handler the function reporting a {@link CltuThrowEventResult} object
+     */
+    public void setThrowEventOperationHandler(Function<CltuThrowEventInvocation, CltuThrowEventResult> handler) {
+        this.throwEventOperationHandler = handler;
     }
 
+    /**
+     * Update the production status of the service instance.
+     *
+     * @param productionStatus the new production status, cannot be null
+     * @param uplinkStatus the new uplink status, cannot be null
+     * @param bufferAvailable the available CLTU buffer
+     */
     public void updateProductionStatus(CltuProductionStatusEnum productionStatus, CltuUplinkStatusEnum uplinkStatus, long bufferAvailable) {
         dispatchFromProvider(() -> doUpdateProductionStatus(productionStatus, uplinkStatus, bufferAvailable));
     }
 
+    /**
+     * Notify the user that the CLTU buffer is now empty
+     *
+     * @param bufferAvailable the available CLTU buffer
+     */
     public void bufferEmpty(long bufferAvailable) {
         dispatchFromProvider(() -> doBufferEmpty(bufferAvailable));
     }
 
+    /**
+     * Notify the user about the progress of a CLTU.
+     *
+     * @param cltuId the CLTU identification
+     * @param status the status of the CLTU
+     * @param radiationStartTime the radiation start time of the CLTU (depending on the status, can be null)
+     * @param radiationStopTime the radiation stop time of the CLTU (depending on the status, can be null)
+     * @param bufferAvailable the available CLTU buffer
+     */
     public void cltuProgress(long cltuId, CltuStatusEnum status, Date radiationStartTime, Date radiationStopTime, long bufferAvailable) {
         dispatchFromProvider(() -> doCltuProgress(cltuId, status, radiationStartTime, radiationStopTime, bufferAvailable));
     }
 
+    /**
+     * Notify the user about the progress of a thrown event.
+     *
+     * @param eventId the event identification
+     * @param checksFailed true if the checks failed, otherwise false
+     * @param completed true if the event completed, otherwise false
+     */
     public void eventProgress(long eventId, boolean checksFailed, boolean completed) {
         dispatchFromProvider(() -> doEventProgress(eventId, checksFailed, completed));
     }

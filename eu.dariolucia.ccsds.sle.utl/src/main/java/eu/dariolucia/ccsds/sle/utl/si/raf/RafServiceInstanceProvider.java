@@ -67,6 +67,12 @@ public class RafServiceInstanceProvider extends ReturnServiceInstanceProvider<Ra
         registerPduReceptionHandler(RafGetParameterInvocation.class, this::handleRafGetParameterInvocation);
     }
 
+    /**
+     * Register an handler to deal with the operation. Such handler is called when an operation goes through
+     * all the internal checks defined by this implementation. The handler shall not return a null result.
+     *
+     * @param handler the function reporting a {@link RafStartResult} object
+     */
     public void setStartOperationHandler(Function<RafStartInvocation, RafStartResult>  handler) {
         this.startOperationHandler = handler;
     }
