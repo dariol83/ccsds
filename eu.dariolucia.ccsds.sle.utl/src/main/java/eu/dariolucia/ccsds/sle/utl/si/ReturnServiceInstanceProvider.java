@@ -580,14 +580,14 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
     }
 
     private void stopStatusReport() {
-        if(LOG.isLoggable(Level.INFO)) {
+        if(LOG.isLoggable(Level.FINER)) {
             LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
         }
         this.reportingCycle = null;
-        if (reportingScheduler.get() != null) {
-            this.reportingScheduler.get().cancel();
+        Timer scheduleTimer = reportingScheduler.getAndSet(null);
+        if (scheduleTimer != null) {
+            scheduleTimer.cancel();
         }
-        this.reportingScheduler.set(null);
     }
 
     private void sendStatusReport(boolean immediate) {

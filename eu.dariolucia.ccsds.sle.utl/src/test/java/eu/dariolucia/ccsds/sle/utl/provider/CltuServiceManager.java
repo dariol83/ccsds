@@ -50,13 +50,13 @@ public class CltuServiceManager extends ServiceInstanceManager<CltuServiceInstan
         serviceInstance.updateProductionStatus(CltuProductionStatusEnum.OPERATIONAL, CltuUplinkStatusEnum.NOMINAL, availableBuffer);
     }
 
-    private Long transferDataHandler(CltuTransferDataInvocation cltuTransferDataInvocation) {
+    private CltuTransferDataResult transferDataHandler(CltuTransferDataInvocation cltuTransferDataInvocation) {
         byte[] cltu = cltuTransferDataInvocation.getCltuData().value;
         long id = cltuTransferDataInvocation.getCltuIdentification().longValue();
         LOG.info(serviceInstance.getServiceInstanceIdentifier() + ": Transfer data received: " + cltu.length + " bytes with id " + id);
         if(availableBuffer - cltu.length < 0) {
             // Buffer full: reject with whatever error: not sure if this is appropriate but this is a protocol test tool
-            return -1L;
+            return CltuTransferDataResult.errorSpecific(CltuTransferDataDiagnosticsEnum.UNABLE_TO_STORE);
         } else {
             // Decrease the buffer size
             this.availableBuffer -= cltu.length;
@@ -78,7 +78,7 @@ public class CltuServiceManager extends ServiceInstanceManager<CltuServiceInstan
                     serviceInstance.cltuProgress(id, CltuStatusEnum.RADIATED, radStarted, new Date(), availableBuffer);
                 }
             }, 800); // 800 ms for radiation
-            return (long) availableBuffer;
+            return CltuTransferDataResult.noError(availableBuffer);
         }
     }
 

@@ -82,7 +82,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     private Long nbCltuReceived = 0L;
     private Long nbCltuProcessed = 0L;
     private Long nbCltuRadiated = 0L;
-    private Long bufferAvailable = 0L;
+    private long bufferAvailable = 0L;
 
     private Date productionStatusOperationalTime = null;
 
@@ -98,9 +98,8 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     // Operation extension handlers: they are called to drive the positive/negative response (where supported).
     // If it is not set, it means that there are no additional checks to be done.
     private volatile Function<CltuStartInvocation, CltuStartResult> startOperationHandler; // NOSONAR function pointer
-    // Return the remaining buffer if the CLTU is added to the buffer for processing, or a negative number if the CLTU must be discarded and was not added to the buffer.
-    // The absolute value of the negative number is the specific diagnostic code to be sent back to the user, so make sure it is in line with the CCSDS specs.
-    private volatile Function<CltuTransferDataInvocation, Long> transferDataOperationHandler; // NOSONAR function pointer
+    // Return CltuTransferDataResult.noError(), or an error state if the CLTU must be discarded and was not added to the buffer.
+    private volatile Function<CltuTransferDataInvocation, CltuTransferDataResult> transferDataOperationHandler; // NOSONAR function pointer
     // Return CltuThrowEventResult.noError() if the event invocation has been taken onboard, or an error state if the throw event must be discarded and it will not be processed.
     private volatile Function<CltuThrowEventInvocation, CltuThrowEventResult> throwEventOperationHandler; // NOSONAR function pointer
 
@@ -124,7 +123,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         this.startOperationHandler = handler;
     }
 
-    public void setTransferDataOperationHandler(Function<CltuTransferDataInvocation, Long> transferDataOperationHandler) {
+    public void setTransferDataOperationHandler(Function<CltuTransferDataInvocation, CltuTransferDataResult> transferDataOperationHandler) {
         this.transferDataOperationHandler = transferDataOperationHandler;
     }
 
@@ -342,28 +341,31 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         }
 
         // Validate the request
+        CltuTransferDataResult tdResult = CltuTransferDataResult.noError(0);
         boolean permittedOk = true;
         // Expected CLTU identification
         if(invocation.getCltuIdentification().intValue() != this.cltuIdentification) {
             permittedOk = false;
+            tdResult = CltuTransferDataResult.errorSpecific(CltuTransferDataDiagnosticsEnum.OUT_OF_SEQUENCE);
         }
         // Latest transmission time
         if(invocation.getLatestTransmissionTime().getKnown() != null) {
             Date latestTransmissionTime = PduFactoryUtil.toDate(invocation.getLatestTransmissionTime());
             if(latestTransmissionTime == null || latestTransmissionTime.getTime() < new Date().getTime()) {
                 permittedOk = false;
+                tdResult = CltuTransferDataResult.errorSpecific(CltuTransferDataDiagnosticsEnum.INVALID_TIME);
             }
         }
 
-        Long newBufferAvailable = null;
         if (permittedOk) {
             // Ask the external handler if any
-            Function<CltuTransferDataInvocation, Long> handler = this.transferDataOperationHandler; // NOSONAR: null is a plausible value
+            Function<CltuTransferDataInvocation, CltuTransferDataResult> handler = this.transferDataOperationHandler; // NOSONAR: null is a plausible value
             if (handler != null) {
-                newBufferAvailable = handler.apply(invocation);
-                permittedOk = newBufferAvailable != null && newBufferAvailable > 0;
+                tdResult = handler.apply(invocation);
+                permittedOk = !tdResult.isError();
             } else {
                 // If there is no handler for a transfer data, the CLTU cannot be radiated, so fail by default
+                tdResult = CltuTransferDataResult.errorSpecific(CltuTransferDataDiagnosticsEnum.UNABLE_TO_PROCESS);
                 permittedOk = false;
             }
         }
@@ -373,21 +375,18 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         pdu.setResult(new CltuTransferDataReturn.Result());
         if (permittedOk) {
             pdu.getResult().setPositiveResult(new BerNull());
-            this.bufferAvailable = newBufferAvailable;
+            this.bufferAvailable = tdResult.getAvailableBuffer();
             ++this.cltuIdentification;
             ++this.nbCltuReceived;
         } else {
             pdu.getResult().setNegativeResult(new DiagnosticCltuTransferData());
-            // If you reach this point, it means that either there was a previous fail, so newBufferAvailable is null, or that the provider returned a negative or zero number
-            if(newBufferAvailable != null) {
-                // Code from the provider implementation
-                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(Math.abs(newBufferAvailable)));
+            if(tdResult.getCommon() != null) {
+                pdu.getResult().getNegativeResult().setCommon(new Diagnostics(tdResult.getCommon().getCode()));
             } else {
-                // Unable to process: not really according to the standard but good enough for testing
-                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(0));
+                pdu.getResult().getNegativeResult().setSpecific(new BerInteger(tdResult.getSpecific().getCode()));
             }
         }
-        pdu.setCltuBufferAvailable(new BufferSize(this.bufferAvailable != null ? this.bufferAvailable : 0));
+        pdu.setCltuBufferAvailable(new BufferSize(this.bufferAvailable));
         pdu.setCltuIdentification(new CltuIdentification(this.cltuIdentification));
         // Add credentials
         // From the API configuration (remote peers) and SI configuration (responder
@@ -1121,7 +1120,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
             pdu.setInvokerCredentials(creds);
         }
         //
-        pdu.setCltuBufferAvailable(new BufferSize(this.bufferAvailable == null ? 0 : this.bufferAvailable));
+        pdu.setCltuBufferAvailable(new BufferSize(this.bufferAvailable));
         pdu.setCltuLastOk(new eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.structures.CltuLastOk());
         if(this.lastOk == null) {
             pdu.getCltuLastOk().setNoCltuOk(new BerNull());

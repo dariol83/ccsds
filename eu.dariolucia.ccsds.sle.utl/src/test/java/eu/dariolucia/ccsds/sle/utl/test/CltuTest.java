@@ -883,7 +883,7 @@ public class CltuTest {
                     e.printStackTrace();
                 }
             }).start();
-            return 15400L;
+            return CltuTransferDataResult.noError(15400);
         });
 
         // Send a transfer data (it will succeed): you will get positive return, async notify and buffer empty notification
@@ -912,7 +912,7 @@ public class CltuTest {
                     e.printStackTrace();
                 }
             }).start();
-            return 15400L;
+            return CltuTransferDataResult.noError(15400);
         });
 
         // Send a transfer data (it will succeed): you will get positive return, async notify and buffer empty notification
