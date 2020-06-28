@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  ~   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~   Licensed under the Apache License, Version 2.0 (the "License");
+  ~   you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  -->
+
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:complexType name="definition">
+        <xs:sequence>
+            <xs:element name="id_fields" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="field" type="identField" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="packets" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="packet" type="packetDefinition" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="parameters" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="parameter" type="parameterDefinition" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="identField">
+        <xs:sequence/>
+        <xs:attribute name="id" type="xs:ID" use="required"/>
+        <xs:attribute name="offset" type="xs:int" use="required"/>
+        <xs:attribute name="len" type="xs:int" use="required"/>
+        <xs:attribute name="and" type="xs:string"/>
+        <xs:attribute name="or" type="xs:string"/>
+        <xs:attribute name="lshift" type="xs:int" use="required"/>
+        <xs:attribute name="rshift" type="xs:int" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="packetDefinition">
+        <xs:sequence>
+            <xs:element name="identification" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="match" type="identFieldMatcher" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="structure" type="packetStructure" minOccurs="0"/>
+            <xs:element name="extension" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:ID" use="required"/>
+        <xs:attribute name="external_id" type="xs:long" use="required"/>
+        <xs:attribute name="description" type="xs:string"/>
+        <xs:attribute name="type" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="identFieldMatcher">
+        <xs:sequence/>
+        <xs:attribute name="field" type="xs:IDREF" use="required"/>
+        <xs:attribute name="value" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="packetStructure">
+        <xs:sequence>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+                <xs:element name="parameter" type="encodedParameter"/>
+                <xs:element name="array" type="encodedArray"/>
+                <xs:element name="structure" type="encodedStructure"/>
+            </xs:choice>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="encodedParameter">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedItem">
+                <xs:sequence>
+                    <xs:choice minOccurs="0">
+                        <xs:element name="type_fixed" type="fixedType"/>
+                        <xs:element name="type_ref" type="referenceType"/>
+                        <xs:element name="type_param" type="parameterType"/>
+                        <xs:element name="type_ext" type="extensionType"/>
+                    </xs:choice>
+                    <xs:choice minOccurs="0">
+                        <xs:element name="length_fixed" type="fixedLength"/>
+                        <xs:element name="length_ref" type="referenceLength"/>
+                        <xs:element name="length_param" type="parameterLength"/>
+                    </xs:choice>
+                    <xs:element name="time" type="generationTime" minOccurs="0"/>
+                    <xs:element name="value" type="xs:string" minOccurs="0"/>
+                    <xs:choice minOccurs="0">
+                        <xs:element name="parameter_fixed" type="fixedLinkedParameter"/>
+                        <xs:element name="parameter_ref" type="referenceLinkedParameter"/>
+                    </xs:choice>
+                </xs:sequence>
+                <xs:attribute name="pad_to" type="xs:int"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="abstractEncodedItem" abstract="true">
+        <xs:sequence>
+            <xs:choice minOccurs="0">
+                <xs:element name="location_absolute" type="fixedAbsoluteLocation"/>
+                <xs:element name="location_last" type="lastRelativeLocation"/>
+                <xs:element name="location_param" type="encodedItemRelativeLocation"/>
+            </xs:choice>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="fixedType">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedType">
+                <xs:sequence/>
+                <xs:attribute name="type" type="dataTypeEnum" use="required"/>
+                <xs:attribute name="length" type="xs:int" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="abstractEncodedType" abstract="true">
+        <xs:sequence/>
+    </xs:complexType>
+
+    <xs:complexType name="referenceType">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedType">
+                <xs:sequence/>
+                <xs:attribute name="ref" type="xs:string"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="parameterType">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedType">
+                <xs:sequence/>
+                <xs:attribute name="ref" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="extensionType">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedType">
+                <xs:sequence/>
+                <xs:attribute name="external" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="fixedLength">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedLength">
+                <xs:sequence/>
+                <xs:attribute name="len" type="xs:int" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="abstractEncodedLength" abstract="true">
+        <xs:sequence/>
+    </xs:complexType>
+
+    <xs:complexType name="referenceLength">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedLength">
+                <xs:sequence/>
+                <xs:attribute name="ref" type="xs:string"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="parameterLength">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedLength">
+                <xs:sequence/>
+                <xs:attribute name="ref" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="generationTime">
+        <xs:sequence/>
+        <xs:attribute name="offset_ref" type="xs:string"/>
+        <xs:attribute name="absolute_ref" type="xs:string"/>
+        <xs:attribute name="offset" type="xs:int"/>
+    </xs:complexType>
+
+    <xs:complexType name="fixedLinkedParameter">
+        <xs:complexContent>
+            <xs:extension base="abstractLinkedParameter">
+                <xs:sequence/>
+                <xs:attribute name="parameter" type="xs:IDREF" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="abstractLinkedParameter" abstract="true">
+        <xs:sequence/>
+    </xs:complexType>
+
+    <xs:complexType name="parameterDefinition">
+        <xs:sequence>
+            <xs:element name="type" type="fixedType"/>
+            <xs:element name="extension" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:ID" use="required"/>
+        <xs:attribute name="external_id" type="xs:long" use="required"/>
+        <xs:attribute name="description" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="referenceLinkedParameter">
+        <xs:complexContent>
+            <xs:extension base="abstractLinkedParameter">
+                <xs:sequence/>
+                <xs:attribute name="ref" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="fixedAbsoluteLocation">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedLocation">
+                <xs:sequence/>
+                <xs:attribute name="bit_absolute" type="xs:int" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="abstractEncodedLocation" abstract="true">
+        <xs:sequence/>
+    </xs:complexType>
+
+    <xs:complexType name="lastRelativeLocation">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedLocation">
+                <xs:sequence/>
+                <xs:attribute name="bit_offset" type="xs:int" use="required"/>
+                <xs:attribute name="bit_align" type="xs:int" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="encodedItemRelativeLocation">
+        <xs:complexContent>
+            <xs:extension base="lastRelativeLocation">
+                <xs:sequence/>
+                <xs:attribute name="ref" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="encodedArray">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedItem">
+                <xs:sequence>
+                    <xs:choice minOccurs="0">
+                        <xs:element name="size_fixed" type="fixedArraySize"/>
+                        <xs:element name="size_ref" type="referenceArraySize"/>
+                    </xs:choice>
+                    <xs:choice minOccurs="0" maxOccurs="unbounded">
+                        <xs:element name="parameter" type="encodedParameter"/>
+                        <xs:element name="array" type="encodedArray"/>
+                        <xs:element name="structure" type="encodedStructure"/>
+                    </xs:choice>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="fixedArraySize">
+        <xs:complexContent>
+            <xs:extension base="abstractArraySize">
+                <xs:sequence/>
+                <xs:attribute name="len" type="xs:int" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="abstractArraySize" abstract="true">
+        <xs:sequence/>
+    </xs:complexType>
+
+    <xs:complexType name="referenceArraySize">
+        <xs:complexContent>
+            <xs:extension base="abstractArraySize">
+                <xs:sequence/>
+                <xs:attribute name="ref" type="xs:string" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="encodedStructure">
+        <xs:complexContent>
+            <xs:extension base="abstractEncodedItem">
+                <xs:sequence>
+                    <xs:choice minOccurs="0" maxOccurs="unbounded">
+                        <xs:element name="parameter" type="encodedParameter"/>
+                        <xs:element name="array" type="encodedArray"/>
+                        <xs:element name="structure" type="encodedStructure"/>
+                    </xs:choice>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:simpleType name="dataTypeEnum">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="BOOLEAN"/>
+            <xs:enumeration value="ENUMERATED"/>
+            <xs:enumeration value="UNSIGNED_INTEGER"/>
+            <xs:enumeration value="SIGNED_INTEGER"/>
+            <xs:enumeration value="REAL"/>
+            <xs:enumeration value="BIT_STRING"/>
+            <xs:enumeration value="OCTET_STRING"/>
+            <xs:enumeration value="CHARACTER_STRING"/>
+            <xs:enumeration value="ABSOLUTE_TIME"/>
+            <xs:enumeration value="RELATIVE_TIME"/>
+            <xs:enumeration value="DEDUCED"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>
