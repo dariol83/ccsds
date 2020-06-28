@@ -83,22 +83,22 @@ class FarmEngineTest {
         // Send 4 AD frames
         vc.dispatch(true, 0, new byte[200]);
         TcTransferFrame fr = collector.retrieveFirst(true);
-        System.out.println("Frame 0");
+        // System.out.println("Frame 0");
         farm.frameArrived(fr);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 1");
+        // System.out.println("Frame 1");
         farm.frameArrived(fr);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 2");
+        // System.out.println("Frame 2");
         farm.frameArrived(fr);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 3");
+        // System.out.println("Frame 3");
         farm.frameArrived(fr);
 
         expectedClcw = ClcwBuilder.create()
@@ -181,25 +181,25 @@ class FarmEngineTest {
         // Send 4 AD frames
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 0");
+        // System.out.println("Frame 0");
         farm.frameArrived(fr);
         Thread.sleep(1000);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 1");
+        // System.out.println("Frame 1");
         farm.frameArrived(fr);
         Thread.sleep(1000);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 2");
+        // System.out.println("Frame 2");
         farm.frameArrived(fr);
         Thread.sleep(1000);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 3");
+        // System.out.println("Frame 3");
         farm.frameArrived(fr);
         Thread.sleep(2000);
 
@@ -224,7 +224,7 @@ class FarmEngineTest {
         vc.setVirtualChannelFrameCounter(100);
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 100");
+        // System.out.println("Frame 100");
         farm.frameArrived(fr);
         Thread.sleep(1000);
 
@@ -301,25 +301,25 @@ class FarmEngineTest {
         // Send 4 AD frames
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 0");
+        // System.out.println("Frame 0");
         farm.frameArrived(fr);
         Thread.sleep(1000);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 1");
+        // System.out.println("Frame 1");
         farm.frameArrived(fr);
         Thread.sleep(1000);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 2");
+        // System.out.println("Frame 2");
         farm.frameArrived(fr);
         Thread.sleep(1000);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 3");
+        // System.out.println("Frame 3");
         farm.frameArrived(fr);
         Thread.sleep(2000);
 
@@ -419,25 +419,25 @@ class FarmEngineTest {
         // Send 4 AD frames
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 0");
+        // System.out.println("Frame 0");
         farm.frameArrived(fr);
         Thread.sleep(1000);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 1");
+        // System.out.println("Frame 1");
         farm.frameArrived(fr);
         Thread.sleep(1000);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 2");
+        // System.out.println("Frame 2");
         farm.frameArrived(fr);
         Thread.sleep(1000);
 
         vc.dispatch(true, 0, new byte[200]);
         fr = collector.retrieveFirst(true);
-        System.out.println("Frame 3");
+        // System.out.println("Frame 3");
         farm.frameArrived(fr);
         Thread.sleep(2000);
 
@@ -1047,7 +1047,7 @@ class FarmEngineTest {
 
         @Override
         public void statusReport(FarmStatus status) {
-            System.out.println(status);
+            // System.out.println(status);
             synchronized (lastStatus) {
                 lastStatus.add(status);
                 lastStatus.notifyAll();

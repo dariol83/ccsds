@@ -290,6 +290,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         notify(() -> {
             for (IServiceInstanceListener l : this.listeners) {
                 try {
+                    if(LOG.isLoggable(Level.FINER)) {
+                        LOG.finer(String.format("%s: Notify PDU %s to listener %s", getServiceInstanceIdentifier(), name, l));
+                    }
                     l.onPduReceived(this, pdu, name, encodedOperation);
                 } catch (Exception e) {
                     LOG.log(Level.SEVERE,
@@ -565,8 +568,8 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     }
 
     private void startReturnTimeout(final long opInvokeId, Object pdu) {
-        if (LOG.isLoggable(Level.FINE)) {
-            LOG.fine(getServiceInstanceIdentifier() + ": Return timeout started for invokeId=" + opInvokeId + ", operation: " + pdu);
+        if (LOG.isLoggable(Level.FINER)) {
+            LOG.finer(getServiceInstanceIdentifier() + ": Return timeout started for invokeId=" + opInvokeId + ", operation: " + pdu);
         }
         TimerTask tt = new TimerTask() {
             @Override
@@ -802,7 +805,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                 return false;
             } else if (!credentialsRequired) {
                 // No credentials required
-                LOG.fine(() -> String.format("%s: Credential not required, operation credentials empty, ok", getServiceInstanceIdentifier()));
+                if(LOG.isLoggable(Level.FINEST)) {
+                    LOG.finest(() -> String.format("%s: Credential not required, operation credentials empty, ok", getServiceInstanceIdentifier()));
+                }
                 return true;
             } else {
                 byte[] encodedCredentials = remoteCredentials.getUsed().value;
@@ -1164,7 +1169,9 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                 return;
             }
             // At this stage, op cannot be null
-
+            if (LOG.isLoggable(Level.FINER)) {
+                LOG.finer(getServiceInstanceIdentifier() + ": PDU decoded as " + op.getClass().getSimpleName());
+            }
             // Use a map <class 2 runnable> to process the PDU accordingly to its type. This
             // must be in this class, and handlers must be registered by children classes in the setup.
             @SuppressWarnings("unchecked")

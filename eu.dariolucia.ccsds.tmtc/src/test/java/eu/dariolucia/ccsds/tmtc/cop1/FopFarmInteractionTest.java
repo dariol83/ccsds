@@ -63,7 +63,7 @@ class FopFarmInteractionTest {
         // Create FARM-1
         FarmEngine farm = new FarmEngine(0, receiverVirtualChannel, true, 5, 6, FarmState.S3, 0);
         farm.register(o -> {
-            System.out.println("FARM: " + o);
+            // System.out.println("FARM: " + o);
         });
 
         // Create FOP-1 to transmit frames straight to the FARM, 1.5 seconds delay
@@ -79,12 +79,12 @@ class FopFarmInteractionTest {
         fop.register(new IFopObserver() {
             @Override
             public void transferNotification(FopOperationStatus status, TcTransferFrame frame) {
-                System.out.println("TC frame " + frame.getVirtualChannelFrameCount() + ": " + status);
+                // System.out.println("TC frame " + frame.getVirtualChannelFrameCount() + ": " + status);
             }
 
             @Override
             public void directiveNotification(FopOperationStatus status, Object tag, FopDirective directive, int qualifier) {
-                System.out.println("Directive " + directive + ": " + status);
+                // System.out.println("Directive " + directive + ": " + status);
             }
 
             @Override
@@ -99,7 +99,7 @@ class FopFarmInteractionTest {
 
             @Override
             public void statusReport(FopStatus status) {
-                System.out.println("FOP: " + status);
+                // System.out.println("FOP: " + status);
             }
         });
         // Create a poller that sends the CLCW every second from FARM to FOP
@@ -132,7 +132,7 @@ class FopFarmInteractionTest {
             tcVc.dispatch(true, 0, generateSpacePacket(i));
             TcTransferFrame genFrame = collector.retrieveFirst(true);
             assertTrue(fop.transmit(genFrame, 30000));
-            System.out.println("Space Packet " + i + " sent");
+            // System.out.println("Space Packet " + i + " sent");
         }
 
         // Verify confirmation of the 20 frames

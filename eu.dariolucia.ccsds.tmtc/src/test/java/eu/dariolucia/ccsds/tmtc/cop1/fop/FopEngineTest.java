@@ -2037,7 +2037,7 @@ class FopEngineTest {
 
         @Override
         public void transferNotification(FopOperationStatus status, TcTransferFrame frame) {
-            System.out.println("Transfer frame - type " + frame.getFrameType() + ": " + status);
+            // System.out.println("Transfer frame - type " + frame.getFrameType() + ": " + status);
             synchronized (lastFrame) {
                 lastFrame.set(new Object[] {status, frame});
                 lastFrame.notifyAll();
@@ -2046,7 +2046,7 @@ class FopEngineTest {
 
         @Override
         public void directiveNotification(FopOperationStatus status, Object tag, FopDirective directive, int qualifier) {
-            System.out.println("Directive " + tag + ", directive " + " " + qualifier + ": " + status);
+            // System.out.println("Directive " + tag + ", directive " + " " + qualifier + ": " + status);
             synchronized (lastDirective) {
                 lastDirective.set(new Object[] {status, tag, directive, qualifier});
                 lastDirective.notifyAll();
@@ -2055,7 +2055,7 @@ class FopEngineTest {
 
         @Override
         public void alert(FopAlertCode code) {
-            System.out.println("Alert: " + code);
+            // System.out.println("Alert: " + code);
             synchronized (lastAlert) {
                 lastAlert.set(code);
                 lastAlert.notifyAll();
@@ -2064,12 +2064,12 @@ class FopEngineTest {
 
         @Override
         public void suspend() {
-            System.out.println("Suspend");
+            // System.out.println("Suspend");
         }
 
         @Override
         public void statusReport(FopStatus status) {
-            System.out.println(status);
+            // System.out.println(status);
             synchronized (lastStatus) {
                 lastStatus.add(status);
                 lastStatus.notifyAll();

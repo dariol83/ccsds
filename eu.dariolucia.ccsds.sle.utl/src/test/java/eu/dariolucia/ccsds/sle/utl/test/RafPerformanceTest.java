@@ -18,6 +18,8 @@ package eu.dariolucia.ccsds.sle.utl.test;
 
 import com.beanit.jasn1.ber.types.BerNull;
 import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafStartReturn;
+import eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.raf.outgoing.pdus.RafTransferDataInvocation;
+import eu.dariolucia.ccsds.sle.utl.LightweightStatsRecorder;
 import eu.dariolucia.ccsds.sle.utl.OperationRecorder;
 import eu.dariolucia.ccsds.sle.utl.si.raf.RafServiceInstanceProvider;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
@@ -43,8 +45,8 @@ public class RafPerformanceTest {
 
     @Test
     void testPerformance() throws IOException, InterruptedException {
-        Logger.getLogger("eu.dariolucia").setLevel(Level.OFF);
-        Arrays.stream(Logger.getLogger("eu.dariolucia").getHandlers()).forEach(o -> o.setLevel(Level.OFF));
+        Logger.getLogger("").setLevel(Level.OFF);
+        Arrays.stream(Logger.getLogger("").getHandlers()).forEach(o -> o.setLevel(Level.OFF));
 
         // Provider
         InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_provider.xml");
@@ -61,24 +63,20 @@ public class RafPerformanceTest {
         RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
         rafUser.configure();
         // Register listener
-        OperationRecorder recorder = new OperationRecorder();
+        LightweightStatsRecorder recorder = new LightweightStatsRecorder();
         rafUser.register(recorder);
 
         rafUser.bind(2);
 
         // Check reported state
-        AwaitUtil.await(2000);
+        AwaitUtil.await(5000);
         assertTrue(recorder.getStates().size() > 0);
         assertEquals(ServiceInstanceBindingStateEnum.READY, recorder.getStates().get(recorder.getStates().size() - 1).getState());
 
         // Start
-        recorder.getPduReceived().clear();
         rafUser.start(null, null, RafRequestedFrameQualityEnum.GOOD_FRAMES_ONLY);
-        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived().size() == 1);
-        assertEquals(1, recorder.getPduReceived().size());
-        assertEquals(new BerNull().toString(), ((RafStartReturn)recorder.getPduReceived().get(0)).getResult().getPositiveResult().toString());
-
-        rafUser.deregister(recorder);
+        AwaitUtil.awaitCondition(2000, () -> recorder.getPduReceived() == 1L);
+        assertEquals(1L, recorder.getPduReceived());
 
         AtomicBoolean generationRunning = new AtomicBoolean(true);
         // Start provider thread
@@ -93,23 +91,29 @@ public class RafPerformanceTest {
         });
         generationThread.start();
 
+        int secondsToWait = 20;
         // Get data rate
         RateSample rs1 = rafUser.getCurrentRate();
-
-        AwaitUtil.await(10000);
+        System.out.println(rs1);
+        AwaitUtil.await(secondsToWait * 1000);
 
         // Get data rate
         RateSample rs2 = rafUser.getCurrentRate();
-
+        System.out.println(rs2);
         assertNotNull(rs2.getInstant());
         assertNotNull(rs2.getByteSample().getDate());
         assertEquals(162, rs2.getByteSample().getTotalOutUnits());
 
-        System.out.println("PDU  RX in 10 seconds: " + (rs2.getPduSample().getTotalInUnits() - rs1.getPduSample().getTotalInUnits()));
+        System.out.println("PDU  RX in " + secondsToWait + " seconds: " + (rs2.getPduSample().getTotalInUnits() - rs1.getPduSample().getTotalInUnits()));
         System.out.println("PDU  RX data rate: " + rs2.getPduSample().getInRate());
-        System.out.println("Byte RX data rate: " + rs2.getByteSample().getInRate() + " bytes/sec");
-        System.out.println("Bits RX data rate: " + (rs2.getByteSample().getInRate() / (1024 * 1024)) * 8 + " Mbps");
+        System.out.println("(TML) Byte RX data rate: " + rs2.getByteSample().getInRate() + " bytes/sec");
+        System.out.println("(TML) Bits RX data rate: " + (rs2.getByteSample().getInRate() / (1024 * 1024)) * 8 + " Mbps");
         generationRunning.set(false);
+
+        // Check how many transfer datas the recorder received and compute the amount of data received
+        long numTransferredBytes = recorder.getTransferDataBytesReceived();
+        System.out.println("(SI) PDU received: " + recorder.getPduReceived());
+        System.out.println("(SI) Bits frame RX data rate: " + (((numTransferredBytes * 8) / secondsToWait) / (1024 * 1024)) + " Mbps");
 
         // Stop
         rafUser.stop();

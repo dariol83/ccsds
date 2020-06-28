@@ -581,7 +581,7 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
 
     private void stopStatusReport() {
         if(LOG.isLoggable(Level.FINER)) {
-            LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
+            LOG.finer(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
         }
         this.reportingCycle = null;
         Timer scheduleTimer = reportingScheduler.getAndSet(null);

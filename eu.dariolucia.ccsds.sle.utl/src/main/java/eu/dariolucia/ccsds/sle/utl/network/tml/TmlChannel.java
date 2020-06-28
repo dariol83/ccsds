@@ -341,8 +341,8 @@ public abstract class TmlChannel {
 	}
 
 	private void restartHbtRxTimer() {
-		if(LOG.isLoggable(Level.FINE)) {
-			LOG.fine(String.format("Starting HBT RX timer of %s to %d seconds", toString(), this.heartbeatTimer.get() * this.deadFactor.get()));
+		if(LOG.isLoggable(Level.FINER)) {
+			LOG.finer(String.format("Starting HBT RX timer of %s to %d seconds", toString(), this.heartbeatTimer.get() * this.deadFactor.get()));
 		}
 		this.lock.lock();
 		try {

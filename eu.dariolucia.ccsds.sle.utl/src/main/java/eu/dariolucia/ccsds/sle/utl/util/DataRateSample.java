@@ -93,5 +93,14 @@ public class DataRateSample {
 	public final long getTotalOutUnits() {
 		return totalOutUnits;
 	}
-	
+
+	@Override
+	public String toString() {
+		return "{" +
+				"RX=" + inRate +
+				", TX=" + outRate +
+				", UNITS IN (total)=" + totalInUnits +
+				", UNITS OUT (total)=" + totalOutUnits +
+				'}';
+	}
 }

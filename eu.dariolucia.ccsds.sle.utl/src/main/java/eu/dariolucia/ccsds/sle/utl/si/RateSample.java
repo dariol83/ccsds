@@ -47,5 +47,13 @@ public class RateSample {
 	public String toCompactByteRateString() {
 		return "IN: " + byteSample.getInRate() + " OUT: " + byteSample.getOutRate();
 	}
-	
+
+	@Override
+	public String toString() {
+		return "{" +
+				"TIME=" + instant +
+				", PDU=" + pduSample +
+				", BYTE=" + byteSample +
+				'}';
+	}
 }

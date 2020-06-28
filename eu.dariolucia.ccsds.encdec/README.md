@@ -10,7 +10,7 @@ The packet structure is defined using a custom XML format definition, built by m
 
 ## Getting started
 ### Definitions
-To use the majority of the functionalities implemented by The module, an XML file describing the packet identification
+To use the majority of the functionalities implemented by the module, an XML file describing the packet identification
 criteria and the packet structure shall be defined. The XML file shall be valid against the provided XSD and shall consider also
 the constraints defined as part of the documentation of the JAXB classes in eu.dariolucia.ccsds.encdec.definition package.
 
@@ -29,7 +29,7 @@ The split between packet encoded fields and (global) parameters is the same conc
  
  Example: assuming that the Definition XML file is residing in /home/dev/myDefinitions.xml
  
-     Definition.load(new FileInputStream("/home/dev/myDefinitions.xml"))
+     Definition d = Definition.load(new FileInputStream("/home/dev/myDefinitions.xml"))
  
 ### Encoding
 To encode a packet, you need:
