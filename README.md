@@ -27,14 +27,13 @@ A simple but effective graphical interface to inspect the user-side peer is prov
 
 ## TM/TC
 The TM/TC Library (eu.dariolucia.ccsds.tmtc) is a library that provide support to parse and build CCSDS TM frames, TC frames, AOS frames, Space Packets and full FARM/FOP implementation for COP-1. It allows encoding/decoding of space packets into TM frames, TC frames or AOS frames. It also provides some basic encodings (e.g. CLTU encoding/decoding, randomization, FECF encoding/checking, Reed-Solomon encoding/checking) but no error correction capabilities. 
+
 A simple graphical interface to inspect TM/TC/AOS/Space Packet data is provided as separate module (eu.dariolucia.ccsds.inspector). It is possible to implement custom connectors to allow inspection of data delivered from a custom source/protocol/format by providing a new 
 service (in Java 11 terms) implementing the interface eu.dariolucia.ccsds.inspector.api.IConnectorFactory. Some connectors to read data from file or socket are already available.
 
 ## ENC/DEC
 A packet identification/encoding/decoding library, which supports basic data types (integer, real, enumeration, CCSDS absolute and 
-relative time formats, strings, octet streams, bit streams), array structures, ECSS TM/TC PUS headers, as derived from the ECSS Packet Utilisation Standard (http://everyspec.com/ESA/download.php?spec=ECSS-E-70-41A.047794.pdf). 
-
-The focus on this implementation is on reliable and efficient packet identification and decoding performance: on my Intel i5 2.67 GHz (year 2010), packet identification is ca. 7M packets per second (with ca. 72K different packet definitions), and parameter decoding speed is ca. 890K parameters per second.   
+relative time formats, strings, octet streams, bit streams), array structures, ECSS TM/TC PUS headers, as derived from the ECSS Packet Utilisation Standard (http://everyspec.com/ESA/download.php?spec=ECSS-E-70-41A.047794.pdf), with main focus on performance. 
 
 Encoding performance has not been measured yet. 
 
