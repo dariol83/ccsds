@@ -2036,7 +2036,7 @@ class FopEngineTest {
         private final AtomicReference<FopAlertCode> lastAlert = new AtomicReference<>();
 
         @Override
-        public void transferNotification(FopOperationStatus status, TcTransferFrame frame) {
+        public void transferNotification(FopEngine engine, FopOperationStatus status, TcTransferFrame frame) {
             // System.out.println("Transfer frame - type " + frame.getFrameType() + ": " + status);
             synchronized (lastFrame) {
                 lastFrame.set(new Object[] {status, frame});
@@ -2045,7 +2045,7 @@ class FopEngineTest {
         }
 
         @Override
-        public void directiveNotification(FopOperationStatus status, Object tag, FopDirective directive, int qualifier) {
+        public void directiveNotification(FopEngine engine, FopOperationStatus status, Object tag, FopDirective directive, int qualifier) {
             // System.out.println("Directive " + tag + ", directive " + " " + qualifier + ": " + status);
             synchronized (lastDirective) {
                 lastDirective.set(new Object[] {status, tag, directive, qualifier});
@@ -2054,7 +2054,7 @@ class FopEngineTest {
         }
 
         @Override
-        public void alert(FopAlertCode code) {
+        public void alert(FopEngine engine, FopAlertCode code) {
             // System.out.println("Alert: " + code);
             synchronized (lastAlert) {
                 lastAlert.set(code);
@@ -2063,12 +2063,12 @@ class FopEngineTest {
         }
 
         @Override
-        public void suspend() {
+        public void suspend(FopEngine engine) {
             // System.out.println("Suspend");
         }
 
         @Override
-        public void statusReport(FopStatus status) {
+        public void statusReport(FopEngine engine, FopStatus status) {
             // System.out.println(status);
             synchronized (lastStatus) {
                 lastStatus.add(status);

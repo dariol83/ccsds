@@ -339,10 +339,10 @@ public class FopEngine {
             if(tfs.getFrame().getFrameType() == TcTransferFrame.FrameType.BC && this.pendingInitAd.get() != null) {
                 // Directive: not on the standard
                 Object[] directive = this.pendingInitAd.getAndSet(null);
-                observers.forEach(o -> o.directiveNotification(FopOperationStatus.NEGATIVE_CONFIRM, directive[0], (FopDirective) directive[1], (int) directive[2]));
+                observers.forEach(o -> o.directiveNotification(this, FopOperationStatus.NEGATIVE_CONFIRM, directive[0], (FopDirective) directive[1], (int) directive[2]));
             } else {
                 // Frame
-                observers.forEach(o -> o.transferNotification(FopOperationStatus.NEGATIVE_CONFIRM, tfs.getFrame()));
+                observers.forEach(o -> o.transferNotification(this, FopOperationStatus.NEGATIVE_CONFIRM, tfs.getFrame()));
             }
         }
         this.sentQueue.clear();
@@ -540,7 +540,7 @@ public class FopEngine {
             pendingAcceptRejectFrame.set(FopOperationStatus.ACCEPT_RESPONSE);
             pendingAcceptRejectFrame.notifyAll();
         }
-        observers.forEach(o -> o.transferNotification(FopOperationStatus.ACCEPT_RESPONSE, frame));
+        observers.forEach(o -> o.transferNotification(this, FopOperationStatus.ACCEPT_RESPONSE, frame));
     }
 
     /**
@@ -552,7 +552,7 @@ public class FopEngine {
      */
     void accept(Object tag, FopDirective directive, int qualifier) {
         checkThreadAccess();
-        observers.forEach(o -> o.directiveNotification(FopOperationStatus.ACCEPT_RESPONSE, tag, directive, qualifier));
+        observers.forEach(o -> o.directiveNotification(this, FopOperationStatus.ACCEPT_RESPONSE, tag, directive, qualifier));
     }
 
     /**
@@ -566,7 +566,7 @@ public class FopEngine {
             pendingAcceptRejectFrame.set(FopOperationStatus.REJECT_RESPONSE);
             pendingAcceptRejectFrame.notifyAll();
         }
-        observers.forEach(o -> o.transferNotification(FopOperationStatus.REJECT_RESPONSE, frame));
+        observers.forEach(o -> o.transferNotification(this, FopOperationStatus.REJECT_RESPONSE, frame));
     }
 
     /**
@@ -578,7 +578,7 @@ public class FopEngine {
      */
     void reject(Object tag, FopDirective directive, int qualifier) {
         checkThreadAccess();
-        observers.forEach(o -> o.directiveNotification(FopOperationStatus.REJECT_RESPONSE, tag, directive, qualifier));
+        observers.forEach(o -> o.directiveNotification(this, FopOperationStatus.REJECT_RESPONSE, tag, directive, qualifier));
     }
 
     /**
@@ -599,12 +599,12 @@ public class FopEngine {
 
     void confirm(TcTransferFrame frame) {
         checkThreadAccess();
-        observers.forEach(o -> o.transferNotification(FopOperationStatus.POSIIVE_CONFIRM, frame));
+        observers.forEach(o -> o.transferNotification(this, FopOperationStatus.POSIIVE_CONFIRM, frame));
     }
 
     void confirm(Object tag, FopDirective directive, int qualifier) {
         checkThreadAccess();
-        observers.forEach(o -> o.directiveNotification(FopOperationStatus.POSIIVE_CONFIRM, tag, directive, qualifier));
+        observers.forEach(o -> o.directiveNotification(this, FopOperationStatus.POSIIVE_CONFIRM, tag, directive, qualifier));
     }
 
     void addToWaitQueue(FopEvent fopEvent) {
@@ -634,7 +634,7 @@ public class FopEngine {
         purgeSentQueue(); // b)
         purgeWaitQueue(); // c)
         // d) not understood: if the wait and the sent queues are purged, there is no other frame stored in the FOP engine at this stage
-        observers.forEach(o -> o.alert(code)); // e)
+        observers.forEach(o -> o.alert(this, code)); // e)
     }
 
     /**
@@ -642,7 +642,7 @@ public class FopEngine {
      */
     void suspend() {
         checkThreadAccess();
-        observers.forEach(IFopObserver::suspend);
+        observers.forEach(o -> o.suspend(this));
     }
 
     /**
@@ -1008,7 +1008,7 @@ public class FopEngine {
 
     private void reportStatus(FopState previousState, FopState currentState, FopEvent.EventNumber number) {
         FopStatus status = new FopStatus(expectedAckFrameSequenceNumber, sentQueue.size(), waitQueue.get() != null, adOutReadyFlag, bcOutReadyFlag, bdOutReadyFlag, previousState, currentState, number);
-        observers.forEach(o -> o.statusReport(status));
+        observers.forEach(o -> o.statusReport(this, status));
     }
 
     private void applyStateTransition(FopEvent event) {

@@ -24,8 +24,9 @@ public interface IFarmObserver {
     /**
      * Provide a status report of the internal FARM engine status.
      *
+     * @param engine the FARM engine
      * @param status the FARM status
      */
-    void statusReport(FarmStatus status);
+    void statusReport(FarmEngine engine, FarmStatus status);
 
 }

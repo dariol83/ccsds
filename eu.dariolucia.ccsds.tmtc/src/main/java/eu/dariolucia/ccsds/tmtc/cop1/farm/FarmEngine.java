@@ -396,7 +396,7 @@ public class FarmEngine implements Supplier<Clcw> {
 
     private void reportStatus(FarmState previousState, FarmState currentState, FarmEvent.EventNumber number) {
         FarmStatus status = new FarmStatus(this.framesToDeliver.size(), processReport(), previousState, currentState, number);
-        observers.forEach(o -> o.statusReport(status));
+        observers.forEach(o -> o.statusReport(this, status));
     }
 
     private void applyStateTransition(FarmEvent event) {

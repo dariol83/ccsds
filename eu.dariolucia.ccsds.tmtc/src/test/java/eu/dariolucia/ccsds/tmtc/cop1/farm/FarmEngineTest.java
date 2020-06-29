@@ -1046,7 +1046,7 @@ class FarmEngineTest {
         private final List<FarmStatus> lastStatus = new LinkedList<>();
 
         @Override
-        public void statusReport(FarmStatus status) {
+        public void statusReport(FarmEngine engine, FarmStatus status) {
             // System.out.println(status);
             synchronized (lastStatus) {
                 lastStatus.add(status);

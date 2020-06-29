@@ -62,7 +62,7 @@ class FopFarmInteractionTest {
 
         // Create FARM-1
         FarmEngine farm = new FarmEngine(0, receiverVirtualChannel, true, 5, 6, FarmState.S3, 0);
-        farm.register(o -> {
+        farm.register((e,o) -> {
             // System.out.println("FARM: " + o);
         });
 
@@ -78,27 +78,27 @@ class FopFarmInteractionTest {
         });
         fop.register(new IFopObserver() {
             @Override
-            public void transferNotification(FopOperationStatus status, TcTransferFrame frame) {
+            public void transferNotification(FopEngine engine, FopOperationStatus status, TcTransferFrame frame) {
                 // System.out.println("TC frame " + frame.getVirtualChannelFrameCount() + ": " + status);
             }
 
             @Override
-            public void directiveNotification(FopOperationStatus status, Object tag, FopDirective directive, int qualifier) {
+            public void directiveNotification(FopEngine engine, FopOperationStatus status, Object tag, FopDirective directive, int qualifier) {
                 // System.out.println("Directive " + directive + ": " + status);
             }
 
             @Override
-            public void alert(FopAlertCode code) {
+            public void alert(FopEngine engine, FopAlertCode code) {
 
             }
 
             @Override
-            public void suspend() {
+            public void suspend(FopEngine engine) {
 
             }
 
             @Override
-            public void statusReport(FopStatus status) {
+            public void statusReport(FopEngine engine, FopStatus status) {
                 // System.out.println("FOP: " + status);
             }
         });
