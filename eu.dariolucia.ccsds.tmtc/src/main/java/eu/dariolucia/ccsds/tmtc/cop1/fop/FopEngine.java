@@ -38,6 +38,8 @@ import java.util.function.Supplier;
 @SuppressWarnings("StatementWithEmptyBody")
 public class FopEngine {
 
+    public static final String ANNOTATION_BC_FRAME_TAG = "##BC_FRAME_TAG";
+
     private final int virtualChannelId;
     private final Supplier<Integer> nextVirtualChannelFrameCounterGetter;
     private final Consumer<Integer> nextVirtualChannelFrameCounterSetter;
@@ -195,6 +197,15 @@ public class FopEngine {
         this.state = new S6FopState(this); // In principle, the ‘Initial’ State is the first state entered by the state machine for a particular Virtual Channel.
         //
         this.fopTimer = new Timer("FOP TC VC " + virtualChannelId + " Timer");
+    }
+
+    /**
+     * Return the TC virtual channel ID.
+     *
+     * @return the TC virtual channel ID
+     */
+    public int getVirtualChannelId() {
+        return virtualChannelId;
     }
 
     /**
@@ -716,15 +727,17 @@ public class FopEngine {
         this.bdOutReadyFlag = flag;
     }
 
-    void transmitTypeBcFrameUnlock() {
+    void transmitTypeBcFrameUnlock(Object tag) {
         checkThreadAccess();
         TcTransferFrame frame = bcFrameUnlockFactory.get();
+        frame.setAnnotationValue(ANNOTATION_BC_FRAME_TAG, tag);
         transmitTypeBcFrame(frame);
     }
 
-    void transmitTypeBcFrameSetVr(int vr) {
+    void transmitTypeBcFrameSetVr(Object tag, int vr) {
         checkThreadAccess();
         TcTransferFrame frame = bcFrameSetVrFactory.apply(vr);
+        frame.setAnnotationValue(ANNOTATION_BC_FRAME_TAG, tag);
         transmitTypeBcFrame(frame);
     }
 

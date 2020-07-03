@@ -94,7 +94,7 @@ public class S6FopState extends AbstractFopState {
         engine.accept(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         engine.registerPendingInitAd(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         engine.initialise();
-        engine.transmitTypeBcFrameUnlock();
+        engine.transmitTypeBcFrameUnlock(fopEvent.getDirectiveTag());
         return new S5FopState(engine);
     }
 
@@ -103,7 +103,7 @@ public class S6FopState extends AbstractFopState {
         engine.registerPendingInitAd(fopEvent.getDirectiveTag(), fopEvent.getDirectiveId(), fopEvent.getDirectiveQualifier());
         engine.initialise();
         engine.prepareForSetVr(fopEvent.getDirectiveQualifier());
-        engine.transmitTypeBcFrameSetVr(fopEvent.getDirectiveQualifier());
+        engine.transmitTypeBcFrameSetVr(fopEvent.getDirectiveTag(), fopEvent.getDirectiveQualifier());
         return new S5FopState(engine);
     }
 
