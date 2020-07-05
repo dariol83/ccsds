@@ -100,7 +100,7 @@ public class EncodeWalker extends StructureWalker<byte[], EncodingException> {
             break;
             case ENUMERATED:
                 int enumerationValue = this.resolver.getEnumerationValue(ei, this.currentLocation);
-                this.bitHandler.setNextIntegerSigned(enumerationValue, dataLength);
+                this.bitHandler.setNextIntegerUnsigned(enumerationValue, dataLength);
                 value = enumerationValue;
             break;
             case UNSIGNED_INTEGER:

@@ -149,7 +149,7 @@ public class DecodeWalker extends StructureWalker<DecodingResult, DecodingExcept
                 value = this.bitHandler.getNextBoolean();
             break;
             case ENUMERATED:
-                value = this.bitHandler.getNextIntegerSigned(dataLength);
+                value = this.bitHandler.getNextIntegerUnsigned(dataLength);
             break;
             case UNSIGNED_INTEGER:
                 value = this.bitHandler.getNextLongUnsigned(dataLength);

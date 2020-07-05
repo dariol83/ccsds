@@ -37,7 +37,7 @@ public enum DataTypeEnum {
      */
     BOOLEAN(1),
     /**
-     * Enumerated value (integer encoding).
+     * Enumerated value (unsigned integer encoding).
      * Depending on the associated 'length', the value is encoded to/decoded from
      * 'length' number of bits.
      */
