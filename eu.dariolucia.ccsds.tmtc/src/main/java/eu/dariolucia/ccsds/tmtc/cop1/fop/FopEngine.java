@@ -54,7 +54,8 @@ public class FopEngine {
 
     private final List<IFopObserver> observers = new CopyOnWriteArrayList<>();
 
-    private final AtomicReference<FopOperationStatus> pendingAcceptRejectFrame = new AtomicReference<>();
+    private final AtomicReference<FopOperationStatus> pendingAcceptRejectResult = new AtomicReference<>();
+    private final AtomicReference<TcTransferFrame> pendingAcceptRejectFrame = new AtomicReference<>();
 
     private final AtomicReference<Object[]> pendingInitAd = new AtomicReference<>();
 
@@ -257,17 +258,18 @@ public class FopEngine {
     public boolean transmit(TcTransferFrame frame, int timeoutMillis) throws InterruptedException {
         long expirationTime = System.currentTimeMillis()+ timeoutMillis;
         synchronized (pendingAcceptRejectFrame) {
-            if(pendingAcceptRejectFrame.get() != null) {
-                throw new IllegalStateException("Internal state error, pendingAcceptRejectFrame must be null at this stage");
-            }
+            pendingAcceptRejectFrame.set(frame);
+            pendingAcceptRejectResult.set(null);
             transmit(frame);
-            while(pendingAcceptRejectFrame.get() == null) {
+            while(pendingAcceptRejectResult.get() == null) {
                 pendingAcceptRejectFrame.wait(timeoutMillis);
                 if(System.currentTimeMillis() >= expirationTime) {
                     break;
                 }
             }
-            FopOperationStatus operationResult = pendingAcceptRejectFrame.getAndSet(null);
+            FopOperationStatus operationResult = pendingAcceptRejectResult.get();
+            pendingAcceptRejectFrame.set(null);
+            pendingAcceptRejectResult.set(null);
             return operationResult == FopOperationStatus.ACCEPT_RESPONSE;
         }
     }
@@ -529,12 +531,12 @@ public class FopEngine {
                 // a Type-AD FDU is available on the Wait_Queue. If so, the FDU is removed from the Wait_Queue, an
                 // 'Accept Response to Request to Transfer FDU' is passed to the Higher Layer, and the 'Transmit Type-AD Frame'
                 // action for the FDU is performed.
-                if(waitQueue.get() != null && waitQueue.get().getFrameType() == TcTransferFrame.FrameType.AD && nextVirtualChannelFrameCounterGetter.get() < (expectedAckFrameSequenceNumber + fopSlidingWindow)) {
+                if(waitQueue.get() != null && waitQueue.get().getFrameType() == TcTransferFrame.FrameType.AD && lessThan(waitQueue.get().getVirtualChannelFrameCount(), (expectedAckFrameSequenceNumber + fopSlidingWindow), fopSlidingWindow)) {
                     TcTransferFrame toTransmit = waitQueue.getAndSet(null);
                     accept(toTransmit);
                     transmitTypeAdFrame(toTransmit);
                 } else { // d)
-                    // If no FDU is available on the Wait_Queue, no further processing is performed.
+                    // If no FDU is available on the Wait_Queue, or cannot be sent out, no further processing is performed.
                 }
             }
         }
@@ -548,8 +550,10 @@ public class FopEngine {
     void accept(TcTransferFrame frame) {
         checkThreadAccess();
         synchronized (pendingAcceptRejectFrame) {
-            pendingAcceptRejectFrame.set(FopOperationStatus.ACCEPT_RESPONSE);
-            pendingAcceptRejectFrame.notifyAll();
+            if(pendingAcceptRejectFrame.get() == frame) {
+                pendingAcceptRejectResult.set(FopOperationStatus.ACCEPT_RESPONSE);
+                pendingAcceptRejectFrame.notifyAll();
+            }
         }
         observers.forEach(o -> o.transferNotification(this, FopOperationStatus.ACCEPT_RESPONSE, frame));
     }
@@ -574,8 +578,10 @@ public class FopEngine {
     void reject(TcTransferFrame frame) {
         checkThreadAccess();
         synchronized (pendingAcceptRejectFrame) {
-            pendingAcceptRejectFrame.set(FopOperationStatus.REJECT_RESPONSE);
-            pendingAcceptRejectFrame.notifyAll();
+            if(pendingAcceptRejectFrame.get() == frame) {
+                pendingAcceptRejectResult.set(FopOperationStatus.ACCEPT_RESPONSE);
+                pendingAcceptRejectFrame.notifyAll();
+            }
         }
         observers.forEach(o -> o.transferNotification(this, FopOperationStatus.REJECT_RESPONSE, frame));
     }
@@ -1044,6 +1050,9 @@ public class FopEngine {
     }
 
     private void lowerLayer(TcTransferFrame frame, boolean accepted) {
+        if(fopExecutor.isTerminated()) {
+            return;
+        }
         fopExecutor.execute(() -> processLowerLayer(frame, accepted));
     }
 
