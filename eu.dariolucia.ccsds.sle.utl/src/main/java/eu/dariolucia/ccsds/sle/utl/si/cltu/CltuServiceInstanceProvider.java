@@ -259,7 +259,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         clearError();
 
         if(LOG.isLoggable(Level.INFO)) {
-            LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
+            LOG.info(String.format("%s: Sending asynchronous notification %s", getServiceInstanceIdentifier(), notificationType));
         }
         // Validate state
         if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE && this.currentState != ServiceInstanceBindingStateEnum.READY) {
@@ -793,8 +793,8 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
     }
 
     private void stopStatusReport() {
-        if(LOG.isLoggable(Level.INFO)) {
-            LOG.info(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.finer(String.format("%s: Stopping status report", getServiceInstanceIdentifier()));
         }
         this.reportingCycle = null;
         if (reportingScheduler.get() != null) {
