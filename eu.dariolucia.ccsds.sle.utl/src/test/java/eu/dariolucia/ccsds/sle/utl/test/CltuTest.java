@@ -836,7 +836,7 @@ public class CltuTest {
         cltuUser.bind(bind);
 
         // Check reported state
-        AwaitUtil.await(2000);
+        AwaitUtil.await(4000);
         assertTrue(recorder.getStates().size() > 0);
         assertEquals(ServiceInstanceBindingStateEnum.READY, recorder.getStates().get(recorder.getStates().size() - 1).getState());
 
@@ -846,14 +846,14 @@ public class CltuTest {
         // Start
         recorder.getPduReceived().clear();
         cltuUser.start(1);
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((CltuStartReturn)recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Simulate lock and production status change
         recorder.getPduReceived().clear();
         cltuProvider.updateProductionStatus(CltuProductionStatusEnum.OPERATIONAL, CltuUplinkStatusEnum.NOMINAL, 16000);
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(CltuProductionStatusEnum.OPERATIONAL.ordinal(), ((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getProductionStatus().intValue());
         assertNotNull(((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getCltuNotification().getProductionOperational());
@@ -861,7 +861,7 @@ public class CltuTest {
         // Send a transfer data (it will fail because there is no handler)
         recorder.getPduReceived().clear();
         cltuUser.transferData(1, new Date(), new Date(System.currentTimeMillis() + 300000), 50000, true, new byte[] {0x00, 0x00, 0x00, 0x00});
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
         assertEquals(16000, ((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getCltuBufferAvailable().intValue());
@@ -889,7 +889,7 @@ public class CltuTest {
         // Send a transfer data (it will succeed): you will get positive return, async notify and buffer empty notification
         recorder.getPduReceived().clear();
         cltuUser.transferData(1, new Date(), new Date(System.currentTimeMillis() + 300000), 50000, true, new byte[] {0x00, 0x00, 0x00, 0x00});
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 3);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 3);
         assertEquals(3, recorder.getPduReceived().size());
         assertNotNull(((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
         assertEquals(15400, ((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getCltuBufferAvailable().intValue());
@@ -918,7 +918,7 @@ public class CltuTest {
         // Send a transfer data (it will succeed): you will get positive return, async notify and buffer empty notification
         recorder.getPduReceived().clear();
         cltuUser.transferData(2, new Date(), new Date(System.currentTimeMillis() + 1000), 50000, true, new byte[] {0x00, 0x00, 0x00, 0x00});
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 3);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 3);
         assertEquals(3, recorder.getPduReceived().size());
         assertNotNull(((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
         assertEquals(15400, ((CltuTransferDataReturn) recorder.getPduReceived().get(0)).getCltuBufferAvailable().intValue());
@@ -929,7 +929,7 @@ public class CltuTest {
         // Send production status update
         recorder.getPduReceived().clear();
         cltuProvider.updateProductionStatus(CltuProductionStatusEnum.INTERRUPTED, CltuUplinkStatusEnum.NO_BIT_LOCK, 16000);
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(CltuProductionStatusEnum.INTERRUPTED.ordinal(), ((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getProductionStatus().intValue());
         assertNotNull(((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getCltuNotification().getProductionInterrupted());
@@ -937,7 +937,7 @@ public class CltuTest {
         // Send production status update
         recorder.getPduReceived().clear();
         cltuProvider.updateProductionStatus(CltuProductionStatusEnum.HALTED, CltuUplinkStatusEnum.NO_RF_AVAILABLE, 16000);
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(CltuProductionStatusEnum.HALTED.ordinal(), ((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getProductionStatus().intValue());
         assertNotNull(((CltuAsyncNotifyInvocation) recorder.getPduReceived().get(0)).getCltuNotification().getProductionHalted());
@@ -945,14 +945,14 @@ public class CltuTest {
         // Stop
         recorder.getPduReceived().clear();
         cltuUser.stop();
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((SleAcknowledgement)recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Throw event (it will fail because of no handler)
         recorder.getPduReceived().clear();
         cltuUser.throwEvent(0, 100, new byte[] { 0x00, 0x00 });
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getResult().getNegativeResult());
         assertEquals(0, ((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getEventInvocationIdentification().intValue());
@@ -974,7 +974,7 @@ public class CltuTest {
         // Throw event (it will succeed)
         recorder.getPduReceived().clear();
         cltuUser.throwEvent(0, 100, new byte[] { 0x00, 0x00 });
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
         assertNotNull(((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
         assertEquals(1, ((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getEventInvocationIdentification().intValue());
@@ -997,7 +997,7 @@ public class CltuTest {
         // Throw event (it will succeed)
         recorder.getPduReceived().clear();
         cltuUser.throwEvent(1, 100, new byte[] { 0x00, 0x00 });
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
         assertNotNull(((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
         assertEquals(2, ((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getEventInvocationIdentification().intValue());
@@ -1020,7 +1020,7 @@ public class CltuTest {
         // Throw event (it will succeed)
         recorder.getPduReceived().clear();
         cltuUser.throwEvent(2, 100, new byte[] { 0x00, 0x00 });
-        AwaitUtil.awaitCondition(4000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
         assertNotNull(((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
         assertEquals(3, ((CltuThrowEventReturn) recorder.getPduReceived().get(0)).getEventInvocationIdentification().intValue());
@@ -1029,9 +1029,9 @@ public class CltuTest {
         // Unbind
         cltuUser.unbind(UnbindReasonEnum.END);
 
-        AwaitUtil.awaitCondition(4000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(8000, () -> cltuUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(4000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(8000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuProvider.getCurrentBindingState());
 
         cltuUser.dispose();

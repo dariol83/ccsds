@@ -941,11 +941,16 @@ public class RafTest {
     }
 
     @Test
-    void testSleTaskObject() {
-        ServiceInstance.SleTask task = new ServiceInstance.SleTask((byte) 0, () -> {
+    void testSleTaskObject() throws IOException {
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("configuration_test_user_auth.xml");
+        UtlConfigurationFile userFile = UtlConfigurationFile.load(in);
+        RafServiceInstanceConfiguration rafConfigU = (RafServiceInstanceConfiguration) userFile.getServiceInstances().get(3); // RAF
+        RafServiceInstance rafUser = new RafServiceInstance(userFile.getPeerConfiguration(), rafConfigU);
+
+        ServiceInstance.SleTask task = rafUser.new SleTask((byte) 0, () -> {
             throw new RuntimeException("Test");
         });
-        ServiceInstance.SleTask task2 = new ServiceInstance.SleTask((byte) 1, () -> {
+        ServiceInstance.SleTask task2 = rafUser.new SleTask((byte) 1, () -> {
             throw new RuntimeException("Test");
         });
         assertNotEquals(task, task2);
