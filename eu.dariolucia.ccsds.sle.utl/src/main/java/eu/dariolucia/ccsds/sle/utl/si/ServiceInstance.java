@@ -38,6 +38,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -68,10 +69,17 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     private static final int SI_INIT_MODE_UIB = 1;
     private static final int SI_INIT_MODE_PIB = 2;
 
+    private static final int MAX_DISPATCHER_QUEUE = 1000;
+    private static final int MAX_NOTIFIER_QUEUE = 1000;
+
     private static final Logger LOG = Logger.getLogger(ServiceInstance.class.getName());
 
-    private final ExecutorService dispatcher;
-    private final ExecutorService notifier;
+    private final ExecutorService dispatcherService;
+    private final ExecutorService notifierService;
+    private final BlockingQueue<Runnable> notificationQueue = new ArrayBlockingQueue<>(MAX_NOTIFIER_QUEUE);
+    private final PriorityBlockingQueue<SleTask> dispatchQueue = new PriorityBlockingQueue<>(30);
+
+    private final AtomicLong sleTaskSequencer = new AtomicLong(0);
 
     // The SLE API configuration
     private final PeerConfiguration peerConfiguration;
@@ -122,21 +130,22 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         this.peerConfiguration = peerConfiguration;
         this.serviceInstanceConfiguration = serviceInstanceConfiguration;
 
-        this.dispatcher = new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS, new PriorityBlockingQueue<>(30),
-                r -> {
-                    Thread t = new Thread(r);
-                    t.setDaemon(true);
-                    t.setName(ServiceInstance.this.serviceInstanceConfiguration.getServiceInstanceIdentifier()
-                            + " - SI Dispatcher");
-                    return t;
-                });
-        this.notifier = Executors.newSingleThreadExecutor(r -> {
+        this.dispatcherService = Executors.newFixedThreadPool(1, r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            t.setName(ServiceInstance.this.serviceInstanceConfiguration.getServiceInstanceIdentifier()
+                    + " - SI Dispatcher");
+            return t;
+        });
+        this.dispatcherService.execute(this::dispatcherMainThread);
+        this.notifierService = Executors.newFixedThreadPool(1, r -> {
             Thread t = new Thread(r);
             t.setDaemon(true);
             t.setName(ServiceInstance.this.serviceInstanceConfiguration.getServiceInstanceIdentifier()
                     + " - SI Notifier");
             return t;
         });
+        this.notifierService.execute(this::notifierMainThread);
 
         // register handlers for unbind return and bind return operations
         registerPduReceptionHandler(SleBindInvocation.class, this::handleSleBindInvocation);
@@ -145,6 +154,64 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         registerPduReceptionHandler(SleUnbindReturn.class, this::handleSleUnbindReturn);
         // Custom setup
         setup();
+    }
+
+    private void notifierMainThread() {
+        while(!this.notifierService.isShutdown()) {
+            Runnable r;
+            try {
+                r = this.notificationQueue.take();
+            } catch (InterruptedException e) { // NOSONAR not ignored
+                // This thread can be interrupted on dispose
+                if (LOG.isLoggable(Level.FINE)) {
+                    LOG.log(Level.FINE, String.format("%s: Interruption when waiting for element in the notification queue", getServiceInstanceIdentifier()), e);
+                }
+                return;
+            }
+            if(this.notifierService.isShutdown()) {
+                return;
+            }
+            try {
+                r.run();
+            } catch (Exception e) {
+                if (LOG.isLoggable(Level.WARNING)) {
+                    LOG.log(Level.WARNING, String.format("%s: Exception when notifying information", getServiceInstanceIdentifier()), e);
+                }
+            }
+        }
+    }
+
+    private void dispatcherMainThread() {
+        while(!this.dispatcherService.isShutdown()) {
+            SleTask t;
+            synchronized (dispatchQueue) {
+                while(dispatchQueue.isEmpty() && !this.dispatcherService.isShutdown()) {
+                    try {
+                        dispatchQueue.wait();
+                    } catch (InterruptedException e) { // NOSONAR
+                        // This thread can be interrupted on dispose
+                        if (LOG.isLoggable(Level.WARNING)) {
+                            LOG.log(Level.WARNING, String.format("%s: Interruption when waiting for element in the dispatch queue", getServiceInstanceIdentifier()), e);
+                        }
+                        return;
+                    }
+                }
+                if(dispatcherService.isShutdown()) {
+                    return;
+                }
+                t = this.dispatchQueue.poll();
+                dispatchQueue.notifyAll();
+            }
+            if(t != null) {
+                try {
+                    t.run();
+                } catch (Exception e) {
+                    if (LOG.isLoggable(Level.WARNING)) {
+                        LOG.log(Level.WARNING, String.format("%s: Exception when dispatching task", getServiceInstanceIdentifier()), e);
+                    }
+                }
+            }
+        }
     }
 
     protected final <T> void registerPduReceptionHandler(Class<T> clazz, Consumer<T> handler) {
@@ -166,7 +233,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         return (Consumer<T>) this.handlers.get(clazz);
     }
 
-    private final void setError(String message, Exception e) {
+    private void setError(String message, Exception e) {
         LOG.log(Level.SEVERE, String.format("%s: %s", getServiceInstanceIdentifier(), message), e);
         this.lastErrorMessage = message;
         this.lastErrorException = e;
@@ -216,32 +283,63 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         if (!this.configured) {
             throw new IllegalStateException("Service instance not configured: call configure() before invoking any method");
         }
-        if (this.dispatcher.isShutdown()) {
+        if (this.dispatcherService.isShutdown()) {
             if (LOG.isLoggable(Level.FINE)) {
                 LOG.fine(getServiceInstanceIdentifier() + ": Invocation not dispatched, dispatcher was shut down");
             }
             return;
         }
         SleTask t = new SleTask(SleTask.FROM_USER_TYPE, r);
-        this.dispatcher.execute(t);
+        addToDispatchQueue(t);
     }
 
     protected final void dispatchFromProvider(Runnable r) {
         if (!this.configured) {
             throw new IllegalStateException("Service instance not configured: call configure() before invoking any method");
         }
-        if (this.dispatcher.isShutdown()) {
+        if (this.dispatcherService.isShutdown()) {
             if (LOG.isLoggable(Level.FINE)) {
                 LOG.fine(getServiceInstanceIdentifier() + ": Invocation not dispatched, dispatcher was shut down");
             }
             return;
         }
         SleTask t = new SleTask(SleTask.FROM_PROVIDER_TYPE, r);
-        this.dispatcher.execute(t);
+        addToDispatchQueue(t);
+    }
+
+    private void addToDispatchQueue(SleTask t) {
+        synchronized (dispatchQueue) {
+            while (dispatchQueue.size() > MAX_DISPATCHER_QUEUE) {
+                try {
+                    dispatchQueue.wait();
+                } catch (InterruptedException e) { // NOSONAR
+                    // Do nothing but return
+                    if (LOG.isLoggable(Level.FINE)) {
+                        LOG.fine(getServiceInstanceIdentifier() + ": Task not added to dispatch queue due to interruption");
+                    }
+                    return;
+                }
+            }
+            this.dispatchQueue.offer(t); // NOSONAR this method never returns false
+            this.dispatchQueue.notifyAll();
+        }
     }
 
     private void notify(Runnable r) {
-        this.notifier.execute(r);
+        if (this.notifierService.isShutdown()) {
+            if (LOG.isLoggable(Level.FINE)) {
+                LOG.fine(getServiceInstanceIdentifier() + ": Information not notified, notifier was shut down");
+            }
+            return;
+        }
+        try {
+            this.notificationQueue.put(r);
+        } catch (InterruptedException e) { // NOSONAR
+            // Do nothing but return
+            if (LOG.isLoggable(Level.FINE)) {
+                LOG.fine(getServiceInstanceIdentifier() + ": Information not added to notification queue due to interruption");
+            }
+        }
     }
 
     protected final void notifyStateUpdate() {
@@ -1034,9 +1132,8 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
      */
     public void dispose() {
         dispatchFromUser(this::doDispose);
-        this.dispatcher.shutdown();
         try {
-            this.dispatcher.awaitTermination(5000L, TimeUnit.MILLISECONDS);
+            this.dispatcherService.awaitTermination(5000L, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) { // NOSONAR rule to be disabled
             Thread.interrupted();
             LOG.log(Level.WARNING, String.format("%s: problem while waiting for full disposal", getServiceInstanceIdentifier()), e);
@@ -1054,6 +1151,8 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         } else {
             doPeerAbort(PeerAbortReasonEnum.OPERATIONAL_REQUIREMENTS);
         }
+        this.dispatcherService.shutdownNow();
+        this.notifierService.shutdownNow();
         if (LOG.isLoggable(Level.FINER)) {
             LOG.log(Level.FINER, String.format("%s: Dispose completed", getServiceInstanceIdentifier()));
         }
@@ -1317,26 +1416,27 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
      *    and to process immediately a user request (e.g. a STOP request)</li>
      *    <li>the creation time: if two requests have the same type, then the one scheduled before will be executed
      *    before</li>
-     *    <li>the task hashcode: to prevent that two requests with the same type and the same creation time can be
-     *    considered equal from the point of view of the priority blocking queue comparator</li>
+     *    <li>the sequencer value: to prevent that two requests with the same type and the same creation time can be
+     *    considered equal from the point of view of the priority blocking queue comparator, and to keep the order in case
+     *    of equal time (e.g. high rate TM)</li>
      * </ul>
      *
      * Public class for testability reasons
      */
-    public static class SleTask extends FutureTask<Void> implements Comparable<SleTask> {
+    public class SleTask extends FutureTask<Void> implements Comparable<SleTask> {
 
         private static final byte FROM_USER_TYPE = 0x00;
         private static final byte FROM_PROVIDER_TYPE = 0x01;
 
         private final long creation;
         private final byte type;
-        private final Runnable task;
+        private final long sequencerValue;
 
         public SleTask(byte type, Runnable task) {
             super(task, null);
             this.type = type;
-            this.task = task;
-            this.creation = System.currentTimeMillis();
+            this.creation = Instant.now().toEpochMilli();
+            this.sequencerValue = sleTaskSequencer.incrementAndGet();
         }
 
         @Override
@@ -1353,7 +1453,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             } else if (this.creation != o.creation) {
                 return (int) (this.creation - o.creation);
             } else {
-                return this.task.hashCode() - o.task.hashCode();
+                return (int) (this.sequencerValue - o.sequencerValue);
             }
         }
 
@@ -1364,12 +1464,12 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
             SleTask sleTask = (SleTask) o;
             return creation == sleTask.creation &&
                     type == sleTask.type &&
-                    task.equals(sleTask.task);
+                    sequencerValue == sleTask.sequencerValue;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(creation, type, task);
+            return Objects.hash(creation, type, sequencerValue);
         }
     }
 }
