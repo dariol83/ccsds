@@ -34,6 +34,7 @@ import eu.dariolucia.ccsds.sle.utl.si.raf.*;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.raf.RafServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +54,15 @@ public class RafTest {
     static void setLogLevel() {
         Logger.getLogger("eu.dariolucia").setLevel(Level.ALL);
         Arrays.stream(Logger.getLogger("eu.dariolucia").getHandlers()).forEach(o -> o.setLevel(Level.ALL));
+    }
+
+    @AfterEach
+    void afterEachTest() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            //
+        }
     }
 
     @Test
