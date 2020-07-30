@@ -650,17 +650,7 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
         this.endTime = null;
         this.reportingCycle = null; // NULL if off, otherwise a value
 
-        // Updated via STATUS_REPORT
-        this.statusMutex.lock();
-        try {
-            this.frameSyncLockStatus = LockStatusEnum.UNKNOWN;
-            this.symbolSyncLockStatus = LockStatusEnum.UNKNOWN;
-            this.subcarrierLockStatus = LockStatusEnum.UNKNOWN;
-            this.carrierLockStatus = LockStatusEnum.UNKNOWN;
-            this.productionStatus = ProductionStatusEnum.UNKNOWN;
-        } finally {
-            this.statusMutex.unlock();
-        }
+        // Status parameters are not updated here
     }
 
     protected abstract void doResetState();

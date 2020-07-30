@@ -34,6 +34,7 @@ import eu.dariolucia.ccsds.sle.utl.si.rcf.*;
 import eu.dariolucia.ccsds.sle.utl.config.UtlConfigurationFile;
 import eu.dariolucia.ccsds.sle.utl.config.rcf.RcfServiceInstanceConfiguration;
 import eu.dariolucia.ccsds.sle.utl.si.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -55,6 +56,14 @@ public class RcfTest {
         Arrays.stream(Logger.getLogger("eu.dariolucia").getHandlers()).forEach(o -> o.setLevel(Level.ALL));
     }
 
+    @AfterEach
+    void afterEachTest() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            //
+        }
+    }
 
     @Test
     void testProviderBindUnbind() throws IOException, InterruptedException {

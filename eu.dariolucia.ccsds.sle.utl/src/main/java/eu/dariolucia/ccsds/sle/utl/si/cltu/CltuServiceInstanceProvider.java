@@ -1296,15 +1296,10 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
 
         // START
         this.firstCltuIdentification = null;
-        // STATUS_REPORT
-        this.lastProcessed = null; // also from async notify
-        this.lastOk = null; // also from async notify
-        this.productionStatus = CltuProductionStatusEnum.INTERRUPTED; // also from async notify
-        this.uplinkStatus = CltuUplinkStatusEnum.UPLINK_STATUS_NOT_AVAILABLE; // also from async notify
+        // STATUS_REPORT (only some, others are managed externally)
         this.nbCltuReceived = 0L;
         this.nbCltuProcessed = 0L;
         this.nbCltuRadiated = 0L;
-        this.bufferAvailable = 0L;
 
         this.radiationNotificationSet.clear();
     }

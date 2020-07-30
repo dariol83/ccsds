@@ -36,6 +36,7 @@ import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
 import eu.dariolucia.ccsds.sle.utl.si.ServiceInstanceBindingStateEnum;
 import eu.dariolucia.ccsds.sle.utl.si.UnbindReasonEnum;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.*;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -54,6 +55,15 @@ public class CltuTest {
     static void setLogLevel() {
         Logger.getLogger("eu.dariolucia").setLevel(Level.ALL);
         Arrays.stream(Logger.getLogger("eu.dariolucia").getHandlers()).forEach(o -> o.setLevel(Level.ALL));
+    }
+
+    @AfterEach
+    void afterEachTest() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            //
+        }
     }
 
     @Test
