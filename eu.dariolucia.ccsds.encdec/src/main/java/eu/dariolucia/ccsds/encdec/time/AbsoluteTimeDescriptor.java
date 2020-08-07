@@ -16,10 +16,14 @@
 
 package eu.dariolucia.ccsds.encdec.time;
 
+import java.io.Serializable;
+
 /**
  * This class allows to specify a CUC or CDS time descriptor, with the related characteristics, for absolute time encoding.
  */
-public final class AbsoluteTimeDescriptor {
+public final class AbsoluteTimeDescriptor implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Create a CUC descriptor with the provided characteristics.

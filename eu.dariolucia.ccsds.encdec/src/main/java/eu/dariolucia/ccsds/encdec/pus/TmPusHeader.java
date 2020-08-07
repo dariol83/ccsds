@@ -20,12 +20,15 @@ import eu.dariolucia.ccsds.encdec.bit.BitEncoderDecoder;
 import eu.dariolucia.ccsds.encdec.time.AbsoluteTimeDescriptor;
 import eu.dariolucia.ccsds.encdec.value.TimeUtil;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 /**
  * Definition of the TM PUS Header as per section 5.4.3 of ECSS-E-70-41A.
  */
-public class TmPusHeader {
+public class TmPusHeader implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final byte version;
     private final short serviceType;

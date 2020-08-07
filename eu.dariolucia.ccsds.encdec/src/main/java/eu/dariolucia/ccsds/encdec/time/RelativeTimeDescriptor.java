@@ -16,10 +16,14 @@
 
 package eu.dariolucia.ccsds.encdec.time;
 
+import java.io.Serializable;
+
 /**
  * This class allows to specify a CUC time descriptor, with the related characteristics, for relative time encoding.
  */
-public final class RelativeTimeDescriptor {
+public final class RelativeTimeDescriptor implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Create a CUC descriptor with the provided characteristics.

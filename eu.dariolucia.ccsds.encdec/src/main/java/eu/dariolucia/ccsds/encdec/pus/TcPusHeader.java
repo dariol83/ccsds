@@ -18,13 +18,17 @@ package eu.dariolucia.ccsds.encdec.pus;
 
 import eu.dariolucia.ccsds.encdec.bit.BitEncoderDecoder;
 
+import java.io.Serializable;
+
 /**
  * Definition of the TC PUS Header as per section 5.3.3 of ECSS-E-70-41A.
  */
-public class TcPusHeader {
+public class TcPusHeader implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final byte version;
-    private final AckField ackField;
+    private final AckField ackField; // NOSONAR ackField is serializable
     private final short serviceType;
     private final short serviceSubType;
     private final Integer sourceId;
