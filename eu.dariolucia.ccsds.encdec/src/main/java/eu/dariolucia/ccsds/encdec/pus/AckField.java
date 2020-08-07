@@ -16,12 +16,15 @@
 
 package eu.dariolucia.ccsds.encdec.pus;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * Representation of a TC PUS Header ack field.
  */
-public class AckField {
+public class AckField implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private static final AckField ALL_ACKS = new AckField(true, true, true, true);
 

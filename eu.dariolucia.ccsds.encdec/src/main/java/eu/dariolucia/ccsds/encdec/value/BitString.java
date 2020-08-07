@@ -25,6 +25,8 @@ import java.util.Objects;
  */
 public class BitString implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private final byte[] data;
     private final int length;
 
