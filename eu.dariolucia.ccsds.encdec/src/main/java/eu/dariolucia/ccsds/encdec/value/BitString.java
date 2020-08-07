@@ -16,13 +16,14 @@
 
 package eu.dariolucia.ccsds.encdec.value;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 
 /**
  * A bit string class. A bit string is defined by a byte[] and the number of bits delivering the information.
  */
-public class BitString {
+public class BitString implements Serializable {
 
     private final byte[] data;
     private final int length;
