@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox fx:id="tmAosViewbox" prefHeight="200.0" prefWidth="100.0" spacing="5.0" xmlns="http://javafx.com/javafx/10.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.viewer.fxml.TmAosTab">
+ <children>
+    <Label text="TM Frame/AOS Dump" />
+    <TextArea fx:id="tmAosTextArea" prefHeight="300.0" promptText="Hex dump of the TM Frame/AOS or CADU " wrapText="true" />
+    <HBox alignment="CENTER_LEFT" spacing="5.0">
+       <children>
+          <Label text="Type" />
+          <ChoiceBox fx:id="tmAosTypeChoicebox" prefWidth="150.0" />
+          <Label text="Randomized" />
+          <ChoiceBox fx:id="tmAosRandomizedChoicebox" prefWidth="150.0" />
+          <Label text="OCF" />
+          <ChoiceBox fx:id="tmAosOcfChoicebox" prefWidth="150.0" />
+          <Label text="FECF" />
+          <ChoiceBox fx:id="tmAosFecfChoicebox" prefWidth="150.0" />
+          <Label text="AOS FHCF" />
+          <ChoiceBox fx:id="tmAosFhcfChoicebox" prefWidth="150.0" />
+          <Label text="AOS Insert Zone (octets)" />
+          <TextField fx:id="tmAosInsertZoneTextField" prefWidth="50.0" text="0" />
+          <Label text="Security Header (octets)" />
+          <TextField fx:id="tmAosSecurityHeaderTextField" prefWidth="50.0" text="0" />
+          <Label text="Security Trailer (octets)" />
+          <TextField fx:id="tmAosSecurityTrailerTextField" prefWidth="50.0" text="0" />
+          <Region HBox.hgrow="ALWAYS" />
+          <Button mnemonicParsing="false" onAction="#onTmAosDecodeButtonClicked" prefWidth="100.0" text="Decode" />
+          <Button mnemonicParsing="false" onAction="#onTmAosClearButtonClicked" prefWidth="100.0" text="Clear" />
+       </children>
+    </HBox>
+    <Separator />
+    <TextArea fx:id="tmAosResultTextArea" VBox.vgrow="ALWAYS" promptText="No information" editable="false" />
+ </children>
+ <padding>
+    <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+ </padding>
+</VBox>
+

@@ -23,10 +23,7 @@ import eu.dariolucia.ccsds.viewer.utils.SlePduAttribute;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TreeTableRow;
-import javafx.scene.control.TreeTableView;
+import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.VBox;
@@ -46,7 +43,7 @@ public class SleTab implements Initializable {
     public ChoiceBox<String> sleTypeChoicebox;
     public ChoiceBox<String> sleSenderChoicebox;
     public ChoiceBox<String> sleVersionChoicebox;
-    public TreeTableView<SlePduAttribute> pduDetailsTreeTableView;
+    public TextArea sleResultTextArea;
 
     private List<SleParser> parsers = new ArrayList<>();
 
@@ -63,19 +60,6 @@ public class SleTab implements Initializable {
         sleVersionChoicebox.getItems().add(MainController.I_DO_NOT_KNOW);
         sleVersionChoicebox.getItems().addAll("1", "2", "3", "4", "5");
         sleVersionChoicebox.getSelectionModel().select(0);
-
-        this.pduDetailsTreeTableView.setRowFactory(tv -> {
-            TreeTableRow<SlePduAttribute> r = new TreeTableRow<>();
-            // r.setOnMouseClicked(pduDetailsDblClickHandler);
-            return r;
-        });
-
-        pduDetailsTreeTableView.getColumns().get(0)
-                .setCellValueFactory(o -> new ReadOnlyObjectWrapper(o.getValue().getValue().getName()));
-        pduDetailsTreeTableView.getColumns().get(1)
-                .setCellValueFactory(o -> new ReadOnlyObjectWrapper(o.getValue().getValue().getType()));
-        pduDetailsTreeTableView.getColumns().get(2)
-                .setCellValueFactory(o -> new ReadOnlyObjectWrapper(o.getValue().getValue().getValueAsString()));
 
         initialiseSleParserClasses();
     }
@@ -111,14 +95,35 @@ public class SleTab implements Initializable {
         for(SleParser p : parsers) {
             try {
                 SlePdu pdu = p.parse(bdata);
-                pduDetailsTreeTableView.setRoot(pdu.buildTreeItem());
+                printPdu(pdu.buildTreeItem());
                 return;
             } catch (Exception e) {
                 // Next parser
             }
         }
         // If you reach this position, it means no parsers
-        pduDetailsTreeTableView.setRoot(null);
+        sleResultTextArea.setText(null);
+    }
+
+    private void printPdu(TreeItem<SlePduAttribute> rootItem) {
+        StringBuilder textBuilder = new StringBuilder("");
+        printRecursive(0, rootItem, textBuilder);
+        sleResultTextArea.setText(textBuilder.toString());
+    }
+
+    private void printRecursive(int level, TreeItem<SlePduAttribute> item, StringBuilder builder) {
+        // Add tabs
+        for(int i = 0; i < level; ++i) {
+            builder.append('\t');
+        }
+        // Add values
+        builder.append(String.format("%s %s %s", item.getValue().getName(), item.getValue().getType(), item.getValue().getValueAsString()));
+        // Add new line
+        builder.append('\n');
+        //
+        for(TreeItem<SlePduAttribute> a : item.getChildren()) {
+            printRecursive(level + 1, a, builder);
+        }
     }
 
     private List<SleParser> lookUpParsers(String type, String sender, String version) {
@@ -127,19 +132,7 @@ public class SleTab implements Initializable {
 
     public void onSleClearButtonClicked(ActionEvent actionEvent) {
         sleTextArea.clear();
+        sleResultTextArea.clear();
     }
 
-    public void onSleCopyValueToClipboard(ActionEvent actionEvent) {
-        String value = null;
-        if(pduDetailsTreeTableView.getSelectionModel().getSelectedItem() != null) {
-            value = pduDetailsTreeTableView.getSelectionModel().getSelectedItem().getValue().getValueAsString();
-        }
-        if(value == null) {
-            return;
-        }
-        final Clipboard clipboard = Clipboard.getSystemClipboard();
-        final ClipboardContent content = new ClipboardContent();
-        content.putString(value);
-        clipboard.setContent(content);
-    }
 }
