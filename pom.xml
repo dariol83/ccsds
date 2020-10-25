@@ -64,7 +64,7 @@
         <jasn1.version>1.11.2</jasn1.version>
         <antlr.version>2.7.7</antlr.version>
         <!-- Maven plugin versions -->
-        <maven.jacoco.version>0.8.2</maven.jacoco.version>
+        <maven.jacoco.version>0.8.4</maven.jacoco.version>
         <maven.javadoc.version>3.1.0</maven.javadoc.version>
         <maven.source.version>3.1.0</maven.source.version>
         <maven.surefire.version>2.22.2</maven.surefire.version>
@@ -82,6 +82,7 @@
         <module>eu.dariolucia.ccsds.sle.utl</module>
         <module>eu.dariolucia.ccsds.sle.utlfx</module>
         <module>eu.dariolucia.ccsds.examples</module>
+        <module>eu.dariolucia.ccsds.viewer</module>
     </modules>
 
     <build>

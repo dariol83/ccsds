@@ -1,0 +1,9 @@
+target
+.idea
+*.iml
+.classpath
+.project
+.settings/
+/target/
+/META-INF/
+/test-output/
