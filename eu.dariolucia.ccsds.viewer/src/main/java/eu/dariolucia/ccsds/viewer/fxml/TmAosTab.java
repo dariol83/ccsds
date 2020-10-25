@@ -1,5 +1,6 @@
 package eu.dariolucia.ccsds.viewer.fxml;
 
+import eu.dariolucia.ccsds.tmtc.coding.decoder.TmRandomizerDecoder;
 import eu.dariolucia.ccsds.tmtc.coding.encoder.TmAsmEncoder;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.util.StringUtil;
@@ -13,6 +14,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.ResourceBundle;
 
 import static eu.dariolucia.ccsds.viewer.fxml.MainController.I_DO_NOT_KNOW;
@@ -44,17 +46,14 @@ public class TmAosTab implements Initializable {
         tmAosRandomizedChoicebox.getItems().addAll(YES, NO);
         tmAosRandomizedChoicebox.getSelectionModel().select(0);
 
-        tmAosOcfChoicebox.getItems().add(I_DO_NOT_KNOW);
         tmAosOcfChoicebox.getItems().addAll(YES, NO);
         tmAosOcfChoicebox.getSelectionModel().select(0);
 
-        tmAosFecfChoicebox.getItems().add(I_DO_NOT_KNOW);
         tmAosFecfChoicebox.getItems().addAll(YES, NO);
-        tmAosFecfChoicebox.getSelectionModel().select(0);
+        tmAosFecfChoicebox.getSelectionModel().select(1);
 
-        tmAosFhcfChoicebox.getItems().add(I_DO_NOT_KNOW);
         tmAosFhcfChoicebox.getItems().addAll(YES, NO);
-        tmAosFhcfChoicebox.getSelectionModel().select(0);
+        tmAosFhcfChoicebox.getSelectionModel().select(1);
     }
 
     public void onTmAosDecodeButtonClicked(ActionEvent actionEvent) {
@@ -65,31 +64,49 @@ public class TmAosTab implements Initializable {
         byte[] bdata = StringUtil.toByteArray(data);
 
         // Let's try to see what we have to do
-        if(tmAosTypeChoicebox.getSelectionModel().getSelectedItem().equals(I_DO_NOT_KNOW)) {
-            if(data.startsWith(StringUtil.toHexDump(TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER).toUpperCase())) {
-                // It is a CADU
+        try {
+            if (tmAosTypeChoicebox.getSelectionModel().getSelectedItem().equals(I_DO_NOT_KNOW)) {
+                if (data.startsWith(StringUtil.toHexDump(TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER).toUpperCase())) {
+                    // It is a CADU
+                    processCadu(bdata);
+                } else {
+                    // Assume frame
+                    processFrame(bdata);
+                }
+                return;
             }
+            if (tmAosTypeChoicebox.getSelectionModel().getSelectedItem().equals("TM Frame CADU") || tmAosTypeChoicebox.getSelectionModel().getSelectedItem().equals("AOS CADU")) {
+                processCadu(bdata);
+            } else {
+                processFrame(bdata);
+            }
+        } catch (Exception e) {
+            error(e.getMessage());
         }
-
-        // If you reach this position, it means no parsers
-        tmAosResultTextArea.setText(null);
     }
 
-    private void printPdu(TreeItem<SlePduAttribute> rootItem) {
-        StringBuilder textBuilder = new StringBuilder("");
-        printRecursive(0, rootItem, textBuilder);
-        tmAosResultTextArea.setText(textBuilder.toString());
+    private void processFrame(byte[] bdata) {
+        // Check if it is randomised
+        if(tmAosRandomizedChoicebox.getSelectionModel().getSelectedItem().equals(YES)) {
+            bdata = new TmRandomizerDecoder().apply(bdata);
+        } else if(tmAosRandomizedChoicebox.getSelectionModel().getSelectedItem().equals(NO)){
+
+        }
     }
 
-    private void printRecursive(int level, TreeItem<SlePduAttribute> item, StringBuilder builder) {
-        // Add tabs
-        for(int i = 0; i < level; ++i) {
-            builder.append('\t');
+    private void processCadu(byte[] bdata) {
+        if(Arrays.equals(bdata, 0, 4, TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER, 0, 4)) {
+            // Try to guess the frame size
+            int idepth = (bdata.length - 4) / 255;
+            // Extract n blocks of 223 bytes (assuming RS 223/255 is used)
+            processFrame(Arrays.copyOfRange(bdata, 4, 4 + (223 * idepth)));
+        } else {
+            error("Data does not start with attached sync marker " + StringUtil.toHexDump(TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER).toUpperCase());
         }
-        // Add values
-        builder.append(String.format("%s %s %s", item.getValue().getName(), item.getValue().getType(), item.getValue().getValueAsString()));
-        // Add new line
-        builder.append('\n');
+    }
+
+    private void error(String error) {
+        tmAosResultTextArea.setText(error);
     }
 
     public void onTmAosClearButtonClicked(ActionEvent actionEvent) {
