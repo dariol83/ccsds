@@ -86,23 +86,33 @@ public class SleTab implements Initializable {
     }
 
     public void onSleDecodeButtonClicked(ActionEvent actionEvent) {
-        String data = sleTextArea.getText();
-        if(data.isBlank()) {
-            return;
-        }
-        byte[] bdata = StringUtil.toByteArray(data.toUpperCase());
-        List<SleParser>  parsers = lookUpParsers(sleTypeChoicebox.getSelectionModel().getSelectedItem(), sleSenderChoicebox.getSelectionModel().getSelectedItem(), sleVersionChoicebox.getSelectionModel().getSelectedItem());
-        for(SleParser p : parsers) {
-            try {
-                SlePdu pdu = p.parse(bdata);
-                printPdu(pdu.buildTreeItem());
+        sleResultTextArea.clear();
+        try {
+            String data = sleTextArea.getText();
+            data = data.trim();
+            data = data.replace("\n", "");
+            data = data.replace("\t", "");
+            data = data.replace(" ", "");
+            if (data.isBlank()) {
                 return;
-            } catch (Exception e) {
-                // Next parser
             }
+            byte[] bdata = StringUtil.toByteArray(data.toUpperCase());
+            List<SleParser> parsers = lookUpParsers(sleTypeChoicebox.getSelectionModel().getSelectedItem(), sleSenderChoicebox.getSelectionModel().getSelectedItem(), sleVersionChoicebox.getSelectionModel().getSelectedItem());
+            for (SleParser p : parsers) {
+                try {
+                    SlePdu pdu = p.parse(bdata);
+                    printPdu(pdu.buildTreeItem());
+                    return;
+                } catch (Exception e) {
+                    // Next parser
+                }
+            }
+            // If you reach this position, it means no parsers
+            sleResultTextArea.setText(null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            sleResultTextArea.setText(e.getMessage());
         }
-        // If you reach this position, it means no parsers
-        sleResultTextArea.setText(null);
     }
 
     private void printPdu(TreeItem<SlePduAttribute> rootItem) {
@@ -113,11 +123,13 @@ public class SleTab implements Initializable {
 
     private void printRecursive(int level, TreeItem<SlePduAttribute> item, StringBuilder builder) {
         // Add tabs
-        for(int i = 0; i < level; ++i) {
-            builder.append('\t');
+        String name = item.getValue().getName();
+        if(level > 0) {
+            name = String.format("%" + (level * 4) + "s", " ") + name;
         }
         // Add values
-        builder.append(String.format("%s %s %s", item.getValue().getName(), item.getValue().getType(), item.getValue().getValueAsString()));
+        // builder.append(String.format("%-60s    %-40s     %s", name, item.getValue().getType(), item.getValue().getValueAsString()));
+        builder.append(String.format("%-60s   %s", name, item.getValue().getValueAsString()));
         // Add new line
         builder.append('\n');
         //

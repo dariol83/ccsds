@@ -32,7 +32,8 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
+// TODO add Time parsing
+// TODO add CLCW parsing
 public class DataViewer extends Application {
 	
 	private static final Logger LOG = Logger.getLogger(DataViewer.class.getName());
@@ -47,9 +48,8 @@ public class DataViewer extends Application {
 		try {
 			AnchorPane root = FXMLLoader.load(DataViewer.class.getResource("/eu/dariolucia/ccsds/viewer/fxml/Main.fxml"));
 			Scene scene = new Scene(root,1600,960);
-			// primaryStage.getIcons().add(new Image(DataViewer.class.getResourceAsStream("/eu/dariolucia/ccsds/viewer/images/monitor.png")));
 			primaryStage.setScene(scene);
-			primaryStage.setTitle(NAME + " " + VERSION);
+			primaryStage.setTitle(NAME + " " + VERSION + " - " + AUTHOR + " " + YEARS);
 			primaryStage.setOnCloseRequest(DataViewer::performExit);
 			primaryStage.show();
 
@@ -68,6 +68,7 @@ public class DataViewer extends Application {
 		alert.setTitle(NAME + " - Confirm Exit");
 		alert.setContentText("Are you sure you want to exit?");
 		alert.setGraphic(null);
+
 		Optional<ButtonType> result = alert.showAndWait();
 		if (result.isPresent() && result.get() == ButtonType.OK) {
 			Platform.exit();

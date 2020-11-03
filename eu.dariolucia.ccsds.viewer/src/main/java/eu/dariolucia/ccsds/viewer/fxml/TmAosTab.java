@@ -2,31 +2,36 @@ package eu.dariolucia.ccsds.viewer.fxml;
 
 import eu.dariolucia.ccsds.tmtc.coding.decoder.TmRandomizerDecoder;
 import eu.dariolucia.ccsds.tmtc.coding.encoder.TmAsmEncoder;
+import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
+import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.AbstractReceiverVirtualChannel;
+import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.AosReceiverVirtualChannel;
+import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.IVirtualChannelReceiverOutput;
+import eu.dariolucia.ccsds.tmtc.datalink.channel.receiver.TmReceiverVirtualChannel;
+import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
+import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.util.StringUtil;
-import eu.dariolucia.ccsds.viewer.utils.SlePduAttribute;
 import javafx.event.ActionEvent;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TreeItem;
 import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.util.Arrays;
 import java.util.ResourceBundle;
 
-import static eu.dariolucia.ccsds.viewer.fxml.MainController.I_DO_NOT_KNOW;
+import static eu.dariolucia.ccsds.viewer.utils.UI.addLine;
 
 public class TmAosTab implements Initializable {
 
     public static final String YES = "YES";
     public static final String NO = "NO";
+
     public VBox tmAosViewbox;
 
     public TextArea tmAosTextArea;
-    public ChoiceBox<String> tmAosTypeChoicebox;
     public ChoiceBox<String> tmAosRandomizedChoicebox;
     public ChoiceBox<String> tmAosOcfChoicebox;
     public ChoiceBox<String> tmAosFecfChoicebox;
@@ -38,13 +43,8 @@ public class TmAosTab implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        tmAosTypeChoicebox.getItems().add(I_DO_NOT_KNOW);
-        tmAosTypeChoicebox.getItems().addAll("TM Frame CADU", "AOS CADU", "TM Frame", "AOS");
-        tmAosTypeChoicebox.getSelectionModel().select(0);
-
-        tmAosRandomizedChoicebox.getItems().add(I_DO_NOT_KNOW);
         tmAosRandomizedChoicebox.getItems().addAll(YES, NO);
-        tmAosRandomizedChoicebox.getSelectionModel().select(0);
+        tmAosRandomizedChoicebox.getSelectionModel().select(1);
 
         tmAosOcfChoicebox.getItems().addAll(YES, NO);
         tmAosOcfChoicebox.getSelectionModel().select(0);
@@ -57,27 +57,23 @@ public class TmAosTab implements Initializable {
     }
 
     public void onTmAosDecodeButtonClicked(ActionEvent actionEvent) {
+        tmAosResultTextArea.clear();
         String data = tmAosTextArea.getText().toUpperCase();
+        data = data.trim();
+        data = data.replace("\n", "");
+        data = data.replace("\t", "");
+        data = data.replace(" ", "");
         if(data.isBlank()) {
             return;
         }
-        byte[] bdata = StringUtil.toByteArray(data);
-
         // Let's try to see what we have to do
         try {
-            if (tmAosTypeChoicebox.getSelectionModel().getSelectedItem().equals(I_DO_NOT_KNOW)) {
-                if (data.startsWith(StringUtil.toHexDump(TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER).toUpperCase())) {
-                    // It is a CADU
-                    processCadu(bdata);
-                } else {
-                    // Assume frame
-                    processFrame(bdata);
-                }
-                return;
-            }
-            if (tmAosTypeChoicebox.getSelectionModel().getSelectedItem().equals("TM Frame CADU") || tmAosTypeChoicebox.getSelectionModel().getSelectedItem().equals("AOS CADU")) {
+            byte[] bdata = StringUtil.toByteArray(data);
+            if (data.startsWith(StringUtil.toHexDump(TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER).toUpperCase())) {
+                // It is a CADU
                 processCadu(bdata);
             } else {
+                // Assume frame
                 processFrame(bdata);
             }
         } catch (Exception e) {
@@ -89,9 +85,140 @@ public class TmAosTab implements Initializable {
         // Check if it is randomised
         if(tmAosRandomizedChoicebox.getSelectionModel().getSelectedItem().equals(YES)) {
             bdata = new TmRandomizerDecoder().apply(bdata);
-        } else if(tmAosRandomizedChoicebox.getSelectionModel().getSelectedItem().equals(NO)){
-
         }
+        // Now the frame is not randomized, and ready to be processed
+        String message = "";
+        // Check if it is an AOS or a TM frame
+        if((bdata[0] & 0xC0) == 0) {
+            // TM
+            try {
+                TmTransferFrame ttf = new TmTransferFrame(bdata,
+                        tmAosFecfChoicebox.getSelectionModel().getSelectedItem().equals(YES),
+                        Integer.parseInt(tmAosSecurityHeaderTextField.getText()),
+                        Integer.parseInt(tmAosSecurityTrailerTextField.getText()));
+                processTmFrame(ttf);
+                return;
+            } catch (Exception e) {
+                // Not a TM frame
+                message = e.getMessage();
+            }
+        } else {
+            // AOS
+            try {
+                AosTransferFrame aosf = new AosTransferFrame(bdata,
+                        tmAosFhcfChoicebox.getSelectionModel().getSelectedItem().equals(YES),
+                        Integer.parseInt(tmAosInsertZoneTextField.getText()),
+                        AosTransferFrame.UserDataType.M_PDU,
+                        tmAosOcfChoicebox.getSelectionModel().getSelectedItem().equals(YES),
+                        tmAosFecfChoicebox.getSelectionModel().getSelectedItem().equals(YES),
+                        Integer.parseInt(tmAosSecurityHeaderTextField.getText()),
+                        Integer.parseInt(tmAosSecurityTrailerTextField.getText()));
+                processAosFrame(aosf);
+                return;
+            } catch (Exception e) {
+                // Not a AOS frame
+                message = e.getMessage();
+            }
+        }
+        error("Provided dump is not a AOS/TM Frame: " + message);
+    }
+
+    private void processAosFrame(AosTransferFrame aosf) {
+        StringBuilder sb = new StringBuilder("");
+        addLine(sb, "Transfer Frame Version Number", aosf.getTransferFrameVersionNumber());
+        addLine(sb, "Spacecraft ID", aosf.getSpacecraftId());
+        addLine(sb, "Virtual Channel ID", aosf.getVirtualChannelId());
+        addLine(sb, "Virtual Channel Frame Count", aosf.getVirtualChannelFrameCount());
+        addLine(sb, "Virtual Channel Frame Count Usage Flag", aosf.isVirtualChannelFrameCountUsageFlag());
+        addLine(sb, "Virtual Channel Frame Count Cycle", Byte.toUnsignedInt(aosf.getVirtualChannelFrameCountCycle()));
+        addLine(sb, "Replay Flag", aosf.isReplayFlag());
+        if(aosf.isFrameHeaderErrorControlPresent()) {
+            addLine(sb, "FHEC Value", String.format("%04X", aosf.getFhec()));
+            addLine(sb, "Valid Header", aosf.isValidHeader());
+        }
+        if(aosf.getInsertZoneLength() > 0) {
+            addLine(sb, "Insert Zone", StringUtil.toHexDump(aosf.getInsertZoneCopy()));
+        }
+        if(aosf.isOcfPresent()) {
+            addLine(sb, "OCF", StringUtil.toHexDump(aosf.getOcfCopy()));
+        }
+        if(aosf.isFecfPresent()) {
+            addLine(sb, "FECF", String.format("%04X", aosf.getFecf()));
+        }
+        if(aosf.getSecurityHeaderLength() > 0) {
+            addLine(sb, "Security Header", StringUtil.toHexDump(aosf.getSecurityHeaderCopy()));
+        }
+        if(aosf.getSecurityTrailerLength() > 0) {
+            addLine(sb, "Security Trailer", StringUtil.toHexDump(aosf.getSecurityTrailerCopy()));
+        }
+        addLine(sb, "Idle Frame", aosf.isIdleFrame());
+        addLine(sb, "No start of packet", aosf.isNoStartPacket());
+        addLine(sb, "First Header Pointer", aosf.getFirstHeaderPointer());
+        addLine(sb, "Data Field", StringUtil.toHexDump(aosf.getDataFieldCopy()));
+        if(!aosf.isIdleFrame() && !aosf.isNoStartPacket()) {
+            sb.append("\n");
+            extractPacketsFrom(sb, aosf);
+        }
+
+        tmAosResultTextArea.setText(sb.toString());
+    }
+
+    private void extractPacketsFrom(StringBuilder sb, AosTransferFrame aosf) {
+        AosReceiverVirtualChannel vc = new AosReceiverVirtualChannel(aosf.getVirtualChannelId(), VirtualChannelAccessMode.PACKET, false);
+        vc.register(new IVirtualChannelReceiverOutput() {
+            @Override
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+                addLine(sb, "Packet", StringUtil.toHexDump(packet));
+            }
+        });
+        vc.accept(aosf);
+    }
+
+    private void extractPacketsFrom(StringBuilder sb, TmTransferFrame ttf) {
+        TmReceiverVirtualChannel vc = new TmReceiverVirtualChannel(ttf.getVirtualChannelId(), VirtualChannelAccessMode.PACKET, false);
+        vc.register(new IVirtualChannelReceiverOutput() {
+            @Override
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+                addLine(sb, "Packet", StringUtil.toHexDump(packet));
+            }
+        });
+        vc.accept(ttf);
+    }
+
+    private void processTmFrame(TmTransferFrame ttf) {
+        StringBuilder sb = new StringBuilder("");
+        addLine(sb, "Transfer Frame Version Number", ttf.getTransferFrameVersionNumber());
+        addLine(sb, "Spacecraft ID", ttf.getSpacecraftId());
+        addLine(sb, "Virtual Channel ID", ttf.getVirtualChannelId());
+        addLine(sb, "Master Channel Frame Count", ttf.getMasterChannelFrameCount());
+        addLine(sb, "Virtual Channel Frame Count", ttf.getVirtualChannelFrameCount());
+        addLine(sb, "Packet Order Flag", ttf.isPacketOrderFlag());
+        addLine(sb, "Secondary Header Present", ttf.isSecondaryHeaderPresent());
+        addLine(sb, "Synchronisation Flag", ttf.isSynchronisationFlag());
+        addLine(sb, "Segment Length Identifier", ttf.getSegmentLengthIdentifier());
+
+        if(ttf.isOcfPresent()) {
+            addLine(sb, "OCF", StringUtil.toHexDump(ttf.getOcfCopy()));
+        }
+        if(ttf.isFecfPresent()) {
+            addLine(sb, "FECF", String.format("%04X", ttf.getFecf()));
+        }
+        if(ttf.getSecurityHeaderLength() > 0) {
+            addLine(sb, "Security Header", StringUtil.toHexDump(ttf.getSecurityHeaderCopy()));
+        }
+        if(ttf.getSecurityTrailerLength() > 0) {
+            addLine(sb, "Security Trailer", StringUtil.toHexDump(ttf.getSecurityTrailerCopy()));
+        }
+        addLine(sb, "Idle Frame", ttf.isIdleFrame());
+        addLine(sb, "No start of packet", ttf.isNoStartPacket());
+        addLine(sb, "First Header Pointer", ttf.getFirstHeaderPointer());
+        addLine(sb, "Data Field", StringUtil.toHexDump(ttf.getDataFieldCopy()));
+        if(!ttf.isIdleFrame() && !ttf.isNoStartPacket()) {
+            sb.append("\n");
+            extractPacketsFrom(sb, ttf);
+        }
+
+        tmAosResultTextArea.setText(sb.toString());
     }
 
     private void processCadu(byte[] bdata) {
@@ -101,12 +228,12 @@ public class TmAosTab implements Initializable {
             // Extract n blocks of 223 bytes (assuming RS 223/255 is used)
             processFrame(Arrays.copyOfRange(bdata, 4, 4 + (223 * idepth)));
         } else {
-            error("Data does not start with attached sync marker " + StringUtil.toHexDump(TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER).toUpperCase());
+            error("Data does not start with expected sync marker " + StringUtil.toHexDump(TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER).toUpperCase());
         }
     }
 
     private void error(String error) {
-        tmAosResultTextArea.setText(error);
+        tmAosResultTextArea.setText(tmAosResultTextArea.getText() + "\nERROR: " + error);
     }
 
     public void onTmAosClearButtonClicked(ActionEvent actionEvent) {

@@ -20,7 +20,6 @@
           <Button mnemonicParsing="false" onAction="#onSleClearButtonClicked" prefWidth="100.0" text="Clear" />
        </children>
     </HBox>
-    <Separator />
     <TextArea fx:id="sleResultTextArea" VBox.vgrow="ALWAYS" promptText="No information" editable="false" />
  </children>
  <padding>

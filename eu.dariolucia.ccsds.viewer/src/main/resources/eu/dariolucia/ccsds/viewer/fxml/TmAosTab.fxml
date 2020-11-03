@@ -9,16 +9,14 @@
     <TextArea fx:id="tmAosTextArea" prefHeight="300.0" promptText="Hex dump of the TM Frame/AOS or CADU " wrapText="true" />
     <HBox alignment="CENTER_LEFT" spacing="5.0">
        <children>
-          <Label text="Type" />
-          <ChoiceBox fx:id="tmAosTypeChoicebox" prefWidth="150.0" />
           <Label text="Randomized" />
           <ChoiceBox fx:id="tmAosRandomizedChoicebox" prefWidth="150.0" />
           <Label text="OCF" />
-          <ChoiceBox fx:id="tmAosOcfChoicebox" prefWidth="150.0" />
+          <ChoiceBox fx:id="tmAosOcfChoicebox" prefWidth="100.0" />
           <Label text="FECF" />
-          <ChoiceBox fx:id="tmAosFecfChoicebox" prefWidth="150.0" />
+          <ChoiceBox fx:id="tmAosFecfChoicebox" prefWidth="100.0" />
           <Label text="AOS FHCF" />
-          <ChoiceBox fx:id="tmAosFhcfChoicebox" prefWidth="150.0" />
+          <ChoiceBox fx:id="tmAosFhcfChoicebox" prefWidth="100.0" />
           <Label text="AOS Insert Zone (octets)" />
           <TextField fx:id="tmAosInsertZoneTextField" prefWidth="50.0" text="0" />
           <Label text="Security Header (octets)" />
@@ -30,7 +28,6 @@
           <Button mnemonicParsing="false" onAction="#onTmAosClearButtonClicked" prefWidth="100.0" text="Clear" />
        </children>
     </HBox>
-    <Separator />
     <TextArea fx:id="tmAosResultTextArea" VBox.vgrow="ALWAYS" promptText="No information" editable="false" />
  </children>
  <padding>
