@@ -28,7 +28,7 @@ A simple but effective graphical interface to inspect the user-side peer is prov
 ## TM/TC
 The TM/TC Library (eu.dariolucia.ccsds.tmtc) is a library that provide support to parse and build CCSDS TM frames, TC frames, AOS frames, Space Packets and full FARM/FOP implementation for COP-1. It allows encoding/decoding of space packets into TM frames, TC frames or AOS frames. It also provides some basic encodings (e.g. CLTU encoding/decoding, randomization, FECF encoding/checking, Reed-Solomon encoding/checking) but no error correction capabilities. 
 
-A simple graphical interface to inspect TM/TC/AOS/Space Packet data is provided as separate module (eu.dariolucia.ccsds.inspector). It is possible to implement custom connectors to allow inspection of data delivered from a custom source/protocol/format by providing a new 
+A simple graphical interface to inspect TM/TC/AOS/Space Packet data as stream is provided as separate module (eu.dariolucia.ccsds.inspector). It is possible to implement custom connectors to allow inspection of data delivered from a custom source/protocol/format by providing a new 
 service (in Java 11 terms) implementing the interface eu.dariolucia.ccsds.inspector.api.IConnectorFactory. Some connectors to read data from file or socket are already available.
 
 ## ENC/DEC
@@ -49,6 +49,9 @@ A modules providing examples on how to use the three modules above in a combined
 - TC processor with output to console, from CLTU to encoded parameter extraction.
 
 **The main target of the examples module is not to provide final applications ready to be used**, rather to explain the different levels and concepts of the libraries, and how to link the various objects together. 
+
+## Data Viewer
+To ease the debug and visualisation of encoded information in telemetry and telecommand data, the module viewer (eu.dariolucia.ccsds.viewer) contains an application that can display decoded and structure information from all the data types supported by this library (CADUs, TM frames, AOS frames, TC frames, CLTU, Space Packets, all SLE operations, time encodings, CLCW).
 
 # Goals
 The purpose of this repository is to produce, as far as my possibilities allow, simple, well-designed, well-documented, well-tested code with top performance. For each module (examples and tools excluded) I have the following targets:
