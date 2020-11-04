@@ -32,8 +32,6 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-// TODO add Time parsing
-// TODO add CLCW parsing
 public class DataViewer extends Application {
 	
 	private static final Logger LOG = Logger.getLogger(DataViewer.class.getName());
@@ -51,6 +49,8 @@ public class DataViewer extends Application {
 			primaryStage.setScene(scene);
 			primaryStage.setTitle(NAME + " " + VERSION + " - " + AUTHOR + " " + YEARS);
 			primaryStage.setOnCloseRequest(DataViewer::performExit);
+			primaryStage.getIcons().add(new Image(
+					DataViewer.class.getResourceAsStream("/eu/dariolucia/ccsds/viewer/fxml/activity.png")));
 			primaryStage.show();
 
 		} catch(Exception e) {

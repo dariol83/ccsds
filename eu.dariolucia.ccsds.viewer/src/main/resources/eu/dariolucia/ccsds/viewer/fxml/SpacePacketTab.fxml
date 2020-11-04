@@ -9,6 +9,18 @@
     <TextArea fx:id="spTextArea" prefHeight="300.0" promptText="Hex dump of the Space Packet " wrapText="true" />
     <HBox alignment="CENTER_LEFT" spacing="5.0">
        <children>
+           <Label text="PUS" />
+           <ChoiceBox fx:id="spPusChoicebox" prefWidth="100.0" />
+           <Label text="PUS TM Packet Subcounter" />
+           <ChoiceBox fx:id="spPusPacketSubcounterChoicebox" prefWidth="100.0" />
+           <Label text="Source/Destination ID (bits)" />
+           <TextField fx:id="spPusSourceDestinationTextField" prefWidth="50.0" text="0" />
+           <Label text="TM Time P-Field" />
+           <ChoiceBox fx:id="spPusTimeExplicitChoicebox" prefWidth="100.0" />
+           <Label text="TM Time Type" />
+           <ChoiceBox fx:id="spPusTimeChoicebox" prefWidth="100.0" />
+           <Label text="TM Time Agency Epoch" />
+           <TextField fx:id="spPusAgencyEpochTextField" prefWidth="150.0" promptText="yyyy-mm-ddThh:mm:ssZ" />
           <Region HBox.hgrow="ALWAYS" />
           <Button mnemonicParsing="false" onAction="#onSpDecodeButtonClicked" prefWidth="100.0" text="Decode" />
           <Button mnemonicParsing="false" onAction="#onSpClearButtonClicked" prefWidth="100.0" text="Clear" />

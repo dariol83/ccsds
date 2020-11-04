@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox fx:id="timeViewbox" prefHeight="200.0" prefWidth="100.0" spacing="5.0" xmlns="http://javafx.com/javafx/10.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.viewer.fxml.TimeTab">
+ <children>
+    <Label text="Time Dump" />
+    <TextArea fx:id="timeTextArea" prefHeight="300.0" promptText="Hex dump of the time " wrapText="true" />
+    <HBox alignment="CENTER_LEFT" spacing="5.0">
+       <children>
+           <Label text="Type" />
+           <ChoiceBox fx:id="timeTypeChoicebox" prefWidth="100.0" />
+           <Label text="P-Field" />
+           <ChoiceBox fx:id="timePFieldChoicebox" prefWidth="100.0" />
+           <Label text="CUC Coarse" />
+           <TextField fx:id="timeCucCoarseTextField" prefWidth="50.0" text="4" />
+           <Label text="CUC Fine" />
+           <TextField fx:id="timeCucFineTextField" prefWidth="50.0" text="2" />
+           <Label text="CDS Type" />
+           <ChoiceBox fx:id="timeCdsTypeChoicebox" prefWidth="100.0" />
+           <Label text="CDS Sub-millis" />
+           <ChoiceBox fx:id="timeCdsSubmillisChoicebox" prefWidth="100.0" />
+           <Label text="TM Time Agency Epoch" />
+           <TextField fx:id="timeAgencyEpochTextField" prefWidth="150.0" promptText="yyyy-mm-ddThh:mm:ssZ" />
+          <Region HBox.hgrow="ALWAYS" />
+          <Button mnemonicParsing="false" onAction="#onTimeDecodeButtonClicked" prefWidth="100.0" text="Decode" />
+          <Button mnemonicParsing="false" onAction="#onTimeClearButtonClicked" prefWidth="100.0" text="Clear" />
+       </children>
+    </HBox>
+    <TextArea fx:id="timeResultTextArea" VBox.vgrow="ALWAYS" promptText="No information" editable="false" />
+ </children>
+ <padding>
+    <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+ </padding>
+</VBox>
+

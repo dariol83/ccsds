@@ -175,7 +175,7 @@ public class TcCltuTab implements Initializable {
     }
 
     public void onTcCltuClearButtonClicked(ActionEvent actionEvent) {
-        tcCltuResultTextArea.clear();
+        tcCltuTextArea.clear();
         tcCltuResultTextArea.clear();
     }
 

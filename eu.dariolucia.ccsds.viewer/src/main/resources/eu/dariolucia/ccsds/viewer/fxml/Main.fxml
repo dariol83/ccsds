@@ -6,7 +6,7 @@
    <children>
       <TabPane layoutX="-131.0" layoutY="7.0" prefHeight="739.0" prefWidth="1088.0" tabClosingPolicy="UNAVAILABLE" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <tabs>
-          <Tab text="     SLE     ">
+          <Tab text="SLE">
                <content>
                   <fx:include source="SleTab.fxml" />
                </content>
@@ -24,6 +24,16 @@
             <Tab text="Space Packet">
                 <content>
                     <fx:include source="SpacePacketTab.fxml" />
+                </content>
+            </Tab>
+            <Tab text="CLCW">
+                <content>
+                    <fx:include source="ClcwTab.fxml" />
+                </content>
+            </Tab>
+            <Tab text="Time">
+                <content>
+                    <fx:include source="TimeTab.fxml" />
                 </content>
             </Tab>
         </tabs>
