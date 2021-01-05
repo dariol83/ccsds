@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.encdec.definition;
 
 import javax.xml.bind.annotation.*;
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -28,7 +29,7 @@ import java.util.Objects;
  * For {@link ParameterType} and {@link ParameterLength} correct usage, the external ID must be correctly specified.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ParameterDefinition {
+public class ParameterDefinition implements Serializable {
 
     public static final int EXTERNAL_ID_NOT_SET = -1;
 

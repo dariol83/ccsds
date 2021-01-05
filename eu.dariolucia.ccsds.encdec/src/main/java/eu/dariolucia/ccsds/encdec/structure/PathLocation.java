@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.encdec.structure;
 
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -27,7 +28,7 @@ import java.util.Objects;
  *
  * This class is immutable.
  */
-public final class PathLocation {
+public final class PathLocation implements Serializable {
 
     public static final char PATH_COMPONENT_SEPARATOR = '.';
     public static final char ARRAY_INDEX_SEPARATOR = '#';
@@ -207,7 +208,7 @@ public final class PathLocation {
         return Objects.hash(pathComponents);
     }
 
-    private class PathLocationItem {
+    private static class PathLocationItem implements Serializable {
 
         public final String name;
         public final int index;

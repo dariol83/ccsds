@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.encdec.definition;
 
 import javax.xml.bind.annotation.*;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,7 +36,7 @@ import java.util.Objects;
  * </ul>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class PacketDefinition {
+public class PacketDefinition implements Serializable {
 
     public static final int EXTERNAL_ID_NOT_SET = -1;
 

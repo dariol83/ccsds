@@ -19,6 +19,7 @@ package eu.dariolucia.ccsds.encdec.definition;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -36,7 +37,7 @@ import java.util.Objects;
  * in order to enable the generation time derivation process.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class GenerationTime {
+public class GenerationTime implements Serializable {
 
     @XmlAttribute(name = "offset_ref")
     private String relativeTimeReference = null;

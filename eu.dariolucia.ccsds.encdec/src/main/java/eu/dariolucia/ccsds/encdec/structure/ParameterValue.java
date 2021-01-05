@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.encdec.structure;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 /**
@@ -23,7 +24,7 @@ import java.time.Instant;
  * that is linked to a {@link eu.dariolucia.ccsds.encdec.definition.ParameterDefinition}. In such case, the instance contains
  * the ID of the {@link eu.dariolucia.ccsds.encdec.definition.ParameterDefinition}, the value and the generation time, if computed.
  */
-public class ParameterValue {
+public class ParameterValue implements Serializable {
 
     private final String id;
     private final long externalId;

@@ -16,10 +16,12 @@
 
 package eu.dariolucia.ccsds.tmtc.transport.pdu;
 
+import java.io.Serializable;
+
 /**
  * This class provides an implementation of a bitstream, as defined by the AOS data link protocol.
  */
-public class BitstreamData {
+public class BitstreamData implements Serializable {
 
 	private static final BitstreamData INVALID_BITSTREAM_DATA = new BitstreamData();
 

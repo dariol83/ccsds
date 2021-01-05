@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.tmtc.util;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +26,7 @@ import java.util.Set;
  *
  * This class is not thread-safe.
  */
-public abstract class AnnotatedObject {
+public abstract class AnnotatedObject implements Serializable {
 
 	public abstract int getLength();
 

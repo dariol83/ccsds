@@ -16,13 +16,15 @@
 
 package eu.dariolucia.ccsds.tmtc.ocf.pdu;
 
+import java.io.Serializable;
+
 /**
  * This class represents an abstract Operational Control Field class. Upon creation the class checks if the provided
  * argument is a CLCW and sets the flag returned by isClcw() accordingly.
  *
  * This class is immutable but it might return direct references for performance reasons.
  */
-public abstract class AbstractOcf {
+public abstract class AbstractOcf implements Serializable {
 
     /**
      * The OCF data

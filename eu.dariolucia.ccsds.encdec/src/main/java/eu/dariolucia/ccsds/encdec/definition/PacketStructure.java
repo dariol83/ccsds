@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.encdec.definition;
 
 import javax.xml.bind.annotation.*;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.Objects;
  * defined inside the structure definition).
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class PacketStructure {
+public class PacketStructure implements Serializable {
 
     @XmlElements({
             @XmlElement(name="parameter",type=EncodedParameter.class),

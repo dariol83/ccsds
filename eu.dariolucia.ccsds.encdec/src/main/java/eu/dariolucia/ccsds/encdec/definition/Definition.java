@@ -24,6 +24,7 @@ import javax.xml.bind.annotation.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -51,7 +52,7 @@ import java.util.Objects;
  */
 @XmlRootElement(name = "packet_definitions", namespace = "http://dariolucia.eu/ccsds/encdec")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Definition {
+public class Definition implements Serializable {
 
     /**
      * This method loads a {@link Definition} object from an {@link InputStream}.
