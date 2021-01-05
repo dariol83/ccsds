@@ -21,6 +21,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlIDREF;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -28,7 +29,7 @@ import java.util.Objects;
  * the corresponding identification fields match the values by the identification field matchers, the packet is identified.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class IdentFieldMatcher {
+public class IdentFieldMatcher implements Serializable {
 
     @XmlIDREF
     @XmlAttribute(name = "field", required = true)

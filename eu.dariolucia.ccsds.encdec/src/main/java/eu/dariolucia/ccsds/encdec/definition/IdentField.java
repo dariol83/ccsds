@@ -21,6 +21,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -37,7 +38,7 @@ import java.util.Objects;
  * level.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class IdentField {
+public class IdentField implements Serializable {
 
 	@XmlID
 	@XmlAttribute(required = true)

@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.encdec.definition;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import java.io.Serializable;
 
 /**
  * This abstract class defines the type of the encoded parameter:
@@ -29,7 +30,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
  * </ul>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public abstract class AbstractEncodedType {
+public abstract class AbstractEncodedType implements Serializable {
 
     public AbstractEncodedType() {
         // Nothing to do

@@ -21,6 +21,7 @@ import eu.dariolucia.ccsds.encdec.definition.EncodedParameter;
 import eu.dariolucia.ccsds.encdec.definition.PacketDefinition;
 import eu.dariolucia.ccsds.encdec.definition.ParameterDefinition;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,7 +33,7 @@ import java.util.Map;
  *
  * The class specifies a {@link IVisitor} interface that can be implemented and used to visit the result.
  */
-public class DecodingResult {
+public class DecodingResult implements Serializable {
 
     private final PacketDefinition definition;
     private final List<Item> decodedItems;
@@ -121,7 +122,7 @@ public class DecodingResult {
         default void visitStructureEnd(Structure a) {}
     }
 
-    public abstract static class Item {
+    public abstract static class Item implements Serializable {
         public final PathLocation location;
         public final String name;
 

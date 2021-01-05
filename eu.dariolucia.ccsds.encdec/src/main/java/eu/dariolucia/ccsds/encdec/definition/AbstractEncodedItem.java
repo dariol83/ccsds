@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.encdec.definition;
 
 import javax.xml.bind.annotation.*;
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -25,7 +26,7 @@ import java.util.Objects;
  * an optional location, which is taken into account by the encoding and decoding process accordingly.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public abstract class AbstractEncodedItem {
+public abstract class AbstractEncodedItem implements Serializable {
 
     @XmlAttribute(name = "id", required = true)
     private String id;
