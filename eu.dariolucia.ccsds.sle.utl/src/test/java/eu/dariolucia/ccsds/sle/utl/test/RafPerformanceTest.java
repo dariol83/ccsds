@@ -69,7 +69,8 @@ public class RafPerformanceTest {
         rafUser.bind(2);
 
         // Check reported state
-        AwaitUtil.await(5000);
+        assertTrue(rafUser.waitForState(ServiceInstanceBindingStateEnum.READY, 5000));
+        AwaitUtil.await(2000);
         assertTrue(recorder.getStates().size() > 0);
         assertEquals(ServiceInstanceBindingStateEnum.READY, recorder.getStates().get(recorder.getStates().size() - 1).getState());
 

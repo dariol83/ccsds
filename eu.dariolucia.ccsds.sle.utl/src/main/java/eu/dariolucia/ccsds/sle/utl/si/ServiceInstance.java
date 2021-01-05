@@ -92,6 +92,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     private volatile int initMode = SI_INIT_MODE_NOT_SELECTED;
     // Service instance state
     protected volatile ServiceInstanceBindingStateEnum currentState = ServiceInstanceBindingStateEnum.UNBOUND; // NOSONAR enumeration is immutable
+    private final Object currentStateMonitor = new Object();
 
     private Integer sleVersion = null; // Set by the bind request
 
@@ -773,6 +774,34 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                 LOG.log(Level.INFO, String.format("%s: State transition from %s to %s", getServiceInstanceIdentifier(), this.currentState, newState));
             }
             this.currentState = newState;
+            // currentState is volatile and it is written only by the owning thread, so no writing race conditions. Also code reading this
+            // variable in derived classes is safe, because the code is read in methods executed only by the owning thread.
+            // There is no need to put this under lock as its assignment is atomic, being a volatile field.
+            synchronized (currentStateMonitor) {
+                currentStateMonitor.notifyAll();
+            }
+        }
+    }
+
+    /**
+     * This method waits until the service instance reaches the specified state, or the timeout expires.
+     *
+     * @param expectedState the expected state to reach
+     * @param timeoutMillis the timeout in milliseconds
+     * @return true if the expected state was reached, false if the timeout expires
+     * @throws InterruptedException if the thread is interrupted
+     */
+    public final boolean waitForState(ServiceInstanceBindingStateEnum expectedState, int timeoutMillis) throws InterruptedException {
+        long maxWait = System.currentTimeMillis() + timeoutMillis;
+        synchronized (currentStateMonitor) {
+            long now = System.currentTimeMillis();
+            ServiceInstanceBindingStateEnum theState = this.currentState;
+            while(theState != expectedState && now < maxWait) {
+                currentStateMonitor.wait(maxWait - now);
+                now = System.currentTimeMillis();
+                theState = this.currentState;
+            }
+            return theState == expectedState;
         }
     }
 
