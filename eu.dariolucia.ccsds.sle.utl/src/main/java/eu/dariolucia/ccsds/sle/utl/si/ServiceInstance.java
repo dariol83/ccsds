@@ -69,15 +69,15 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     private static final int SI_INIT_MODE_UIB = 1;
     private static final int SI_INIT_MODE_PIB = 2;
 
-    private static final int MAX_DISPATCHER_QUEUE = 1000;
-    private static final int MAX_NOTIFIER_QUEUE = 1000;
+    private static final int MAX_DISPATCHER_QUEUE = 10;
+    private static final int MAX_NOTIFIER_QUEUE = 10;
 
     private static final Logger LOG = Logger.getLogger(ServiceInstance.class.getName());
 
     private final ExecutorService dispatcherService;
     private final ExecutorService notifierService;
     private final BlockingQueue<Runnable> notificationQueue = new ArrayBlockingQueue<>(MAX_NOTIFIER_QUEUE);
-    private final PriorityBlockingQueue<SleTask> dispatchQueue = new PriorityBlockingQueue<>(30);
+    private final PriorityBlockingQueue<SleTask> dispatchQueue = new PriorityBlockingQueue<>(MAX_DISPATCHER_QUEUE);
 
     private final AtomicLong sleTaskSequencer = new AtomicLong(0);
 
@@ -125,6 +125,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     private BindDiagnosticsEnum negativeBindReturnDiagnostics = BindDiagnosticsEnum.OTHER_REASON;
 
     private boolean configured = false;
+    private boolean disposing = false;
 
     protected ServiceInstance(PeerConfiguration peerConfiguration,
                               ServiceInstanceConfiguration serviceInstanceConfiguration) {
@@ -164,7 +165,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
                 r = this.notificationQueue.take();
             } catch (InterruptedException e) { // NOSONAR not ignored
                 // This thread can be interrupted on dispose
-                if (LOG.isLoggable(Level.FINE)) {
+                if (!disposing && LOG.isLoggable(Level.FINE)) {
                     LOG.log(Level.FINE, String.format("%s: Interruption when waiting for element in the notification queue", getServiceInstanceIdentifier()), e);
                 }
                 return;
@@ -389,7 +390,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         notify(() -> {
             for (IServiceInstanceListener l : this.listeners) {
                 try {
-                    if(LOG.isLoggable(Level.FINER)) {
+                    if(LOG.isLoggable(Level.FINEST)) {
                         LOG.finer(String.format("%s: Notify PDU %s to listener %s", getServiceInstanceIdentifier(), name, l));
                     }
                     l.onPduReceived(this, pdu, name, encodedOperation);
@@ -1170,6 +1171,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
     }
 
     private void doDispose() {
+        this.disposing = true;
         if (LOG.isLoggable(Level.FINER)) {
             LOG.log(Level.FINER, String.format("%s: Dispose requested", getServiceInstanceIdentifier()));
         }
