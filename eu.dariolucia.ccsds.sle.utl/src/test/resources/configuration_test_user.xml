@@ -19,6 +19,7 @@
         <port-mappings>
             <mapping port-name="TEST_TM_OLT" address="127.0.0.1:23232" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
             <mapping port-name="TEST_TM_ONC" address="127.0.0.1:23233" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
+            <mapping port-name="TEST_TM_ONC_SLOW" address="127.0.0.1:23239" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="4096" tcp-rx-buffer="4096" />
             <mapping port-name="TEST_TC" address="127.0.0.1:23234" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
             <mapping port-name="TEST_TM_OLT1" address="127.0.0.1:23235" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
             <mapping port-name="TEST_TM_OLT2" address="127.0.0.1:23236" dead-factor="3" heartbeat-time="60" tcp-tx-buffer="65536" tcp-rx-buffer="65536" />
@@ -318,6 +319,30 @@
             <delivery-mode>COMPLETE_ONLINE</delivery-mode>
             <latency-limit>3</latency-limit>
             <transfer-buffer-size>80</transfer-buffer-size>
+            <minimum-reporting-cycle>0</minimum-reporting-cycle>
+            <permitted-frame-quality-set>
+                <quality>GOOD_FRAMES_ONLY</quality>
+                <quality>BAD_FRAMES_ONLY</quality>
+                <quality>ALL_FRAMES</quality>
+            </permitted-frame-quality-set>
+
+            <requested-frame-quality>GOOD_FRAMES_ONLY</requested-frame-quality>
+            <!-- start-time and end-time omitted: both null -->
+        </raf>
+        <raf>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlc59</service-instance-id>
+            <service-version-number>2</service-version-number> <!-- optional -->
+            <initiator>USER</initiator>
+            <initiator-id>TEST-USER</initiator-id>
+            <responder-id>TEST-PROVIDER</responder-id>
+            <responder-port-id>TEST_TM_ONC_SLOW</responder-port-id>
+            <return-timeout-period>120</return-timeout-period>
+            <!-- Everything below is optional -->
+            <reporting-cycle>30</reporting-cycle>
+
+            <delivery-mode>COMPLETE_ONLINE</delivery-mode>
+            <latency-limit>3</latency-limit>
+            <transfer-buffer-size>10</transfer-buffer-size>
             <minimum-reporting-cycle>0</minimum-reporting-cycle>
             <permitted-frame-quality-set>
                 <quality>GOOD_FRAMES_ONLY</quality>

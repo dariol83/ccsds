@@ -268,23 +268,29 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
     protected void doHandleTransferBufferInvocation(K bufferToSend) {
         clearError();
 
-        // Validate state
-        if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
-            setError("Transfer buffer in transmission discarded, service instance is in state "
-                    + this.currentState);
-            notifyStateUpdate();
-            return;
-        }
+        try {
+            // Validate state
+            if (this.currentState != ServiceInstanceBindingStateEnum.ACTIVE) {
+                setError("Transfer buffer in transmission discarded, service instance is in state "
+                        + this.currentState);
+                notifyStateUpdate();
+                return;
+            }
 
-        boolean resultOk = encodeAndSend(null, bufferToSend, SleOperationNames.TRANSFER_BUFFER_NAME);
+            boolean resultOk = encodeAndSend(null, bufferToSend, SleOperationNames.TRANSFER_BUFFER_NAME);
 
-        if (resultOk) {
-            // Clear buffer transmission flag
-            clearBufferTransmissionFlag();
-            // Notify PDU
-            notifyPduSent(bufferToSend, SleOperationNames.TRANSFER_BUFFER_NAME, getLastPduSent());
-            // Generate state and notify update
-            notifyStateUpdate();
+            if (resultOk) {
+                // Clear buffer transmission flag
+                clearBufferTransmissionFlag();
+                // Notify PDU
+                notifyPduSent(bufferToSend, SleOperationNames.TRANSFER_BUFFER_NAME, getLastPduSent());
+                // Generate state and notify update
+                notifyStateUpdate();
+            } else {
+                LOG.log(Level.SEVERE, String.format(">>>>>>>>>>>>>>>>> %s: transfer buffer could not be sent!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", getServiceInstanceIdentifier()));
+            }
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, String.format(">>>>>>>>>>>>>>>>>>> %s: EXCEPTION DETECTED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", getServiceInstanceIdentifier()), e);
         }
     }
 
@@ -326,19 +332,31 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
 
     // Under sync on this.bufferMutex
     private boolean trySendBuffer(K bufferToSend) {
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.finer(String.format("%s: transfer buffer about to be sent", getServiceInstanceIdentifier()));
+        }
         // Here we check the delivery mode
         if (getConfiguredDeliveryMode() == DeliveryModeEnum.TIMELY_ONLINE) {
             // Timely mode: if there is a buffer in transmission, you have to discard the buffer
             if (this.bufferUnderTransmission) {
+                if(LOG.isLoggable(Level.FINER)) {
+                    LOG.finer(String.format("%s: transfer buffer pending transmission in online timely delivery mode, new transfer buffer discarded", getServiceInstanceIdentifier()));
+                }
                 return true;
             }
         } else {
             // Complete mode: wait
             while (this.bufferActive && this.bufferUnderTransmission) {
+                if(LOG.isLoggable(Level.FINER)) {
+                    LOG.finer(String.format("%s: transfer buffer pending transmission in online complete delivery mode, waiting for transmission", getServiceInstanceIdentifier()));
+                }
                 try {
                     this.bufferChangedCondition.await();
                 } catch (InterruptedException e) { // NOSONAR: sorry to say, but this rule is pointless, to be disabled in the profile
                     Thread.interrupted();
+                    if(LOG.isLoggable(Level.FINER)) {
+                        LOG.finer(String.format("%s: interrupted exception in online complete delivery mode received, new transfer buffer discarded", getServiceInstanceIdentifier()));
+                    }
                     // Buffer discarded
                     return true;
                 }
@@ -347,6 +365,10 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
         if (bufferActive) {
             // Set transmission flag
             this.bufferUnderTransmission = true;
+            //
+            if(LOG.isLoggable(Level.FINER)) {
+                LOG.finer(String.format("%s: sending transfer buffer to the owner thread for dispatching to proxy", getServiceInstanceIdentifier()));
+            }
             // Send the buffer
             dispatchFromProvider(() -> doHandleTransferBufferInvocation(bufferToSend));
             // Not discarded
