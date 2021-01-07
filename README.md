@@ -1,5 +1,5 @@
 [<img src="https://img.shields.io/maven-central/v/eu.dariolucia.ccsds/eu.dariolucia.ccsds?color=greem&style=flat">](https://search.maven.org/search?q=eu.dariolucia.ccsds)
-[<img src="https://img.shields.io/travis/dariol83/ccsds?style=flat">](https://travis-ci.org/dariol83/ccsds)
+[<img src="https://img.shields.io/travis/dariol83/ccsds?style=flat">](https://travis-ci.com/dariol83/ccsds)
 [<img src="https://img.shields.io/sonar/violations/eu.dariolucia.ccsds:eu.dariolucia.ccsds?format=long&server=https%3A%2F%2Fsonarcloud.io&style=flat">](https://sonarcloud.io/project/issues?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds&resolved=false)
 [<img src="https://img.shields.io/sonar/coverage/eu.dariolucia.ccsds:eu.dariolucia.ccsds?server=https%3A%2F%2Fsonarcloud.io&style=flat">](https://sonarcloud.io/component_measures?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds&metric=coverage&view=list)
 [<img src="https://img.shields.io/sonar/quality_gate/eu.dariolucia.ccsds:eu.dariolucia.ccsds?server=https%3A%2F%2Fsonarcloud.io&style=flat">](https://sonarcloud.io/dashboard?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds)
