@@ -107,7 +107,7 @@ public abstract class AbstractFopState {
 
     protected AbstractFopState e45(FopEvent fopEvent) {
         engine.setBdOutReadyFlag(true);
-        engine.accept(fopEvent.getFrame());
+        // engine.accept(fopEvent.getFrame()); // FIXME: the CCSDS standard reports an accept here, but this would duplicate the accept at E22. Write to the CCSDS WG.
         return this;
     }
 

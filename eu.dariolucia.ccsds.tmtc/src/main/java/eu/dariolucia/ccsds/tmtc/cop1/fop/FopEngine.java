@@ -56,6 +56,7 @@ public class FopEngine {
 
     private final AtomicReference<FopOperationStatus> pendingAcceptRejectResult = new AtomicReference<>();
     private final AtomicReference<TcTransferFrame> pendingAcceptRejectFrame = new AtomicReference<>();
+    private final AtomicReference<FopEvent.EventNumber> pendingEventResult = new AtomicReference<>();
 
     private final AtomicReference<Object[]> pendingInitAd = new AtomicReference<>();
 
@@ -96,7 +97,7 @@ public class FopEngine {
      * FDU is on the Wait_Queue, this means that the Higher Procedures have not yet received an
      * 'Accept Response' for the corresponding 'Request to Transfer FDU'.
      */
-    private AtomicReference<TcTransferFrame> waitQueue = new AtomicReference<>(null);
+    private final AtomicReference<TcTransferFrame> waitQueue = new AtomicReference<>(null);
     /**
      * Whether or not a ‘Transmit Request for Frame’ can be sent for AD. If true, means READY.
      */
@@ -115,7 +116,7 @@ public class FopEngine {
      * Transfer Frame is first passed to the Lower Procedures for transmission, and the time the
      * FOP-1 has finished processing the Transfer Frame.
      */
-    private Queue<TransferFrameStatus> sentQueue = new LinkedList<>();
+    private final Queue<TransferFrameStatus> sentQueue = new LinkedList<>();
     /**
      * The Expected_Acknowledgement_Frame_Sequence_Number, NN(R), contains the Frame
      * Sequence Number of the oldest unacknowledged AD Frame, which is on the Sent_Queue.
@@ -256,20 +257,68 @@ public class FopEngine {
      * @throws InterruptedException in case the invoking thread is interrupted
      */
     public boolean transmit(TcTransferFrame frame, int timeoutMillis) throws InterruptedException {
-        long expirationTime = System.currentTimeMillis()+ timeoutMillis;
+        long expirationTime = System.currentTimeMillis() + timeoutMillis;
+        if(frame.getFrameType() == TcTransferFrame.FrameType.BD) {
+            return transmitSyncBD(frame, expirationTime);
+        } else if(frame.getFrameType() == TcTransferFrame.FrameType.AD) {
+            return transmitSyncAD(frame, expirationTime);
+        } else {
+            throw new IllegalArgumentException("This method can be invoked only for BD and AD frames");
+        }
+    }
+
+    /**
+     * BD frames can be unblocked as soon as a REJECT_RESPONSE is received (event E22), or events E45 or E46 are received.
+     *
+     * @param frame the frame to send
+     * @param expirationTime the absolute expiration time in ms since Java epoch
+     * @return true if the request was accepted, false it is was rejected or the timeout expired
+     * @throws InterruptedException in case the invoking thread is interrupted
+     */
+    private boolean transmitSyncBD(TcTransferFrame frame, long expirationTime) throws InterruptedException {
+        synchronized (pendingAcceptRejectFrame) {
+            pendingAcceptRejectFrame.set(frame);
+            pendingEventResult.set(null);
+            transmit(frame);
+            while (pendingEventResult.get() == null) {
+                long timeout = expirationTime - System.currentTimeMillis();
+                if (timeout > 0) {
+                    pendingAcceptRejectFrame.wait(timeout);
+                }
+                if (System.currentTimeMillis() >= expirationTime) {
+                    break;
+                }
+            }
+            FopEvent.EventNumber operationResult = pendingEventResult.getAndSet(null);
+            pendingAcceptRejectFrame.set(null);
+            return operationResult == FopEvent.EventNumber.E45;
+        }
+    }
+
+    /**
+     * AD frames can be unblocked as soon as an ACCEPT_RESPONSE or REJECT_RESPONSE is received.
+     *
+     * @param frame the frame to send
+     * @param expirationTime the absolute expiration time in ms since Java epoch
+     * @return true if the request was accepted, false it is was rejected or the timeout expired
+     * @throws InterruptedException in case the invoking thread is interrupted
+     */
+    private boolean transmitSyncAD(TcTransferFrame frame, long expirationTime) throws InterruptedException {
         synchronized (pendingAcceptRejectFrame) {
             pendingAcceptRejectFrame.set(frame);
             pendingAcceptRejectResult.set(null);
             transmit(frame);
-            while(pendingAcceptRejectResult.get() == null) {
-                pendingAcceptRejectFrame.wait(timeoutMillis);
-                if(System.currentTimeMillis() >= expirationTime) {
+            while (pendingAcceptRejectResult.get() == null) {
+                long timeout = expirationTime - System.currentTimeMillis();
+                if (timeout > 0) {
+                    pendingAcceptRejectFrame.wait(timeout);
+                }
+                if (System.currentTimeMillis() >= expirationTime) {
                     break;
                 }
             }
-            FopOperationStatus operationResult = pendingAcceptRejectResult.get();
+            FopOperationStatus operationResult = pendingAcceptRejectResult.getAndSet(null);
             pendingAcceptRejectFrame.set(null);
-            pendingAcceptRejectResult.set(null);
             return operationResult == FopOperationStatus.ACCEPT_RESPONSE;
         }
     }
@@ -549,13 +598,13 @@ public class FopEngine {
      */
     void accept(TcTransferFrame frame) {
         checkThreadAccess();
+        observers.forEach(o -> o.transferNotification(this, FopOperationStatus.ACCEPT_RESPONSE, frame));
         synchronized (pendingAcceptRejectFrame) {
             if(pendingAcceptRejectFrame.get() == frame) {
                 pendingAcceptRejectResult.set(FopOperationStatus.ACCEPT_RESPONSE);
                 pendingAcceptRejectFrame.notifyAll();
             }
         }
-        observers.forEach(o -> o.transferNotification(this, FopOperationStatus.ACCEPT_RESPONSE, frame));
     }
 
     /**
@@ -731,6 +780,10 @@ public class FopEngine {
     void setBdOutReadyFlag(boolean flag) {
         checkThreadAccess();
         this.bdOutReadyFlag = flag;
+        // Notify the state change: note that bdOutReadyFlag is volatile
+        synchronized (pendingAcceptRejectFrame) {
+            pendingAcceptRejectFrame.notifyAll();
+        }
     }
 
     void transmitTypeBcFrameUnlock(Object tag) {
@@ -1028,6 +1081,13 @@ public class FopEngine {
     private void reportStatus(FopState previousState, FopState currentState, FopEvent.EventNumber number) {
         FopStatus status = new FopStatus(expectedAckFrameSequenceNumber, sentQueue.size(), waitQueue.get() != null, adOutReadyFlag, bcOutReadyFlag, bdOutReadyFlag, previousState, currentState, number);
         observers.forEach(o -> o.statusReport(this, status));
+        // Unlock transmit thread if any
+        if(number == FopEvent.EventNumber.E22 || number == FopEvent.EventNumber.E45 || number == FopEvent.EventNumber.E46) {
+            synchronized (pendingAcceptRejectFrame) {
+                pendingEventResult.set(number);
+                pendingAcceptRejectFrame.notifyAll();
+            }
+        }
     }
 
     private void applyStateTransition(FopEvent event) {
