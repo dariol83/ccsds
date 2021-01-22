@@ -843,7 +843,7 @@ public class FopEngine {
     void releaseBcFrame() {
         checkThreadAccess();
         Optional<TransferFrameStatus> optBcFrame = this.sentQueue.stream().filter(o -> o.getFrame().getFrameType() == TcTransferFrame.FrameType.BC).findFirst();
-        optBcFrame.ifPresent(transferFrameStatus -> this.sentQueue.remove(transferFrameStatus));
+        optBcFrame.ifPresent(this.sentQueue::remove);
     }
 
     // ---------------------------------------------------------------------------------------------------------
