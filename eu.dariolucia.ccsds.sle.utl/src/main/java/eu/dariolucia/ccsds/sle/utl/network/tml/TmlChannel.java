@@ -91,6 +91,7 @@ public abstract class TmlChannel {
 	protected final ITmlChannelObserver observer;
 	
 	protected final Lock lock = new ReentrantLock();
+	protected final Lock writeLock = new ReentrantLock(); // To handle concurrent writing to the socket between HBT and PDU
 	private final Timer hbtScheduler = new Timer(true);
 
 	protected final int txBuffer;
@@ -487,13 +488,16 @@ public abstract class TmlChannel {
 			}
 			return;
 		}
+		this.writeLock.lock(); // Acquire
 		try {
 			os.write(HBT_MESSAGE);
 			if(LOG.isLoggable(Level.FINE)) {
 				LOG.fine(String.format("HB sent from channel %s", toString()));
 			}
 			this.statsCounter.addOut(HBT_MESSAGE.length);
+			this.writeLock.unlock(); // Release OK
 		} catch (IOException e) {
+			this.writeLock.unlock(); // Release fail
 			LOG.log(Level.SEVERE, String.format("Exception while sending HBT on channel %s", toString()), e);
 			this.lock.lock();
 			try {
@@ -635,12 +639,15 @@ public abstract class TmlChannel {
 		if(os == null) {
 			throw new TmlChannelException("Channel " + toString() + " not connected");
 		}
+		this.writeLock.lock();
 		try {
 			byte[] toSend = ByteBuffer.allocate(8 + pdu.length).put(PDU_MESSAGE_HDR).putInt(pdu.length).put(pdu).array();
 			os.write(toSend);
 			this.statsCounter.addOut(toSend.length);
 		} catch (IOException e) {
 			throw new TmlChannelException("Exception while writing on channel " + toString(), e);
+		} finally {
+			this.writeLock.unlock();
 		}
 	}
 
