@@ -30,7 +30,7 @@ import java.io.Serializable;
  * </ul>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public abstract class AbstractEncodedLength implements Serializable {
+public abstract class AbstractEncodedLength implements Serializable { // NOSONAR I won't convert this class into an interface, logically it is not an interface
 
     public AbstractEncodedLength() {
         // Nothing to do

@@ -137,7 +137,7 @@ public class DecodingResult implements Serializable {
     public static class Parameter extends Item {
         public final EncodedParameter parameterItem;
         public final DataTypeEnum actualType;
-        public final Object value;
+        public final Object value; // NOSONAR all values should be allowed to be set, not only Serializable ones. It is up to the user of the class to know this and use it properly.
         public final Instant generationTime;
 
         public Parameter(PathLocation location, String name, EncodedParameter parameterItem, DataTypeEnum actualType, Object value) {
@@ -159,7 +159,7 @@ public class DecodingResult implements Serializable {
     }
 
     public static class Array extends Item {
-        public final List<ArrayItem> arrayItems;
+        public final List<ArrayItem> arrayItems; // NOSONAR: I understand, but not the case here to think about JEE usage and disk flush
 
         public Array(PathLocation location, String name, List<ArrayItem> arrayItems) {
             super(location, name);
@@ -179,7 +179,7 @@ public class DecodingResult implements Serializable {
     }
 
     public static class ArrayItem extends Item {
-        public final List<Item> array;
+        public final List<Item> array; // NOSONAR: I understand, but not the case here to think about JEE usage and disk flush
 
         public ArrayItem(PathLocation location, String name, List<Item> array) {
             super(location, name);
@@ -195,7 +195,7 @@ public class DecodingResult implements Serializable {
     }
 
     public static class Structure extends Item {
-        public final List<Item> properties;
+        public final List<Item> properties; // NOSONAR: I understand, but not the case here to think about JEE usage and disk flush
 
         public Structure(PathLocation location, String name, List<Item> properties) {
             super(location, name);

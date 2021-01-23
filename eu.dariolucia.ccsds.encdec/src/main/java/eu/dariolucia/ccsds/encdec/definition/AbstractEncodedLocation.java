@@ -25,7 +25,7 @@ import java.io.Serializable;
  * with respect to the current position (see {@link LastRelativeLocation}).
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public abstract class AbstractEncodedLocation implements Serializable {
+public abstract class AbstractEncodedLocation implements Serializable { // NOSONAR I won't convert this class into an interface, logically it is not an interface
 
     public AbstractEncodedLocation() {
         // Nothing to do

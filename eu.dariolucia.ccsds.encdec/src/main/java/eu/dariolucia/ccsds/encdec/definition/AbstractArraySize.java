@@ -23,7 +23,7 @@ import java.io.Serializable;
  * {@link FixedArraySize} class, or can be set to be read from a specific parameter, using the {@link ReferenceArraySize}
  * class.
  */
-public abstract class AbstractArraySize implements Serializable {
+public abstract class AbstractArraySize implements Serializable {  // NOSONAR I won't convert this class into an interface, logically it is not an interface
 
     public AbstractArraySize() {
         // Nothing to do
