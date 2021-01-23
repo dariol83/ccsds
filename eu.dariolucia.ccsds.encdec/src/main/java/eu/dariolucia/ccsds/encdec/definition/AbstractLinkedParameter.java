@@ -28,7 +28,7 @@ import java.io.Serializable;
  * </ul>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public abstract class AbstractLinkedParameter implements Serializable {
+public abstract class AbstractLinkedParameter implements Serializable { // NOSONAR I won't convert this class into an interface, logically it is not an interface
 
     public AbstractLinkedParameter() {
         // Nothing to do

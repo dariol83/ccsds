@@ -287,10 +287,14 @@ public abstract class ReturnServiceInstanceProvider<T extends CommonEncDec, K ex
                 // Generate state and notify update
                 notifyStateUpdate();
             } else {
-                LOG.log(Level.SEVERE, String.format("%s: Transfer buffer sending problem", getServiceInstanceIdentifier()));
+                if(LOG.isLoggable(Level.SEVERE)) {
+                    LOG.log(Level.SEVERE, String.format("%s: Transfer buffer sending problem", getServiceInstanceIdentifier()));
+                }
             }
         } catch (Exception e) {
-            LOG.log(Level.SEVERE, String.format("%s: Exception detected when handling transfer buffer invocation", getServiceInstanceIdentifier()), e);
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("%s: Exception detected when handling transfer buffer invocation", getServiceInstanceIdentifier()), e);
+            }
         }
     }
 

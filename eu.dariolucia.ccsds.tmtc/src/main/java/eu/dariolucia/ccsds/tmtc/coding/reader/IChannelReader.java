@@ -61,7 +61,7 @@ public interface IChannelReader extends Closeable, Supplier<byte[]> {
         try {
             return readNext();
         } catch (IOException e) {
-            return null;
+            return null; // NOSONAR what the hell is this rule? null is a very specific value, with a specific meaning, I cannot replace with byte[0]
         }
     }
 }
