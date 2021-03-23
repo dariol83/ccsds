@@ -59,6 +59,14 @@
                     <outputDirectory>${project.build.directory}</outputDirectory>
                 </configuration>
             </plugin>
+            <!--
+            This module is trickier, as it relies on the Java module system to add connectors.
+            Therefore you need to do the following steps after compilation:
+            1. Copy the generated jar file inside the target/deps folder
+            2. Create a bat/sh file (depending on your OS) inside the deps folder, with a single line:
+                java -p . -m eu.dariolucia.ccsds.inspector/eu.dariolucia.ccsds.inspector.application.Launcher
+            3. Run it :)
+            -->
         </plugins>
     </build>
 
