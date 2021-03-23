@@ -104,7 +104,8 @@ Too often we give things for granted, forgetting the amazing amount of work that
 
 A special mention goes to the people that took some of their time to contribute to this project by providing improvements via Pull Requests:
 - Alessio Di Fazio, for the POM update to generate OSGi compliant bundles;
-- Javier Peña, for the .gitignore and POM update to improve the support in Eclipse IDE.  
+- Javier Peña, for the .gitignore and POM update to improve the support in Eclipse IDE;  
+- @nculijun for the approach to package UI applications into self-executable JARs.
 
 # Contributions
 If you find any issue with the provided code or you would like to see a specific feature implemented, please raise a request on GitHub.
