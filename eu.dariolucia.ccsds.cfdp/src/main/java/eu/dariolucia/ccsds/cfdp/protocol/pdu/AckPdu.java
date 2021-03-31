@@ -10,26 +10,26 @@ public class AckPdu extends FileDirectivePdu {
          * and has been terminated, or it might be one that has never been active at this
          * entity.
          */
-        Undefined,
+        UNDEFINED,
         /**
          * The transaction to which the acknowledged PDU belongs is currently
          * active at this entity.
          */
-        Active,
+        ACTIVE,
         /**
          * The transaction to which the acknowledged PDU belongs is not
          * currently active at this entity, the CFDP implementation does retain
          * transaction history, and the transaction is thereby known to be one that was
          * formerly active and has been terminated.
          */
-        Terminated,
+        TERMINATED,
         /**
          * The transaction to which the acknowledged PDU belongs is
          * not currently active at this entity, the CFDP implementation does retain
          * transaction history, and the transaction is thereby known to be one that has
          * never been active at this entity
          */
-        Unrecognized
+        UNRECOGNIZED
     }
 
     /**
@@ -61,7 +61,7 @@ public class AckPdu extends FileDirectivePdu {
         this.directiveCode = (byte) ((pdu[getHeaderLength()] & 0xF0) >>> 4);
         this.directiveSubtypeCode = (byte) (pdu[getHeaderLength()] & 0x0F);
         this.conditionCode = (byte) ((pdu[getHeaderLength() + 1] & 0xF0) >>> 4);
-        this.transactionStatus = TransactionStatus.values()[((pdu[getHeaderLength() + 1] & 0x03))];
+        this.transactionStatus = TransactionStatus.values()[(pdu[getHeaderLength() + 1] & 0x03)];
     }
 
     public byte getDirectiveCode() {

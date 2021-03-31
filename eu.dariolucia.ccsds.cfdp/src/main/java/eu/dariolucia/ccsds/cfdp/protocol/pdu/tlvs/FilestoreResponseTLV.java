@@ -5,40 +5,38 @@ public class FilestoreResponseTLV implements TLV {
     public static final int TLV_TYPE = 0x01;
 
     public enum StatusCode {
-        Successful(null, 0b0000),
-        CreateNotAllowed(ActionCode.Create, 0b0001),
-        FileDoesNotExist(ActionCode.Delete, 0b0001),
-        DeleteFileNotAllowed(ActionCode.Delete, 0b0010),
-        OldFileDoesNotExist(ActionCode.Rename, 0b0001),
-        NewFileAlreadyExists(ActionCode.Rename, 0b0010),
-        RenameNotAllowed(ActionCode.Rename, 0b0011),
-        File1DoesNotExist(ActionCode.Append, 0b0001),
-        File2DoesNotExist(ActionCode.Append, 0b0010),
-        AppendNotAllowed(ActionCode.Append, 0b0011),
-        File1NotExist(ActionCode.Replace, 0b0001),
-        File2NotExist(ActionCode.Replace, 0b0010),
-        ReplaceNotAllowed(ActionCode.Replace, 0b0011),
-        DirectoryCannotBeCreated(ActionCode.CreateDirectory, 0b0001),
-        DirectoryDoesNotExist(ActionCode.RemoveDirectory, 0b0001),
-        RemoveDirectoryNotAllowed(ActionCode.RemoveDirectory, 0b0010),
-        DenyFileNotAllowed(ActionCode.DenyFile, 0b0010),
-        DenyDirectoryNotAllowed(ActionCode.DenyDirectory, 0b0010),
-        NotPerformed(null, 0b1111);
+        SUCCESSFUL(null, 0b0000),
+        CREATE_NOT_ALLOWED(ActionCode.CREATE, 0b0001),
+        FILE_DOES_NOT_EXIST(ActionCode.DELETE, 0b0001),
+        DELETE_FILE_NOT_ALLOWED(ActionCode.DELETE, 0b0010),
+        OLD_FILE_DOES_NOT_EXIST(ActionCode.RENAME, 0b0001),
+        NEW_FILE_ALREADY_EXISTS(ActionCode.RENAME, 0b0010),
+        RENAME_NOT_ALLOWED(ActionCode.RENAME, 0b0011),
+        FILE_1_DOES_NOT_EXIST(ActionCode.APPEND, 0b0001),
+        FILE_2_DOES_NOT_EXIST(ActionCode.APPEND, 0b0010),
+        APPEND_NOT_ALLOWED(ActionCode.APPEND, 0b0011),
+        FILE_1_NOT_EXIST(ActionCode.REPLACE, 0b0001),
+        FILE_2_NOT_EXIST(ActionCode.REPLACE, 0b0010),
+        REPLACE_NOT_ALLOWED(ActionCode.REPLACE, 0b0011),
+        DIRECTORY_CANNOT_BE_CREATED(ActionCode.CREATE_DIRECTORY, 0b0001),
+        DIRECTORY_DOES_NOT_EXIST(ActionCode.REMOVE_DIRECTORY, 0b0001),
+        REMOVE_DIRECTORY_NOT_ALLOWED(ActionCode.REMOVE_DIRECTORY, 0b0010),
+        DENY_FILE_NOT_ALLOWED(ActionCode.DENY_FILE, 0b0010),
+        DENY_DIRECTORY_NOT_ALLOWED(ActionCode.DENY_DIRECTORY, 0b0010),
+        NOT_PERFORMED(null, 0b1111);
 
         private final ActionCode actionCode;
-        private final int statusCode;
+        private final int status;
 
-        StatusCode(ActionCode actionCode, int statusCode) {
+        StatusCode(ActionCode actionCode, int status) {
             this.actionCode = actionCode;
-            this.statusCode = statusCode;
+            this.status = status;
         }
 
         public static StatusCode from(ActionCode ac, int status) {
             for(StatusCode sc : values()) {
-                if(sc.actionCode == null || sc.actionCode == ac) {
-                    if(status == sc.statusCode) {
-                        return sc;
-                    }
+                if((sc.actionCode == null || sc.actionCode == ac) && status == sc.status) {
+                    return sc;
                 }
             }
             return null;

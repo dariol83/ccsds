@@ -1,5 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
+import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
+
 import java.nio.ByteBuffer;
 
 public class EndOfFilePdu extends FileDirectivePdu {
@@ -28,7 +30,7 @@ public class EndOfFilePdu extends FileDirectivePdu {
             int currentOffset = getHeaderLength() + 1 + 4 + (isLargeFile() ? 8 : 4);
             byte type = pdu[currentOffset];
             if(type != 0x06) {
-                throw new RuntimeException("Cannot parse Fault Location type in End-Of-File PDU: expected 0x06, got " + String.format("0x%02X", type));
+                throw new CfdpRuntimeException("Cannot parse Fault Location type in End-Of-File PDU: expected 0x06, got " + String.format("0x%02X", type));
             }
             int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
             this.faultLocation = readInteger(pdu, currentOffset + 2, length);

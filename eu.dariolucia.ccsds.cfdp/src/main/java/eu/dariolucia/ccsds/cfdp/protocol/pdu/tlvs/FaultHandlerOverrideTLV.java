@@ -5,11 +5,11 @@ public class FaultHandlerOverrideTLV implements TLV {
     public static final int TLV_TYPE = 0x04;
 
     public enum HandlerCode {
-        Reserved,
-        IssueNoticeOfCancellation,
-        IssueNoticeOfSuspension,
-        IgnoreError,
-        AbandonTransaction
+        RESERVED,
+        ISSUE_NOTICE_OF_CANCELLATION,
+        ISSUE_NOTICE_OF_SUSPENSION,
+        IGNORE_ERROR,
+        ABANDON_TRANSACTION
     }
 
     private final byte conditionCode;

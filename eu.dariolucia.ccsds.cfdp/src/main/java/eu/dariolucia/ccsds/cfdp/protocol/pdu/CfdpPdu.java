@@ -1,17 +1,19 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
+import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
+
 import java.nio.ByteBuffer;
 
 public class CfdpPdu {
 
     public enum PduType {
-        FileDirective,
-        FileData
+        FILE_DIRECTIVE,
+        FILE_DATA
     }
 
     public enum Direction {
-        TowardFileReceiver,
-        TowardFileSender
+        TOWARD_FILE_RECEIVER,
+        TOWARD_FILE_SENDER
     }
 
 
@@ -50,8 +52,8 @@ public class CfdpPdu {
 
     public CfdpPdu(byte[] pdu) {
         this.version = (pdu[0] & 0xE0) >>> 5;
-        this.type = ((pdu[0] & 0x10) >>> 4) == 0 ? PduType.FileDirective : PduType.FileData;
-        this.direction = ((pdu[0] & 0x08) >>> 3) == 0 ? Direction.TowardFileReceiver : Direction.TowardFileSender;
+        this.type = ((pdu[0] & 0x10) >>> 4) == 0 ? PduType.FILE_DIRECTIVE : PduType.FILE_DATA;
+        this.direction = ((pdu[0] & 0x08) >>> 3) == 0 ? Direction.TOWARD_FILE_RECEIVER : Direction.TOWARD_FILE_SENDER;
         this.unacknowledged = ((pdu[0] & 0x04) >>> 2) == 0;
         this.crcPresent = ((pdu[0] & 0x02) >>> 1) == 1;
         this.largeFile = (pdu[0] & 0x01) == 1;
@@ -74,7 +76,7 @@ public class CfdpPdu {
 
     protected final Long readInteger(byte[] data, int offset, int size) {
         if(size > 8) {
-            throw new RuntimeException("Cannot read an unsigned integer larger than 8, actual is " + size);
+            throw new CfdpRuntimeException("Cannot read an unsigned integer larger than 8, actual is " + size);
         }
         if(size == 0) {
             return null;

@@ -1,5 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
+import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.*;
 
 import java.nio.ByteBuffer;
@@ -55,50 +56,66 @@ public class MetadataPdu extends FileDirectivePdu {
             // TLV: Get the current tag
             byte type = pdu[currentOffset];
             switch(type) {
-                case FilestoreRequestTLV.TLV_TYPE: {
-                    int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
-                    FilestoreRequestTLV fr = new FilestoreRequestTLV(pdu, currentOffset + 2);
-                    if(fr.getLength() != length) {
-                        throw new RuntimeException("Length mismatch when parsing FilestoreRequest in Metadata PDU: read length is " + length + ", but parsed " + fr.getLength());
-                    }
-                    options.add(fr);
-                    currentOffset += 2 + length;
-                }
-                case MessageToUserTLV.TLV_TYPE: {
-                    int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
-                    MessageToUserTLV fr = new MessageToUserTLV(pdu, currentOffset + 2, length);
-                    if(fr.getLength() != length) {
-                        throw new RuntimeException("Length mismatch when parsing MessageToUser in Metadata PDU: read length is " + length + ", but parsed " + fr.getLength());
-                    }
-                    options.add(fr);
-                    currentOffset += 2 + length;
-                }
+                case FilestoreRequestTLV.TLV_TYPE:
+                    currentOffset = parseFilestoreRequest(pdu, currentOffset);
                 break;
-                case FaultHandlerOverrideTLV.TLV_TYPE: {
-                    int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
-                    FaultHandlerOverrideTLV fr = new FaultHandlerOverrideTLV(pdu, currentOffset + 2);
-                    if(fr.getLength() != length) {
-                        throw new RuntimeException("Length mismatch when parsing FaultHandlerOverride in Metadata PDU: read length is " + length + ", but parsed " + fr.getLength());
-                    }
-                    options.add(fr);
-                    currentOffset += 2 + length;
-                }
+                case MessageToUserTLV.TLV_TYPE:
+                    currentOffset = parseMessageToUser(pdu, currentOffset);
                 break;
-                case FlowLabelTLV.TLV_TYPE: {
-                    int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
-                    FlowLabelTLV fr = new FlowLabelTLV(pdu, currentOffset + 2, length);
-                    if(fr.getLength() != length) {
-                        throw new RuntimeException("Length mismatch when parsing FlowLabel in Metadata PDU: read length is " + length + ", but parsed " + fr.getLength());
-                    }
-                    options.add(fr);
-                    currentOffset += 2 + length;
-                }
+                case FaultHandlerOverrideTLV.TLV_TYPE:
+                    currentOffset = parseFaultHandlerOverride(pdu, currentOffset);
                 break;
-                default: {
-                    throw new RuntimeException("TLV type not supported in Metadata PDU: " + String.format("0x%02X", type));
-                }
+                case FlowLabelTLV.TLV_TYPE:
+                    currentOffset = parseFlowLabel(pdu, currentOffset);
+                break;
+                default:
+                    throw new CfdpRuntimeException("TLV type not supported in Metadata PDU: " + String.format("0x%02X", type));
             }
         }
+    }
+
+    private int parseFlowLabel(byte[] pdu, int currentOffset) {
+        int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
+        FlowLabelTLV fr = new FlowLabelTLV(pdu, currentOffset + 2, length);
+        if(fr.getLength() != length) {
+            throw new CfdpRuntimeException(String.format("Length mismatch when parsing FlowLabel in Metadata PDU: read length is %d, but parsed %d", length, fr.getLength()));
+        }
+        options.add(fr);
+        currentOffset += 2 + length;
+        return currentOffset;
+    }
+
+    private int parseFaultHandlerOverride(byte[] pdu, int currentOffset) {
+        int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
+        FaultHandlerOverrideTLV fr = new FaultHandlerOverrideTLV(pdu, currentOffset + 2);
+        if(fr.getLength() != length) {
+            throw new CfdpRuntimeException(String.format("Length mismatch when parsing FaultHandlerOverride in Metadata PDU: read length is %d, but parsed %d", length, fr.getLength()));
+        }
+        options.add(fr);
+        currentOffset += 2 + length;
+        return currentOffset;
+    }
+
+    private int parseMessageToUser(byte[] pdu, int currentOffset) {
+        int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
+        MessageToUserTLV fr = new MessageToUserTLV(pdu, currentOffset + 2, length);
+        if(fr.getLength() != length) {
+            throw new CfdpRuntimeException(String.format("Length mismatch when parsing MessageToUser in Metadata PDU: read length is %d, but parsed %d", length, fr.getLength()));
+        }
+        options.add(fr);
+        currentOffset += 2 + length;
+        return currentOffset;
+    }
+
+    private int parseFilestoreRequest(byte[] pdu, int currentOffset) {
+        int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
+        FilestoreRequestTLV fr = new FilestoreRequestTLV(pdu, currentOffset + 2);
+        if(fr.getLength() != length) {
+            throw new CfdpRuntimeException(String.format("Length mismatch when parsing FilestoreRequest in Metadata PDU: read length is %d, but parsed %d", length, fr.getLength()));
+        }
+        options.add(fr);
+        currentOffset += 2 + length;
+        return currentOffset;
     }
 
     public boolean isClosureRequested() {

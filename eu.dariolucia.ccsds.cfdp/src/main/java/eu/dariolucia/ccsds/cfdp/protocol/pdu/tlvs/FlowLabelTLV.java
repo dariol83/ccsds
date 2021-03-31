@@ -19,7 +19,7 @@ public class FlowLabelTLV implements TLV {
         // Starting from offset, assume that there is an encoded message with length len
         this.data = len > 0 ? Arrays.copyOfRange(pdu, offset, len) : null;
         // Encoded length
-        this.encodedLength = this.data == null ? 0 : this.data.length;;
+        this.encodedLength = this.data == null ? 0 : this.data.length;
     }
 
     public byte[] getData() {

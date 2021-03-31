@@ -1,5 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
+import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreResponseTLV;
 
 import java.util.Collections;
@@ -9,10 +10,10 @@ import java.util.List;
 public class FinishedPdu extends FileDirectivePdu {
 
     public enum FileStatus {
-        DiscardedDeliberatly,
-        DiscardedByFilestore,
-        RetainedInFilestore,
-        StatusUnreported
+        DISCARDED_DELIBERATLY,
+        DISCARDED_BY_FILESTORE,
+        RETAINED_IN_FILESTORE,
+        STATUS_UNREPORTED
     }
 
     private final byte conditionCode;
@@ -48,7 +49,7 @@ public class FinishedPdu extends FileDirectivePdu {
                 int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
                 FilestoreResponseTLV fr = new FilestoreResponseTLV(pdu, currentOffset + 2);
                 if(fr.getLength() != length) {
-                    throw new RuntimeException("Length mismatch when parsing FilestoreResponse in Finished PDU: read length is " + length + ", but parsed " + fr.getLength());
+                    throw new CfdpRuntimeException("Length mismatch when parsing FilestoreResponse in Finished PDU: read length is " + length + ", but parsed " + fr.getLength());
                 }
                 filestoreResponses.add(fr);
                 currentOffset += 2 + length;
@@ -65,8 +66,8 @@ public class FinishedPdu extends FileDirectivePdu {
             // Otherwise, entity ID in the TLV is the ID of the entity at which transaction cancellation was initiated.
             // The Type of the Entity ID TLV shall be 06 hex; the Value shall be an Entity ID
             byte type = pdu[currentOffset];
-            if(type != 0x06) {
-                throw new RuntimeException("Cannot parse Fault Location type in Finished PDU: expected 0x06, got " + String.format("0x%02X", type));
+            if(type != 0x06) { // TODO: use TLV
+                throw new CfdpRuntimeException("Cannot parse Fault Location type in Finished PDU: expected 0x06, got " + String.format("0x%02X", type));
             }
             int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
             this.faultLocation = readInteger(pdu, currentOffset + 2, length);
