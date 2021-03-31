@@ -1,18 +1,8 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
-public class FilestoreResponse {
+public class FilestoreResponseTLV implements TLV {
 
-    public enum ActionCode {
-        Create,
-        Delete,
-        Rename,
-        Append,
-        Replace,
-        CreateDirectory,
-        RemoveDirectory,
-        DenyFile,
-        DenyDirectory
-    }
+    public static final int TLV_TYPE = 0x01;
 
     public enum StatusCode {
         Successful(null, 0b0000),
@@ -67,7 +57,7 @@ public class FilestoreResponse {
 
     private final int encodedLength;
 
-    public FilestoreResponse(ActionCode actionCode, StatusCode statusCode, String firstFileName, String secondFileName, String filestoreMessage) {
+    public FilestoreResponseTLV(ActionCode actionCode, StatusCode statusCode, String firstFileName, String secondFileName, String filestoreMessage) {
         this.actionCode = actionCode;
         this.statusCode = statusCode;
         this.firstFileName = firstFileName;
@@ -77,7 +67,7 @@ public class FilestoreResponse {
                 (filestoreMessage == null ? 1 : 1 + filestoreMessage.length());
     }
 
-    public FilestoreResponse(byte[] data, int offset) {
+    public FilestoreResponseTLV(byte[] data, int offset) {
         int originalOffset = offset;
         // Starting from offset, assume that there is an encoded Filestore Response TLV Contents: Table 5-17
         this.actionCode = ActionCode.values()[(data[offset] & 0xF0) >>> 4];
@@ -134,13 +124,24 @@ public class FilestoreResponse {
         return filestoreMessage;
     }
 
-    public int getEncodedLength() {
+    @Override
+    public int getType() {
+        return TLV_TYPE;
+    }
+
+    @Override
+    public int getLength() {
         return encodedLength;
     }
 
     @Override
+    public byte[] encode(boolean withTypeLength) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
     public String toString() {
-        return "FilestoreResponse{" +
+        return "FilestoreResponseTLV{" +
                 "actionCode=" + actionCode +
                 ", statusCode=" + statusCode +
                 ", firstFileName='" + firstFileName + '\'' +

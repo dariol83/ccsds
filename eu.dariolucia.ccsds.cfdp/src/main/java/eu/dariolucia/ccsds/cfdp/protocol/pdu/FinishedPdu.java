@@ -1,6 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreResponse;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreResponseTLV;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -29,7 +29,7 @@ public class FinishedPdu extends FileDirectivePdu {
      */
     private final FileStatus fileStatus;
 
-    private final List<FilestoreResponse> filestoreResponses = new LinkedList<>();
+    private final List<FilestoreResponseTLV> filestoreResponses = new LinkedList<>();
 
     private final Long faultLocation;
 
@@ -46,9 +46,9 @@ public class FinishedPdu extends FileDirectivePdu {
             byte type = pdu[currentOffset];
             if(type == 0x01) {
                 int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
-                FilestoreResponse fr = new FilestoreResponse(pdu, currentOffset + 2);
-                if(fr.getEncodedLength() != length) {
-                    throw new RuntimeException("Length mismatch when parsing FilestoreResponse in Finished PDU: read length is " + length + ", but parsed " + fr.getEncodedLength());
+                FilestoreResponseTLV fr = new FilestoreResponseTLV(pdu, currentOffset + 2);
+                if(fr.getLength() != length) {
+                    throw new RuntimeException("Length mismatch when parsing FilestoreResponse in Finished PDU: read length is " + length + ", but parsed " + fr.getLength());
                 }
                 filestoreResponses.add(fr);
                 currentOffset += 2 + length;
@@ -85,7 +85,7 @@ public class FinishedPdu extends FileDirectivePdu {
         return fileStatus;
     }
 
-    public List<FilestoreResponse> getFilestoreResponses() {
+    public List<FilestoreResponseTLV> getFilestoreResponses() {
         return Collections.unmodifiableList(filestoreResponses);
     }
 
