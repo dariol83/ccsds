@@ -1,6 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
 import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.EntityIdTLV;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreResponseTLV;
 
 import java.util.Collections;
@@ -32,7 +33,7 @@ public class FinishedPdu extends FileDirectivePdu {
 
     private final List<FilestoreResponseTLV> filestoreResponses = new LinkedList<>();
 
-    private final Long faultLocation;
+    private final EntityIdTLV faultLocation;
 
     public FinishedPdu(byte[] pdu) {
         super(pdu);
@@ -66,11 +67,11 @@ public class FinishedPdu extends FileDirectivePdu {
             // Otherwise, entity ID in the TLV is the ID of the entity at which transaction cancellation was initiated.
             // The Type of the Entity ID TLV shall be 06 hex; the Value shall be an Entity ID
             byte type = pdu[currentOffset];
-            if(type != 0x06) { // TODO: use TLV
-                throw new CfdpRuntimeException("Cannot parse Fault Location type in Finished PDU: expected 0x06, got " + String.format("0x%02X", type));
+            if(type != EntityIdTLV.TLV_TYPE) {
+                throw new CfdpRuntimeException("Cannot parse Fault Location type in Finished PDU: expected " + EntityIdTLV.TLV_TYPE + ", got " + String.format("0x%02X", type));
             }
             int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
-            this.faultLocation = readInteger(pdu, currentOffset + 2, length);
+            this.faultLocation = new EntityIdTLV(pdu, currentOffset + 2, length);
         }
     }
 
@@ -90,7 +91,7 @@ public class FinishedPdu extends FileDirectivePdu {
         return Collections.unmodifiableList(filestoreResponses);
     }
 
-    public Long getFaultLocation() {
+    public EntityIdTLV getFaultLocation() {
         return faultLocation;
     }
 

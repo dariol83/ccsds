@@ -1,6 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
-import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
+import eu.dariolucia.ccsds.cfdp.common.IntegerUtil;
 
 import java.nio.ByteBuffer;
 
@@ -63,30 +63,15 @@ public class CfdpPdu {
         this.segmentMetadata = ((pdu[3] & 0x08) >>> 3) == 1;
         this.transactionSequenceNumberLength = (pdu[3] & 0x07) + 1;
         // Let's parse the source entity ID
-        this.sourceEntityId = readInteger(pdu, 4, entityIdLength);
+        this.sourceEntityId = IntegerUtil.readInteger(pdu, 4, entityIdLength);
         // Let's parse the transaction sequence number
-        this.transactionSequenceNumber = readInteger(pdu, 4 + entityIdLength, transactionSequenceNumberLength);
+        this.transactionSequenceNumber = IntegerUtil.readInteger(pdu, 4 + entityIdLength, transactionSequenceNumberLength);
         // Let's parse the destination entity ID
-        this.destinationEntityId = readInteger(pdu, 4 + entityIdLength + transactionSequenceNumberLength, entityIdLength);
+        this.destinationEntityId = IntegerUtil.readInteger(pdu, 4 + entityIdLength + transactionSequenceNumberLength, entityIdLength);
         // Store the header length
         this.headerLength = 4 + 2 * entityIdLength + transactionSequenceNumberLength;
         // Store the full PDU here
         this.pdu = pdu;
-    }
-
-    protected final Long readInteger(byte[] data, int offset, int size) {
-        if(size > 8) {
-            throw new CfdpRuntimeException("Cannot read an unsigned integer larger than 8, actual is " + size);
-        }
-        if(size == 0) {
-            return null;
-        }
-        long tempAccumulator = 0;
-        for(int i = 0; i < size; ++i) {
-            tempAccumulator |= Byte.toUnsignedLong(data[offset + i]);
-            tempAccumulator <<= 8;
-        }
-        return tempAccumulator;
     }
 
     public int getVersion() {
