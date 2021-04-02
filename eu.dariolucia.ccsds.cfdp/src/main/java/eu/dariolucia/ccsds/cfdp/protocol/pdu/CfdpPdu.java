@@ -23,7 +23,7 @@ public class CfdpPdu {
 
     private final Direction direction;
 
-    private final boolean unacknowledged;
+    private final boolean acknowledged;
 
     private final boolean crcPresent;
 
@@ -54,7 +54,7 @@ public class CfdpPdu {
         this.version = (pdu[0] & 0xE0) >>> 5;
         this.type = ((pdu[0] & 0x10) >>> 4) == 0 ? PduType.FILE_DIRECTIVE : PduType.FILE_DATA;
         this.direction = ((pdu[0] & 0x08) >>> 3) == 0 ? Direction.TOWARD_FILE_RECEIVER : Direction.TOWARD_FILE_SENDER;
-        this.unacknowledged = ((pdu[0] & 0x04) >>> 2) == 0;
+        this.acknowledged = ((pdu[0] & 0x04) >>> 2) == 1;
         this.crcPresent = ((pdu[0] & 0x02) >>> 1) == 1;
         this.largeFile = (pdu[0] & 0x01) == 1;
         this.dataFieldLength = Short.toUnsignedInt(ByteBuffer.wrap(pdu, 1, pdu.length - 1).getShort());
@@ -90,8 +90,8 @@ public class CfdpPdu {
         return direction;
     }
 
-    public boolean isUnacknowledged() {
-        return unacknowledged;
+    public boolean isAcknowledged() {
+        return acknowledged;
     }
 
     public boolean isCrcPresent() {
@@ -144,7 +144,7 @@ public class CfdpPdu {
                 "version=" + version +
                 ", type=" + type +
                 ", direction=" + direction +
-                ", unacknowledged=" + unacknowledged +
+                ", unacknowledged=" + acknowledged +
                 ", crcPresent=" + crcPresent +
                 ", largeFile=" + largeFile +
                 ", dataFieldLength=" + dataFieldLength +
