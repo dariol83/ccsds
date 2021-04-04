@@ -37,8 +37,8 @@ public class IntegerUtil {
         }
         long tempAccumulator = 0;
         for(int i = 0; i < size; ++i) {
-            tempAccumulator |= Byte.toUnsignedLong(data[offset + i]);
             tempAccumulator <<= 8;
+            tempAccumulator |= Byte.toUnsignedLong(data[offset + i]);
         }
         return tempAccumulator;
     }

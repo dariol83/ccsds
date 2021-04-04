@@ -1,6 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.common.IntegerUtil;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.EndOfFilePdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.EntityIdTLV;
@@ -17,6 +18,10 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
     private long fileSize;
 
     private EntityIdTLV faultLocation;
+
+    public EndOfFilePduBuilder() {
+        setType(CfdpPdu.PduType.FILE_DIRECTIVE);
+    }
 
     public EndOfFilePduBuilder setConditionCode(byte conditionCode, EntityIdTLV faultLocation) {
         this.conditionCode = conditionCode;

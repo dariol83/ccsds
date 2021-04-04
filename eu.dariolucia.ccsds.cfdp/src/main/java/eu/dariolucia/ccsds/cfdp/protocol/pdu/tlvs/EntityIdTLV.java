@@ -2,6 +2,8 @@ package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
 import eu.dariolucia.ccsds.cfdp.common.IntegerUtil;
 
+import java.nio.ByteBuffer;
+
 public class EntityIdTLV implements TLV {
 
     public static final int TLV_TYPE = 0x06;
@@ -41,7 +43,17 @@ public class EntityIdTLV implements TLV {
 
     @Override
     public byte[] encode(boolean withTypeLength) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(withTypeLength) {
+            ByteBuffer bb = ByteBuffer.allocate(2 + this.encodedLength);
+            bb.put((byte) 0x06);
+            bb.put((byte) (this.encodedLength & 0xFF));
+            if(encodedLength > 0) {
+                bb.put(IntegerUtil.encodeInteger(entityId, encodedLength));
+            }
+            return bb.array();
+        } else {
+            return IntegerUtil.encodeInteger(entityId, encodedLength);
+        }
     }
 
     @Override

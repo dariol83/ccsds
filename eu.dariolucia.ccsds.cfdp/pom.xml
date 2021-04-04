@@ -32,4 +32,11 @@
     <name>CCSDS File Delivery Protocol - CFDP</name>
     <description>Library implementing a CCSDS File Delivery Protocol engine, according to CCSDS 727.0-B-5</description>
 
+    <dependencies>
+        <dependency>
+            <groupId>eu.dariolucia.ccsds</groupId>
+            <artifactId>eu.dariolucia.ccsds.tmtc</artifactId>
+            <version>${parent.version}</version>
+        </dependency>
+    </dependencies>
 </project>
