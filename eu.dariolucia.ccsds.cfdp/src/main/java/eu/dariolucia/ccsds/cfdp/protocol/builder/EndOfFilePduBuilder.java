@@ -1,6 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
-import eu.dariolucia.ccsds.cfdp.common.IntegerUtil;
+import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.EndOfFilePdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
@@ -9,6 +9,9 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.EntityIdTLV;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+/**
+ * Builder class for {@link EndOfFilePdu} objects.
+ */
 public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFilePduBuilder> {
 
     private byte conditionCode;
@@ -19,21 +22,51 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
 
     private EntityIdTLV faultLocation;
 
+    /**
+     * Construct an empty builder for this file directive PDU.
+     */
     public EndOfFilePduBuilder() {
         setType(CfdpPdu.PduType.FILE_DIRECTIVE);
     }
 
+    /**
+     * Condition code of the acknowledged PDU, as per {@link eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu} CC_ constants.
+     * The fault location is ignored if condition code is 'No error'. Otherwise, entity ID in the
+     * TLV is the ID of the entity at which transaction cancellation was initiated.
+     * @param conditionCode the condition code
+     * @param faultLocation the fault location
+     * @return this
+     */
     public EndOfFilePduBuilder setConditionCode(byte conditionCode, EntityIdTLV faultLocation) {
         this.conditionCode = conditionCode;
-        this.faultLocation = faultLocation;
+        if(conditionCode != FileDirectivePdu.CC_NOERROR) {
+            this.faultLocation = faultLocation;
+        } else {
+            this.faultLocation = null;
+        }
         return this;
     }
 
+    /**
+     * The checksum shall be computed over the file data and inserted into the EOF (No
+     * error) PDU by the sending entity.
+     *
+     * @param fileChecksum the file checksum
+     * @return this
+     */
     public EndOfFilePduBuilder setFileChecksum(int fileChecksum) {
         this.fileChecksum = fileChecksum;
         return this;
     }
 
+    /**
+     * In octets. This value shall be the total number of file data octets
+     * transmitted by the sender, regardless of the condition code (i.e., it
+     * shall be supplied even if the condition code is other than 'No error').
+     *
+     * @param fileSize the file size
+     * @return this
+     */
     public EndOfFilePduBuilder setFileSize(long fileSize) {
         this.fileSize = fileSize;
         return this;
@@ -46,10 +79,10 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
         bos.write((this.conditionCode << 4) & 0xFF);
         totalLength += 1;
         // Checksum (4 bytes)
-        bos.write(IntegerUtil.encodeInteger(this.fileChecksum, Integer.BYTES));
+        bos.write(BytesUtil.encodeInteger(this.fileChecksum, Integer.BYTES));
         totalLength += 4;
         // File size (4 or 8 bytes, check isLargeFile())
-        bos.write(IntegerUtil.encodeInteger(this.fileSize, isLargeFile() ? 8 : 4));
+        bos.write(BytesUtil.encodeInteger(this.fileSize, isLargeFile() ? 8 : 4));
         totalLength += isLargeFile() ? 8 : 4;
         // Fault location
         if(this.conditionCode != FileDirectivePdu.CC_NOERROR) {

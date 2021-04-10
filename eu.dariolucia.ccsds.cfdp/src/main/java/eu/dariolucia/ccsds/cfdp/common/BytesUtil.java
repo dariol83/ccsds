@@ -1,8 +1,11 @@
 package eu.dariolucia.ccsds.cfdp.common;
 
-public class IntegerUtil {
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
-    private IntegerUtil() {
+public class BytesUtil {
+
+    private BytesUtil() {
         // Nothing here
     }
 
@@ -75,5 +78,42 @@ public class IntegerUtil {
             maskSelector <<= 8;
         }
         return toReturn;
+    }
+
+    /**
+     * Write a LV string to a byte buffer: it is assumed that the byte buffer can accomodate
+     * the length of the string (ISO_8859_1 encoded) plus the length byte.
+     *
+     * @param bb the byte buffer output
+     * @param toWrite the string to write
+     */
+    public static void writeLVString(ByteBuffer bb, String toWrite) {
+        if(toWrite != null && toWrite.length() > 255) {
+            throw new IllegalArgumentException("String length is greater than 255, cannot write LV string: " + toWrite);
+        }
+        if(toWrite != null && toWrite.length() > 0) {
+            bb.put((byte) (toWrite.length() & 0xFF));
+            bb.put(toWrite.getBytes(StandardCharsets.ISO_8859_1));
+        } else {
+            bb.put((byte) 0);
+        }
+    }
+
+    /**
+     * Read a LV string from the provided byte array starting at the specified offset.
+     * It returns an empty string, in case the string length (L) is 0.
+     *
+     * @param data the byte array to read from
+     * @param offset the offset
+     * @return the decoded string (empty, 0-length string if the L value is 0x00)
+     */
+    public static String readLVString(byte[] data, int offset) {
+        int len = Byte.toUnsignedInt(data[offset]);
+        offset += 1;
+        if(len > 0) {
+            return new String(data, offset, len, StandardCharsets.ISO_8859_1);
+        } else {
+            return "";
+        }
     }
 }

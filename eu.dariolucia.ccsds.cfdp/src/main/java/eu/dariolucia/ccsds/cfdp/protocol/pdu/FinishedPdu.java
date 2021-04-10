@@ -8,6 +8,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Finished PDU - CCSDS 727.0-B-5, 5.2.3
+ */
 public class FinishedPdu extends FileDirectivePdu {
 
     public enum FileStatus {
@@ -17,6 +20,9 @@ public class FinishedPdu extends FileDirectivePdu {
         STATUS_UNREPORTED
     }
 
+    /**
+     * Condition code.
+     */
     private final byte conditionCode;
 
     /**
@@ -31,8 +37,17 @@ public class FinishedPdu extends FileDirectivePdu {
      */
     private final FileStatus fileStatus;
 
+    /**
+     * A filestore response TLV must be included for each filestore request TLV of the
+     * Metadata PDU.
+     */
     private final List<FilestoreResponseTLV> filestoreResponses = new LinkedList<>();
 
+    /**
+     * Omitted if condition code is 'No error' or 'Unsupported checksum type'.
+     * Otherwise, entity ID in the TLV is the ID of the entity at which transaction
+     * cancellation was initiated.
+     */
     private final EntityIdTLV faultLocation;
 
     public FinishedPdu(byte[] pdu) {

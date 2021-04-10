@@ -1,6 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
-import eu.dariolucia.ccsds.cfdp.common.IntegerUtil;
+import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 
 import java.nio.ByteBuffer;
 
@@ -22,7 +22,7 @@ public class EntityIdTLV implements TLV {
 
     public EntityIdTLV(byte[] pdu, int offset, int octetLength) {
         // Starting from offset, assume that there is an encoded message with length len
-        this.entityId = IntegerUtil.readInteger(pdu, offset, octetLength);
+        this.entityId = BytesUtil.readInteger(pdu, offset, octetLength);
         // Encoded length
         this.encodedLength = octetLength;
     }
@@ -45,14 +45,14 @@ public class EntityIdTLV implements TLV {
     public byte[] encode(boolean withTypeLength) {
         if(withTypeLength) {
             ByteBuffer bb = ByteBuffer.allocate(2 + this.encodedLength);
-            bb.put((byte) 0x06);
+            bb.put((byte) TLV_TYPE);
             bb.put((byte) (this.encodedLength & 0xFF));
             if(encodedLength > 0) {
-                bb.put(IntegerUtil.encodeInteger(entityId, encodedLength));
+                bb.put(BytesUtil.encodeInteger(entityId, encodedLength));
             }
             return bb.array();
         } else {
-            return IntegerUtil.encodeInteger(entityId, encodedLength);
+            return BytesUtil.encodeInteger(entityId, encodedLength);
         }
     }
 

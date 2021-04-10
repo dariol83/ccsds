@@ -1,9 +1,12 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
-import eu.dariolucia.ccsds.cfdp.common.IntegerUtil;
+import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 
 import java.util.Arrays;
 
+/**
+ * Finished PDU - CCSDS 727.0-B-5, 5.3
+ */
 public class FileDataPdu extends CfdpPdu {
 
     public static final byte RCS_NO_START_NO_END = 0x00;
@@ -12,14 +15,32 @@ public class FileDataPdu extends CfdpPdu {
     public static final byte RCS_START_END = 0x03;
     public static final byte RCS_NOT_PRESENT = (byte) 0xFF; // not present in the standard, added by this implementation
 
+    /**
+     * Present if and only if the value of the segment metadata flag in the PDU header is 1.
+     */
     private final byte recordContinuationState;
 
+    /**
+     * Present if and only if the value of the segment metadata flag in the PDU header is 1.
+     * 0 to 63
+     */
     private final int segmentMetadataLength;
 
+    /**
+     * Present if and only if the value of the segment metadata flag in the PDU header is 1 and the
+     * segment metadata length is greater than zero.
+     * Values are application-specific. Variable length, from 0 to 504.
+     */
     private final byte[] segmentMetadata;
 
+    /**
+     * FSS, in octets.
+     */
     private final long offset;
 
+    /**
+     * File data.
+     */
     private final byte[] fileData;
 
     public FileDataPdu(byte[] pdu) {
@@ -41,7 +62,7 @@ public class FileDataPdu extends CfdpPdu {
             this.segmentMetadata = null;
         }
         //
-        this.offset = IntegerUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
+        this.offset = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
         currentOffset += isLargeFile() ? 8 : 4;
         this.fileData = Arrays.copyOfRange(pdu, currentOffset, pdu.length); // This could be optimized only by storing the start of the file data
     }

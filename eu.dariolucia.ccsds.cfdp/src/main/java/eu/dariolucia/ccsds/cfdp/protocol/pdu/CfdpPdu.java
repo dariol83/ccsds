@@ -1,6 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
-import eu.dariolucia.ccsds.cfdp.common.IntegerUtil;
+import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 
 import java.nio.ByteBuffer;
 
@@ -63,11 +63,11 @@ public class CfdpPdu {
         this.segmentMetadata = ((pdu[3] & 0x08) >>> 3) == 1;
         this.transactionSequenceNumberLength = (pdu[3] & 0x07) + 1;
         // Let's parse the source entity ID
-        this.sourceEntityId = IntegerUtil.readInteger(pdu, 4, entityIdLength);
+        this.sourceEntityId = BytesUtil.readInteger(pdu, 4, entityIdLength);
         // Let's parse the transaction sequence number
-        this.transactionSequenceNumber = IntegerUtil.readInteger(pdu, 4 + entityIdLength, transactionSequenceNumberLength);
+        this.transactionSequenceNumber = BytesUtil.readInteger(pdu, 4 + entityIdLength, transactionSequenceNumberLength);
         // Let's parse the destination entity ID
-        this.destinationEntityId = IntegerUtil.readInteger(pdu, 4 + entityIdLength + transactionSequenceNumberLength, entityIdLength);
+        this.destinationEntityId = BytesUtil.readInteger(pdu, 4 + entityIdLength + transactionSequenceNumberLength, entityIdLength);
         // Store the header length
         this.headerLength = 4 + 2 * entityIdLength + transactionSequenceNumberLength;
         // Store the full PDU here

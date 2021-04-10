@@ -1,5 +1,9 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
+import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
+
+import java.nio.ByteBuffer;
+
 public class FilestoreResponseTLV implements TLV {
 
     public static final int TLV_TYPE = 0x01;
@@ -72,32 +76,14 @@ public class FilestoreResponseTLV implements TLV {
         this.statusCode = StatusCode.from(this.actionCode, data[offset] & 0x0F);
         offset += 1;
         // First file name
-        int len = Byte.toUnsignedInt(data[offset]);
-        offset += 1;
-        if(len > 0) {
-            this.firstFileName = new String(data, offset, len);
-            offset += len;
-        } else {
-            this.firstFileName = null;
-        }
+        this.firstFileName = BytesUtil.readLVString(data, offset);
+        offset += this.firstFileName.length();
         // Second file name
-        len = Byte.toUnsignedInt(data[offset]);
-        offset += 1;
-        if(len > 0) {
-            this.secondFileName = new String(data, offset, len);
-            offset += len;
-        } else {
-            this.secondFileName = null;
-        }
+        this.secondFileName = BytesUtil.readLVString(data, offset);
+        offset += this.secondFileName.length();
         // Filestore message
-        len = Byte.toUnsignedInt(data[offset]);
-        offset += 1;
-        if(len > 0) {
-            this.filestoreMessage = new String(data, offset, len);
-            offset += len;
-        } else {
-            this.filestoreMessage = null;
-        }
+        this.filestoreMessage = BytesUtil.readLVString(data, offset);
+        offset += this.filestoreMessage.length();
         // Encoded length
         this.encodedLength = offset - originalOffset;
     }
@@ -134,7 +120,27 @@ public class FilestoreResponseTLV implements TLV {
 
     @Override
     public byte[] encode(boolean withTypeLength) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        ByteBuffer bb;
+        if(withTypeLength) {
+            bb = ByteBuffer.allocate(2 + this.encodedLength);
+            bb.put((byte) TLV_TYPE);
+            bb.put((byte) (this.encodedLength & 0xFF));
+        } else {
+            bb = ByteBuffer.allocate(this.encodedLength);
+        }
+        if(this.encodedLength > 0) {
+            // Action code and status code
+            byte first = (byte) ((this.actionCode.ordinal() << 4) & 0xF0);
+            first |= this.statusCode.status & 0x0F;
+            bb.put(first);
+            // First string
+            BytesUtil.writeLVString(bb, this.firstFileName);
+            // Second string
+            BytesUtil.writeLVString(bb, this.secondFileName);
+            // Filestore message
+            BytesUtil.writeLVString(bb, this.filestoreMessage);
+        }
+        return bb.array();
     }
 
     @Override

@@ -5,14 +5,34 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.EntityIdTLV;
 
 import java.nio.ByteBuffer;
 
+/**
+ * End of File PDU - CCSDS 727.0-B-5, 5.2.2
+ */
 public class EndOfFilePdu extends FileDirectivePdu {
 
+    /**
+     * Condition code.
+     */
     private final byte conditionCode;
 
+    /**
+     * The checksum shall be computed over the file data and inserted into the EOF (No
+     * error) PDU by the sending entity.
+     */
     private final int fileChecksum;
 
+    /**
+     * In octets. This value shall be the total number of file data octets
+     * transmitted by the sender, regardless of the condition code (i.e., it
+     * shall be supplied even if the condition code is other than 'No error').
+     */
     private final long fileSize;
 
+    /**
+     * Omitted if condition code is 'No error'. Otherwise, entity ID in the
+     * TLV is the ID of the entity at which transaction cancellation was
+     * initiated.
+     */
     private final EntityIdTLV faultLocation;
 
     public EndOfFilePdu(byte[] pdu) {

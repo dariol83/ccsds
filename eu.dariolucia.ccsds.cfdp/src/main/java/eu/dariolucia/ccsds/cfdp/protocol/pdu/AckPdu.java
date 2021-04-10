@@ -1,5 +1,8 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
+/**
+ * Ack PDU - CCSDS 727.0-B-5, 5.2.4
+ */
 public class AckPdu extends FileDirectivePdu {
 
     public enum TransactionStatus {

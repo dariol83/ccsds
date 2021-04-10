@@ -1,6 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
-import eu.dariolucia.ccsds.cfdp.common.IntegerUtil;
+import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -36,14 +36,14 @@ public class NakPdu extends FileDirectivePdu {
         super(pdu);
         // PDU-specific parsing
         int currentOffset = getHeaderLength();
-        this.startOfScope = IntegerUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
+        this.startOfScope = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
         currentOffset += isLargeFile() ? 8 : 4;
-        this.endOfScope = IntegerUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
+        this.endOfScope = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
         currentOffset += isLargeFile() ? 8 : 4;
         while (currentOffset < pdu.length) {
-            long startOffset = IntegerUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
+            long startOffset = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
             currentOffset += isLargeFile() ? 8 : 4;
-            long endOffset = IntegerUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
+            long endOffset = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
             currentOffset += isLargeFile() ? 8 : 4;
             segmentRequests.add(new SegmentRequest(startOffset, endOffset));
         }

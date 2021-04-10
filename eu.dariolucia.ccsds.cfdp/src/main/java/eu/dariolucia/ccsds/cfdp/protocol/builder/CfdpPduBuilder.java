@@ -1,6 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
-import eu.dariolucia.ccsds.cfdp.common.IntegerUtil;
+import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
 
 import java.io.ByteArrayOutputStream;
@@ -25,7 +25,7 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
 
     private int entityIdLength;
 
-    private boolean segmentMetadata;
+    private boolean segmentMetadataPresent;
 
     private int transactionSequenceNumberLength;
 
@@ -70,8 +70,8 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
         return (K) this;
     }
 
-    public K setSegmentMetadata(boolean segmentMetadata) {
-        this.segmentMetadata = segmentMetadata;
+    public K setSegmentMetadataPresent(boolean segmentMetadataPresent) {
+        this.segmentMetadataPresent = segmentMetadataPresent;
         return (K) this;
     }
 
@@ -123,8 +123,8 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
         return entityIdLength;
     }
 
-    public boolean isSegmentMetadata() {
-        return segmentMetadata;
+    public boolean isSegmentMetadataPresent() {
+        return segmentMetadataPresent;
     }
 
     public int getTransactionSequenceNumberLength() {
@@ -168,17 +168,17 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
             tempByte |= 0x80;
         }
         tempByte |= ((this.entityIdLength - 1) << 4);
-        if(this.segmentMetadata) {
+        if(this.segmentMetadataPresent) {
             tempByte |= 0x08;
         }
         tempByte |= (this.transactionSequenceNumberLength - 1);
         bos.write(tempByte);
         // Encode the source entity ID
-        bos.write(IntegerUtil.encodeInteger(this.sourceEntityId, this.entityIdLength));
+        bos.write(BytesUtil.encodeInteger(this.sourceEntityId, this.entityIdLength));
         // Encode the transaction sequence number
-        bos.write(IntegerUtil.encodeInteger(this.transactionSequenceNumber, this.transactionSequenceNumberLength));
+        bos.write(BytesUtil.encodeInteger(this.transactionSequenceNumber, this.transactionSequenceNumberLength));
         // Encode the destination entity ID
-        bos.write(IntegerUtil.encodeInteger(this.destinationEntityId, this.entityIdLength));
+        bos.write(BytesUtil.encodeInteger(this.destinationEntityId, this.entityIdLength));
         // Encode the data field
         int len = encodeDataField(bos);
 
