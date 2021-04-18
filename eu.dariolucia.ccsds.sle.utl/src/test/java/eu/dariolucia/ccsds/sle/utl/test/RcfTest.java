@@ -301,55 +301,55 @@ public class RcfTest {
 
         // Ask for schedule status report (immediate): expect a positive return and a report
         rafUser.scheduleStatusReport(false, null);
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
         // Ask for parameter transfer buffer size: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RcfParameterEnum.BUFFER_SIZE);
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(10, ((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParBufferSize().getParameterValue().intValue());
 
         // Ask for parameter delivery mode: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RcfParameterEnum.DELIVERY_MODE);
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(DeliveryModeEnum.TIMELY_ONLINE.ordinal(), ((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParDeliveryMode().getParameterValue().intValue());
 
         // Ask for parameter latency limit: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RcfParameterEnum.LATENCY_LIMIT);
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(3, ((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParLatencyLimit().getParameterValue().getOnline().intValue());
 
         // Ask for parameter requested GVCID: expect positive return, undefined result
         recorder.getPduReceived().clear();
         rafUser.getParameter(RcfParameterEnum.REQUESTED_GVCID);
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReqGvcId().getParameterValue().getUndefined());
 
         // Ask for parameter permitted GVCID: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RcfParameterEnum.PERMITTED_GVCID_SET);
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParPermittedGvcidSet().getParameterValue());
 
         // Ask for parameter return timeout: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RcfParameterEnum.RETURN_TIMEOUT_PERIOD);
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(120, ((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReturnTimeout().getParameterValue().intValue());
 
         // Ask for parameter min reporting cycle: expect negative return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RcfParameterEnum.MIN_REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(0, ((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getNegativeResult().getSpecific().intValue());
 
@@ -357,32 +357,32 @@ public class RcfTest {
         recorder.getPduReceived().clear();
         rafUser.scheduleStatusReport(false, 5);
 
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 2);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 2);
         assertEquals(2, recorder.getPduReceived().size());
 
-        AwaitUtil.awaitCondition(6000, () -> recorder.getPduReceived().size() == 3);
+        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 3);
         assertEquals(3, recorder.getPduReceived().size());
 
         // Ask for parameter reporting cycle: expect positive return
         recorder.getPduReceived().clear();
         rafUser.getParameter(RcfParameterEnum.REPORTING_CYCLE);
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertEquals(5, ((RcfGetParameterReturnV1toV4) recorder.getPduReceived().get(0)).getResult().getPositiveResult().getParReportingCycle().getParameterValue().getPeriodicReportingOn().intValue());
 
         // Stop status report
         recorder.getPduReceived().clear();
         rafUser.scheduleStatusReport(true, null);
-        AwaitUtil.awaitCondition(8000, () -> recorder.getPduReceived().size() == 1);
+        AwaitUtil.awaitCondition(10000, () -> recorder.getPduReceived().size() == 1);
         assertEquals(1, recorder.getPduReceived().size());
         assertNotNull(((SleScheduleStatusReportReturn) recorder.getPduReceived().get(0)).getResult().getPositiveResult());
 
         // Unbind
         rafUser.unbind(UnbindReasonEnum.END);
 
-        AwaitUtil.awaitCondition(8000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(10000, () -> rafUser.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafUser.getCurrentBindingState());
-        AwaitUtil.awaitCondition(8000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(10000, () -> rafProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, rafProvider.getCurrentBindingState());
 
         rafUser.dispose();
