@@ -85,4 +85,9 @@ public class FileDataPduBuilder extends CfdpPduBuilder<FileDataPdu, FileDataPduB
     protected FileDataPdu buildObject(byte[] pdu) {
         return new FileDataPdu(pdu);
     }
+
+    @Override
+    protected int getInitialBufferAllocation() {
+        return super.getInitialBufferAllocation() + this.fileData.length;
+    }
 }

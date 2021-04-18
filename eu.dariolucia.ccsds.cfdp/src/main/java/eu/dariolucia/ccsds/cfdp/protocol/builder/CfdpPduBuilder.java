@@ -7,9 +7,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+/**
+ * Parent class for all PDU builder objects.
+ *
+ * @param <T> the CFDP PDU type
+ * @param <K> the CFDP PDU builder type (required to allow specific-type chains of builder method calls)
+ */
 public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder<T, K>> {
 
     private static final int VERSION = 0b001;
+    private static final int INITIAL_BYTE_OUTPUT_ALLOCATION_BYTES = 512;
 
     private CfdpPdu.PduType type;
 
@@ -144,7 +151,7 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
     }
 
     public T build() throws IOException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream(getInitialBufferAllocation());
         // Encode the 1st byte
         byte tempByte = (byte) (VERSION << 5);
         tempByte |= (byte) (this.type.ordinal() << 4);
@@ -190,6 +197,10 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
 
         // Build the Pdu and return
         return buildObject(cfdpPdu);
+    }
+
+    protected int getInitialBufferAllocation() {
+        return INITIAL_BYTE_OUTPUT_ALLOCATION_BYTES;
     }
 
     protected abstract int encodeDataField(ByteArrayOutputStream bos) throws IOException;

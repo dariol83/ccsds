@@ -8,6 +8,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Metadata PDU - CCSDS 727.0-B-5, 5.2.5
+ */
 public class MetadataPdu extends FileDirectivePdu {
 
     private final boolean closureRequested;
@@ -118,26 +121,66 @@ public class MetadataPdu extends FileDirectivePdu {
         return currentOffset;
     }
 
+    /**
+     * If transaction closure is requested. If transaction is in Acknowledged mode,
+     * set to ‘0’ and ignored.
+     *
+     * @return true if closure is requested (flag set to 1), otherwise false
+     */
     public boolean isClosureRequested() {
         return closureRequested;
     }
 
+    /**
+     * Checksum algorithm identifier as registered in the SANA Checksum Types
+     * Registry. Value zero indicates use of the legacy modular checksum.
+     *
+     * @return the checksum identifier
+     */
     public byte getChecksumType() {
         return checksumType;
     }
 
+    /**
+     * Length of file in octets. Set to 0 means unbounded file.
+     *
+     * @return the file size in octets
+     */
     public long getFileSize() {
         return fileSize;
     }
 
+    /**
+     * Source file name. Can be null string when there is no associated file, e.g.
+     * for messages used for Proxy operations.
+     *
+     * @return the source file name or null string if no such file name is present
+     */
     public String getSourceFileName() {
         return sourceFileName;
     }
 
+    /**
+     * Destination file name. Can be null string when there is no associated file, e.g.
+     * for messages used for Proxy operations.
+     *
+     * @return the destination file name or null string if no such file name is present
+     */
     public String getDestinationFileName() {
         return destinationFileName;
     }
 
+    /**
+     * Options. Allowed ones are:
+     * <ul>
+     *     <li>{@link FilestoreRequestTLV}</li>
+     *     <li>{@link MessageToUserTLV}</li>
+     *     <li>{@link FaultHandlerOverrideTLV}</li>
+     *     <li>{@link FlowLabelTLV}</li>
+     * </ul>
+     *
+     * @return the list of options
+     */
     public List<TLV> getOptions() {
         return Collections.unmodifiableList(options);
     }

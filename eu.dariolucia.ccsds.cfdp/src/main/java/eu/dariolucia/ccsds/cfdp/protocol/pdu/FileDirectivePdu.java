@@ -1,5 +1,8 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
+/**
+ * Parent class for file directive PDUs
+ */
 public class FileDirectivePdu extends CfdpPdu {
 
     public static final byte DC_EOF_PDU = 0x04;

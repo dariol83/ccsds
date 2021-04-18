@@ -6,6 +6,10 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+
+/**
+ * Nak PDU - CCSDS 727.0-B-5, 5.2.6
+ */
 public class NakPdu extends FileDirectivePdu {
 
     public static final class SegmentRequest {
@@ -49,10 +53,20 @@ public class NakPdu extends FileDirectivePdu {
         }
     }
 
+    /**
+     * Start of scope (offset it bytes).
+     *
+     * @return start of scope
+     */
     public long getStartOfScope() {
         return startOfScope;
     }
 
+    /**
+     * End of scope (offset in bytes).
+     *
+     * @return end of scope
+     */
     public long getEndOfScope() {
         return endOfScope;
     }

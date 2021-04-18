@@ -1,5 +1,9 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
+
+/**
+ * Prompt PDU - CCSDS 727.0-B-5, 5.2.7
+ */
 public class PromptPdu extends FileDirectivePdu {
 
     private final boolean nakResponseRequired;
