@@ -29,7 +29,7 @@
 
     <artifactId>eu.dariolucia.ccsds.cfdp</artifactId>
     <packaging>bundle</packaging>
-    <name>CCSDS File Delivery Protocol - CFDP</name>
+    <name>CCSDS File Delivery Protocol</name>
     <description>Library implementing a CCSDS File Delivery Protocol engine, according to CCSDS 727.0-B-5</description>
 
     <dependencies>
@@ -37,6 +37,11 @@
             <groupId>eu.dariolucia.ccsds</groupId>
             <artifactId>eu.dariolucia.ccsds.tmtc</artifactId>
             <version>${parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${jaxb.version}</version>
         </dependency>
     </dependencies>
 </project>

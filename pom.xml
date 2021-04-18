@@ -83,7 +83,7 @@
         <module>eu.dariolucia.ccsds.sle.utlfx</module>
         <module>eu.dariolucia.ccsds.examples</module>
         <module>eu.dariolucia.ccsds.viewer</module>
-        <!-- <module>eu.dariolucia.ccsds.cfdp</module> -->
+        <module>eu.dariolucia.ccsds.cfdp</module>
     </modules>
 
     <build>
