@@ -14,6 +14,9 @@ public class RemoteEntityConfigurationInformation {
     @XmlAttribute(name = "version")
     private long protocolVersion;
 
+    @XmlElement(name = "ut_layer")
+    private String utLayer;
+
     @XmlElement(name = "address")
     private String utAddress;
 
@@ -77,6 +80,15 @@ public class RemoteEntityConfigurationInformation {
 
     public RemoteEntityConfigurationInformation setProtocolVersion(long protocolVersion) {
         this.protocolVersion = protocolVersion;
+        return this;
+    }
+
+    public String getUtLayer() {
+        return utLayer;
+    }
+
+    public RemoteEntityConfigurationInformation setUtLayer(String utLayer) {
+        this.utLayer = utLayer;
         return this;
     }
 
@@ -229,6 +241,7 @@ public class RemoteEntityConfigurationInformation {
         return "RemoteEntityConfigurationInformation{" +
                 "remoteEntityId=" + remoteEntityId +
                 ", protocolVersion=" + protocolVersion +
+                ", utLayer='" + utLayer + '\'' +
                 ", utAddress='" + utAddress + '\'' +
                 ", positiveAckTimerInterval=" + positiveAckTimerInterval +
                 ", nackTimerInterval=" + nackTimerInterval +
