@@ -26,7 +26,7 @@ public class BytesUtil {
      * @param offset the starting offset
      * @param size the length of the encoded integer in bytes
      * @return the integer (as long)
-     * @throws CfdpRuntimeException if size > 8 or negative
+     * @throws CfdpRuntimeException if size is greater than 8 or negative
      */
     public static Long readInteger(byte[] data, int offset, int size) {
         if(size > 8) {
@@ -62,7 +62,7 @@ public class BytesUtil {
      * @param value the value to encode
      * @param size the length of the encoded integer in bytes
      * @return the array containing the encoded integer
-     * @throws CfdpRuntimeException if size > 8 or negative
+     * @throws CfdpRuntimeException if size is greater than 8 or negative
      */
     public static byte[] encodeInteger(long value, int size) {
         if(size > 8) {

@@ -57,7 +57,7 @@ public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduB
      * 'Data Complete' means that metadata, all file data, and EOF have been received, and the
      * checksum has been verified.
      *
-     * @param dataComplete
+     * @param dataComplete true if completed, otherwise false
      * @return this
      */
     public FinishedPduBuilder setDataComplete(boolean dataComplete) {
