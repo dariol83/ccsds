@@ -2,6 +2,7 @@ package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.AckPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -76,6 +77,9 @@ public class AckPduBuilder extends CfdpPduBuilder<AckPdu, AckPduBuilder> {
     @Override
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;
+        // Directive code
+        bos.write(FileDirectivePdu.DC_ACK_PDU);
+        totalLength += 1;
         // Directive code and subtype
         byte first = (byte) ((this.directiveCode << 4) & 0xF0);
         first |= (byte) (this.directiveSubtypeCode & 0x0F);

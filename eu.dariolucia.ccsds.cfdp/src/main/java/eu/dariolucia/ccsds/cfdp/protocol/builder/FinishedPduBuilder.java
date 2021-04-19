@@ -102,6 +102,9 @@ public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduB
     @Override
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;
+        // Directive code
+        bos.write(FileDirectivePdu.DC_FINISHED_PDU);
+        totalLength += 1;
         // Condition code (4 bits), spare bit, delivery code (1 bit) and file status (2 bits)
         byte first = (byte) ((this.conditionCode << 4) & 0xF0);
         first |= (byte) (this.dataComplete ? 0x00 : 0x04);

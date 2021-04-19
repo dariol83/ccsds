@@ -37,10 +37,14 @@ public class EndOfFilePdu extends FileDirectivePdu {
 
     public EndOfFilePdu(byte[] pdu) {
         super(pdu);
+        // Directive code check
+        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_EOF_PDU) {
+            throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
+        }
         // PDU-specific parsing
-        this.conditionCode = (byte) ((pdu[getHeaderLength()] & 0xF0) >>> 4);
-        this.fileChecksum = ByteBuffer.wrap(pdu, getHeaderLength() + 1, 4).getInt();
-        this.fileSize = isLargeFile() ? ByteBuffer.wrap(pdu, getHeaderLength() + 1 + 4, 8).getLong() : Integer.toUnsignedLong(ByteBuffer.wrap(pdu, getHeaderLength() + 1 + 4, 4).getInt());
+        this.conditionCode = (byte) ((pdu[getDirectiveParameterIndex()] & 0xF0) >>> 4);
+        this.fileChecksum = ByteBuffer.wrap(pdu, getDirectiveParameterIndex() + 1, 4).getInt();
+        this.fileSize = isLargeFile() ? ByteBuffer.wrap(pdu, getDirectiveParameterIndex() + 1 + 4, 8).getLong() : Integer.toUnsignedLong(ByteBuffer.wrap(pdu, getDirectiveParameterIndex() + 1 + 4, 4).getInt());
         // Let's check the condition code
         if(this.conditionCode == FileDirectivePdu.CC_NOERROR) {
             // Fault location omitted if condition code is 'No error'.
@@ -48,7 +52,7 @@ public class EndOfFilePdu extends FileDirectivePdu {
         } else {
             // Otherwise, entity ID in the TLV is the ID of the entity at which transaction cancellation was initiated.
             // The Type of the Entity ID TLV shall be 06 hex; the Value shall be an Entity ID
-            int currentOffset = getHeaderLength() + 1 + 4 + (isLargeFile() ? 8 : 4);
+            int currentOffset = getDirectiveParameterIndex() + 1 + 4 + (isLargeFile() ? 8 : 4);
             byte type = pdu[currentOffset];
             if(type != EntityIdTLV.TLV_TYPE) {
                 throw new CfdpRuntimeException("Cannot parse Fault Location type in End-Of-File PDU: expected " + EntityIdTLV.TLV_TYPE + ", got " + String.format("0x%02X", type));

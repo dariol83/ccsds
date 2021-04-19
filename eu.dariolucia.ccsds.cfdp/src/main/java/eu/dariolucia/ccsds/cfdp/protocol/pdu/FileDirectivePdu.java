@@ -31,4 +31,7 @@ public class FileDirectivePdu extends CfdpPdu {
         super(pdu);
     }
 
+    public int getDirectiveParameterIndex() {
+        return getHeaderLength() + 1;
+    }
 }

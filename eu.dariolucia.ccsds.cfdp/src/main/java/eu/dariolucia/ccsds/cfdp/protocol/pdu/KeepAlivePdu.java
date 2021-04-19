@@ -11,8 +11,12 @@ public class KeepAlivePdu extends FileDirectivePdu {
 
     public KeepAlivePdu(byte[] pdu) {
         super(pdu);
+        // Directive code check
+        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_KEEPALIVE_PDU) {
+            throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
+        }
         // PDU-specific parsing
-        this.progress = BytesUtil.readInteger(pdu, getHeaderLength(), isLargeFile() ? 8 : 4);
+        this.progress = BytesUtil.readInteger(pdu, getDirectiveParameterIndex(), isLargeFile() ? 8 : 4);
     }
 
     /**

@@ -38,8 +38,12 @@ public class NakPdu extends FileDirectivePdu {
 
     public NakPdu(byte[] pdu) {
         super(pdu);
+        // Directive code check
+        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_NACK_PDU) {
+            throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
+        }
         // PDU-specific parsing
-        int currentOffset = getHeaderLength();
+        int currentOffset = getDirectiveParameterIndex();
         this.startOfScope = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
         currentOffset += isLargeFile() ? 8 : 4;
         this.endOfScope = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);

@@ -52,12 +52,16 @@ public class FinishedPdu extends FileDirectivePdu {
 
     public FinishedPdu(byte[] pdu) {
         super(pdu);
+        // Directive code check
+        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_FINISHED_PDU) {
+            throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
+        }
         // PDU-specific parsing
-        this.conditionCode = (byte) ((pdu[getHeaderLength()] & 0xF0) >>> 4);
-        this.dataComplete = ((pdu[getHeaderLength()] & 0x04) >>> 2) == 0;
-        this.fileStatus = FileStatus.values()[pdu[getHeaderLength()] & 0x03];
+        this.conditionCode = (byte) ((pdu[getDirectiveParameterIndex()] & 0xF0) >>> 4);
+        this.dataComplete = ((pdu[getDirectiveParameterIndex()] & 0x04) >>> 2) == 0;
+        this.fileStatus = FileStatus.values()[pdu[getDirectiveParameterIndex()] & 0x03];
         // Filestore responses
-        int currentOffset = getHeaderLength() + 1;
+        int currentOffset = getDirectiveParameterIndex() + 1;
         while(currentOffset < pdu.length) {
             // TLV: Get the current tag
             byte type = pdu[currentOffset];

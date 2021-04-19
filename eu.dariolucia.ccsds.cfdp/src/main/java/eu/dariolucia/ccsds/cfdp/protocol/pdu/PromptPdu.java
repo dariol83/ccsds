@@ -12,8 +12,12 @@ public class PromptPdu extends FileDirectivePdu {
 
     public PromptPdu(byte[] pdu) {
         super(pdu);
+        // Directive code check
+        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_PROMPT_PDU) {
+            throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
+        }
         // PDU-specific parsing
-        this.nakResponseRequired = (pdu[getHeaderLength()] & 0x80) == 0;
+        this.nakResponseRequired = (pdu[getDirectiveParameterIndex()] & 0x80) == 0;
         this.keepAliveResponseRequired = !this.nakResponseRequired;
     }
 

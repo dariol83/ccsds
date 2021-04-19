@@ -60,11 +60,15 @@ public class AckPdu extends FileDirectivePdu {
 
     public AckPdu(byte[] pdu) {
         super(pdu);
+        // Directive code check
+        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_ACK_PDU) {
+            throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
+        }
         // PDU-specific parsing
-        this.directiveCode = (byte) ((pdu[getHeaderLength()] & 0xF0) >>> 4);
-        this.directiveSubtypeCode = (byte) (pdu[getHeaderLength()] & 0x0F);
-        this.conditionCode = (byte) ((pdu[getHeaderLength() + 1] & 0xF0) >>> 4);
-        this.transactionStatus = TransactionStatus.values()[(pdu[getHeaderLength() + 1] & 0x03)];
+        this.directiveCode = (byte) ((pdu[getDirectiveParameterIndex()] & 0xF0) >>> 4);
+        this.directiveSubtypeCode = (byte) (pdu[getDirectiveParameterIndex()] & 0x0F);
+        this.conditionCode = (byte) ((pdu[getDirectiveParameterIndex() + 1] & 0xF0) >>> 4);
+        this.transactionStatus = TransactionStatus.values()[(pdu[getDirectiveParameterIndex() + 1] & 0x03)];
     }
 
     public byte getDirectiveCode() {

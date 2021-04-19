@@ -36,7 +36,7 @@ class EndOfFilePduBuilderTest {
         assertFalse(pdu.isSegmentationControlPreserved());
         assertTrue(pdu.isCrcPresent());
         assertTrue(pdu.isAcknowledged());
-        assertEquals(9, pdu.getDataFieldLength());
+        assertEquals(10, pdu.getDataFieldLength());
         assertEquals(4, pdu.getEntityIdLength());
         assertEquals(3, pdu.getTransactionSequenceNumberLength());
         assertEquals(0x0000000000F11204L, pdu.getSourceEntityId());
@@ -69,7 +69,7 @@ class EndOfFilePduBuilderTest {
         assertFalse(pdu.isSegmentationControlPreserved());
         assertTrue(pdu.isCrcPresent());
         assertTrue(pdu.isAcknowledged());
-        assertEquals(15, pdu.getDataFieldLength());
+        assertEquals(16, pdu.getDataFieldLength());
         assertEquals(4, pdu.getEntityIdLength());
         assertEquals(3, pdu.getTransactionSequenceNumberLength());
         assertEquals(0x0000000000F11204L, pdu.getSourceEntityId());

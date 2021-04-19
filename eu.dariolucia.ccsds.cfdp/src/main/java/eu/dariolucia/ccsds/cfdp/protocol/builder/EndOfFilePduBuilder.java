@@ -75,6 +75,9 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
     @Override
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;
+        // Directive code
+        bos.write(FileDirectivePdu.DC_EOF_PDU);
+        totalLength += 1;
         // Condition code (4 bits) and spare (4 bits)
         bos.write((this.conditionCode << 4) & 0xFF);
         totalLength += 1;

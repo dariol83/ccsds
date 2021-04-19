@@ -27,11 +27,15 @@ public class MetadataPdu extends FileDirectivePdu {
 
     public MetadataPdu(byte[] pdu) {
         super(pdu);
+        // Directive code check
+        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_METADATA_PDU) {
+            throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
+        }
         // PDU-specific parsing
-        this.closureRequested = (pdu[getHeaderLength()] & 0x40) != 0;
-        this.checksumType = (byte) (pdu[getHeaderLength()] & 0x0F);
-        this.fileSize = isLargeFile() ? ByteBuffer.wrap(pdu, getHeaderLength() + 1, 8).getLong() : Integer.toUnsignedLong(ByteBuffer.wrap(pdu, getHeaderLength() + 1, 4).getInt());
-        int currentOffset = getHeaderLength() + 1 + (isLargeFile() ? 8 : 4);
+        this.closureRequested = (pdu[getDirectiveParameterIndex()] & 0x40) != 0;
+        this.checksumType = (byte) (pdu[getDirectiveParameterIndex()] & 0x0F);
+        this.fileSize = isLargeFile() ? ByteBuffer.wrap(pdu, getDirectiveParameterIndex() + 1, 8).getLong() : Integer.toUnsignedLong(ByteBuffer.wrap(pdu, getDirectiveParameterIndex() + 1, 4).getInt());
+        int currentOffset = getDirectiveParameterIndex() + 1 + (isLargeFile() ? 8 : 4);
         // Source file name
         int len = Byte.toUnsignedInt(pdu[currentOffset]);
         currentOffset += 1;
