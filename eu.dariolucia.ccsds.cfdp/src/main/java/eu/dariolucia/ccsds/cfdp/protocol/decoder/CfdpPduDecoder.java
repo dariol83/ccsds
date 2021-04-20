@@ -2,7 +2,8 @@ package eu.dariolucia.ccsds.cfdp.protocol.decoder;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -22,10 +23,10 @@ public class CfdpPduDecoder {
         return decode(data, 0, data.length);
     }
 
-    public static CfdpPdu decode(ByteArrayInputStream bos) {
+    public static CfdpPdu decode(InputStream bos) throws IOException {
         // Read the first 4 bytes
         byte[] buffer = new byte[HEADER_SIZE];
-        bos.readNBytes(buffer, 0, HEADER_SIZE);
+        readNBytes(bos, buffer, 0, HEADER_SIZE);
         // Read and decode the first 4 bytes
         CfdpPdu.PduType type = ((buffer[0] & 0x10) >>> 4) == 0 ? CfdpPdu.PduType.FILE_DIRECTIVE : CfdpPdu.PduType.FILE_DATA;
         int dataFieldLength = Short.toUnsignedInt(ByteBuffer.wrap(buffer, 1, 2).getShort());
@@ -35,8 +36,20 @@ public class CfdpPduDecoder {
         int totalLength = HEADER_SIZE + transactionSequenceNumberLength + entityIdLength*2 + dataFieldLength;
         byte[] pdu = new byte[totalLength];
         System.arraycopy(buffer, 0, pdu, 0, HEADER_SIZE);
-        bos.readNBytes(pdu, HEADER_SIZE, totalLength - HEADER_SIZE);
+        readNBytes(bos, pdu, HEADER_SIZE, totalLength - HEADER_SIZE);
         return buildPdu(type, entityIdLength, transactionSequenceNumberLength, pdu);
+    }
+
+    private static void readNBytes(InputStream bos, byte[] buffer, int offset, int numBytes) throws IOException {
+        int read = 0;
+        while(read < numBytes) {
+            int currentRead = bos.read(buffer, offset + read, numBytes - read);
+            if(currentRead <= 0) {
+                throw new IOException("Cannot read from stream: end of data reached");
+            } else {
+                read += currentRead;
+            }
+        }
     }
 
     public static CfdpPdu decode(byte[] data, int offset, int length) {

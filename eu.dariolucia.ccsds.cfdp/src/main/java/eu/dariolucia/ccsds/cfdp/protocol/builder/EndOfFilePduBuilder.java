@@ -72,6 +72,22 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
         return this;
     }
 
+    public byte getConditionCode() {
+        return conditionCode;
+    }
+
+    public int getFileChecksum() {
+        return fileChecksum;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public EntityIdTLV getFaultLocation() {
+        return faultLocation;
+    }
+
     @Override
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;

@@ -74,6 +74,22 @@ public class AckPduBuilder extends CfdpPduBuilder<AckPdu, AckPduBuilder> {
         return this;
     }
 
+    public byte getDirectiveCode() {
+        return directiveCode;
+    }
+
+    public byte getDirectiveSubtypeCode() {
+        return directiveSubtypeCode;
+    }
+
+    public byte getConditionCode() {
+        return conditionCode;
+    }
+
+    public AckPdu.TransactionStatus getTransactionStatus() {
+        return transactionStatus;
+    }
+
     @Override
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;

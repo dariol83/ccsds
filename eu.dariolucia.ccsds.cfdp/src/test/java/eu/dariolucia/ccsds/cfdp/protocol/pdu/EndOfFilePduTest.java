@@ -5,13 +5,14 @@ import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class EndOfFilePduTest {
 
-    private final byte[] P1_NOERROR     = StringUtil.toByteArray("26 000A 21 F11204 9155 A2A1A3 04 00 C5A134D2 0032112D".replace(" ", ""));
-    private final byte[] P1_ERROR       = StringUtil.toByteArray("26 000F 21 F11204 9155 A2A1A3 04 B0 C5A134D2 0032112D 0603F4F5F6".replace(" ", ""));
+    private final byte[] P1_NOERROR     = StringUtil.toByteArray("22 000A 21 F11204 9155 A2A1A3 04 00 C5A134D2 0032112D".replace(" ", ""));
+    private final byte[] P1_ERROR       = StringUtil.toByteArray("22 000F 21 F11204 9155 A2A1A3 04 B0 C5A134D2 0032112D 0603F4F5F6".replace(" ", ""));
 
     @Test
     public void testEndOfFilePduParsing() {
@@ -55,6 +56,8 @@ class EndOfFilePduTest {
         assertEquals(0x0032112D, pdu.getFileSize());
         assertNotNull(pdu.getFaultLocation());
         assertEquals(0x0000000000F4F5F6L, pdu.getFaultLocation().getEntityId());
+
+        assertNotNull(pdu.toString());
     }
 
     @Test
@@ -82,7 +85,7 @@ class EndOfFilePduTest {
     }
 
     @Test
-    public void testDecoderStream() {
+    public void testDecoderStream() throws IOException {
         CfdpPdu decoded = CfdpPduDecoder.decode(new ByteArrayInputStream(P1_NOERROR));
         assertEquals(EndOfFilePdu.class, decoded.getClass());
         assertEquals(0b001, decoded.getVersion());

@@ -28,7 +28,7 @@ public class FileDataPduBuilder extends CfdpPduBuilder<FileDataPdu, FileDataPduB
     public FileDataPduBuilder() {
         setType(CfdpPdu.PduType.FILE_DATA);
         setRecordContinuationState(FileDataPdu.RCS_NOT_PRESENT);
-        setSegmentMetadata(new byte[0]);
+        setSegmentMetadata(null);
     }
 
     public FileDataPduBuilder setRecordContinuationState(byte recordContinuationState) {
@@ -38,7 +38,7 @@ public class FileDataPduBuilder extends CfdpPduBuilder<FileDataPdu, FileDataPduB
 
     public FileDataPduBuilder setSegmentMetadata(byte[] segmentMetadata) {
         this.segmentMetadata = segmentMetadata;
-        this.segmentMetadataLength = segmentMetadata != null ? segmentMetadata.length : 0;
+        this.segmentMetadataLength = segmentMetadata != null ? segmentMetadata.length : -1;
         return this;
     }
 
@@ -50,6 +50,26 @@ public class FileDataPduBuilder extends CfdpPduBuilder<FileDataPdu, FileDataPduB
     public FileDataPduBuilder setFileData(byte[] fileData) {
         this.fileData = fileData;
         return this;
+    }
+
+    public byte getRecordContinuationState() {
+        return recordContinuationState;
+    }
+
+    public int getSegmentMetadataLength() {
+        return segmentMetadataLength;
+    }
+
+    public byte[] getSegmentMetadata() {
+        return segmentMetadata;
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public byte[] getFileData() {
+        return fileData;
     }
 
     @Override
@@ -67,13 +87,8 @@ public class FileDataPduBuilder extends CfdpPduBuilder<FileDataPdu, FileDataPduB
             }
         }
         // Offset
-        if(isLargeFile()) {
-            bos.write(BytesUtil.encodeInteger(this.offset, 8));
-            totalLength += 8;
-        } else {
-            bos.write(BytesUtil.encodeInteger(this.offset, 4));
-            totalLength += 4;
-        }
+        bos.write(BytesUtil.encodeInteger(this.offset, isLargeFile() ? 8 : 4));
+        totalLength += isLargeFile() ? 8 : 4;
         // Data
         bos.write(this.fileData);
         totalLength += this.fileData.length;

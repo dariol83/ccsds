@@ -156,7 +156,7 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
         byte tempByte = (byte) (VERSION << 5);
         tempByte |= (byte) (this.type.ordinal() << 4);
         tempByte |= (byte) (this.direction.ordinal() << 3);
-        if(this.acknowledged) {
+        if(!this.acknowledged) {
             tempByte |= 0x04;
         }
         if(this.crcPresent) {
