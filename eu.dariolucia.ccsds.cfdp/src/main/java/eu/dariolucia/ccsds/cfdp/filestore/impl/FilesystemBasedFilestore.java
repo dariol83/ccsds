@@ -65,6 +65,8 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
             }
         } else if(target.isDirectory()) {
             throw new FilestoreException(String.format("Cannot delete file %s: the file is a directory", fullPath));
+        } else {
+            throw new FilestoreException(String.format("Cannot delete file %s: the file does not exist", fullPath));
         }
     }
 
@@ -117,6 +119,19 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
     }
 
     @Override
+    public byte[] getFile(String fullPath) throws FilestoreException {
+        File target = constructTarget(fullPath);
+        if(!target.exists()) {
+            throw new FilestoreException(String.format("Cannot read file %s: file does not exist", fullPath));
+        }
+        try {
+            return Files.readAllBytes(target.toPath());
+        } catch (IOException e) {
+            throw new FilestoreException(String.format("Cannot read file %s: %s", fullPath, e.getMessage()), e);
+        }
+    }
+
+    @Override
     public void createDirectory(String fullPath) throws FilestoreException {
         File target = constructTarget(fullPath);
         if(!target.exists()) {
@@ -139,6 +154,8 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
             }
         } else if(!target.isDirectory()) {
             throw new FilestoreException(String.format("Cannot delete directory %s: the path is not a directory", fullPath));
+        } else {
+            throw new FilestoreException(String.format("Cannot directory file %s: the directory does not exist", fullPath));
         }
     }
 
@@ -146,10 +163,27 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
     public List<String> listDirectory(String fullPath, boolean recursive) throws FilestoreException {
         File target = constructTarget(fullPath);
         try {
-            return Files.list(target.toPath()).map(Path::toFile).map(File::getName).collect(Collectors.toList()); // NOSONAR pointless remark
+            return Files.walk(target.toPath(), recursive ? Integer.MAX_VALUE : 1).map(Path::toFile).filter(f -> !f.getAbsolutePath().equals(target.getAbsolutePath())).map(this::fileToName).collect(Collectors.toList()); // NOSONAR pointless remark
         } catch (IOException e) {
             throw new FilestoreException(String.format("Cannot list directory %s: %s", fullPath, e.getMessage()), e);
         }
+    }
+
+    private String fileToName(File file) {
+        String fullPath = file.getAbsolutePath().substring(root.getAbsolutePath().length());
+        String matcher = File.separator;
+        // Handle Windows separator
+        if(matcher.equals("\\")) {
+            matcher = "\\\\";
+        }
+        fullPath = fullPath.replaceAll(matcher, DIR_FILE_SEPARATOR);
+        if(fullPath.startsWith(DIR_FILE_SEPARATOR)) {
+            fullPath = fullPath.substring(1);
+        }
+        if(file.isDirectory() && !fullPath.endsWith(DIR_FILE_SEPARATOR)) {
+            fullPath += DIR_FILE_SEPARATOR;
+        }
+        return fullPath;
     }
 
     @Override
@@ -166,6 +200,10 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
 
     private File constructTarget(String fullPath) {
         String[] splt = fullPath.split(DIR_FILE_SEPARATOR, -1);
-        return new File(root.getAbsolutePath() + (splt[0] != null ?  File.separator + splt[0] : "") + File.separator + splt[1]);
+        if(splt.length == 2) {
+            return new File(root.getAbsolutePath() + (splt[0] != null ? File.separator + splt[0] : "") + File.separator + splt[1]);
+        } else {
+            return new File(root.getAbsolutePath() + File.separator + splt[0]);
+        }
     }
 }

@@ -14,6 +14,8 @@ public interface IVirtualFilestore {
 
     void replaceFile(String fullPath, byte[] data) throws FilestoreException;
 
+    byte[] getFile(String fullPath) throws FilestoreException;
+
     void createDirectory(String fullPath) throws FilestoreException;
 
     void deleteDirectory(String fullPath) throws FilestoreException;
