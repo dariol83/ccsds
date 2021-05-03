@@ -16,7 +16,7 @@ import java.util.*;
  *
  * Ref. CCSDS 727.0-B-5, 3.4.1
  */
-public class PutRequest extends AbstractRequest {
+public class PutRequest implements ICfdpRequest {
 
     /**
      * PutRequest factory method to transfer two files with the default settings.
@@ -177,5 +177,21 @@ public class PutRequest extends AbstractRequest {
 
     public List<FilestoreRequestTLV> getFileStoreRequestList() {
         return Collections.unmodifiableList(fileStoreRequestList);
+    }
+
+    @Override
+    public String toString() {
+        return "PutRequest{" +
+                "destinationCfdpEntityId=" + destinationCfdpEntityId +
+                ", sourceFileName='" + sourceFileName + '\'' +
+                ", destinationFileName='" + destinationFileName + '\'' +
+                ", segmentationControl=" + segmentationControl +
+                ", faultHandlerOverrideMap=" + faultHandlerOverrideMap +
+                ", flowLabel=" + Arrays.toString(flowLabel) +
+                ", acknowledgedTransmissionMode=" + acknowledgedTransmissionMode +
+                ", closureRequested=" + closureRequested +
+                ", messageToUser=" + messageToUser +
+                ", fileStoreRequestList=" + fileStoreRequestList +
+                '}';
     }
 }

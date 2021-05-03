@@ -1,4 +1,4 @@
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
-public class ReportIndication extends AbstractIndication {
+public class ReportIndication implements ICfdpIndication {
 }
