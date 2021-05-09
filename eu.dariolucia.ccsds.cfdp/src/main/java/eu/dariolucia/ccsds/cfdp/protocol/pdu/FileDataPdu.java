@@ -22,14 +22,14 @@ public class FileDataPdu extends CfdpPdu {
 
     /**
      * Present if and only if the value of the segment metadata flag in the PDU header is 1.
-     * 0 to 63
+     * 0 to 63.
      */
     private final int segmentMetadataLength;
 
     /**
      * Present if and only if the value of the segment metadata flag in the PDU header is 1 and the
      * segment metadata length is greater than zero.
-     * Values are application-specific. Variable length, from 0 to 504.
+     * Values are application-specific. Variable length, from 0 to 504 bits (8 times 63 octets).
      */
     private final byte[] segmentMetadata;
 
