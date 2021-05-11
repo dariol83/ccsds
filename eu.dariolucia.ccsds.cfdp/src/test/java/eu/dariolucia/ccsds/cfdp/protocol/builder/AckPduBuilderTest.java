@@ -19,7 +19,7 @@ class AckPduBuilderTest {
                 .setSegmentMetadataPresent(false)
                 .setSegmentationControlPreserved(false)
                 .setAcknowledged(true)
-                .setCrcPresent(true)
+                .setCrcPresent(false)
                 .setEntityIdLength(4)
                 .setDestinationEntityId(0x00A2A1A3)
                 .setSourceEntityId(0x00F11204)
@@ -36,7 +36,7 @@ class AckPduBuilderTest {
         assertFalse(pdu.isLargeFile());
         assertFalse(pdu.isSegmentMetadata());
         assertFalse(pdu.isSegmentationControlPreserved());
-        assertTrue(pdu.isCrcPresent());
+        assertFalse(pdu.isCrcPresent());
         assertTrue(pdu.isAcknowledged());
         assertEquals(3, pdu.getDataFieldLength());
         assertEquals(4, pdu.getEntityIdLength());
@@ -54,7 +54,7 @@ class AckPduBuilderTest {
         assertFalse(builder.isLargeFile());
         assertFalse(builder.isSegmentMetadataPresent());
         assertFalse(builder.isSegmentationControlPreserved());
-        assertTrue(builder.isCrcPresent());
+        assertFalse(builder.isCrcPresent());
         assertTrue(builder.isAcknowledged());
         assertEquals(4, builder.getEntityIdLength());
         assertEquals(3, builder.getTransactionSequenceNumberLength());
