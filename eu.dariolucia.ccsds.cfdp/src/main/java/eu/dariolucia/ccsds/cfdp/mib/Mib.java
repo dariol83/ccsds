@@ -76,6 +76,15 @@ public class Mib {
         return this;
     }
 
+    public RemoteEntityConfigurationInformation getRemoteEntityById(long id) {
+        for(RemoteEntityConfigurationInformation re : this.remoteEntities) {
+            if(id == re.getRemoteEntityId()) {
+                return re;
+            }
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         StringBuilder toReturn = new StringBuilder("Mib{\n" +

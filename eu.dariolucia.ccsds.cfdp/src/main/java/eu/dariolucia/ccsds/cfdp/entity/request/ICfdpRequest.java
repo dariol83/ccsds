@@ -1,4 +1,4 @@
 package eu.dariolucia.ccsds.cfdp.entity.request;
 
-interface ICfdpRequest {
+public interface ICfdpRequest {
 }

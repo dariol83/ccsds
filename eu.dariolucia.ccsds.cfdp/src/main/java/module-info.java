@@ -1,4 +1,5 @@
 open module eu.dariolucia.ccsds.cfdp {
+    requires java.logging;
     requires transitive java.xml.bind;
     requires eu.dariolucia.ccsds.tmtc;
 
@@ -13,6 +14,5 @@ open module eu.dariolucia.ccsds.cfdp {
     exports eu.dariolucia.ccsds.cfdp.ut;
 
     uses eu.dariolucia.ccsds.cfdp.protocol.checksum.ICfdpChecksumFactory;
-
 
 }

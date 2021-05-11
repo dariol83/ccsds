@@ -1,6 +1,8 @@
 package eu.dariolucia.ccsds.cfdp.protocol.checksum;
 
 import eu.dariolucia.ccsds.cfdp.common.CfdpStandardComplianceError;
+import eu.dariolucia.ccsds.cfdp.protocol.checksum.impl.ModularChecksum;
+import eu.dariolucia.ccsds.cfdp.protocol.checksum.impl.NullChecksum;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +24,10 @@ public final class CfdpChecksumRegistry {
     public static synchronized ICfdpChecksumFactory getChecksum(int type) throws CfdpUnsupportedChecksumType {
         ServiceLoader<ICfdpChecksumFactory> loader = ServiceLoader.load(ICfdpChecksumFactory.class);
         if(type2factory.isEmpty()) {
-            // Initialise
+            // Add null and modular checksums (part of the implementation)
+            type2factory.put(NULL_CHECKSUM_TYPE, new NullChecksum());
+            type2factory.put(MODULAR_CHECKSUM_TYPE, new ModularChecksum());
+            // Initialise the remaining algorithms
             type2factory.putAll(loader.stream().map(ServiceLoader.Provider::get).collect(Collectors.toMap(ICfdpChecksumFactory::type, Function.identity())));
         }
         ICfdpChecksumFactory factory = type2factory.get(type);
