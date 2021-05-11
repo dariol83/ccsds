@@ -1,6 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
+import eu.dariolucia.ccsds.tmtc.algorithm.Crc16Algorithm;
 
 import java.nio.ByteBuffer;
 
@@ -50,6 +51,8 @@ public class CfdpPdu {
 
     private final byte[] pdu;
 
+    private final boolean crcValid;
+
     public CfdpPdu(byte[] pdu) {
         this.version = (pdu[0] & 0xE0) >>> 5;
         this.type = ((pdu[0] & 0x10) >>> 4) == 0 ? PduType.FILE_DIRECTIVE : PduType.FILE_DATA;
@@ -72,6 +75,17 @@ public class CfdpPdu {
         this.headerLength = 4 + 2 * entityIdLength + transactionSequenceNumberLength;
         // Store the full PDU here
         this.pdu = pdu;
+
+        // If CRC is enabled, compute the CRC now
+        if(this.crcPresent) {
+            // Last two bytes are the CRC
+            short crc = Crc16Algorithm.getCrc16(this.pdu, 0, this.pdu.length - 2);
+            short fromPdu = ByteBuffer.wrap(this.pdu, this.pdu.length - 2, 2).getShort();
+            this.crcValid = crc == fromPdu;
+        } else {
+            // No CRC -> assume PDU is valid
+            this.crcValid = true;
+        }
     }
 
     public int getVersion() {
@@ -138,6 +152,10 @@ public class CfdpPdu {
         return pdu;
     }
 
+    public boolean isCrcValid() {
+        return crcValid;
+    }
+
     @Override
     public String toString() {
         return "CfdpPdu{" +
@@ -156,6 +174,7 @@ public class CfdpPdu {
                 ", transactionSequenceNumber=" + transactionSequenceNumber +
                 ", destinationEntityId=" + destinationEntityId +
                 ", headerLength=" + headerLength +
+                ", crcValid=" + crcValid +
                 '}';
     }
 }

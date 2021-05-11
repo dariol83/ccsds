@@ -2,6 +2,7 @@ package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
+import eu.dariolucia.ccsds.tmtc.algorithm.Crc16Algorithm;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -17,6 +18,7 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
 
     private static final int VERSION = 0b001;
     private static final int INITIAL_BYTE_OUTPUT_ALLOCATION_BYTES = 512;
+    private static final byte[] CRC_PLACEHOLDER = new byte[] {0,0};
 
     private CfdpPdu.PduType type;
 
@@ -189,11 +191,23 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
         // Encode the data field
         int len = encodeDataField(bos);
 
+        // If CRC is enabled, then add 2 bytes 0x00, 0x00 to the data field. Ref: 4.1.1, 4.1.3
+        if(this.crcPresent) {
+            bos.write(CRC_PLACEHOLDER);
+            len += 2;
+        }
+
         // Close and get the PDU
         byte[] cfdpPdu = bos.toByteArray();
 
         // Fix the length of the data field
         ByteBuffer.wrap(cfdpPdu, 1, 2).putShort((short) (len & 0xFFFF));
+
+        // If CRC is enabled, compute the CRC and write the result in the last two bytes
+        if(this.crcPresent) {
+            short crc = Crc16Algorithm.getCrc16(cfdpPdu, 0, len - 2);
+            ByteBuffer.wrap(cfdpPdu, len - 2, 2).putShort(crc);
+        }
 
         // Build the Pdu and return
         return buildObject(cfdpPdu);
