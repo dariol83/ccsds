@@ -99,7 +99,7 @@ public class PutRequest implements ICfdpRequest {
      * messages are defined in the User Operations section to allow remote initiation of CFDP
      * transactions.
      */
-    private final MessageToUserTLV messageToUser;
+    private final List<MessageToUserTLV> messageToUserList = new LinkedList<>();
 
     /**
      * If included, the optional filestore requests shall be transmitted at the beginning of the
@@ -118,11 +118,11 @@ public class PutRequest implements ICfdpRequest {
      * @param flowLabel The flow label, can be null
      * @param acknowledgedTransmissionMode Overrides the transmission mode specified in the MIB, can be null
      * @param closureRequested Overrides the closure mode specified in the MIB, can be null
-     * @param messageToUser The Message to User, can be null
+     * @param messageToUserList A list of messages to user, can be null
      * @param faultHandlerOverrideMap A map to override the fault handlers per fault condition specified in the MIB, can be null
      * @param fileStoreRequestList A list of file store requests, acted upon by the destination entity when all data transfer activities of the transaction are completed, can be null
      */
-    public PutRequest(long destinationCfdpEntityId, String sourceFileName, String destinationFileName, boolean segmentationControl, byte[] flowLabel, Boolean acknowledgedTransmissionMode, Boolean closureRequested, MessageToUserTLV messageToUser, Map<Integer, FaultHandlerStrategy.Action> faultHandlerOverrideMap, List<FilestoreRequestTLV> fileStoreRequestList) { // NOSONAR due to protocol, builder pattern not design for this type of objects
+    public PutRequest(long destinationCfdpEntityId, String sourceFileName, String destinationFileName, boolean segmentationControl, byte[] flowLabel, Boolean acknowledgedTransmissionMode, Boolean closureRequested, List<MessageToUserTLV> messageToUserList, Map<Integer, FaultHandlerStrategy.Action> faultHandlerOverrideMap, List<FilestoreRequestTLV> fileStoreRequestList) { // NOSONAR due to protocol, builder pattern not design for this type of objects
         this.destinationCfdpEntityId = destinationCfdpEntityId;
         this.sourceFileName = sourceFileName;
         this.destinationFileName = destinationFileName;
@@ -130,7 +130,9 @@ public class PutRequest implements ICfdpRequest {
         this.flowLabel = flowLabel;
         this.acknowledgedTransmissionMode = acknowledgedTransmissionMode;
         this.closureRequested = closureRequested;
-        this.messageToUser = messageToUser;
+        if(messageToUserList != null) {
+            this.messageToUserList.addAll(messageToUserList);
+        }
         if(faultHandlerOverrideMap != null) {
             this.faultHandlerOverrideMap.putAll(faultHandlerOverrideMap);
         }
@@ -171,8 +173,8 @@ public class PutRequest implements ICfdpRequest {
         return closureRequested;
     }
 
-    public MessageToUserTLV getMessageToUser() {
-        return messageToUser;
+    public List<MessageToUserTLV> getMessageToUserList() {
+        return Collections.unmodifiableList(messageToUserList);
     }
 
     public List<FilestoreRequestTLV> getFileStoreRequestList() {
@@ -190,7 +192,7 @@ public class PutRequest implements ICfdpRequest {
                 ", flowLabel=" + Arrays.toString(flowLabel) +
                 ", acknowledgedTransmissionMode=" + acknowledgedTransmissionMode +
                 ", closureRequested=" + closureRequested +
-                ", messageToUser=" + messageToUser +
+                ", messageToUserList=" + messageToUserList +
                 ", fileStoreRequestList=" + fileStoreRequestList +
                 '}';
     }

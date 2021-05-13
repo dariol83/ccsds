@@ -1,5 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
+import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
+
 public class FaultHandlerOverrideTLV implements TLV {
 
     public static final int TLV_TYPE = 0x04;
@@ -9,7 +11,17 @@ public class FaultHandlerOverrideTLV implements TLV {
         ISSUE_NOTICE_OF_CANCELLATION,
         ISSUE_NOTICE_OF_SUSPENSION,
         IGNORE_ERROR,
-        ABANDON_TRANSACTION
+        ABANDON_TRANSACTION;
+
+        public static HandlerCode map(FaultHandlerStrategy.Action action) {
+            switch (action) {
+                case ABANDON: return ABANDON_TRANSACTION;
+                case NOTICE_OF_CANCELLATION: return ISSUE_NOTICE_OF_CANCELLATION;
+                case NOTICE_OF_SUSPENSION: return ISSUE_NOTICE_OF_SUSPENSION;
+                case NO_ACTION: return IGNORE_ERROR;
+                default: throw new Error("Fault strategy action " + action + " not supported. Software problem."); // NOSONAR this is my way of dealing with potentially catastrophic errors
+            }
+        }
     }
 
     private final byte conditionCode;

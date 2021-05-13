@@ -3,6 +3,8 @@ package eu.dariolucia.ccsds.cfdp.mib;
 import javax.xml.bind.annotation.*;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class LocalEntityConfigurationInformation {
@@ -102,6 +104,10 @@ public class LocalEntityConfigurationInformation {
     public LocalEntityConfigurationInformation setFaultHandlerStrategyList(List<FaultHandlerStrategy> faultHandlerStrategyList) {
         this.faultHandlerStrategyList = faultHandlerStrategyList;
         return this;
+    }
+
+    public Map<Integer, FaultHandlerStrategy.Action> getFaultHandlerMap() {
+        return this.faultHandlerStrategyList.stream().collect(Collectors.toMap(FaultHandlerStrategy::getCondition, FaultHandlerStrategy::getStrategy));
     }
 
     @Override

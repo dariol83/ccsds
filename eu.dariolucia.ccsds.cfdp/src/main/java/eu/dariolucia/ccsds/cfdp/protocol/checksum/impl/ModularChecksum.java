@@ -77,9 +77,9 @@ public class ModularChecksum implements ICfdpChecksumFactory {
         }
 
         @Override
-        public int checksum(byte[] data, int fileOffset) {
+        public int checksum(byte[] data, long fileOffset) {
             // Check the file offset: if not 4-bytes aligned, do so and just the first 4-bytes word
-            int leadingZeroes = fileOffset % 4;
+            int leadingZeroes = (int) fileOffset % 4;
             if(leadingZeroes > 0) {
                 // I need to pad at the beginning
                 byte[] tmp = new byte[] {0,0,0,0};
@@ -90,6 +90,11 @@ public class ModularChecksum implements ICfdpChecksumFactory {
             // Then compute the checksum using the standard approach
             currentChecksum += Integer.toUnsignedLong(checksum(data, 4 - leadingZeroes, data.length - (4 - leadingZeroes)));
             currentChecksum &= 0xFFFFFFFF;
+            return (int) currentChecksum;
+        }
+
+        @Override
+        public int getCurrentChecksum() {
             return (int) currentChecksum;
         }
 

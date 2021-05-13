@@ -34,7 +34,14 @@ public interface ICfdpChecksum {
      * @param fileOffset the file offset of the part of the file data
      * @return the current (potentially partial) checksum
      */
-    int checksum(byte[] data, int fileOffset);
+    int checksum(byte[] data, long fileOffset);
+
+    /**
+     * It can be used only in conjunction with the incremental checksum computation.
+     *
+     * @return the current value of the checksum
+     */
+    int getCurrentChecksum();
 
     /**
      * Return the type of the checksum (as in the SANA Checksum Identifiers registry)

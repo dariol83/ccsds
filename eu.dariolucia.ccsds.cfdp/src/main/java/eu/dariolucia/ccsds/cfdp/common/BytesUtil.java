@@ -116,4 +116,22 @@ public class BytesUtil {
             return "";
         }
     }
+
+    /**
+     * Return the minimum number of bytes that it is required to encode the provided long value.
+     * Negative values always require 8 bytes.
+     *
+     * @param maxEntityId the number to process
+     * @return the minimum number of bytes that it is required to encode the provided long value (between 0 and 8)
+     */
+    public static int getEncodingOctetsNb(long maxEntityId) {
+        if(maxEntityId < 0) {
+            return 8;
+        }
+        if(maxEntityId == 0) {
+            return 1;
+        }
+        int numBits = (int) Math.ceil(Math.log10(maxEntityId) / Math.log10(2));
+        return (int) Math.ceil(numBits / 8.0);
+    }
 }

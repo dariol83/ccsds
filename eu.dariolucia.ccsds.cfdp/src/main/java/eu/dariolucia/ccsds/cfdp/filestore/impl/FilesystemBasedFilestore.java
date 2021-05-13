@@ -3,9 +3,7 @@ package eu.dariolucia.ccsds.cfdp.filestore.impl;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -196,6 +194,52 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
     public boolean directoryExists(String fullPath) {
         File target = constructTarget(fullPath);
         return target.exists() && target.isDirectory();
+    }
+
+    @Override
+    public long fileSize(String fullPath) throws FilestoreException {
+        File target = constructTarget(fullPath);
+        if(!target.exists()) {
+            throw new FilestoreException(String.format("Cannot read size of file %s: file does not exist", fullPath));
+        } else {
+            try {
+                return Files.size(target.toPath());
+            } catch (IOException e) {
+                throw new FilestoreException(e);
+            }
+        }
+    }
+
+    @Override
+    public boolean isUnboundedFile(String sourceFileName) {
+        return false;
+    }
+
+    @Override
+    public InputStream readFile(String fullPath) throws FilestoreException {
+        File target = constructTarget(fullPath);
+        if(!target.exists()) {
+            throw new FilestoreException(String.format("Cannot read file %s: file does not exist", fullPath));
+        } else {
+            try {
+                return new FileInputStream(target);
+            } catch (FileNotFoundException e) {
+                throw new FilestoreException(e);
+            }
+        }
+    }
+
+    @Override
+    public OutputStream writeFile(String fullPath, boolean append) throws FilestoreException {
+        File target = constructTarget(fullPath);
+        if(!target.exists()) {
+            throw new FilestoreException(String.format("Cannot write to file %s: file does not exist", fullPath));
+        }
+        try {
+            return new FileOutputStream(target, append);
+        } catch (IOException e) {
+            throw new FilestoreException(String.format("Cannot append to file %s: %s", fullPath, e.getMessage()), e);
+        }
     }
 
     private File constructTarget(String fullPath) {

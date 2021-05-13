@@ -1,6 +1,8 @@
 package eu.dariolucia.ccsds.cfdp.ut;
 
-public class UtLayerException extends Exception {
+import eu.dariolucia.ccsds.cfdp.common.CfdpException;
+
+public class UtLayerException extends CfdpException {
 
     public UtLayerException() {
     }

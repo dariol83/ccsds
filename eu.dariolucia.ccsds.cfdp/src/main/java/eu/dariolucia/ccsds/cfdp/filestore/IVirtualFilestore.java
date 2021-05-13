@@ -1,5 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.filestore;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 
 public interface IVirtualFilestore {
@@ -26,4 +28,11 @@ public interface IVirtualFilestore {
 
     boolean directoryExists(String fullPath) throws FilestoreException;
 
+    long fileSize(String fullPath) throws FilestoreException;
+
+    boolean isUnboundedFile(String fullPath) throws FilestoreException;
+
+    InputStream readFile(String fullPath) throws FilestoreException;
+
+    OutputStream writeFile(String fullPath, boolean append) throws FilestoreException;
 }

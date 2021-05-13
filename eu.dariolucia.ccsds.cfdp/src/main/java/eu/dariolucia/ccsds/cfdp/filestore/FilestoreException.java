@@ -1,6 +1,8 @@
 package eu.dariolucia.ccsds.cfdp.filestore;
 
-public class FilestoreException extends Exception {
+import eu.dariolucia.ccsds.cfdp.common.CfdpException;
+
+public class FilestoreException extends CfdpException {
 
     public FilestoreException() {
     }
