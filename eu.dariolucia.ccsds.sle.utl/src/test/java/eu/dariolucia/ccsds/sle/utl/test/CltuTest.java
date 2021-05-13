@@ -90,8 +90,7 @@ public class CltuTest {
 
         // Bind
         cltuUser.bind(2);
-        AwaitUtil.await(2000);
-        AwaitUtil.awaitCondition(4000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
+        AwaitUtil.awaitCondition(10000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuUser.getCurrentBindingState());
         assertEquals(1, recorder.getPduReceived().size());
         assertTrue(recorder.getPduReceived().get(0) instanceof SleBindReturn);
