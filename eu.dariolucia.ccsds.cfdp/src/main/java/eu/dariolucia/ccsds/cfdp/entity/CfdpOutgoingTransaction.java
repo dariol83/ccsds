@@ -2,6 +2,8 @@ package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.entity.indication.EofSentIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.FaultIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.TransactionFinishedIndication;
 import eu.dariolucia.ccsds.cfdp.entity.indication.TransactionIndication;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.FileSegment;
@@ -20,10 +22,7 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.*;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,6 +43,11 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
     private EntityIdTLV faultEntityId;
     private long effectiveFileSize;
 
+    // Timer for the declaration of transaction completed when transaction closure is required
+    private TimerTask transactionFinishCheckTimer;
+    // Finished PDU for transactions with closure request
+    private FinishedPdu finishedPdu;
+
     public CfdpOutgoingTransaction(long transactionId, CfdpEntity entity, PutRequest r) {
         super(transactionId, entity, r.getDestinationCfdpEntityId());
         this.request = r;
@@ -62,6 +66,31 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         // 1) ACK PDU for EOF PDU (if in acknowledged mode)
         // 2) Finished PDU (if closure is requested)
         // 3) NAK PDU (if in acknowledged mode)
+        if(pdu instanceof FinishedPdu) {
+            handleFinishedPdu((FinishedPdu) pdu);
+        }
+    }
+
+    private void handleFinishedPdu(FinishedPdu pdu) {
+        if(!isAcknowledged()) {
+            this.finishedPdu = pdu;
+            // 4.6.3.2.3 Reception of a Finished PDU shall cause
+            // a) the Check timer of the associated transaction to be turned off; and
+            // b) a Notice of Completion (either Completed or Canceled, depending on the nature of
+            //    the Finished PDU) to be issued.
+            if (this.transactionFinishCheckTimer != null) {
+                this.transactionFinishCheckTimer.cancel();
+                this.transactionFinishCheckTimer = null;
+            }
+            handleNoticeOfCompletion(deriveCompletedStatus(pdu));
+        } else {
+
+        }
+    }
+
+    private boolean deriveCompletedStatus(FinishedPdu pdu) {
+        return pdu.getConditionCode() == FileDirectivePdu.CC_NOERROR || pdu.getConditionCode() == FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE &&
+                pdu.isDataComplete();
     }
 
     /**
@@ -159,7 +188,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
                 getEntity().notifyIndication(new EofSentIndication(getTransactionId()));
             }
             // Handle the closure of the transaction
-            handle(this::handleClosure);
+            handleClosure();
         } else {
             // Construct the file data PDU
             this.effectiveFileSize += gs.getData().length;
@@ -299,18 +328,91 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
     }
 
     private void handleClosure() {
-        if(!isAcknowledged() && !isClosureRequested()) {
-            // The transaction does not expect anything back and can be disposed
-            dispose();
+        if(!isAcknowledged()) {
+            // 4.6.3.2.1 Transmission of an EOF (No error) PDU shall cause the sending CFDP entity to
+            // issue a Notice of Completion (Completed) unless transaction closure was requested.
+            if(!isClosureRequested()) {
+                handleNoticeOfCompletion(true);
+            } else {
+                // 4.6.3.2.2 In the latter case, a transaction-specific Check timer shall be started. The expiry
+                // period of the timer shall be determined in an implementation-specific manner.
+                this.transactionFinishCheckTimer = new TimerTask() {
+                    @Override
+                    public void run() {
+                        handle(CfdpOutgoingTransaction.this::handleTransactionFinishedCheckTimerElapsed);
+                    }
+                };
+                schedule(this.transactionFinishCheckTimer, getRemoteDestination().getCheckInterval(), false);
+            }
         } else {
-            // The transaction remains open and waits for the closure
+            // The transaction remains open and waits for the EOF ACK and related closure (if present)
+        }
+    }
+
+    private void handleNoticeOfCompletion(boolean completed) {
+        // 4.11.1.1.1 On Notice of Completion of the Copy File procedure, the sending CFDP entity
+        // shall
+        // a) release all unreleased portions of the file retransmission buffer
+        // b) stop transmission of file segments and metadata.
+
+        // 4.11.1.1.2 If sending in acknowledged mode,
+        // a) any transmission of Prompt PDUs shall be terminated
+        // b) the application of Positive Acknowledgment Procedures to PDUs previously issued
+        //    by this entity shall be terminated.
+
+        // 4.11.1.1.3 In any case,
+        // a) if the sending entity is the transaction's source, it shall issue a TransactionFinished.indication primitive indicating the condition in which the transaction
+        //    was completed
+        // b) if all the following are true:
+        //      1) the sending entity is the transaction's source,
+        //      2) the file was sent in acknowledged mode,
+        //      3) the procedure disposition cited in the Notice of Completion is 'Completed', and
+        //      4) the Finished PDU whose arrival completed the transaction contained a Filestore
+        //         Responses parameter,
+        //    then that Filestore Responses parameter shall be passed in the TransactionFinished.indication primitive.
+
+        // TODO: sending entity is the transaction source?
+        if(!isAcknowledged()) {
+            if(this.finishedPdu != null) {
+                getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
+                        this.finishedPdu.getConditionCode(),
+                        this.finishedPdu.getFileStatus(),
+                        this.finishedPdu.isDataComplete(),
+                        this.finishedPdu.getFilestoreResponses(),
+                        null));
+            } else {
+                getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
+                        this.finishedPdu.getConditionCode(),
+                        this.finishedPdu.getFileStatus(),
+                        this.finishedPdu.isDataComplete(),
+                        this.finishedPdu.getFilestoreResponses(),
+                        null));
+            }
+        } else {
+            getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
+                    this.finishedPdu.getConditionCode(),
+                    this.finishedPdu.getFileStatus(),
+                    this.finishedPdu.isDataComplete(),
+                    completed ? this.finishedPdu.getFilestoreResponses() : null,
+                    null));
+        }
+        // Stop everything
+        handleDispose();
+    }
+
+    private void handleTransactionFinishedCheckTimerElapsed() {
+        // If you reach this point, then according to the standard:
+        // 4.6.3.2.4 If the timer expires prior to reception of a Finished PDU for the associated
+        // transaction, a Check Limit Reached fault shall be declared.
+        if(this.transactionFinishCheckTimer != null) {
+            getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_CHECK_LIMIT_REACHED, this.effectiveFileSize));
+            handleDispose();
         }
     }
 
     @Override
-    protected void handleDispose() {
-        // TODO generate TransactionFinishedIndication
-        // TODO cleanup
+    protected void handlePreDispose() {
+        // TODO cleanup resources and memory
     }
 
     private boolean isFileToBeSent() {

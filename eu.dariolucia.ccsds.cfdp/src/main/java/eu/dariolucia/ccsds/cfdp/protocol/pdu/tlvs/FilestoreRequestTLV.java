@@ -1,5 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
+import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
+
 public class FilestoreRequestTLV implements TLV {
 
     public static final int TLV_TYPE = 0x00;
@@ -81,5 +83,10 @@ public class FilestoreRequestTLV implements TLV {
                 ", secondFileName='" + secondFileName + '\'' +
                 ", encodedLength=" + encodedLength +
                 '}';
+    }
+
+    public FilestoreResponseTLV execute(IVirtualFilestore filestore) {
+        // TODO
+        return null;
     }
 }

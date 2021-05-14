@@ -1,19 +1,18 @@
 package eu.dariolucia.ccsds.cfdp.entity;
 
-import eu.dariolucia.ccsds.cfdp.entity.indication.EofRecvIndication;
-import eu.dariolucia.ccsds.cfdp.entity.indication.FaultIndication;
-import eu.dariolucia.ccsds.cfdp.entity.indication.FileSegmentRecvIndication;
-import eu.dariolucia.ccsds.cfdp.entity.indication.MetadataRecvIndication;
+import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
+import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
+import eu.dariolucia.ccsds.cfdp.protocol.builder.CfdpPduBuilder;
+import eu.dariolucia.ccsds.cfdp.protocol.builder.FinishedPduBuilder;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpChecksumRegistry;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpUnsupportedChecksumType;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.ICfdpChecksum;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FaultHandlerOverrideTLV;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.MessageToUserTLV;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.TLV;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.*;
+import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,6 +27,8 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
     private final CfdpPdu initialPdu;
     private final Map<Integer, FaultHandlerStrategy.Action> faultHandlers = new HashMap<>();
 
+    private final List<CfdpPdu> pendingUtTransmissionPduList = new LinkedList<>();
+
     private MetadataPdu metadataPdu;
     private boolean invalidTransmissionModeDetected;
 
@@ -35,12 +36,21 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
     private ICfdpChecksum checksum;
     private long fullyCompletedPartSize = 0;
     private boolean gapDetected = false;
+    private boolean fileCompleted = false;
 
     private EndOfFilePdu eofPdu;
+
+    private TimerTask transactionFinishCheckTimer;
+    private int transactionFinishCheckTimerCount;
 
     private boolean filestoreProblemDetected;
     private boolean checksumTypeMissingSupportDetected;
     private boolean checksumMismatchDetected;
+
+    private FinishedPdu.FileStatus finalFileStatus = FinishedPdu.FileStatus.STATUS_UNREPORTED;
+    private byte finalConditionCode = FileDirectivePdu.CC_NOERROR;
+    private EntityIdTLV finalFaultEntity;
+    private List<FilestoreResponseTLV> filestoreResponses;
 
     public CfdpIncomingTransaction(CfdpPdu pdu, CfdpEntity entity) {
         super(pdu.getTransactionSequenceNumber(), entity, pdu.getSourceEntityId());
@@ -138,7 +148,7 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
             checkForFullFileReconstruction();
         } else {
             // Only metadata information, so the transaction can be closed here
-            handleClosure();
+            // TODO: not really - to be checked
         }
     }
 
@@ -240,18 +250,209 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         }
         // TODO identify the fully completed part offset and if there are gaps (to request retransmission if enabled)
         // Check whether you can reconstruct the file
-        checkForFullFileReconstruction();
+        boolean fileReconstructedAndReady = checkForFullFileReconstruction();
+
+        if(!isAcknowledged()) {
+            // Upon receipt of an EOF (No error) PDU:
+            if(fileReconstructedAndReady) {
+                // a) If file reception is deemed complete as explained in 4.6.1.2.8 above, the receiving
+                // CFDP entity shall issue a Notice of Completion (Completed). Moreover, if the
+                // Closure Requested flag in the transaction’s Metadata PDU is set to ‘1’ and the
+                // receiving entity is the transaction’s destination, the receiving CFDP entity shall issue
+                // a Finished complete) PDU. Any filestore responses shall be carried as parameters of
+                // the Finished (complete) PDU. The condition code in the Finished (complete) PDU
+                // shall be ‘No error’ if file reception was deemed complete following determination
+                // that the calculated and received checksums were equal, but ‘Unsupported checksum
+                // type’ otherwise.
+                handleNoticeOfCompletion(true);
+                if(this.metadataPdu.isClosureRequested()) {
+                    handleForwardingOfFinishedPdu();
+                }
+                handleDispose();
+            } else {
+                // b) Otherwise, a transaction-specific Check timer shall be started. The timer shall have
+                // an implementation-specific expiry period, and there shall be an implementationspecific limit on the number of times the Check timer for any single transaction may
+                // expire.
+                this.transactionFinishCheckTimer = new TimerTask() {
+                    @Override
+                    public void run() {
+                        handle(CfdpIncomingTransaction.this::handleTransactionFinishedCheckTimerElapsed);
+                    }
+                };
+                schedule(this.transactionFinishCheckTimer, getRemoteDestination().getCheckInterval(), true);
+            }
+        } else {
+
+        }
     }
 
-    private void checkForFullFileReconstruction() {
+    private void handleTransactionFinishedCheckTimerElapsed() {
+        // When the timer expires, the receiving entity shall determine whether or not
+        // file reception is now deemed complete. If so, the receiving entity shall issue a Notice
+        // of Completion (Completed) and, if the Closure Requested flag in the transaction’s
+        // Metadata PDU is set to ‘1’ and the receiving entity is the transaction’s destination,
+        // shall additionally issue a Finished (complete) PDU as described above. Otherwise, if
+        // the Check timer expiration limit has been reached, then a Check Limit Reached fault
+        // shall be declared; otherwise the Check timer shall be reset.
+        if(this.transactionFinishCheckTimer != null) {
+            ++this.transactionFinishCheckTimerCount;
+            if(this.fileCompleted) {
+                handleNoticeOfCompletion(true);
+                if(this.metadataPdu.isClosureRequested()) {
+                    handleForwardingOfFinishedPdu();
+                }
+                handleDispose();
+            } else if(this.transactionFinishCheckTimerCount == getRemoteDestination().getCheckIntervalExpirationLimit()) {
+                this.transactionFinishCheckTimer.cancel();
+                this.transactionFinishCheckTimer = null;
+                getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_CHECK_LIMIT_REACHED, this.fullyCompletedPartSize));
+                handleDispose(); // TODO: TBC depending on the CC_ fault handler: with dispose, this sounds like abort
+            }
+        }
+    }
+
+    private void handleNoticeOfCompletion(boolean completed) {
+        // 4.11.1.2.1 If receiving in acknowledged mode,
+        // a) transmission of NAK PDUs, whether in response to NAK timer expiration or in
+        //    response to any other events, shall be terminated
+        // b) any transmission of Keep Alive PDUs shall be terminated
+        // c) the application of Positive Acknowledgment Procedures to PDUs previously issued
+        //    by this entity shall be terminated
+
+        // Derive final status and condition code
+        if(this.filestoreProblemDetected) {
+            this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_BY_FILESTORE;
+            this.finalConditionCode = FileDirectivePdu.CC_FILESTORE_REJECTION;
+            this.finalFaultEntity = new EntityIdTLV(getEntity().getMib().getLocalEntity().getLocalEntityId(), getEntityIdLength());
+        } else if(this.checksumTypeMissingSupportDetected) {
+            this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
+            this.finalConditionCode = FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE;
+            this.finalFaultEntity = new EntityIdTLV(getEntity().getMib().getLocalEntity().getLocalEntityId(), getEntityIdLength());
+        } else if(this.checksumMismatchDetected) {
+            if(this.fileCompleted) {
+                this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
+            } else {
+                this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_DELIBERATLY;
+            }
+            this.finalConditionCode = FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE;
+            this.finalFaultEntity = new EntityIdTLV(getEntity().getMib().getLocalEntity().getLocalEntityId(), getEntityIdLength());
+        } else {
+            this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
+            this.finalConditionCode = FileDirectivePdu.CC_NOERROR;
+            this.finalFaultEntity = null;
+        }
+
+        // 4.11.1.2.2 In any case,
+        // a) if the receiving entity is the transaction’s destination, and the procedure disposition
+        //    cited in the Notice of Completion is ‘Completed’, the receiving CFDP entity shall
+        //    execute any filestore requests conveyed by the Put procedure
+        if(completed) {
+            handleFilestoreRequests();
+        } else {
+            // b) if the procedure disposition cited in the Notice of Completion is ‘Canceled’, and the
+            //    receiving entity is the transaction’s destination, then the incomplete data shall be
+            //    either discarded or retained according to the option set in the MIB
+            //    NOTE – On Notice of Completion (Canceled) for a transaction for which a Notice of
+            //           Completion (Completed) was previously declared, all file data have
+            //           necessarily already been received, and therefore there are no incomplete data
+            //           to discard or retain.
+            if(this.metadataPdu.getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId() &&
+                    getRemoteDestination().isRetainIncompleteReceivedFilesOnCancellation()) {
+                    // TODO: what the hell I do here? :) I might need to invent a way to store a partial file with gaps
+            }
+        }
+        // c) if the receiving entity is the transaction’s destination, then it may optionally issue a
+        //    Transaction-Finished.indication primitive indicating the condition in which the
+        //    transaction was completed
+        // d) if the receiving entity is the transaction’s destination, Filestore Responses and/or a
+        //    Status Report shall be passed as parameters of the TransactionFinished.indication primitive as available.
+        if(this.metadataPdu.getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId() &&
+            getEntity().getMib().getLocalEntity().isTransactionFinishedIndicationRequired()) {
+            getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
+                    this.finalConditionCode,
+                    this.finalFileStatus,
+                    this.fileCompleted,
+                    this.filestoreResponses,
+                    null));
+        }
+    }
+
+    private void handleForwardingOfFinishedPdu() {
+        FinishedPdu pdu = prepareFinishedPdu();
+        forwardPdu(pdu);
+    }
+
+    private FinishedPdu prepareFinishedPdu() {
+        FinishedPduBuilder b = new FinishedPduBuilder();
+        setCommonPduValues(b);
+        b.setDataComplete(this.fileCompleted);
+        b.setFileStatus(this.finalFileStatus);
+        b.setConditionCode(this.finalConditionCode, this.finalFaultEntity);
+        // Add filestore responses
+        // TODO
+
+        return b.build();
+    }
+
+    private <T extends CfdpPdu,K extends CfdpPduBuilder<T, K>> void setCommonPduValues(CfdpPduBuilder<T,K> b) {
+        b.setAcknowledged(isAcknowledged());
+        b.setCrcPresent(getRemoteDestination().isCrcRequiredOnTransmission());
+        b.setDestinationEntityId(getRemoteDestination().getRemoteEntityId());
+        b.setSourceEntityId(getEntity().getMib().getLocalEntity().getLocalEntityId());
+        b.setDirection(CfdpPdu.Direction.TOWARD_FILE_RECEIVER);
+        b.setSegmentationControlPreserved(this.metadataPdu.isSegmentationControlPreserved());
+        // Set the length for the entity ID
+        long maxEntityId = Long.max(getRemoteDestination().getRemoteEntityId(), getEntity().getMib().getLocalEntity().getLocalEntityId());
+        b.setEntityIdLength(BytesUtil.getEncodingOctetsNb(maxEntityId));
+        // Set the transaction ID
+        b.setTransactionSequenceNumber(getTransactionId(), BytesUtil.getEncodingOctetsNb(getTransactionId()));
+        b.setLargeFile(this.metadataPdu.isLargeFile());
+    }
+
+    private boolean forwardPdu(CfdpPdu pdu) { // NOSONAR: false positive
+        // Add to the pending list
+        this.pendingUtTransmissionPduList.add(pdu);
+        // Send all PDUs you have to send, stop if you fail
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, String.format("Incoming transaction %d from entity %d: sending %d pending PDUs to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), getTransmissionLayer().getName()));
+        }
+        while(!pendingUtTransmissionPduList.isEmpty()) {
+            CfdpPdu toSend = pendingUtTransmissionPduList.get(0);
+            try {
+                if(LOG.isLoggable(Level.FINEST)) {
+                    LOG.log(Level.FINEST, String.format("Incoming transaction %d from entity %d: sending PDU %s to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), toSend, getTransmissionLayer().getName()));
+                }
+                getTransmissionLayer().request(toSend);
+                this.pendingUtTransmissionPduList.remove(0);
+            } catch(UtLayerException e) {
+                if(LOG.isLoggable(Level.WARNING)) {
+                    LOG.log(Level.WARNING, String.format("Incoming transaction %d from entity %d: PDU rejected by UT layer %s: %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName(), e.getMessage()), e);
+                }
+                return false;
+            }
+        }
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, String.format("Incoming transaction %d from entity %d: pending PDUs sent to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName()));
+        }
+        return true;
+    }
+
+    /**
+     *
+     * @return false if the file cannot be closed yet, true otherwise (no more PDUs are expected)
+     */
+    private boolean checkForFullFileReconstruction() {
+        if(this.fileCompleted) {
+            return true;
+        }
         if(this.metadataPdu == null || this.eofPdu == null) {
             // Cannot start the reconstruction
-            return;
+            return false;
         }
         // Check the file progress, it must match the file size in the EOF PDU
         if(this.fullyCompletedPartSize != this.eofPdu.getFileSize()) {
             // Still something missing
-            return;
+            return false;
         }
         // 4.6.1.2.8 At the earliest time at which the transaction’s Metadata, File Data (if any), and
         // EOF (No error) PDUs have all been received by the receiving entity:
@@ -277,11 +478,13 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                 storeFile();
             }
         }
-        // You can close the transaction
-        handleClosure();
+        return true;
     }
 
     private void storeFile() {
+        if(this.fileCompleted) {
+            return;
+        }
         IVirtualFilestore filestore = getEntity().getFilestore();
         try {
             filestore.createFile(this.metadataPdu.getDestinationFileName());
@@ -298,20 +501,34 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
             this.filestoreProblemDetected = true;
             getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_FILESTORE_REJECTION, this.fullyCompletedPartSize));
         }
+        this.fileCompleted = true;
+    }
+
+    private void handleFilestoreRequests() {
+        this.filestoreResponses = new LinkedList<>();
+        boolean faultDetected = false;
+        for(TLV req : this.metadataPdu.getOptions()) {
+            if(req instanceof FilestoreRequestTLV) {
+                FilestoreRequestTLV freq = (FilestoreRequestTLV) req;
+                if(faultDetected) {
+                    this.filestoreResponses.add(new FilestoreResponseTLV(freq.getActionCode(), FilestoreResponseTLV.StatusCode.NOT_PERFORMED, null, null, null));
+                } else {
+                    FilestoreResponseTLV resp = freq.execute(getEntity().getFilestore());
+                    this.filestoreResponses.add(resp);
+                    if(resp.getStatusCode() != FilestoreResponseTLV.StatusCode.SUCCESSFUL) {
+                        faultDetected = true;
+                    }
+                }
+            }
+        }
     }
 
     private void handleAckPdu(AckPdu pdu) {
         // TODO: ACK of Finished PDU (only in case of closure requested)
     }
 
-    private void handleClosure() {
-        // TODO: if ack requested and EOF PDU present, send EOF ack with appropriate code
-        // TODO: if closure requested and destination is this entity, send finished PDU
-        // TODO: if no failures and destination is this entity TBC, execute file store requests
-    }
-
     @Override
-    protected void handleDispose() {
+    protected void handlePreDispose() {
         // TODO
     }
 

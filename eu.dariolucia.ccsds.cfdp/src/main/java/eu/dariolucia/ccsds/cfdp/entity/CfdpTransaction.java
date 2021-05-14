@@ -6,6 +6,7 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
 
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -61,12 +62,22 @@ public abstract class CfdpTransaction {
         this.confiner.submit(r);
     }
 
+    protected void schedule(TimerTask t, long period, boolean periodic) {
+        if(periodic) {
+            this.timer.schedule(t, period, period);
+        } else {
+            this.timer.schedule(t, period);
+        }
+    }
+
     public void dispose() {
-        handle(() -> {
-            handleDispose();
-            this.confiner.shutdown();
-            this.timer.cancel();
-        });
+        handle(this::handleDispose);
+    }
+
+    protected void handleDispose() {
+        handlePreDispose();
+        this.confiner.shutdownNow();
+        this.timer.cancel();
     }
 
     public void activate() {
@@ -77,7 +88,7 @@ public abstract class CfdpTransaction {
         handle(() -> handleIndication(pdu));
     }
 
-    protected abstract void handleDispose();
+    protected abstract void handlePreDispose();
 
     protected abstract void handleActivation();
 

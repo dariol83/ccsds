@@ -38,8 +38,11 @@ public class RemoteEntityConfigurationInformation {
     @XmlAttribute(name = "transaction_closure_requested")
     private boolean transactionClosureRequested;
 
-    @XmlAttribute(name = "check_limit")
-    private long checkLimit;
+    @XmlAttribute(name = "check_interval")
+    private long checkInterval; // In the standard, this is referred as Check Limit
+
+    @XmlAttribute(name = "check_interval_expiration_limit")
+    private int checkIntervalExpirationLimit = 1;
 
     @XmlAttribute(name = "default_checksum")
     private int defaultChecksumType;
@@ -67,6 +70,8 @@ public class RemoteEntityConfigurationInformation {
 
     @XmlAttribute(name = "ack_mode_supported")
     private boolean acknowledgedModeSupported = true;
+
+
 
     public long getRemoteEntityId() {
         return remoteEntityId;
@@ -158,12 +163,12 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
-    public long getCheckLimit() {
-        return checkLimit;
+    public long getCheckInterval() {
+        return checkInterval;
     }
 
-    public RemoteEntityConfigurationInformation setCheckLimit(long checkLimit) {
-        this.checkLimit = checkLimit;
+    public RemoteEntityConfigurationInformation setCheckInterval(long checkInterval) {
+        this.checkInterval = checkInterval;
         return this;
     }
 
@@ -248,6 +253,15 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
+    public int getCheckIntervalExpirationLimit() {
+        return checkIntervalExpirationLimit;
+    }
+
+    public RemoteEntityConfigurationInformation setCheckIntervalExpirationLimit(int checkIntervalExpirationLimit) {
+        this.checkIntervalExpirationLimit = checkIntervalExpirationLimit;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "RemoteEntityConfigurationInformation{" +
@@ -261,7 +275,7 @@ public class RemoteEntityConfigurationInformation {
                 ", immediateNakModeEnabled=" + immediateNakModeEnabled +
                 ", defaultTransmissionModeAcknowledged=" + defaultTransmissionModeAcknowledged +
                 ", transactionClosureRequested=" + transactionClosureRequested +
-                ", checkLimit=" + checkLimit +
+                ", checkInterval=" + checkInterval +
                 ", defaultChecksumType=" + defaultChecksumType +
                 ", retainIncompleteReceivedFilesOnCancellation=" + retainIncompleteReceivedFilesOnCancellation +
                 ", crcRequiredOnTransmission=" + crcRequiredOnTransmission +
@@ -271,6 +285,7 @@ public class RemoteEntityConfigurationInformation {
                 ", nakTimerExpirationLimit=" + nakTimerExpirationLimit +
                 ", transactionInactivityLimit=" + transactionInactivityLimit +
                 ", acknowledgedModeSupported=" + acknowledgedModeSupported +
+                ", checkIntervalExpirationLimit=" + checkIntervalExpirationLimit +
                 '}';
     }
 }
