@@ -166,7 +166,7 @@ public class CfdpEntity implements IUtLayerSubscriber {
         // Get a new transaction ID
         long transactionId = generateTransactionId();
         // Create a new transaction object to send the specified file
-        CfdpTransaction cfdpTransaction = new CfdpOutgoingTransaction(transactionId, r, this);
+        CfdpTransaction cfdpTransaction = new CfdpOutgoingTransaction(transactionId, this, r);
         // Register the transaction in the map
         this.id2transaction.put(transactionId, cfdpTransaction);
         // Start the transaction
@@ -237,7 +237,37 @@ public class CfdpEntity implements IUtLayerSubscriber {
 
     @Override
     public void indication(IUtLayer layer, CfdpPdu pdu) {
-        // TODO
+        this.entityConfiner.submit(() -> processIndication(layer, pdu));
+    }
+
+    private void processIndication(IUtLayer layer, CfdpPdu pdu) {
+        if(LOG.isLoggable(Level.FINEST)) {
+            LOG.log(Level.FINEST, String.format("CFDP Entity %d: received PDU from UT layer %s: %s", mib.getLocalEntity().getLocalEntityId(), layer.getName(), pdu));
+        }
+        // Three possibilities: 1) the pdu is not for this entity -> discard TODO: for store-and-foward this is not appropriate
+        if(pdu.getDestinationEntityId() != mib.getLocalEntity().getLocalEntityId()) {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("CFDP Entity %d: PDU from UT layer %s from entity %d not for this entity: received %d", mib.getLocalEntity().getLocalEntityId(), layer.getName(), pdu.getSourceEntityId(), pdu.getDestinationEntityId()));
+            }
+            return;
+        }
+        CfdpTransaction transaction = this.id2transaction.get(pdu.getTransactionSequenceNumber());
+        if(transaction != null) {
+            // 2) the PDU is for this entity and there is a transaction already running -> forward
+            transaction.indication(pdu);
+        } else {
+            // 3) the PDU is for this entity and there is no transaction already running -> create
+            createNewIncomingTransaction(pdu);
+        }
+    }
+
+    private void createNewIncomingTransaction(CfdpPdu pdu) {
+        // Create a new transaction object to handle the requested transaction
+        CfdpTransaction cfdpTransaction = new CfdpIncomingTransaction(pdu, this);
+        // Register the transaction in the map
+        this.id2transaction.put(cfdpTransaction.getTransactionId(), cfdpTransaction);
+        // Start the transaction
+        cfdpTransaction.activate();
     }
 
     @Override

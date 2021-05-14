@@ -18,6 +18,7 @@ public class FileDirectivePdu extends CfdpPdu {
     public static final byte CC_KEEPALIVE_LIMIT_REACHED = 0b0010;
     public static final byte CC_INVALID_TX_MODE = 0b0011;
     public static final byte CC_FILESTORE_REJECTION = 0b0100;
+    public static final byte CC_FILE_CHECKSUM_FAILURE = 0b0101;
     public static final byte CC_FILE_SIZE_ERROR = 0b0110;
     public static final byte CC_NAK_LIMIT_REACHED = 0b0111;
     public static final byte CC_INACTIVITY_DETECTED = 0b1000;

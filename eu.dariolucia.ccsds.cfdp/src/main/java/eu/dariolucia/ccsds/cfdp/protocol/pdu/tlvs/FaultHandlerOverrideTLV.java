@@ -22,6 +22,16 @@ public class FaultHandlerOverrideTLV implements TLV {
                 default: throw new Error("Fault strategy action " + action + " not supported. Software problem."); // NOSONAR this is my way of dealing with potentially catastrophic errors
             }
         }
+
+        public FaultHandlerStrategy.Action toAction() {
+            switch(this) {
+                case ABANDON_TRANSACTION: return FaultHandlerStrategy.Action.ABANDON;
+                case ISSUE_NOTICE_OF_CANCELLATION: return FaultHandlerStrategy.Action.NOTICE_OF_CANCELLATION;
+                case ISSUE_NOTICE_OF_SUSPENSION: return FaultHandlerStrategy.Action.NOTICE_OF_SUSPENSION;
+                case IGNORE_ERROR: return FaultHandlerStrategy.Action.NO_ACTION;
+                default: return null;
+            }
+        }
     }
 
     private final byte conditionCode;
