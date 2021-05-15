@@ -452,13 +452,15 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                     if(CfdpIncomingTransaction.this.nakTimer != null) {
                         ++nakTimerCount;
                         if(fileCompleted) {
-
+                            // Timer expired but file completed in the meantime... Should this ever happen?
+                            return;
                         }
                         if(nakTimerCount < getRemoteDestination().getNakTimerExpirationLimit()) {
                             handleNakComputation();
                             schedule(nakTimer, getRemoteDestination().getNackTimerInterval(), false);
                         } else {
-
+                            getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_NAK_LIMIT_REACHED, fullyCompletedPartSize));
+                            // TODO: what do we do?
                         }
                     }
                 });
