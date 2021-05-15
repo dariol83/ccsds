@@ -28,6 +28,11 @@ public class NakPdu extends FileDirectivePdu {
         public long getEndOffset() {
             return endOffset;
         }
+
+        public boolean overlapWith(long start, long end) {
+            return (start >= startOffset && start <= endOffset) ||
+                    (end >= startOffset && end <= endOffset);
+        }
     }
 
     private final long startOfScope;
@@ -58,7 +63,7 @@ public class NakPdu extends FileDirectivePdu {
     }
 
     /**
-     * Start of scope (offset it bytes).
+     * Start of scope (offset in bytes).
      *
      * @return start of scope
      */

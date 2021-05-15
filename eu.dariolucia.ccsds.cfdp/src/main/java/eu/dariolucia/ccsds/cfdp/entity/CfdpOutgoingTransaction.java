@@ -11,10 +11,7 @@ import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpFileSegmenter;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.impl.FixedSizeSegmenter;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
-import eu.dariolucia.ccsds.cfdp.protocol.builder.CfdpPduBuilder;
-import eu.dariolucia.ccsds.cfdp.protocol.builder.EndOfFilePduBuilder;
-import eu.dariolucia.ccsds.cfdp.protocol.builder.FileDataPduBuilder;
-import eu.dariolucia.ccsds.cfdp.protocol.builder.MetadataPduBuilder;
+import eu.dariolucia.ccsds.cfdp.protocol.builder.*;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpChecksumRegistry;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpUnsupportedChecksumType;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.ICfdpChecksum;
@@ -39,7 +36,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
 
     private ICfdpFileSegmenter segmentProvider;
     private ICfdpChecksum checksum;
-    private byte conditionCode;
+    private byte conditionCode = FileDirectivePdu.CC_NOERROR;
     private EntityIdTLV faultEntityId;
     private long effectiveFileSize;
 
@@ -68,6 +65,59 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         // 3) NAK PDU (if in acknowledged mode)
         if(pdu instanceof FinishedPdu) {
             handleFinishedPdu((FinishedPdu) pdu);
+        } else if(pdu instanceof NakPdu) {
+            handleNakPdu((NakPdu) pdu);
+        } else if(pdu instanceof AckPdu) {
+            handleAckPdu((AckPdu) pdu); // For EOF ACK
+        }
+    }
+
+    private void handleAckPdu(AckPdu pdu) {
+        // TODO: stop timer per EOF
+    }
+
+    private void handleNakPdu(NakPdu pdu) {
+        // 4.6.4.2.1 The sending CFDP entity shall respond to all received NAK PDUs by
+        // retransmitting the requested Metadata PDU and/or the extents of the data file defined by the
+        // start and end offsets of the segment requests in the NAK PDU.
+        long startOfScope = pdu.getStartOfScope();
+        long endOfScope = pdu.getEndOfScope();
+        for(CfdpPdu sentPdu : this.sentPduList) {
+            if(sentPdu instanceof MetadataPdu && startOfScope == 0) {
+                checkAndRetransmitMetadataPdu((MetadataPdu) sentPdu, pdu.getSegmentRequests());
+            } else if(sentPdu instanceof FileDataPdu) {
+                FileDataPdu filePdu = (FileDataPdu) sentPdu;
+                if(filePdu.getOffset() + filePdu.getFileData().length < startOfScope) {
+                    continue;
+                }
+                if(filePdu.getOffset() > endOfScope) {
+                    continue;
+                }
+                // File is in offset, so check if there is a segment request
+                checkAndRetransmitFileDataPdu(filePdu, pdu.getSegmentRequests());
+            } else if(sentPdu instanceof EndOfFilePdu) {
+                // Ignore
+            }
+        }
+    }
+
+    private void checkAndRetransmitFileDataPdu(FileDataPdu filePdu, List<NakPdu.SegmentRequest> segmentRequests) {
+        for(NakPdu.SegmentRequest segmentRequest : segmentRequests) {
+            // If there is an overlap with the file data pdu, send the pdu again
+            if(segmentRequest.overlapWith(filePdu.getOffset(), filePdu.getOffset() + filePdu.getFileData().length)) {
+                forwardPdu(filePdu, true);
+                return;
+            }
+        }
+    }
+
+    private void checkAndRetransmitMetadataPdu(MetadataPdu sentPdu, List<NakPdu.SegmentRequest> segmentRequests) {
+        for(NakPdu.SegmentRequest segmentRequest : segmentRequests) {
+            // If there is a segment with start and end equal to 0, then retransmit the metadata PDU
+            if(segmentRequest.getStartOffset() == 0 && segmentRequest.getEndOffset() == 0) {
+                forwardPdu(sentPdu, true);
+                return;
+            }
         }
     }
 
@@ -83,8 +133,19 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
                 this.transactionFinishCheckTimer = null;
             }
             handleNoticeOfCompletion(deriveCompletedStatus(pdu));
+            // Clean up the transaction resources
+            handleDispose();
         } else {
-
+            // 4.6.4.2.4 Positive Acknowledgment procedures shall be applied to the EOF (No error) and
+            // Finished (complete) PDUs with the Expected Responses being ACK (EOF) PDU and ACK
+            // (Finished) PDU, respectively.
+            AckPdu toSend = prepareAckPdu(pdu);
+            forwardPdu(toSend);
+            // 4.6.4.2.3 Receipt of the Finished (complete) PDU shall cause the sending CFDP entity to
+            // issue a Notice of Completion (Completed).
+            handleNoticeOfCompletion(deriveCompletedStatus(pdu));
+            // Clean up the transaction resources
+            handleDispose();
         }
     }
 
@@ -112,6 +173,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
             segmentAndForwardFileData();
         } else {
             // For Metadata only transactions, closure might or might not be requested
+            // TODO: to be checked, as handleClosure is related primarily to file transactions
             handle(this::handleClosure);
         }
         // End of the transmission activation
@@ -182,6 +244,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
             this.segmentProvider.close();
             int finalChecksum = this.checksum.getCurrentChecksum();
             EndOfFilePdu pdu = prepareEndOfFilePdu(finalChecksum);
+            // TODO: Start EOF ACK timer
             forwardPdu(pdu);
             // Send the EOF indication
             if(getEntity().getMib().getLocalEntity().isEofSentIndicationRequired()) {
@@ -204,8 +267,12 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         this.checksum.checksum(gs.getData(), gs.getOffset());
     }
 
-    private boolean forwardPdu(CfdpPdu pdu) { // NOSONAR: false positive
-        if(isAcknowledged()) {
+    private boolean forwardPdu(CfdpPdu pdu) {
+        return forwardPdu(pdu, false);
+    }
+
+    private boolean forwardPdu(CfdpPdu pdu, boolean retransmission) { // NOSONAR: false positive
+        if(isAcknowledged() && !retransmission) {
             // Remember the PDU
             this.sentPduList.add(pdu);
         }
@@ -312,6 +379,17 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         return b.build();
     }
 
+    private AckPdu prepareAckPdu(FinishedPdu pdu) {
+        AckPduBuilder b = new AckPduBuilder();
+        setCommonPduValues(b);
+        b.setTransactionStatus(AckPdu.TransactionStatus.TERMINATED); // TODO: check
+        b.setConditionCode(this.conditionCode); // TODO: check
+        b.setDirectiveCode(FileDirectivePdu.DC_FINISHED_PDU);
+        b.setDirectiveSubtypeCode((byte) 0x01);
+
+        return b.build();
+    }
+
     private <T extends CfdpPdu,K extends CfdpPduBuilder<T, K>> void setCommonPduValues(CfdpPduBuilder<T,K> b) {
         b.setAcknowledged(isAcknowledged());
         b.setCrcPresent(getRemoteDestination().isCrcRequiredOnTransmission());
@@ -333,6 +411,8 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
             // issue a Notice of Completion (Completed) unless transaction closure was requested.
             if(!isClosureRequested()) {
                 handleNoticeOfCompletion(true);
+                // Nothing to do here, clean up transaction resources
+                handleDispose();
             } else {
                 // 4.6.3.2.2 In the latter case, a transaction-specific Check timer shall be started. The expiry
                 // period of the timer shall be determined in an implementation-specific manner.
@@ -396,8 +476,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
                     completed ? this.finishedPdu.getFilestoreResponses() : null,
                     null));
         }
-        // Stop everything
-        handleDispose();
+        // We don't dispose here, as there might be things to be done after the Notice of Completion, prior to disposal
     }
 
     private void handleTransactionFinishedCheckTimerElapsed() {

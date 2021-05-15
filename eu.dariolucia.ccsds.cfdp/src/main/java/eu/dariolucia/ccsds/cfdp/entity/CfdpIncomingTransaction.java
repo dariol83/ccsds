@@ -5,8 +5,10 @@ import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
+import eu.dariolucia.ccsds.cfdp.protocol.builder.AckPduBuilder;
 import eu.dariolucia.ccsds.cfdp.protocol.builder.CfdpPduBuilder;
 import eu.dariolucia.ccsds.cfdp.protocol.builder.FinishedPduBuilder;
+import eu.dariolucia.ccsds.cfdp.protocol.builder.NakPduBuilder;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpChecksumRegistry;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpUnsupportedChecksumType;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.ICfdpChecksum;
@@ -42,6 +44,11 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
 
     private TimerTask transactionFinishCheckTimer;
     private int transactionFinishCheckTimerCount;
+
+    private TimerTask nakComputationTimer;
+
+    private TimerTask nakTimer;
+    private int nakTimerCount;
 
     private boolean filestoreProblemDetected;
     private boolean checksumTypeMissingSupportDetected;
@@ -79,6 +86,7 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         // 2) FileData PDU
         // 3) EOF PDU
         // 4) ACK (Finished) PDU
+        // 5) Prompt PDU
         if(pdu instanceof MetadataPdu) {
             handleMetadataPdu((MetadataPdu) pdu);
         } else if(pdu instanceof FileDataPdu) {
@@ -87,6 +95,17 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
             handleEndOfFilePdu((EndOfFilePdu) pdu);
         } else if(pdu instanceof AckPdu) {
             handleAckPdu((AckPdu) pdu);
+        } else if(pdu instanceof PromptPdu) {
+            handlePromptPdu((PromptPdu) pdu);
+        }
+    }
+
+    private void handlePromptPdu(PromptPdu pdu) {
+        if(isAcknowledged()) {
+            // Run immediately the task that computes and sends the required NAKs
+            handleNakComputation();
+            // Reset the timer
+            restartNakComputation();
         }
     }
 
@@ -156,6 +175,9 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         // If this is the first PDU ever, then it means that the metadata PDU got lost but still allocates the reconstruction map
         if(this.fileReconstructionMap == null) {
             this.fileReconstructionMap = new TreeMap<>();
+            if(this.metadataPdu == null) {
+                sendMetadataNak();
+            }
         }
         // Check if there is already a FileData PDU like you in the map
         if(this.fileReconstructionMap.containsKey(pdu.getOffset())) {
@@ -182,7 +204,28 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                     pdu.getRecordContinuationState(), pdu.getSegmentMetadataLength(), pdu.getSegmentMetadata()));
         }
         // Check whether you can reconstruct the file
-        checkForFullFileReconstruction();
+        boolean fileReconstructed = checkForFullFileReconstruction();
+        if(isAcknowledged() && fileReconstructed) {
+            handleNoticeOfCompletion(true);
+            handleForwardingOfFinishedPdu();
+            handleDispose();
+        }
+    }
+
+    private void handleForwardingOfEofAckPdu(EndOfFilePdu eofPdu) {
+        AckPdu pdu = prepareAckPdu(eofPdu);
+        forwardPdu(pdu);
+    }
+
+    private AckPdu prepareAckPdu(EndOfFilePdu pdu) {
+        AckPduBuilder b = new AckPduBuilder();
+        setCommonPduValues(b);
+        b.setTransactionStatus(AckPdu.TransactionStatus.ACTIVE); // TODO: check
+        b.setConditionCode(this.finalConditionCode); // TODO: check
+        b.setDirectiveCode(FileDirectivePdu.DC_EOF_PDU);
+        b.setDirectiveSubtypeCode((byte) 0x00);
+
+        return b.build();
     }
 
     /**
@@ -219,15 +262,38 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
             }
         } else {
             // Here we need to expect that the offset is not the one we expect, so we raise the gapDetected flag
-            // TODO compute gap size for NAK
             this.gapDetected = true;
+            if(isAcknowledged() && this.eofPdu == null && this.nakComputationTimer == null) {
+                // Start a periodic task that computes and sends the required NAKs: this you do until the EOF PDU arrives.
+                // When the EOF PDU arrives, then you go for the NAK Timer.
+                restartNakComputation();
+            }
         }
     }
 
     private void handleEndOfFilePdu(EndOfFilePdu pdu) {
+        // Receipt of a PDU to which Positive Acknowledgement procedures are applied shall cause the
+        // receiving CFDP entity immediately to issue the Expected Response.
+        // NOTES
+        //  1   By issuing the Expected Response, the CFDP entity only confirms receipt of the
+        //      PDU; issuance of the Expected Response does not imply that the receiving CFDP
+        //      entity has taken any other action as a result. For example, production of an ACK
+        //      (EOF (Cancel)) PDU implies that an EOF (Cancel) PDU was received but not
+        //      necessarily that the referenced transaction was canceled.
+        // 2    The receiving CFDP entity is always required to issue the Expected Response upon
+        //      receipt of a PDU to which Positive Acknowledgment procedures are applied. The
+        //      purpose of the Expected Response is to turn off the PDU retransmission timer at the
+        //      sending end. This purpose must be served regardless of the status of the transaction:
+        //      undefined, active, terminated, or unrecognized.
+        if(isAcknowledged()) {
+            handleForwardingOfEofAckPdu(pdu);
+        }
         // If this is the first PDU ever, then it means that the metadata PDU got lost but still allocates the reconstruction map
         if(this.fileReconstructionMap == null) {
             this.fileReconstructionMap = new TreeMap<>();
+            if(isAcknowledged() && this.metadataPdu == null) {
+                sendMetadataNak();
+            }
         }
         // Check if there is already a EOF (No error) PDU
         if(this.eofPdu != null && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
@@ -248,7 +314,6 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                 getEntity().getMib().getLocalEntity().isEofRecvIndicationRequired()) {
             getEntity().notifyIndication(new EofRecvIndication(pdu.getTransactionSequenceNumber()));
         }
-        // TODO identify the fully completed part offset and if there are gaps (to request retransmission if enabled)
         // Check whether you can reconstruct the file
         boolean fileReconstructedAndReady = checkForFullFileReconstruction();
 
@@ -282,8 +347,150 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                 schedule(this.transactionFinishCheckTimer, getRemoteDestination().getCheckInterval(), true);
             }
         } else {
-
+            if(fileReconstructedAndReady) {
+                handleNoticeOfCompletion(true);
+                handleForwardingOfFinishedPdu();
+                handleDispose();
+            } else {
+                // Stop the as-you-go timer
+                stopNakComputation();
+                // Run immediately the task that computes and sends the required NAKs
+                handleNakComputation();
+                // Start the NAK timer, as per 4.6.4.6
+                // Upon initial receipt of the EOF (No error) PDU for a transaction, the receiving entity shall
+                // determine whether or not any of the transaction’s file data or metadata have yet to be
+                // received. If so:
+                // a) If any file data gaps or lost metadata are detected for which no segment requests were
+                // included in previously issued NAK PDUs, the receiving CFDP entity shall issue a
+                // NAK sequence.
+                // b) A transaction-specific NAK timer shall be started. The timer shall have an
+                // implementation-specific expiry period. When the timer expires, the receiving entity
+                // shall determine whether or not any of the transaction’s file data or metadata have yet to
+                // be received. If so, the receiving entity shall issue a NAK sequence whose scope begins
+                // at zero and extends through the entire length of the file, and the timer shall be reset.
+                startNakTimer();
+            }
         }
+    }
+
+    private void sendMetadataNak() {
+        NakPduBuilder b = new NakPduBuilder();
+        setCommonPduValues(b);
+        b.setStartOfScope(this.fullyCompletedPartSize);
+        b.setEndOfScope(this.fullyCompletedPartSize);
+        b.addSegmentRequest(new NakPdu.SegmentRequest(0,0));
+        NakPdu pdu = b.build();
+        forwardPdu(pdu);
+    }
+
+    private boolean handleNakComputation() {
+        boolean requestsPerformed = false;
+        // First of all, check if the metadata arrived, and if not, request the NAK
+        if(this.metadataPdu == null) {
+            sendMetadataNak();
+            requestsPerformed = true;
+        }
+        // Then, inspect what you have in terms of file reconstruction
+        List<NakPdu.SegmentRequest> missingSegments = new LinkedList<>();
+        // Initialise it with the number of bytes that we are sure we received
+        long startOfScope = fullyCompletedPartSize;
+
+        long tmpFilePartOffset = fullyCompletedPartSize;
+        for(Map.Entry<Long, FileDataPdu> e : this.fileReconstructionMap.entrySet()) {
+            // All segments having an offset lower than tmpFilePartOffset can be safely skipped
+            if(e.getKey() == tmpFilePartOffset) {
+                // We found a segment that can contribute to the progress of the file, so we take this into account and we go on
+                tmpFilePartOffset += e.getValue().getFileData().length;
+            } else if(e.getKey() > tmpFilePartOffset) {
+                // The file part from tmpFilePartOffset and e.getValue().getOffset() is missing, create segment request
+                missingSegments.add(new NakPdu.SegmentRequest(tmpFilePartOffset, e.getKey()));
+                // Set the progress to e.getValue().getOffset() + e.getValue().getFileData().length
+                tmpFilePartOffset = e.getValue().getOffset() + e.getValue().getFileData().length;
+            }
+        }
+        long endOfScope = tmpFilePartOffset;
+        // If EOF(No error) was received, then add a segment from tmpFilePartOffset and the expected file size
+        if(this.eofPdu != null && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
+            if(tmpFilePartOffset < this.eofPdu.getFileSize()) {
+                missingSegments.add(new NakPdu.SegmentRequest(tmpFilePartOffset, this.eofPdu.getFileSize()));
+                endOfScope = this.eofPdu.getFileSize();
+            }
+        }
+        requestsPerformed = requestsPerformed || !missingSegments.isEmpty();
+        // Build and send the NAK PDUs (group 4 segments into each NAK PDU - implementation-dependant)
+        while(!missingSegments.isEmpty()) {
+            NakPduBuilder b = new NakPduBuilder();
+            setCommonPduValues(b);
+            b.setStartOfScope(startOfScope);
+            b.setEndOfScope(endOfScope);
+            int segsToAdd = 4;
+            while(!missingSegments.isEmpty() && segsToAdd > 0) {
+                b.addSegmentRequest(missingSegments.remove(0));
+                --segsToAdd;
+            }
+            NakPdu pdu = b.build();
+            forwardPdu(pdu);
+        }
+        return requestsPerformed;
+    }
+
+    private void stopNakTimer() {
+        if(this.nakTimer != null) {
+            this.nakTimer.cancel();
+            this.nakTimer = null;
+        }
+    }
+
+    private void startNakTimer() {
+        if(this.nakTimer != null) {
+            return;
+        }
+        this.nakTimer = new TimerTask() {
+            @Override
+            public void run() {
+                handle(() -> {
+                    if(CfdpIncomingTransaction.this.nakTimer != null) {
+                        ++nakTimerCount;
+                        if(fileCompleted) {
+
+                        }
+                        if(nakTimerCount < getRemoteDestination().getNakTimerExpirationLimit()) {
+                            handleNakComputation();
+                            schedule(nakTimer, getRemoteDestination().getNackTimerInterval(), false);
+                        } else {
+
+                        }
+                    }
+                });
+            }
+        };
+        schedule(this.nakTimer, getRemoteDestination().getNackTimerInterval(), false);
+    }
+
+    private void stopNakComputation() {
+        if(this.nakComputationTimer != null) {
+            this.nakComputationTimer.cancel();
+            this.nakComputationTimer = null;
+        }
+    }
+
+    private void restartNakComputation() {
+        if(this.nakComputationTimer != null) {
+            this.nakComputationTimer.cancel();
+            this.nakComputationTimer = null;
+        }
+        this.nakComputationTimer = new TimerTask() {
+            @Override
+            public void run() {
+                final TimerTask expiredTimer = this;
+                handle(() -> {
+                    if (CfdpIncomingTransaction.this.nakComputationTimer == expiredTimer) {
+                        handleNakComputation();
+                    }
+                });
+            }
+        };
+        schedule(this.nakComputationTimer, getRemoteDestination().getNackTimerInterval(), true); // TODO: introduce MIB parameter instead of nack timer interval
     }
 
     private void handleTransactionFinishedCheckTimerElapsed() {
@@ -318,30 +525,32 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         // b) any transmission of Keep Alive PDUs shall be terminated
         // c) the application of Positive Acknowledgment Procedures to PDUs previously issued
         //    by this entity shall be terminated
-
+        stopNakComputation();
+        stopNakTimer();
         // Derive final status and condition code
-        if(this.filestoreProblemDetected) {
-            this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_BY_FILESTORE;
-            this.finalConditionCode = FileDirectivePdu.CC_FILESTORE_REJECTION;
-            this.finalFaultEntity = new EntityIdTLV(getEntity().getMib().getLocalEntity().getLocalEntityId(), getEntityIdLength());
-        } else if(this.checksumTypeMissingSupportDetected) {
-            this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
-            this.finalConditionCode = FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE;
-            this.finalFaultEntity = new EntityIdTLV(getEntity().getMib().getLocalEntity().getLocalEntityId(), getEntityIdLength());
-        } else if(this.checksumMismatchDetected) {
-            if(this.fileCompleted) {
+        if(completed) {
+            if (this.filestoreProblemDetected) {
+                this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_BY_FILESTORE;
+                this.finalConditionCode = FileDirectivePdu.CC_FILESTORE_REJECTION;
+                this.finalFaultEntity = new EntityIdTLV(getEntity().getMib().getLocalEntity().getLocalEntityId(), getEntityIdLength());
+            } else if (this.checksumTypeMissingSupportDetected) {
                 this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
+                this.finalConditionCode = FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE;
+                this.finalFaultEntity = new EntityIdTLV(getEntity().getMib().getLocalEntity().getLocalEntityId(), getEntityIdLength());
+            } else if (this.checksumMismatchDetected) {
+                if (this.fileCompleted) {
+                    this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
+                } else {
+                    this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_DELIBERATLY;
+                }
+                this.finalConditionCode = FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE;
+                this.finalFaultEntity = new EntityIdTLV(getEntity().getMib().getLocalEntity().getLocalEntityId(), getEntityIdLength());
             } else {
-                this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_DELIBERATLY;
+                this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
+                this.finalConditionCode = FileDirectivePdu.CC_NOERROR;
+                this.finalFaultEntity = null;
             }
-            this.finalConditionCode = FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE;
-            this.finalFaultEntity = new EntityIdTLV(getEntity().getMib().getLocalEntity().getLocalEntityId(), getEntityIdLength());
-        } else {
-            this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
-            this.finalConditionCode = FileDirectivePdu.CC_NOERROR;
-            this.finalFaultEntity = null;
         }
-
         // 4.11.1.2.2 In any case,
         // a) if the receiving entity is the transaction’s destination, and the procedure disposition
         //    cited in the Notice of Completion is ‘Completed’, the receiving CFDP entity shall
@@ -524,7 +733,16 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
     }
 
     private void handleAckPdu(AckPdu pdu) {
-        // TODO: ACK of Finished PDU (only in case of closure requested)
+        // ACK of Finished PDU (only in case of closure requested or acknowledged mode)
+        if(pdu.getDirectiveCode() == FileDirectivePdu.DC_FINISHED_PDU) {
+            if(LOG.isLoggable(Level.INFO)) {
+                LOG.log(Level.INFO, String.format("Incoming transaction %d from entity %d: ACK PDU(Finished) received", getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+            }
+        } else {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("Incoming transaction %d from entity %d: ACK PDU(for directive code 0x%02X) received", getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu.getDirectiveCode()));
+            }
+        }
     }
 
     @Override
