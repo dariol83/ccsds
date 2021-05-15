@@ -455,6 +455,13 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                             // Timer expired but file completed in the meantime... Should this ever happen?
                             return;
                         }
+                        // 4.6.4.7 An implementation-specific measure of NAK activity shall be maintained for each
+                        // transaction, and, if an implementation-specific limit is reached for a given transaction, a
+                        // NAK Limit Reached fault shall be declared.
+
+                        // NOTE – A typical implementation of NAK activity limit is a limit on the number of
+                        // successive times the NAK timer is allowed to expire without intervening
+                        // reception of file data and/or metadata that had not previously been received.
                         if(nakTimerCount < getRemoteDestination().getNakTimerExpirationLimit()) {
                             handleNakComputation();
                             schedule(nakTimer, getRemoteDestination().getNackTimerInterval(), false);
