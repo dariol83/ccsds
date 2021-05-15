@@ -61,7 +61,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
     protected void handleIndication(CfdpPdu pdu) {
         // As a sender you can expect:
         // 1) ACK PDU for EOF PDU (if in acknowledged mode)
-        // 2) Finished PDU (if closure is requested)
+        // 2) Finished PDU (if in acknowledged mode or if closure is requested)
         // 3) NAK PDU (if in acknowledged mode)
         if(pdu instanceof FinishedPdu) {
             handleFinishedPdu((FinishedPdu) pdu);
