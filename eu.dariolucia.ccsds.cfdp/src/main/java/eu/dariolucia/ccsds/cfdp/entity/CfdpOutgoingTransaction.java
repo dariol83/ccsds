@@ -69,6 +69,41 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
             handleNakPdu((NakPdu) pdu);
         } else if(pdu instanceof AckPdu) {
             handleAckPdu((AckPdu) pdu); // For EOF ACK
+        } else if(pdu instanceof KeepAlivePdu) {
+            handleKeepAlivePdu((KeepAlivePdu) pdu);
+        }
+    }
+
+    private void handleKeepAlivePdu(KeepAlivePdu pdu) {
+        // 4.6.5.3.1 At the sending CFDP entity, if the discrepancy between the reception progress
+        // reported by the Keep Alive PDU, and the transaction’s transmission progress so far at this
+        // entity exceeds a preset limit, the sending CFDP entity may optionally declare a Keep Alive
+        // Limit Reached fault.
+        int limit = getRemoteDestination().getKeepAliveDiscrepancyLimit();
+        if(limit == -1) {
+            return;
+        }
+        if(this.effectiveFileSize - pdu.getProgress() > limit) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("Outgoing transaction %d to entity %d: keep alive limit fault - remote progress: %d bytes, local progress %d bytes, limit %d bytes", getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.effectiveFileSize, pdu.getProgress(), limit));
+            }
+            getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_KEEPALIVE_LIMIT_REACHED,
+                    this.effectiveFileSize));
+        }
+    }
+
+    public void requestKeepAlive() {
+        sendPromptPdu(true);
+    }
+
+    public void requestNak() {
+        sendPromptPdu(false);
+    }
+
+    private void sendPromptPdu(boolean isKeepAlive) {
+        if (isAcknowledged()) {
+            PromptPdu p = preparePromptPdu(isKeepAlive);
+            forwardPdu(p, true); // Do not store this PDU
         }
     }
 
@@ -387,6 +422,17 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         b.setDirectiveCode(FileDirectivePdu.DC_FINISHED_PDU);
         b.setDirectiveSubtypeCode((byte) 0x01);
 
+        return b.build();
+    }
+
+    private PromptPdu preparePromptPdu(boolean keepAlive) {
+        PromptPduBuilder b = new PromptPduBuilder();
+        setCommonPduValues(b);
+        if(keepAlive) {
+            b.setKeepAliveResponse();
+        } else {
+            b.setNakResponse();
+        }
         return b.build();
     }
 

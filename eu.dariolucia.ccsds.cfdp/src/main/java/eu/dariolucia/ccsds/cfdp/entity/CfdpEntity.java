@@ -2,6 +2,8 @@ package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
 import eu.dariolucia.ccsds.cfdp.entity.request.ICfdpRequest;
+import eu.dariolucia.ccsds.cfdp.entity.request.KeepAliveRequest;
+import eu.dariolucia.ccsds.cfdp.entity.request.PromptNakRequest;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpFileSegmenter;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpSegmentationStrategy;
@@ -74,6 +76,8 @@ public class CfdpEntity implements IUtLayerSubscriber {
         });
         // Register request processors
         this.requestProcessors.put(PutRequest.class, this::processPutRequest);
+        this.requestProcessors.put(KeepAliveRequest.class, this::processKeepAliveRequest);
+        this.requestProcessors.put(PromptNakRequest.class, this::processPromptNakRequest);
         // Add default segmentation strategy
         this.supportedSegmentationStrategies.add(new FixedSizeSegmentationStrategy());
         // Ready to go
@@ -171,6 +175,36 @@ public class CfdpEntity implements IUtLayerSubscriber {
         this.id2transaction.put(transactionId, cfdpTransaction);
         // Start the transaction
         cfdpTransaction.activate();
+    }
+
+    private void processKeepAliveRequest(ICfdpRequest request) {
+        KeepAliveRequest r = (KeepAliveRequest) request;
+        // Get the transaction ID
+        long transactionId = r.getTransactionId();
+        // Get the transaction
+        CfdpTransaction t = this.id2transaction.get(transactionId);
+        if(t instanceof CfdpOutgoingTransaction) {
+            ((CfdpOutgoingTransaction) t).requestKeepAlive();
+        } else {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("Entity %d cannot request keep alive for transaction %d: transaction does not exist or has incorrect type", this.mib.getLocalEntity().getLocalEntityId(), transactionId));
+            }
+        }
+    }
+
+    private void processPromptNakRequest(ICfdpRequest request) {
+        PromptNakRequest r = (PromptNakRequest) request;
+        // Get the transaction ID
+        long transactionId = r.getTransactionId();
+        // Get the transaction
+        CfdpTransaction t = this.id2transaction.get(transactionId);
+        if(t instanceof CfdpOutgoingTransaction) {
+            ((CfdpOutgoingTransaction) t).requestNak();
+        } else {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("Entity %d cannot request prompt NAK for transaction %d: transaction does not exist or has incorrect type", this.mib.getLocalEntity().getLocalEntityId(), transactionId));
+            }
+        }
     }
 
     /**

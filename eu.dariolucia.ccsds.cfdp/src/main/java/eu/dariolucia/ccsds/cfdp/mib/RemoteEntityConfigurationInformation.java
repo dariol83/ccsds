@@ -57,7 +57,7 @@ public class RemoteEntityConfigurationInformation {
     private int maximumFileSegmentLength;
 
     @XmlAttribute(name = "keep_alive_limit")
-    private int keepAliveDiscrepancyLimit; // -1: N/A
+    private int keepAliveDiscrepancyLimit; // -1: N/A, max number of bytes that the receiver can stay behind
 
     @XmlAttribute(name = "positive_ack_expiration_limit")
     private int positiveAckTimerExpirationLimit;
@@ -71,6 +71,8 @@ public class RemoteEntityConfigurationInformation {
     @XmlAttribute(name = "ack_mode_supported")
     private boolean acknowledgedModeSupported = true;
 
+    @XmlAttribute(name = "keep_alive_sending_interval")
+    private long keepAliveSendingInterval;
 
 
     public long getRemoteEntityId() {
@@ -262,6 +264,15 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
+    public long getKeepAliveSendingInterval() {
+        return keepAliveSendingInterval;
+    }
+
+    public RemoteEntityConfigurationInformation setKeepAliveSendingInterval(long keepAliveSendingInterval) {
+        this.keepAliveSendingInterval = keepAliveSendingInterval;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "RemoteEntityConfigurationInformation{" +
@@ -286,6 +297,7 @@ public class RemoteEntityConfigurationInformation {
                 ", transactionInactivityLimit=" + transactionInactivityLimit +
                 ", acknowledgedModeSupported=" + acknowledgedModeSupported +
                 ", checkIntervalExpirationLimit=" + checkIntervalExpirationLimit +
+                ", keepAliveSendingInterval=" + keepAliveSendingInterval +
                 '}';
     }
 }

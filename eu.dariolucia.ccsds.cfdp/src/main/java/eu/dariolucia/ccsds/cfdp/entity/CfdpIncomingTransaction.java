@@ -5,10 +5,7 @@ import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
-import eu.dariolucia.ccsds.cfdp.protocol.builder.AckPduBuilder;
-import eu.dariolucia.ccsds.cfdp.protocol.builder.CfdpPduBuilder;
-import eu.dariolucia.ccsds.cfdp.protocol.builder.FinishedPduBuilder;
-import eu.dariolucia.ccsds.cfdp.protocol.builder.NakPduBuilder;
+import eu.dariolucia.ccsds.cfdp.protocol.builder.*;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpChecksumRegistry;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpUnsupportedChecksumType;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.ICfdpChecksum;
@@ -50,6 +47,8 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
     private TimerTask nakTimer;
     private int nakTimerCount;
 
+    private TimerTask keepAliveSendingTimer;
+
     private boolean filestoreProblemDetected;
     private boolean checksumTypeMissingSupportDetected;
     private boolean checksumMismatchDetected;
@@ -77,6 +76,50 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         }
         // Process the first PDU
         handleIndication(this.initialPdu);
+        // Activate keep alive (if conditions are met)
+        startKeepAliveSendingTimer();
+    }
+
+    private void startKeepAliveSendingTimer() {
+        // If the keepAliveSendingInterval is 0, then no keep alive is sent.
+        if(this.keepAliveSendingTimer != null) {
+            return;
+        }
+
+        // 4.6.5.2.1 In all acknowledged modes, the receiving CFDP entity may periodically send a
+        // Keep Alive PDU to the sending CFDP entity reporting on the transaction’s reception
+        // progress so far at this entity.
+        if(!isAcknowledged()) {
+            return;
+        }
+        if(getRemoteDestination().getKeepAliveSendingInterval() == 0) {
+            // Keep alive disabled
+            return;
+        }
+        this.keepAliveSendingTimer = new TimerTask() {
+            @Override
+            public void run() {
+                final TimerTask expiredTimer = this;
+                handle(() -> {
+                    if (CfdpIncomingTransaction.this.keepAliveSendingTimer == expiredTimer) {
+                        handleKeepAliveTransmission();
+                    }
+                });
+            }
+        };
+        schedule(this.keepAliveSendingTimer, getRemoteDestination().getKeepAliveSendingInterval(), true);
+    }
+
+    private void stopKeepAliveSendingTimer() {
+        if(this.keepAliveSendingTimer != null) {
+            this.keepAliveSendingTimer.cancel();
+            this.keepAliveSendingTimer = null;
+        }
+    }
+
+    private void handleKeepAliveTransmission() {
+        KeepAlivePdu pdu = prepareKeepAlivePdu();
+        forwardPdu(pdu);
     }
 
     @Override
@@ -102,10 +145,16 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
 
     private void handlePromptPdu(PromptPdu pdu) {
         if(isAcknowledged()) {
-            // Run immediately the task that computes and sends the required NAKs
-            handleNakComputation();
-            // Reset the timer
-            restartNakComputation();
+            if(pdu.isNakResponseRequired()) {
+                // Run immediately the task that computes and sends the required NAKs
+                handleNakComputation();
+                // Reset the timer
+                restartNakComputation();
+            } else if(pdu.isKeepAliveResponseRequired()) {
+                // 4.6.5.2.2 The Keep Alive PDU shall also be sent in response to receipt of a Prompt (Keep
+                // Alive) PDU.
+                handleKeepAliveTransmission();
+            }
         }
     }
 
@@ -307,6 +356,10 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         if(this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR && this.fullyCompletedPartSize > this.eofPdu.getFileSize()) {
             getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_FILE_SIZE_ERROR,this.fullyCompletedPartSize));
         }
+        // 4.6.5.2.3 However, transmission of Keep Alive PDUs shall cease upon receipt of the
+        // transaction’s EOF (No error) PDU.
+        stopKeepAliveSendingTimer();
+
         // Initial receipt of the
         // EOF PDU for a transaction may optionally cause the receiving CFDP, if it is the
         // transaction's destination, to issue an EOF-Recv.indication.
@@ -319,56 +372,64 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
 
         if(!isAcknowledged()) {
             // Upon receipt of an EOF (No error) PDU:
-            if(fileReconstructedAndReady) {
-                // a) If file reception is deemed complete as explained in 4.6.1.2.8 above, the receiving
-                // CFDP entity shall issue a Notice of Completion (Completed). Moreover, if the
-                // Closure Requested flag in the transaction’s Metadata PDU is set to ‘1’ and the
-                // receiving entity is the transaction’s destination, the receiving CFDP entity shall issue
-                // a Finished complete) PDU. Any filestore responses shall be carried as parameters of
-                // the Finished (complete) PDU. The condition code in the Finished (complete) PDU
-                // shall be ‘No error’ if file reception was deemed complete following determination
-                // that the calculated and received checksums were equal, but ‘Unsupported checksum
-                // type’ otherwise.
-                handleNoticeOfCompletion(true);
-                if(this.metadataPdu.isClosureRequested()) {
-                    handleForwardingOfFinishedPdu();
-                }
-                handleDispose();
-            } else {
-                // b) Otherwise, a transaction-specific Check timer shall be started. The timer shall have
-                // an implementation-specific expiry period, and there shall be an implementationspecific limit on the number of times the Check timer for any single transaction may
-                // expire.
-                this.transactionFinishCheckTimer = new TimerTask() {
-                    @Override
-                    public void run() {
-                        handle(CfdpIncomingTransaction.this::handleTransactionFinishedCheckTimerElapsed);
+            if(this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
+                if (fileReconstructedAndReady) {
+                    // a) If file reception is deemed complete as explained in 4.6.1.2.8 above, the receiving
+                    // CFDP entity shall issue a Notice of Completion (Completed). Moreover, if the
+                    // Closure Requested flag in the transaction’s Metadata PDU is set to ‘1’ and the
+                    // receiving entity is the transaction’s destination, the receiving CFDP entity shall issue
+                    // a Finished complete) PDU. Any filestore responses shall be carried as parameters of
+                    // the Finished (complete) PDU. The condition code in the Finished (complete) PDU
+                    // shall be ‘No error’ if file reception was deemed complete following determination
+                    // that the calculated and received checksums were equal, but ‘Unsupported checksum
+                    // type’ otherwise.
+                    handleNoticeOfCompletion(true);
+                    if (this.metadataPdu.isClosureRequested()) {
+                        handleForwardingOfFinishedPdu();
                     }
-                };
-                schedule(this.transactionFinishCheckTimer, getRemoteDestination().getCheckInterval(), true);
+                    handleDispose();
+                } else {
+                    // b) Otherwise, a transaction-specific Check timer shall be started. The timer shall have
+                    // an implementation-specific expiry period, and there shall be an implementationspecific limit on the number of times the Check timer for any single transaction may
+                    // expire.
+                    this.transactionFinishCheckTimer = new TimerTask() {
+                        @Override
+                        public void run() {
+                            handle(CfdpIncomingTransaction.this::handleTransactionFinishedCheckTimerElapsed);
+                        }
+                    };
+                    schedule(this.transactionFinishCheckTimer, getRemoteDestination().getCheckInterval(), true);
+                }
+            } else {
+                // TODO
             }
         } else {
-            if(fileReconstructedAndReady) {
-                handleNoticeOfCompletion(true);
-                handleForwardingOfFinishedPdu();
-                handleDispose();
+            if(this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
+                if (fileReconstructedAndReady && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
+                    handleNoticeOfCompletion(true);
+                    handleForwardingOfFinishedPdu();
+                    handleDispose();
+                } else {
+                    // Stop the as-you-go timer
+                    stopNakComputation();
+                    // Run immediately the task that computes and sends the required NAKs
+                    handleNakComputation();
+                    // Start the NAK timer, as per 4.6.4.6
+                    // Upon initial receipt of the EOF (No error) PDU for a transaction, the receiving entity shall
+                    // determine whether or not any of the transaction’s file data or metadata have yet to be
+                    // received. If so:
+                    // a) If any file data gaps or lost metadata are detected for which no segment requests were
+                    // included in previously issued NAK PDUs, the receiving CFDP entity shall issue a
+                    // NAK sequence.
+                    // b) A transaction-specific NAK timer shall be started. The timer shall have an
+                    // implementation-specific expiry period. When the timer expires, the receiving entity
+                    // shall determine whether or not any of the transaction’s file data or metadata have yet to
+                    // be received. If so, the receiving entity shall issue a NAK sequence whose scope begins
+                    // at zero and extends through the entire length of the file, and the timer shall be reset.
+                    startNakTimer();
+                }
             } else {
-                // Stop the as-you-go timer
-                stopNakComputation();
-                // Run immediately the task that computes and sends the required NAKs
-                handleNakComputation();
-                // Start the NAK timer, as per 4.6.4.6
-                // Upon initial receipt of the EOF (No error) PDU for a transaction, the receiving entity shall
-                // determine whether or not any of the transaction’s file data or metadata have yet to be
-                // received. If so:
-                // a) If any file data gaps or lost metadata are detected for which no segment requests were
-                // included in previously issued NAK PDUs, the receiving CFDP entity shall issue a
-                // NAK sequence.
-                // b) A transaction-specific NAK timer shall be started. The timer shall have an
-                // implementation-specific expiry period. When the timer expires, the receiving entity
-                // shall determine whether or not any of the transaction’s file data or metadata have yet to
-                // be received. If so, the receiving entity shall issue a NAK sequence whose scope begins
-                // at zero and extends through the entire length of the file, and the timer shall be reset.
-                startNakTimer();
+                // TODO
             }
         }
     }
@@ -608,6 +669,14 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         b.setConditionCode(this.finalConditionCode, this.finalFaultEntity);
         // Add filestore responses
         // TODO
+
+        return b.build();
+    }
+
+    private KeepAlivePdu prepareKeepAlivePdu() {
+        KeepAlivePduBuilder b = new KeepAlivePduBuilder();
+        setCommonPduValues(b);
+        b.setProgress(this.fullyCompletedPartSize);
 
         return b.build();
     }
