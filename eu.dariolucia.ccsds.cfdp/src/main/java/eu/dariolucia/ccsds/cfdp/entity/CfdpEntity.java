@@ -1,10 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
-import eu.dariolucia.ccsds.cfdp.entity.request.ICfdpRequest;
-import eu.dariolucia.ccsds.cfdp.entity.request.KeepAliveRequest;
-import eu.dariolucia.ccsds.cfdp.entity.request.PromptNakRequest;
-import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
+import eu.dariolucia.ccsds.cfdp.entity.request.*;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpFileSegmenter;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpSegmentationStrategy;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.impl.FixedSizeSegmentationStrategy;
@@ -13,6 +10,7 @@ import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
 import eu.dariolucia.ccsds.cfdp.mib.RemoteEntityConfigurationInformation;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayerSubscriber;
 
@@ -78,6 +76,10 @@ public class CfdpEntity implements IUtLayerSubscriber {
         this.requestProcessors.put(PutRequest.class, this::processPutRequest);
         this.requestProcessors.put(KeepAliveRequest.class, this::processKeepAliveRequest);
         this.requestProcessors.put(PromptNakRequest.class, this::processPromptNakRequest);
+        this.requestProcessors.put(CancelRequest.class, this::processCancelRequest);
+        this.requestProcessors.put(SuspendRequest.class, this::processSuspendRequest);
+        this.requestProcessors.put(ResumeRequest.class, this::processResumeRequest);
+        this.requestProcessors.put(ReportRequest.class, this::processReportRequest);
         // Add default segmentation strategy
         this.supportedSegmentationStrategies.add(new FixedSizeSegmentationStrategy());
         // Ready to go
@@ -205,6 +207,42 @@ public class CfdpEntity implements IUtLayerSubscriber {
                 LOG.log(Level.WARNING, String.format("Entity %d cannot request prompt NAK for transaction %d: transaction does not exist or has incorrect type", this.mib.getLocalEntity().getLocalEntityId(), transactionId));
             }
         }
+    }
+
+    private void processCancelRequest(ICfdpRequest request) {
+        CancelRequest r = (CancelRequest) request;
+        // Get the transaction ID
+        long transactionId = r.getTransactionId();
+        // Get the transaction
+        CfdpTransaction t = this.id2transaction.get(transactionId);
+        t.cancel(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED);
+    }
+
+    private void processSuspendRequest(ICfdpRequest request) {
+        SuspendRequest r = (SuspendRequest) request;
+        // Get the transaction ID
+        long transactionId = r.getTransactionId();
+        // Get the transaction
+        CfdpTransaction t = this.id2transaction.get(transactionId);
+        t.suspend();
+    }
+
+    private void processResumeRequest(ICfdpRequest request) {
+        ResumeRequest r = (ResumeRequest) request;
+        // Get the transaction ID
+        long transactionId = r.getTransactionId();
+        // Get the transaction
+        CfdpTransaction t = this.id2transaction.get(transactionId);
+        t.resume();
+    }
+
+    private void processReportRequest(ICfdpRequest request) {
+        ReportRequest r = (ReportRequest) request;
+        // Get the transaction ID
+        long transactionId = r.getTransactionId();
+        // Get the transaction
+        CfdpTransaction t = this.id2transaction.get(transactionId);
+        t.report();
     }
 
     /**

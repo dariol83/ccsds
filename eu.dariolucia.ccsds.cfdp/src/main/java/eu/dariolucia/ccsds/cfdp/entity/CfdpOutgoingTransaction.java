@@ -1,10 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
-import eu.dariolucia.ccsds.cfdp.entity.indication.EofSentIndication;
-import eu.dariolucia.ccsds.cfdp.entity.indication.FaultIndication;
-import eu.dariolucia.ccsds.cfdp.entity.indication.TransactionFinishedIndication;
-import eu.dariolucia.ccsds.cfdp.entity.indication.TransactionIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.FileSegment;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpFileSegmenter;
@@ -42,8 +39,11 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
 
     // Timer for the declaration of transaction completed when transaction closure is required
     private TimerTask transactionFinishCheckTimer;
+
     // Finished PDU for transactions with closure request
     private FinishedPdu finishedPdu;
+    // True if the metadata PDU was sent, otherwise false
+    private boolean metadataPduSent;
 
     public CfdpOutgoingTransaction(long transactionId, CfdpEntity entity, PutRequest r) {
         super(transactionId, entity, r.getDestinationCfdpEntityId());
@@ -59,17 +59,18 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
      */
     @Override
     protected void handleIndication(CfdpPdu pdu) {
+        resetTransactionInactivityTimer();
         // As a sender you can expect:
         // 1) ACK PDU for EOF PDU (if in acknowledged mode)
         // 2) Finished PDU (if in acknowledged mode or if closure is requested)
         // 3) NAK PDU (if in acknowledged mode)
-        if(pdu instanceof FinishedPdu) {
+        if(pdu instanceof FinishedPdu && !isCancelled()) {
             handleFinishedPdu((FinishedPdu) pdu);
-        } else if(pdu instanceof NakPdu) {
+        } else if(pdu instanceof NakPdu && !isCancelled()) {
             handleNakPdu((NakPdu) pdu);
         } else if(pdu instanceof AckPdu) {
             handleAckPdu((AckPdu) pdu); // For EOF ACK
-        } else if(pdu instanceof KeepAlivePdu) {
+        } else if(pdu instanceof KeepAlivePdu && !isCancelled()) {
             handleKeepAlivePdu((KeepAlivePdu) pdu);
         }
     }
@@ -101,10 +102,106 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
     }
 
     private void sendPromptPdu(boolean isKeepAlive) {
-        if (isAcknowledged()) {
+        if (isAcknowledged() && isRunning()) {
             PromptPdu p = preparePromptPdu(isKeepAlive);
             forwardPdu(p, true); // Do not store this PDU
         }
+    }
+
+    @Override
+    protected void handleCancel(byte conditionCode, long faultEntityId) {
+        this.conditionCode = conditionCode;
+        this.faultEntityId = new EntityIdTLV(faultEntityId, getEntityIdLength());
+        setCancelled();
+        // Handling of a cancellation request from user
+        // 4.11.2.2.1 On Notice of Cancellation of the Copy File procedure, the sending CFDP entity
+        // shall
+        // a) issue a Notice of Completion (Canceled)
+        handleNoticeOfCompletion(false);
+        // b) issue an EOF (cancel) PDU indicating the reason for transaction termination:
+        // Cancel.request received or the condition code of the fault whose declaration
+        // triggered the Notice of Cancellation. The file size field in the EOF (cancel) PDU
+        // shall contain the transaction’s current transmission progress, and the checksum in this
+        // PDU shall be the computed checksum over all File Data PDUs sent so far in the
+        // course of this transaction.
+        int finalChecksum = this.checksum.getCurrentChecksum();
+        EndOfFilePdu pdu = prepareEndOfFilePdu(finalChecksum);
+        forwardPdu(pdu);
+        // Send the EOF indication
+        if(getEntity().getMib().getLocalEntity().isEofSentIndicationRequired()) {
+            getEntity().notifyIndication(new EofSentIndication(getTransactionId()));
+        }
+        // TODO: 4.11.2.2.3 Any fault declared in the course of transferring the EOF (cancel) PDU must result
+        //  in abandonment of the transaction.
+
+        // 4.11.2.2.2 If sending in acknowledged mode,
+        if(isAcknowledged()) {
+            // a) Positive Acknowledgment procedures shall be applied to the EOF (cancel) PDU with
+            // the Expected Response being an ACK (EOF) PDU with condition code equal to that
+            // of the EOF (cancel) PDU
+            // TODO: start timer per EOF
+
+            // b) any PDU received after issuance of the EOF (cancel) PDU and prior to receipt of the
+            // Expected Response shall be ignored, except that all Positive Acknowledgment
+            // procedures remain in effect.
+
+            // This is handled in the handleIndication method
+        } else {
+            handleDispose();
+        }
+    }
+
+    @Override
+    protected void handleSuspend() {
+        if(isSuspended()) {
+            // 4.11.2.5.2 However, a Notice of Suspension shall be ignored if it pertains to a transaction
+            // that is already suspended [...]
+            return;
+        }
+        // 4.11.2.6.1 On Notice of Suspension of the Copy File procedure, the sending CFDP entity
+        // shall
+        // a) suspend transmission of Metadata PDU, file segments, and EOF PDU
+        setSuspended(); // This call will stop forwarding of metadata, file and EOF PDUs
+        // b) save the status of the transaction.
+
+        // 4.11.2.6.2 If operating in acknowledged mode,
+        if(isAcknowledged()) {
+            // a) any transmission of Prompt PDUs shall be suspended -> done in the sendPromptPdu method
+            // TODO: b) the inactivity timer shall be suspended
+            // TODO: c) the application of Positive Acknowledgment Procedures to PDUs previously issued
+            //  by this entity shall be suspended. -> stop timer per EOF
+        }
+        // 4.11.2.6.3 The sending entity shall issue a Suspended.indication.
+        getEntity().notifyIndication(new SuspendedIndication(getTransactionId(), FileDirectivePdu.CC_SUSPEND_REQUEST_RECEIVED));
+    }
+
+    @Override
+    protected void handleResume() {
+        setResumed();
+        // 4.6.7.2.1 On receipt of a Resume.request primitive, the sending CFDP entity shall
+        // a) resume transmission of Metadata PDU, file segments, and EOF PDU
+        if(this.metadataPduSent) {
+            // Resume the sending of the file
+            handle(this::sendFileSegment);
+        } else {
+            // Start the sending of the file from the beginning
+            handle(this::handleStartTransaction);
+        }
+        // b) issue a Resumed.indication.
+        getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.effectiveFileSize));
+
+        // 4.6.7.2.2 If operating in acknowledged mode,
+        if(isAcknowledged()) {
+            // a) any suspended transmission of Prompt PDUs shall be resumed -> handled in the sendPromptPdu method
+            // TODO: b) the application of Positive Acknowledgment Procedures to PDUs previously issued
+            //    by this entity shall be resumed. -> if EOF was sent, start EOF timer
+        }
+    }
+
+    @Override
+    protected void handleReport() {
+        // TODO: define a class with the most important information
+        getEntity().notifyIndication(new ReportIndication(getTransactionId(), new Object()));
     }
 
     private void handleAckPdu(AckPdu pdu) {
@@ -196,22 +293,41 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
     protected void handleActivation() {
         // Notify the creation of the new transaction to the subscriber
         getEntity().notifyIndication(new TransactionIndication(getTransactionId(), request));
-        // Initiation of the Copy File procedures shall cause the sending CFDP entity to
-        // forward a Metadata PDU to the receiving CFDP entity.
-        MetadataPdu metadataPdudu = prepareMetadataPdu();
-        forwardPdu(metadataPdudu);
-
-        if(isFileToBeSent()) {
-            // For transactions that deliver more than just metadata, Copy File initiation also
-            // shall cause the sending CFDP entity to retrieve the file from the sending filestore and to
-            // transmit it in File Data PDUs.
-            segmentAndForwardFileData();
-        } else {
-            // For Metadata only transactions, closure might or might not be requested
-            // TODO: to be checked, as handleClosure is related primarily to file transactions
-            handle(this::handleClosure);
-        }
+        // Start the transaction inactivity timer
+        startTransactionInactivityTimer();
+        // Handle the start of the transaction
+        handleStartTransaction();
         // End of the transmission activation
+    }
+
+    @Override
+    protected void startTransactionInactivityTimer() {
+        // 4.10.2 This requirement does not apply to the sending entity of an unacknowledged mode
+        // transfer
+        if(isAcknowledged()) {
+            super.startTransactionInactivityTimer();
+        }
+    }
+
+    private void handleStartTransaction() {
+        if(isRunning()) {
+            // Initiation of the Copy File procedures shall cause the sending CFDP entity to
+            // forward a Metadata PDU to the receiving CFDP entity.
+            MetadataPdu metadataPdudu = prepareMetadataPdu();
+            forwardPdu(metadataPdudu);
+            this.metadataPduSent = true;
+
+            if (isFileToBeSent()) {
+                // For transactions that deliver more than just metadata, Copy File initiation also
+                // shall cause the sending CFDP entity to retrieve the file from the sending filestore and to
+                // transmit it in File Data PDUs.
+                segmentAndForwardFileData();
+            } else {
+                // For Metadata only transactions, closure might or might not be requested
+                // TODO: to be checked, as handleClosure is related primarily to file transactions
+                handle(this::handleClosure);
+            }
+        }
     }
 
     /**
@@ -269,8 +385,10 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
      * </ol>
      */
     private void sendFileSegment() {
-        // TODO verify if you can send the segment (transmission contact time, suspended)
-
+        // TODO verify if you can send the segment (transmission contact time)
+        if(!isRunning()) {
+            return;
+        }
         // Extract and send the file segment
         FileSegment gs = this.segmentProvider.nextSegment();
         // Check if there are no more segments to send
@@ -409,7 +527,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         // EOF specific
         b.setFileChecksum(finalChecksum);
         b.setFileSize(this.effectiveFileSize);
-        b.setConditionCode(conditionCode, faultEntityId);
+        b.setConditionCode(this.conditionCode, this.faultEntityId);
 
         return b.build();
     }
@@ -515,6 +633,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
                         null));
             }
         } else {
+            // TODO check if this.finishedPdu can be null
             getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
                     this.finishedPdu.getConditionCode(),
                     this.finishedPdu.getFileStatus(),
@@ -538,6 +657,12 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
     @Override
     protected void handlePreDispose() {
         // TODO cleanup resources and memory
+    }
+
+    @Override
+    protected void handleTransactionInactivity() {
+        // TODO refactor fault handling
+        getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_INACTIVITY_DETECTED, this.effectiveFileSize));
     }
 
     private boolean isFileToBeSent() {

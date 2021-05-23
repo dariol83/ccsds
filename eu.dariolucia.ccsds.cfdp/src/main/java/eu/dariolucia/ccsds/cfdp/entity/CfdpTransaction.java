@@ -12,6 +12,13 @@ import java.util.concurrent.Executors;
 
 public abstract class CfdpTransaction {
 
+    public enum TransactionStatus {
+        RUNNING,
+        SUSPENDED,
+        CANCELLED,
+        ABANDONED
+    }
+
     private final long transactionId;
     private final CfdpEntity entity;
     private final int entityIdLength;
@@ -21,6 +28,10 @@ public abstract class CfdpTransaction {
     private final ExecutorService confiner;
 
     private final Timer timer;
+    // Timer for the transaction inactivity limit
+    private TimerTask transactionInactivityLimitTimer;
+
+    private TransactionStatus status = TransactionStatus.RUNNING;
 
     public CfdpTransaction(long transactionId, CfdpEntity cfdpEntity, long remoteEntityId) {
         this.transactionId = transactionId;
@@ -88,9 +99,117 @@ public abstract class CfdpTransaction {
         handle(() -> handleIndication(pdu));
     }
 
+    public void cancel(byte conditionCode) {
+        handle(() -> handleCancel(conditionCode, getEntity().getMib().getLocalEntity().getLocalEntityId()));
+    }
+
+    public void suspend() {
+        handle(() -> {
+            if(isRunning()) {
+                handleSuspend();
+            } else {
+                // TODO log
+            }
+        });
+    }
+
+    public void resume() {
+        handle(() -> {
+            // 4.6.7.1 General
+            // Resume procedures apply upon receipt of a Resume.request primitive submitted by the
+            // CFDP user. However:
+            // a) a Resume.request primitive shall be ignored if it pertains to a transaction that is not
+            //    currently suspended
+            // TODO: b) if the transaction to which a Resume.request primitive pertains is currently not only
+            //    suspended but also frozen (as defined in 4.12), then the transaction shall be
+            //    considered no longer suspended but the only applicable procedure shall be the
+            //    issuance of a Resumed.indication.
+            if(isSuspended()) {
+                handleResume();
+            }
+        });
+    }
+
+    public void report() {
+        handle(this::handleReport);
+    }
+
+    protected void startTransactionInactivityTimer() {
+        if(transactionInactivityLimitTimer != null) {
+            return;
+        }
+        transactionInactivityLimitTimer = new TimerTask() {
+            @Override
+            public void run() {
+                handleTransactionInactivity();
+            }
+        };
+        timer.schedule(transactionInactivityLimitTimer, getRemoteDestination().getTransactionInactivityLimit());
+    }
+
+    protected void resetTransactionInactivityTimer() {
+        if(transactionInactivityLimitTimer != null) {
+            stopTransactionInactivityTimer();
+            startTransactionInactivityTimer();
+        }
+    }
+
+    protected void stopTransactionInactivityTimer() {
+        if (transactionInactivityLimitTimer != null) {
+            transactionInactivityLimitTimer.cancel();
+            transactionInactivityLimitTimer = null;
+        }
+    }
+
+    protected boolean isCancelled() {
+        return this.status == TransactionStatus.CANCELLED;
+    }
+
+    protected void setCancelled() {
+        this.status = TransactionStatus.CANCELLED;
+    }
+
+    protected boolean isSuspended() {
+        return this.status == TransactionStatus.SUSPENDED;
+    }
+
+    protected void setSuspended() {
+        if(this.status == TransactionStatus.RUNNING) {
+            this.status = TransactionStatus.SUSPENDED;
+        }
+    }
+
+    protected void setResumed() {
+        if(this.status == TransactionStatus.SUSPENDED) {
+            this.status = TransactionStatus.RUNNING;
+        }
+    }
+
+    protected boolean isAbandoned() {
+        return this.status == TransactionStatus.ABANDONED;
+    }
+
+    protected void setAbandoned() {
+        this.status = TransactionStatus.ABANDONED;
+    }
+
+    protected boolean isRunning() {
+        return this.status == TransactionStatus.RUNNING;
+    }
+
+    protected abstract void handleCancel(byte conditionCode, long faultEntityId);
+
+    protected abstract void handleSuspend();
+
+    protected abstract void handleResume();
+
+    protected abstract void handleReport();
+
     protected abstract void handlePreDispose();
 
     protected abstract void handleActivation();
+
+    protected abstract void handleTransactionInactivity();
 
     protected abstract void handleIndication(CfdpPdu pdu);
 
