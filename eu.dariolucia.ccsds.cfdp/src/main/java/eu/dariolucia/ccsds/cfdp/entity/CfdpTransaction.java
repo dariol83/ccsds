@@ -31,7 +31,12 @@ public abstract class CfdpTransaction {
     // Timer for the transaction inactivity limit
     private TimerTask transactionInactivityLimitTimer;
 
+    // Status of the transaction
     private TransactionStatus status = TransactionStatus.RUNNING;
+    // Transmission opportunity window state
+    private boolean txAllowed;
+    // Reception opportunity window state
+    private boolean rxAllowed;
 
     public CfdpTransaction(long transactionId, CfdpEntity cfdpEntity, long remoteEntityId) {
         this.transactionId = transactionId;
@@ -130,6 +135,30 @@ public abstract class CfdpTransaction {
         });
     }
 
+    public void updateTxOpportunity(boolean txAllowed) {
+        handle(() -> {
+            boolean wasFrozen = isFrozen();
+            this.txAllowed = txAllowed;
+            handleOpportunityTransition(wasFrozen, isFrozen());
+        });
+    }
+
+    public void updateRxOpportunity(boolean rxAllowed) {
+        handle(() -> {
+            boolean wasFrozen = isFrozen();
+            this.rxAllowed = rxAllowed;
+            handleOpportunityTransition(wasFrozen, isFrozen());
+        });
+    }
+
+    private void handleOpportunityTransition(boolean wasFrozen, boolean frozen) {
+        if (!wasFrozen && frozen) {
+            handleFreeze();
+        } else if (wasFrozen && !frozen) {
+            handleUnfreeze();
+        }
+    }
+
     public void report() {
         handle(this::handleReport);
     }
@@ -194,7 +223,11 @@ public abstract class CfdpTransaction {
     }
 
     protected boolean isRunning() {
-        return this.status == TransactionStatus.RUNNING;
+        return this.status == TransactionStatus.RUNNING && !isFrozen();
+    }
+
+    protected boolean isFrozen() {
+        return !txAllowed || !rxAllowed;
     }
 
     protected abstract void handleCancel(byte conditionCode, long faultEntityId);
@@ -202,6 +235,10 @@ public abstract class CfdpTransaction {
     protected abstract void handleSuspend();
 
     protected abstract void handleResume();
+
+    protected abstract void handleFreeze();
+
+    protected abstract void handleUnfreeze();
 
     protected abstract void handleReport();
 

@@ -163,21 +163,77 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         // a) suspend transmission of Metadata PDU, file segments, and EOF PDU
         setSuspended(); // This call will stop forwarding of metadata, file and EOF PDUs
         // b) save the status of the transaction.
+        handleSuspendActions();
 
-        // 4.11.2.6.2 If operating in acknowledged mode,
-        if(isAcknowledged()) {
-            // a) any transmission of Prompt PDUs shall be suspended -> done in the sendPromptPdu method
-            // TODO: b) the inactivity timer shall be suspended
-            // TODO: c) the application of Positive Acknowledgment Procedures to PDUs previously issued
-            //  by this entity shall be suspended. -> stop timer per EOF
-        }
         // 4.11.2.6.3 The sending entity shall issue a Suspended.indication.
         getEntity().notifyIndication(new SuspendedIndication(getTransactionId(), FileDirectivePdu.CC_SUSPEND_REQUEST_RECEIVED));
     }
 
     @Override
+    protected void handleFreeze() {
+        // 4.12.2.1 On notification of the end of an opportunity to transmit to a specified remote CFDP
+        // entity, the CFDP entity shall ‘freeze’ transmission for all transactions for which it is the
+        // sending entity and the specified remote entity is the receiving entity.
+
+        // 4.12.2.2 The freezing of transmission for a transaction shall have the same effects as
+        // suspension of that transaction by the sending entity (see 4.11.2.6), except that no
+        // Suspended.indication shall be issued and the transaction shall not be considered suspended.
+
+        // 4.12.2.6 On notification of the end of an opportunity to receive from a specified remote
+        // CFDP entity, the CFDP entity shall freeze reception for all transactions for which it is the
+        // receiving entity and the specified remote entity is the sending entity, except those that are in
+        // Unacknowledged mode (XXX: unacknowledged condition not handled).
+
+        // 4.12.2.7 The freezing of reception for a transaction shall have the same effects as suspension
+        // of that transaction by the receiving entity (see 4.11.2.7), except that no
+        // Suspended.indication shall be issued, and the transaction shall not be considered
+        // suspended.
+        handleSuspendActions();
+    }
+
+    private void handleSuspendActions() {
+        // 4.11.2.6.2 If operating in acknowledged mode,
+        if (isAcknowledged()) {
+            // a) any transmission of Prompt PDUs shall be suspended -> done in the sendPromptPdu method
+            // TODO: b) the inactivity timer shall be suspended
+            // TODO: c) the application of Positive Acknowledgment Procedures to PDUs previously issued
+            //  by this entity shall be suspended. -> stop timer per EOF
+        }
+    }
+
+    @Override
     protected void handleResume() {
         setResumed();
+        handleResumeActions(true);
+    }
+
+    @Override
+    protected void handleUnfreeze() {
+        // 4.12.2.3 On notification of the start of an opportunity to transmit to a specified remote
+        // CFDP entity, the CFDP entity shall ‘thaw’ transmission for all transactions for which it is the
+        // sending entity and the specified remote entity is the receiving entity.
+
+        // 4.12.2.4 The thawing of transmission for a transaction shall have the same effects as
+        // resumption of that transaction by the sending entity (see 4.6.7.2.1), except that (a) no
+        // Resumed.indication shall be issued and (b) thawing transmission for a suspended
+        // transaction shall have no effect whatsoever.
+
+        // 4.12.2.8 On notification of the start of an opportunity to receive from a specified remote
+        // CFDP entity, the CFDP entity shall thaw reception for all transactions for which it is the
+        // receiving entity and the specified remote entity is the sending entity, except those that are in
+        // Unacknowledged mode (XXX: unacknowledged condition not handled).
+
+        // 4.12.2.9 The thawing of reception for a transaction shall have the same effects as resumption
+        // of that transaction by the receiving entity (see 4.6.7.3), except that (a) no
+        // Resumed.indication shall be issued, and (b) thawing reception for a suspended transaction
+        // shall have no effect whatsoever.
+        if(isSuspended()) {
+            return;
+        }
+        handleResumeActions(false);
+    }
+
+    private void handleResumeActions(boolean sendNotification) {
         // 4.6.7.2.1 On receipt of a Resume.request primitive, the sending CFDP entity shall
         // a) resume transmission of Metadata PDU, file segments, and EOF PDU
         if(this.metadataPduSent) {
@@ -188,7 +244,9 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
             handle(this::handleStartTransaction);
         }
         // b) issue a Resumed.indication.
-        getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.effectiveFileSize));
+        if(sendNotification) {
+            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.effectiveFileSize));
+        }
 
         // 4.6.7.2.2 If operating in acknowledged mode,
         if(isAcknowledged()) {

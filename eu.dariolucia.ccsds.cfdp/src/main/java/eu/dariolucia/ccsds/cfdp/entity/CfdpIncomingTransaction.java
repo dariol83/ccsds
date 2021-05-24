@@ -566,10 +566,41 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         // 4.11.2.5.2 However, a Notice of Suspension shall be ignored if it pertains to a transaction
         // that is already suspended or if it is issued by the receiving CFDP entity for a transaction sent
         // in Unacknowledged mode.
-        if(!isAcknowledged()) {
+        if(isSuspended() || !isAcknowledged()) {
             return;
         }
         setSuspended();
+        handleSuspendActions();
+        // f) issue a Suspended.indication if so configured in the MIB (see table 8-1)
+        if(getEntity().getMib().getLocalEntity().isSuspendedIndicationRequired()) {
+            getEntity().notifyIndication(new SuspendedIndication(getTransactionId(), FileDirectivePdu.CC_SUSPEND_REQUEST_RECEIVED));
+        }
+        // g) save the status of the transaction.
+    }
+
+    @Override
+    protected void handleFreeze() {
+        // 4.12.2.1 On notification of the end of an opportunity to transmit to a specified remote CFDP
+        // entity, the CFDP entity shall ‘freeze’ transmission for all transactions for which it is the
+        // sending entity and the specified remote entity is the receiving entity.
+
+        // 4.12.2.2 The freezing of transmission for a transaction shall have the same effects as
+        // suspension of that transaction by the sending entity (see 4.11.2.6), except that no
+        // Suspended.indication shall be issued and the transaction shall not be considered suspended.
+
+        // 4.12.2.6 On notification of the end of an opportunity to receive from a specified remote
+        // CFDP entity, the CFDP entity shall freeze reception for all transactions for which it is the
+        // receiving entity and the specified remote entity is the sending entity, except those that are in
+        // Unacknowledged mode (XXX: unacknowledged condition not handled).
+
+        // 4.12.2.7 The freezing of reception for a transaction shall have the same effects as suspension
+        // of that transaction by the receiving entity (see 4.11.2.7), except that no
+        // Suspended.indication shall be issued, and the transaction shall not be considered
+        // suspended.
+        handleSuspendActions();
+    }
+
+    private void handleSuspendActions() {
         // 4.11.2.7 Notice of Suspension Procedures at the Receiving Entity
         // On Notice of Suspension of the Copy File procedure, the receiving CFDP entity shall
         // a) suspend transmission of NAK PDUs -> handled also in handleNakComputation method
@@ -581,16 +612,41 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         // d) suspend transmission of Finished (complete) PDUs -> handled in handleForwardingOfFinishedPdu
         // TODO: e) suspend the application of Positive Acknowledgment Procedures to PDUs previously
         //    issued by this entity -> stop Finished PDU ACK timer
-        // f) issue a Suspended.indication if so configured in the MIB (see table 8-1)
-        if(getEntity().getMib().getLocalEntity().isSuspendedIndicationRequired()) {
-            getEntity().notifyIndication(new SuspendedIndication(getTransactionId(), FileDirectivePdu.CC_SUSPEND_REQUEST_RECEIVED));
-        }
-        // g) save the status of the transaction.
     }
 
     @Override
     protected void handleResume() {
         setResumed();
+        handleResumeActions(true);
+    }
+
+    @Override
+    protected void handleUnfreeze() {
+        // 4.12.2.3 On notification of the start of an opportunity to transmit to a specified remote
+        // CFDP entity, the CFDP entity shall ‘thaw’ transmission for all transactions for which it is the
+        // sending entity and the specified remote entity is the receiving entity.
+
+        // 4.12.2.4 The thawing of transmission for a transaction shall have the same effects as
+        // resumption of that transaction by the sending entity (see 4.6.7.2.1), except that (a) no
+        // Resumed.indication shall be issued and (b) thawing transmission for a suspended
+        // transaction shall have no effect whatsoever.
+
+        // 4.12.2.8 On notification of the start of an opportunity to receive from a specified remote
+        // CFDP entity, the CFDP entity shall thaw reception for all transactions for which it is the
+        // receiving entity and the specified remote entity is the sending entity, except those that are in
+        // Unacknowledged mode (XXX: unacknowledged condition not handled).
+
+        // 4.12.2.9 The thawing of reception for a transaction shall have the same effects as resumption
+        // of that transaction by the receiving entity (see 4.6.7.3), except that (a) no
+        // Resumed.indication shall be issued, and (b) thawing reception for a suspended transaction
+        // shall have no effect whatsoever.
+        if(isSuspended()) {
+            return;
+        }
+        handleResumeActions(false);
+    }
+
+    private void handleResumeActions(boolean sendNotification) {
         // 4.6.7.3.1 On receipt of a Resume.request primitive, the receiving CFDP entity shall
         // a) resume transmission of NAK PDUs
         restartNakComputation();
@@ -598,7 +654,9 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         // b) resume any suspended transmission of Keep Alive PDUs
         startKeepAliveSendingTimer();
         // c) issue a Resumed.indication.
-        getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.fullyCompletedPartSize));
+        if(sendNotification) {
+            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.fullyCompletedPartSize));
+        }
         // 4.6.7.3.2 The application of Positive Acknowledgment Procedures to PDUs previously
         // issued by this entity shall be resumed.
         // TODO: start Finished PDU ACK timer if Finished PDU was sent
