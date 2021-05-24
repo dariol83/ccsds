@@ -1,18 +1,26 @@
 package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
+import eu.dariolucia.ccsds.cfdp.entity.indication.FaultIndication;
 import eu.dariolucia.ccsds.cfdp.mib.RemoteEntityConfigurationInformation;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.AckPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
+import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public abstract class CfdpTransaction {
 
-    public enum TransactionStatus {
+    private static final Logger LOG = Logger.getLogger(CfdpTransaction.class.getName());
+
+    public enum TransactionInnerStatus {
         RUNNING,
         SUSPENDED,
         CANCELLED,
@@ -31,8 +39,15 @@ public abstract class CfdpTransaction {
     // Timer for the transaction inactivity limit
     private TimerTask transactionInactivityLimitTimer;
 
-    // Status of the transaction
-    private TransactionStatus status = TransactionStatus.RUNNING;
+    // Inner status of active transactions
+    private TransactionInnerStatus status = TransactionInnerStatus.RUNNING;
+    // Overall status of the transaction
+    private AckPdu.TransactionStatus overallStatus = AckPdu.TransactionStatus.ACTIVE;
+
+    // Ack timer for Positive Ack Procedure
+    private TimerTask ackTimer;
+    private int ackTimerCount;
+
     // Transmission opportunity window state
     private boolean txAllowed;
     // Reception opportunity window state
@@ -53,6 +68,59 @@ public abstract class CfdpTransaction {
         long maxEntityId = Long.max(remoteDestination.getRemoteEntityId(), entity.getMib().getLocalEntity().getLocalEntityId());
         this.entityIdLength = BytesUtil.getEncodingOctetsNb(maxEntityId);
     }
+
+    protected void startPositiveAckTimer(CfdpPdu pdu) {
+        stopPositiveAckTimer();
+        this.ackTimer = new TimerTask() {
+            @Override
+            public void run() {
+                handle(() -> handlePositiveAckTimerTimerElapsed(this, pdu));
+            }
+        };
+        schedule(this.ackTimer, getRemoteDestination().getPositiveAckTimerInterval(), true);
+    }
+
+    protected void stopPositiveAckTimer() {
+        if(this.ackTimer != null) {
+            this.ackTimer.cancel();
+            this.ackTimer = null;
+            this.ackTimerCount = 0;
+        }
+    }
+
+    protected boolean isAckTimerRunning() {
+        return this.ackTimer != null;
+    }
+
+    protected void handlePositiveAckTimerTimerElapsed(TimerTask timer, CfdpPdu pdu) {
+        // 4.7.1 POSITIVE ACKNOWLEDGEMENT PROCEDURES AT PDU SENDING END
+        // If Positive Acknowledgement procedures apply to a PDU,
+        // a) upon issuing the PDU, the sending CFDP entity shall start a timer and retain the PDU
+        //    for retransmission as necessary
+        if(this.ackTimer == timer) {
+            // c) the sending CFDP entity shall keep a tally of the number of transmission retries
+            ++this.ackTimerCount;
+            if(this.ackTimerCount == getRemoteDestination().getCheckIntervalExpirationLimit()) {
+                // d) if a preset limit is exceeded, the sending CFDP entity shall declare a Positive ACK
+                //    Limit Reached fault
+                this.ackTimer.cancel();
+                this.ackTimer = null;
+                getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_POS_ACK_LIMIT_REACHED, getProgress()));
+                handleDispose(); // TODO: fault handling
+            } else {
+                // b) if the Expected Response is not received before expiry of the timer, the sending
+                //    CFDP entity shall reissue the original PDU
+                try {
+                    forwardPdu(pdu);
+                } catch (UtLayerException e) {
+                    if(LOG.isLoggable(Level.SEVERE)) {
+                        LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on PDU re-transmission upon ACK timer expire: %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                    }
+                }
+            }
+        }
+    }
+
 
     public long getTransactionId() {
         return transactionId;
@@ -191,43 +259,53 @@ public abstract class CfdpTransaction {
     }
 
     protected boolean isCancelled() {
-        return this.status == TransactionStatus.CANCELLED;
+        return this.status == TransactionInnerStatus.CANCELLED;
     }
 
     protected void setCancelled() {
-        this.status = TransactionStatus.CANCELLED;
+        this.status = TransactionInnerStatus.CANCELLED;
+        this.overallStatus = AckPdu.TransactionStatus.TERMINATED;
     }
 
     protected boolean isSuspended() {
-        return this.status == TransactionStatus.SUSPENDED;
+        return this.status == TransactionInnerStatus.SUSPENDED;
     }
 
     protected void setSuspended() {
-        if(this.status == TransactionStatus.RUNNING) {
-            this.status = TransactionStatus.SUSPENDED;
+        if(this.status == TransactionInnerStatus.RUNNING) {
+            this.status = TransactionInnerStatus.SUSPENDED;
         }
     }
 
     protected void setResumed() {
-        if(this.status == TransactionStatus.SUSPENDED) {
-            this.status = TransactionStatus.RUNNING;
+        if(this.status == TransactionInnerStatus.SUSPENDED) {
+            this.status = TransactionInnerStatus.RUNNING;
         }
     }
 
     protected boolean isAbandoned() {
-        return this.status == TransactionStatus.ABANDONED;
+        return this.status == TransactionInnerStatus.ABANDONED;
     }
 
     protected void setAbandoned() {
-        this.status = TransactionStatus.ABANDONED;
+        this.status = TransactionInnerStatus.ABANDONED;
     }
 
     protected boolean isRunning() {
-        return this.status == TransactionStatus.RUNNING && !isFrozen();
+        return this.status == TransactionInnerStatus.RUNNING && !isFrozen();
     }
 
     protected boolean isFrozen() {
         return !txAllowed || !rxAllowed;
+    }
+
+    public AckPdu.TransactionStatus getOverallStatus() {
+        return this.overallStatus;
+    }
+
+    protected void handleAbandon() {
+        setAbandoned();
+        handleDispose();
     }
 
     protected abstract void handleCancel(byte conditionCode, long faultEntityId);
@@ -250,4 +328,7 @@ public abstract class CfdpTransaction {
 
     protected abstract void handleIndication(CfdpPdu pdu);
 
+    protected abstract long getProgress();
+
+    protected abstract void forwardPdu(CfdpPdu pdu) throws UtLayerException;
 }

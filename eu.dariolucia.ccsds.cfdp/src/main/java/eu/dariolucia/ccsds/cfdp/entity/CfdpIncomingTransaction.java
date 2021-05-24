@@ -29,7 +29,6 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
     private final List<CfdpPdu> pendingUtTransmissionPduList = new LinkedList<>();
 
     private MetadataPdu metadataPdu;
-    private boolean invalidTransmissionModeDetected;
 
     private Map<Long, FileDataPdu> fileReconstructionMap;
     private ICfdpChecksum checksum;
@@ -58,6 +57,10 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
     private EntityIdTLV finalFaultEntity;
     private List<FilestoreResponseTLV> filestoreResponses;
 
+    // The last Finished Pdu, once sent while pending acknowledgement
+    private FinishedPdu finishedPdu;
+
+
     public CfdpIncomingTransaction(CfdpPdu pdu, CfdpEntity entity) {
         super(pdu.getTransactionSequenceNumber(), entity, pdu.getSourceEntityId());
         this.initialPdu = pdu;
@@ -71,8 +74,8 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         // the transaction. If the receiving CFDP entity is incapable of operating in this mode, an
         // Invalid Transmission Mode fault shall be declared.
         if(this.initialPdu.isAcknowledged() && !getRemoteDestination().isAcknowledgedModeSupported()) {
-            this.invalidTransmissionModeDetected = true;
             getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_INVALID_TX_MODE,0));
+            // TODO: fault handling
         }
         // Start the transaction inactivity timer
         startTransactionInactivityTimer();
@@ -124,7 +127,13 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
             return;
         }
         KeepAlivePdu pdu = prepareKeepAlivePdu();
-        forwardPdu(pdu);
+        try {
+            forwardPdu(pdu);
+        } catch (UtLayerException e) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Keep Alive PDU transmission: %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+            }
+        }
     }
 
     @Override
@@ -152,6 +161,11 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         } else if(pdu instanceof PromptPdu && !isCancelled()) {
             handlePromptPdu((PromptPdu) pdu);
         }
+    }
+
+    @Override
+    protected long getProgress() {
+        return this.fullyCompletedPartSize;
     }
 
     private void handlePromptPdu(PromptPdu pdu) {
@@ -267,21 +281,34 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         boolean fileReconstructed = checkForFullFileReconstruction();
         if(isAcknowledged() && fileReconstructed) {
             handleNoticeOfCompletion(true);
-            handleForwardingOfFinishedPdu();
-            handleDispose();
+            try {
+                FinishedPdu theFinishedPdu = handleForwardingOfFinishedPdu();
+                startPositiveAckTimer(theFinishedPdu);
+                // No dispose here
+            } catch (UtLayerException e) {
+                if(LOG.isLoggable(Level.SEVERE)) {
+                    LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Finished PDU transmission upon full file reconstruction: %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                }
+            }
         }
     }
 
     private void handleForwardingOfEofAckPdu(EndOfFilePdu eofPdu) {
         AckPdu pdu = prepareAckPdu(eofPdu);
-        forwardPdu(pdu);
+        try {
+            forwardPdu(pdu);
+        } catch (UtLayerException e) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Ack PDU transmission: %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+            }
+        }
     }
 
     private AckPdu prepareAckPdu(EndOfFilePdu pdu) {
         AckPduBuilder b = new AckPduBuilder();
         setCommonPduValues(b);
-        b.setTransactionStatus(AckPdu.TransactionStatus.ACTIVE); // TODO: check
-        b.setConditionCode(this.finalConditionCode); // TODO: check
+        b.setTransactionStatus(getOverallStatus());
+        b.setConditionCode(pdu.getConditionCode());
         b.setDirectiveCode(FileDirectivePdu.DC_EOF_PDU);
         b.setDirectiveSubtypeCode((byte) 0x00);
 
@@ -340,7 +367,7 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         //      entity has taken any other action as a result. For example, production of an ACK
         //      (EOF (Cancel)) PDU implies that an EOF (Cancel) PDU was received but not
         //      necessarily that the referenced transaction was canceled.
-        // 2    The receiving CFDP entity is always required to issue the Expected Response upon
+        //  2   The receiving CFDP entity is always required to issue the Expected Response upon
         //      receipt of a PDU to which Positive Acknowledgment procedures are applied. The
         //      purpose of the Expected Response is to turn off the PDU retransmission timer at the
         //      sending end. This purpose must be served regardless of the status of the transaction:
@@ -383,8 +410,7 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         // transaction’s EOF (No error) PDU.
         stopKeepAliveSendingTimer();
 
-        // Initial receipt of the
-        // EOF PDU for a transaction may optionally cause the receiving CFDP, if it is the
+        // Initial receipt of the EOF PDU for a transaction may optionally cause the receiving CFDP, if it is the
         // transaction's destination, to issue an EOF-Recv.indication.
         if(pdu.getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId() &&
                 getEntity().getMib().getLocalEntity().isEofRecvIndicationRequired()) {
@@ -408,7 +434,13 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                     // type’ otherwise.
                     handleNoticeOfCompletion(true);
                     if (this.metadataPdu.isClosureRequested()) {
-                        handleForwardingOfFinishedPdu();
+                        try {
+                            handleForwardingOfFinishedPdu();
+                        } catch (UtLayerException e) {
+                            if(LOG.isLoggable(Level.SEVERE)) {
+                                LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Finished PDU transmission upon file reception completion (unacknowledged) : %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                            }
+                        }
                     }
                     handleDispose();
                 } else {
@@ -424,14 +456,27 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                     schedule(this.transactionFinishCheckTimer, getRemoteDestination().getCheckInterval(), true);
                 }
             } else {
-                // TODO
+                // XXX: At this stage, the standard is obscure: it is unclear if such EOF can ever come. In my implementation
+                // it might come if the sender detects an error and must interrupt the sending of the file.
+                // If this is the case, we assume that the transaction is cancelled.
+                handleNoticeOfCompletion(false);
+                handleDispose();
             }
         } else {
             if(this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
                 if (fileReconstructedAndReady && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
                     handleNoticeOfCompletion(true);
-                    handleForwardingOfFinishedPdu();
-                    handleDispose();
+                    try {
+                        FinishedPdu theFinishedPdu = handleForwardingOfFinishedPdu();
+                        startPositiveAckTimer(theFinishedPdu);
+                    } catch (UtLayerException e) {
+                        if(LOG.isLoggable(Level.SEVERE)) {
+                            LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Finished PDU transmission upon file reception completion (acknowledged): %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                        }
+                        // Start the timer here, as the finished PDU should be generated and ready to be sent
+                        startPositiveAckTimer(this.finishedPdu);
+                    }
+                    // Do not dispose here, until the positive ack procedure terminates
                 } else {
                     // Stop the as-you-go timer
                     stopNakComputation();
@@ -452,7 +497,11 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                     startNakTimer();
                 }
             } else {
-                // TODO
+                // XXX: At this stage, the standard is obscure: it is unclear if such EOF can ever come. In my implementation
+                // it might come if the sender detects an error and must interrupt the sending of the file.
+                // If this is the case, we assume that the transaction is cancelled.
+                handleNoticeOfCompletion(false);
+                handleDispose();
             }
         }
     }
@@ -464,7 +513,13 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         b.setEndOfScope(this.fullyCompletedPartSize);
         b.addSegmentRequest(new NakPdu.SegmentRequest(0,0));
         NakPdu pdu = b.build();
-        forwardPdu(pdu);
+        try {
+            forwardPdu(pdu);
+        } catch (UtLayerException e) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Metadata Nak PDU transmission: %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+            }
+        }
     }
 
     private boolean handleNakComputation() {
@@ -496,12 +551,10 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
             }
         }
         long endOfScope = tmpFilePartOffset;
-        // If EOF(No error) was received, then add a segment from tmpFilePartOffset and the expected file size
-        if(this.eofPdu != null && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
-            if(tmpFilePartOffset < this.eofPdu.getFileSize()) {
-                missingSegments.add(new NakPdu.SegmentRequest(tmpFilePartOffset, this.eofPdu.getFileSize()));
-                endOfScope = this.eofPdu.getFileSize();
-            }
+        // If EOF(No error) PDU was received, then add a segment from tmpFilePartOffset and the expected file size
+        if(this.eofPdu != null && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR && tmpFilePartOffset < this.eofPdu.getFileSize()) {
+            missingSegments.add(new NakPdu.SegmentRequest(tmpFilePartOffset, this.eofPdu.getFileSize()));
+            endOfScope = this.eofPdu.getFileSize();
         }
         requestsPerformed = requestsPerformed || !missingSegments.isEmpty();
         // Build and send the NAK PDUs (group 4 segments into each NAK PDU - implementation-dependant)
@@ -516,7 +569,13 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                 --segsToAdd;
             }
             NakPdu pdu = b.build();
-            forwardPdu(pdu);
+            try {
+                forwardPdu(pdu);
+            } catch (UtLayerException e) {
+                if(LOG.isLoggable(Level.SEVERE)) {
+                    LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Nak PDU transmission: %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                }
+            }
         }
         return requestsPerformed;
     }
@@ -532,23 +591,29 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         handleNoticeOfCompletion(false);
         // 4.11.2.3.2 If receiving in acknowledged mode,
         if(isAcknowledged()) {
-            // a) the receiving CFDP entity shall issue a Finished (cancel) PDU indicating the reason
-            // for transaction termination: Cancel.request received or the condition code of the
-            // fault whose declaration triggered the Notice of Cancellation
-            handleForwardingOfFinishedPdu();
-            // b) Positive Acknowledgment procedures shall be applied to the Finished (cancel) PDU
-            // with the Expected Response being an ACK (Finished) PDU with condition code
-            // equal to that of the Finished (cancel) PDU
-            // TODO: start Finished PDU ack timer
+            try {
+                // a) the receiving CFDP entity shall issue a Finished (cancel) PDU indicating the reason
+                // for transaction termination: Cancel.request received or the condition code of the
+                // fault whose declaration triggered the Notice of Cancellation
+                FinishedPdu theFinishedPdu = handleForwardingOfFinishedPdu();
+                // b) Positive Acknowledgment procedures shall be applied to the Finished (cancel) PDU
+                // with the Expected Response being an ACK (Finished) PDU with condition code
+                // equal to that of the Finished (cancel) PDU
+                startPositiveAckTimer(theFinishedPdu);
 
-            // c) any PDU received after issuance of the Finished (cancel) PDU and prior to receipt of
-            // the Expected Response shall be ignored, except that all Positive Acknowledgment
-            // procedures remain in effect
+                // c) any PDU received after issuance of the Finished (cancel) PDU and prior to receipt of
+                // the Expected Response shall be ignored, except that all Positive Acknowledgment
+                // procedures remain in effect
 
-            // Handled in handleIndication method
-
-            // TODO: d) any fault declared in the course of transferring this PDU must result in abandonment
-            //  of the transaction.
+                // Handled in handleIndication method
+            } catch (UtLayerException e) {
+                // d) any fault declared in the course of transferring this PDU must result in abandonment
+                //    of the transaction.
+                if(LOG.isLoggable(Level.SEVERE)) {
+                    LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Finished PDU transmission upon cancelling (acknowledged): %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                }
+                handleAbandon();
+            }
         } else {
             // 4.11.2.3.3 If receiving in unacknowledged mode, and if the transaction’s Metadata PDU has
             // been received and the Closure Requested flag is set to ‘1’ in that PDU, then the receiving
@@ -556,7 +621,13 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
             // termination: Cancel.request received or the condition code of the fault whose declaration
             // triggered the Notice of Cancellation.
             if(this.metadataPdu != null && this.metadataPdu.isClosureRequested()) {
-                handleForwardingOfFinishedPdu();
+                try {
+                    handleForwardingOfFinishedPdu();
+                } catch (UtLayerException e) {
+                    if(LOG.isLoggable(Level.SEVERE)) {
+                        LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Finished PDU transmission upon cancelling (unacknowledged): %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                    }
+                }
             }
         }
     }
@@ -608,16 +679,31 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         stopNakTimer();
         // b) suspend any transmission of Keep Alive PDUs -> handled also in handleKeepAliveTransmission
         stopKeepAliveSendingTimer();
-        // TODO: c) suspend the inactivity timer
+        // c) suspend the inactivity timer
+        stopTransactionInactivityTimer();
         // d) suspend transmission of Finished (complete) PDUs -> handled in handleForwardingOfFinishedPdu
-        // TODO: e) suspend the application of Positive Acknowledgment Procedures to PDUs previously
+        // e) suspend the application of Positive Acknowledgment Procedures to PDUs previously
         //    issued by this entity -> stop Finished PDU ACK timer
+        stopPositiveAckTimer();
     }
 
     @Override
     protected void handleResume() {
         setResumed();
-        handleResumeActions(true);
+        // 4.6.7.1 Resume procedures apply upon receipt of a Resume.request primitive submitted by the
+        // CFDP user. However:
+        // a) [...]
+        // b) if the transaction to which a Resume.request primitive pertains is currently not only
+        //    suspended but also frozen (as defined in 4.12), then the transaction shall be
+        //    considered no longer suspended but the only applicable procedure shall be the
+        //    issuance of a Resumed.indication.
+        if(!isFrozen()) {
+            // Full resume
+            handleResumeActions(true);
+        } else {
+            // Just send the notification, because the transaction is still frozen
+            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.fullyCompletedPartSize));
+        }
     }
 
     @Override
@@ -657,9 +743,16 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         if(sendNotification) {
             getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.fullyCompletedPartSize));
         }
+        // XXX: What about the transaction inactivity timer? I think it should be started
+        startTransactionInactivityTimer();
+
         // 4.6.7.3.2 The application of Positive Acknowledgment Procedures to PDUs previously
         // issued by this entity shall be resumed.
-        // TODO: start Finished PDU ACK timer if Finished PDU was sent
+
+        // Start Finished PDU ACK timer if Finished PDU was sent and not yet acknowledged
+        if(this.finishedPdu != null) {
+            startPositiveAckTimer(this.finishedPdu);
+        }
     }
 
     @Override
@@ -698,16 +791,16 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                         // reception of file data and/or metadata that had not previously been received.
                         if(nakTimerCount < getRemoteDestination().getNakTimerExpirationLimit()) {
                             handleNakComputation();
-                            schedule(nakTimer, getRemoteDestination().getNackTimerInterval(), false);
+                            schedule(nakTimer, getRemoteDestination().getNakTimerInterval(), false);
                         } else {
                             getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_NAK_LIMIT_REACHED, fullyCompletedPartSize));
-                            // TODO: what do we do?
+                            // TODO: fault handling
                         }
                     }
                 });
             }
         };
-        schedule(this.nakTimer, getRemoteDestination().getNackTimerInterval(), false);
+        schedule(this.nakTimer, getRemoteDestination().getNakTimerInterval(), false);
     }
 
     private void stopNakComputation() {
@@ -733,10 +826,12 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                 });
             }
         };
-        schedule(this.nakComputationTimer, getRemoteDestination().getNackTimerInterval(), true); // TODO: introduce MIB parameter instead of nack timer interval
+        schedule(this.nakComputationTimer, getRemoteDestination().getNakRecomputationInterval(), true);
     }
 
     private void handleTransactionFinishedCheckTimerElapsed() {
+        // This method can be called ONLY if the transaction is unacknowledged.
+
         // When the timer expires, the receiving entity shall determine whether or not
         // file reception is now deemed complete. If so, the receiving entity shall issue a Notice
         // of Completion (Completed) and, if the Closure Requested flag in the transaction’s
@@ -749,14 +844,20 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
             if(this.fileCompleted) {
                 handleNoticeOfCompletion(true);
                 if(this.metadataPdu.isClosureRequested()) {
-                    handleForwardingOfFinishedPdu();
+                    try {
+                        handleForwardingOfFinishedPdu();
+                    } catch (UtLayerException e) {
+                        if(LOG.isLoggable(Level.SEVERE)) {
+                            LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Finished PDU transmission upon file reception completion (unacknowledged with closure, timer expired): %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                        }
+                    }
                 }
                 handleDispose();
             } else if(this.transactionFinishCheckTimerCount == getRemoteDestination().getCheckIntervalExpirationLimit()) {
                 this.transactionFinishCheckTimer.cancel();
                 this.transactionFinishCheckTimer = null;
                 getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_CHECK_LIMIT_REACHED, this.fullyCompletedPartSize));
-                handleDispose(); // TODO: TBC depending on the CC_ fault handler: with dispose, this sounds like abort
+                handleDispose(); // TODO: fault handling
             }
         }
     }
@@ -765,11 +866,13 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         // 4.11.1.2.1 If receiving in acknowledged mode,
         // a) transmission of NAK PDUs, whether in response to NAK timer expiration or in
         //    response to any other events, shall be terminated
-        // b) any transmission of Keep Alive PDUs shall be terminated
-        // c) the application of Positive Acknowledgment Procedures to PDUs previously issued
-        //    by this entity shall be terminated
         stopNakComputation();
         stopNakTimer();
+        // b) any transmission of Keep Alive PDUs shall be terminated
+        stopKeepAliveSendingTimer();
+        // c) the application of Positive Acknowledgment Procedures to PDUs previously issued
+        //    by this entity shall be terminated
+        stopPositiveAckTimer();
         // Derive final status and condition code
         if(completed) {
             if (this.filestoreProblemDetected) {
@@ -813,8 +916,9 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
             //           Completion (Completed) was previously declared, all file data have
             //           necessarily already been received, and therefore there are no incomplete data
             //           to discard or retain.
-            // TODO: this.metadataPdu can be null
-            if(this.metadataPdu.getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId() &&
+
+            // If I do not have the metadata I do not even know how to call this file, how long is this, so sorry... discarded
+            if(this.metadataPdu != null && this.metadataPdu.getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId() &&
                     getRemoteDestination().isRetainIncompleteReceivedFilesOnCancellation()) {
                     // TODO: what the hell I do here? :) I might need to invent a way to store a partial file with gaps
                 this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
@@ -827,7 +931,10 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         //    transaction was completed
         // d) if the receiving entity is the transaction’s destination, Filestore Responses and/or a
         //    Status Report shall be passed as parameters of the TransactionFinished.indication primitive as available.
-        if(this.metadataPdu.getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId() &&
+
+        // If I do not have the metadata I might not know where this file is supposed to go, so as the indication is optional,
+        // the code below is still standard-compliant
+        if(this.metadataPdu != null && this.metadataPdu.getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId() &&
             getEntity().getMib().getLocalEntity().isTransactionFinishedIndicationRequired()) {
             getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
                     this.finalConditionCode,
@@ -838,10 +945,13 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         }
     }
 
-    private void handleForwardingOfFinishedPdu() {
+    private FinishedPdu handleForwardingOfFinishedPdu() throws UtLayerException {
         if(isRunning()) {
-            FinishedPdu pdu = prepareFinishedPdu();
-            forwardPdu(pdu);
+            this.finishedPdu = prepareFinishedPdu();
+            forwardPdu(finishedPdu);
+            return finishedPdu;
+        } else {
+            return null;
         }
     }
 
@@ -852,8 +962,9 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         b.setFileStatus(this.finalFileStatus);
         b.setConditionCode(this.finalConditionCode, this.finalFaultEntity);
         // Add filestore responses
-        // TODO
-
+        for(FilestoreResponseTLV tlv : this.filestoreResponses) {
+            b.addFilestoreResponse(tlv);
+        }
         return b.build();
     }
 
@@ -880,35 +991,36 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         b.setLargeFile(this.metadataPdu.isLargeFile());
     }
 
-    private boolean forwardPdu(CfdpPdu pdu) { // NOSONAR: false positive
+    @Override
+    protected void forwardPdu(CfdpPdu pdu) throws UtLayerException {
         // Add to the pending list
         this.pendingUtTransmissionPduList.add(pdu);
         // Send all PDUs you have to send, stop if you fail
         if(LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, String.format("Incoming transaction %d from entity %d: sending %d pending PDUs to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), getTransmissionLayer().getName()));
+            LOG.log(Level.FINER, String.format("Transaction %d with remote entity %d: sending %d pending PDUs to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), getTransmissionLayer().getName()));
         }
         while(!pendingUtTransmissionPduList.isEmpty()) {
             CfdpPdu toSend = pendingUtTransmissionPduList.get(0);
             try {
                 if(LOG.isLoggable(Level.FINEST)) {
-                    LOG.log(Level.FINEST, String.format("Incoming transaction %d from entity %d: sending PDU %s to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), toSend, getTransmissionLayer().getName()));
+                    LOG.log(Level.FINEST, String.format("Transaction %d with remote entity %d: sending PDU %s to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), toSend, getTransmissionLayer().getName()));
                 }
                 getTransmissionLayer().request(toSend);
                 this.pendingUtTransmissionPduList.remove(0);
             } catch(UtLayerException e) {
                 if(LOG.isLoggable(Level.WARNING)) {
-                    LOG.log(Level.WARNING, String.format("Incoming transaction %d from entity %d: PDU rejected by UT layer %s: %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName(), e.getMessage()), e);
+                    LOG.log(Level.WARNING, String.format("Transaction %d with remote entity %d: PDU rejected by UT layer %s: %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName(), e.getMessage()), e);
                 }
-                return false;
+                throw e;
             }
         }
         if(LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, String.format("Incoming transaction %d from entity %d: pending PDUs sent to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName()));
+            LOG.log(Level.FINER, String.format("Transaction %d with remote entity %d: pending PDUs sent to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName()));
         }
-        return true;
     }
 
     /**
+     * This method checks if the file can be fully reconstructed. In such case, the file is reconstructed and stored.
      *
      * @return false if the file cannot be closed yet, true otherwise (no more PDUs are expected)
      */
@@ -938,6 +1050,7 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         } else {
             // d) otherwise, a File Checksum Failure fault shall be declared.
             getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE, this.fullyCompletedPartSize));
+            // TODO: fault handling
             this.checksumMismatchDetected = true;
             if(faultHandlers.get((int) FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE) == FaultHandlerStrategy.Action.NO_ACTION) {
                 // The action taken upon such error need not necessarily entail discarding the
@@ -967,7 +1080,7 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
             os.close();
         } catch (FilestoreException | IOException e) {
             if(LOG.isLoggable(Level.SEVERE)) {
-                LOG.log(Level.SEVERE, String.format("Incoming transaction %d from entity %d: problem when storing file %s to filestore: %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.metadataPdu.getDestinationFileName(), e.getMessage()), e);
+                LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: problem when storing file %s to filestore: %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.metadataPdu.getDestinationFileName(), e.getMessage()), e);
             }
             this.filestoreProblemDetected = true;
             getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_FILESTORE_REJECTION, this.fullyCompletedPartSize));
@@ -1011,18 +1124,25 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
         // ACK of Finished PDU (only in case of closure requested or acknowledged mode)
         if(pdu.getDirectiveCode() == FileDirectivePdu.DC_FINISHED_PDU) {
             if(LOG.isLoggable(Level.INFO)) {
-                LOG.log(Level.INFO, String.format("Incoming transaction %d from entity %d: ACK PDU(Finished) received", getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+                LOG.log(Level.INFO, String.format("Transaction %d with remote entity %d: ACK PDU(Finished) received", getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+            }
+            if(isAcknowledged() && this.finishedPdu != null && this.finishedPdu.getConditionCode() == pdu.getConditionCode()) {
+                // Ack received
+                this.finishedPdu = null;
+                stopPositiveAckTimer();
+                // TODO: at this stage, probably the procedure must be disposed
+                handleDispose();
             }
         } else {
             if(LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, String.format("Incoming transaction %d from entity %d: ACK PDU(for directive code 0x%02X) received", getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu.getDirectiveCode()));
+                LOG.log(Level.WARNING, String.format("Transaction %d with remote entity %d: ACK PDU(for directive code 0x%02X) received", getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu.getDirectiveCode()));
             }
         }
     }
 
     @Override
     protected void handleTransactionInactivity() {
-        // TODO: refactor the handling of faults
+        // TODO: fault handling
         getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_INACTIVITY_DETECTED, this.fullyCompletedPartSize));
     }
 

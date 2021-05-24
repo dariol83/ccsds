@@ -23,8 +23,8 @@ public class RemoteEntityConfigurationInformation {
     @XmlAttribute(name = "positive_ack_timer_interval")
     private long positiveAckTimerInterval; // -1: N/A
 
-    @XmlAttribute(name = "nack_timer_interval")
-    private long nackTimerInterval; // -1: N/A
+    @XmlAttribute(name = "nak_timer_interval")
+    private long nakTimerInterval; // -1: N/A
 
     @XmlAttribute(name = "keep_alive_interval")
     private long keepAliveInterval; // -1: N/A
@@ -74,6 +74,8 @@ public class RemoteEntityConfigurationInformation {
     @XmlAttribute(name = "keep_alive_sending_interval")
     private long keepAliveSendingInterval;
 
+    @XmlAttribute(name = "nak_recomputation_interval")
+    private long nakRecomputationInterval;
 
     public long getRemoteEntityId() {
         return remoteEntityId;
@@ -120,12 +122,12 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
-    public long getNackTimerInterval() {
-        return nackTimerInterval;
+    public long getNakTimerInterval() {
+        return nakTimerInterval;
     }
 
-    public RemoteEntityConfigurationInformation setNackTimerInterval(long nackTimerInterval) {
-        this.nackTimerInterval = nackTimerInterval;
+    public RemoteEntityConfigurationInformation setNakTimerInterval(long nakTimerInterval) {
+        this.nakTimerInterval = nakTimerInterval;
         return this;
     }
 
@@ -273,6 +275,15 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
+    public long getNakRecomputationInterval() {
+        return nakRecomputationInterval;
+    }
+
+    public RemoteEntityConfigurationInformation setNakRecomputationInterval(long nakRecomputationInterval) {
+        this.nakRecomputationInterval = nakRecomputationInterval;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "RemoteEntityConfigurationInformation{" +
@@ -281,7 +292,7 @@ public class RemoteEntityConfigurationInformation {
                 ", utLayer='" + utLayer + '\'' +
                 ", utAddress='" + utAddress + '\'' +
                 ", positiveAckTimerInterval=" + positiveAckTimerInterval +
-                ", nackTimerInterval=" + nackTimerInterval +
+                ", nackTimerInterval=" + nakTimerInterval +
                 ", keepAliveInterval=" + keepAliveInterval +
                 ", immediateNakModeEnabled=" + immediateNakModeEnabled +
                 ", defaultTransmissionModeAcknowledged=" + defaultTransmissionModeAcknowledged +
@@ -298,6 +309,7 @@ public class RemoteEntityConfigurationInformation {
                 ", acknowledgedModeSupported=" + acknowledgedModeSupported +
                 ", checkIntervalExpirationLimit=" + checkIntervalExpirationLimit +
                 ", keepAliveSendingInterval=" + keepAliveSendingInterval +
+                ", nakRecomputationInterval=" + nakRecomputationInterval +
                 '}';
     }
 }
