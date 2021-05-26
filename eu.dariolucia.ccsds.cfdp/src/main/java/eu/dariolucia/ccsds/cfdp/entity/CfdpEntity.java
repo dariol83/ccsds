@@ -344,21 +344,40 @@ public class CfdpEntity implements IUtLayerSubscriber {
 
     @Override
     public void startTxPeriod(IUtLayer layer, long entityId) {
-        // TODO
+        // Check all transactions that are affected by this and update them
+        updateTxOpportunity(entityId, true);
     }
 
     @Override
     public void endTxPeriod(IUtLayer layer, long entityId) {
-        // TODO
+        updateTxOpportunity(entityId, false);
+    }
+
+    private void updateTxOpportunity(long entityId, boolean b) {
+        // Check all transactions that are affected by this and update them
+        for (Map.Entry<Long, CfdpTransaction> e : this.id2transaction.entrySet()) {
+            if (e.getValue().getRemoteDestination().getRemoteEntityId() == entityId) {
+                e.getValue().updateTxOpportunity(b);
+            }
+        }
     }
 
     @Override
     public void startRxPeriod(IUtLayer layer, long entityId) {
-        // TODO
+        updateRxOpportunity(entityId, true);
     }
 
     @Override
     public void endRxPeriod(IUtLayer layer, long entityId) {
-        // TODO
+        updateRxOpportunity(entityId, false);
+    }
+
+    private void updateRxOpportunity(long entityId, boolean b) {
+        // Check all transactions that are affected by this and update them
+        for (Map.Entry<Long, CfdpTransaction> e : this.id2transaction.entrySet()) {
+            if (e.getValue().getRemoteDestination().getRemoteEntityId() == entityId) {
+                e.getValue().updateRxOpportunity(b);
+            }
+        }
     }
 }

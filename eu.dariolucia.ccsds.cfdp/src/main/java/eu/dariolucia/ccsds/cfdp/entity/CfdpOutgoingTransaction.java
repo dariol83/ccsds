@@ -25,7 +25,6 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
     private static final Logger LOG = Logger.getLogger(CfdpOutgoingTransaction.class.getName());
 
     private final PutRequest request;
-    private final Map<Integer, FaultHandlerStrategy.Action> faultHandlers = new HashMap<>();
 
     // Variables to handle file data transfer
     private final List<CfdpPdu> sentPduList = new LinkedList<>();
@@ -46,12 +45,15 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
     private boolean metadataPduSent;
     // EOF PDU once sent
     private EndOfFilePdu eofPdu;
+    // Flag to indicate that PDU transmission can go on and the notice of completion was not called
+    private boolean txRunning;
 
     public CfdpOutgoingTransaction(long transactionId, CfdpEntity entity, PutRequest r) {
         super(transactionId, entity, r.getDestinationCfdpEntityId());
         this.request = r;
-        this.faultHandlers.putAll(entity.getMib().getLocalEntity().getFaultHandlerMap());
-        this.faultHandlers.putAll(r.getFaultHandlerOverrideMap());
+        overrideHandlers(entity.getMib().getLocalEntity().getFaultHandlerMap());
+        overrideHandlers(r.getFaultHandlerOverrideMap());
+        this.txRunning = true;
     }
 
     /**
@@ -95,9 +97,11 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
             if(LOG.isLoggable(Level.SEVERE)) {
                 LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: keep alive limit fault - remote progress: %d bytes, local progress %d bytes, limit %d bytes", getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.effectiveFileSize, pdu.getProgress(), limit));
             }
-            getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_KEEPALIVE_LIMIT_REACHED,
-                    this.effectiveFileSize));
-            // TODO: fault handling
+            try {
+                fault(FileDirectivePdu.CC_KEEPALIVE_LIMIT_REACHED, getLocalEntityId());
+            } catch (FaultDeclaredException e) {
+                // Nothing to be done here at this stage, all actions performed by the fault handler
+            }
         }
     }
 
@@ -152,7 +156,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
             if(LOG.isLoggable(Level.SEVERE)) {
                 LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on EOF(cancel) PDU transmission: %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
             }
-            handleAbandon();
+            handleAbandon(FileDirectivePdu.CC_NOERROR); // TODO: there is no CC code for this situation
             return;
         }
 
@@ -278,7 +282,13 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
             handle(this::sendFileSegment);
         } else {
             // Start the sending of the file from the beginning
-            handle(this::handleStartTransaction);
+            handle(() -> {
+                try {
+                    handleStartTransaction();
+                } catch (FaultDeclaredException e) {
+                    // Nothing to be done at this stage, all done by the fault handler
+                }
+            });
         }
         // b) issue a Resumed.indication.
         if(sendNotification) {
@@ -337,9 +347,8 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
                 }
                 // File is in offset, so check if there is a segment request
                 checkAndRetransmitFileDataPdu(filePdu, pdu.getSegmentRequests());
-            } else if(sentPdu instanceof EndOfFilePdu) {
-                // Ignore
             }
+            // Ignore EOF PDUs
         }
     }
 
@@ -401,8 +410,6 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
                     LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on ACK(Finished) PDU transmission: %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
                 }
             }
-            // TODO: unsure if the following two lines must be executed anyway or not
-
             // 4.6.4.2.3 Receipt of the Finished (complete) PDU shall cause the sending CFDP entity to
             // issue a Notice of Completion (Completed).
             handleNoticeOfCompletion(deriveCompletedStatus(pdu));
@@ -426,7 +433,11 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         // Start the transaction inactivity timer
         startTransactionInactivityTimer();
         // Handle the start of the transaction
-        handleStartTransaction();
+        try {
+            handleStartTransaction();
+        } catch (FaultDeclaredException e) {
+            // Nothing to be done at this stage, all done by the fault handler
+        }
         // End of the transmission activation
     }
 
@@ -439,7 +450,12 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         }
     }
 
-    private void handleStartTransaction() {
+    @Override
+    protected long getSourceEntityId() {
+        return getEntity().getMib().getLocalEntity().getLocalEntityId();
+    }
+
+    private void handleStartTransaction() throws FaultDeclaredException {
         if(isRunning()) {
             // Initiation of the Copy File procedures shall cause the sending CFDP entity to
             // forward a Metadata PDU to the receiving CFDP entity.
@@ -460,8 +476,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
                 segmentAndForwardFileData();
             } else {
                 // For Metadata only transactions, closure might or might not be requested
-                // TODO: to be checked, as handleClosure is related primarily to file transactions
-                handle(this::handleClosure);
+                handleTransactionClosure();
             }
         }
     }
@@ -488,15 +503,20 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
      * The task sending the last chunk enqueues also a {@link eu.dariolucia.ccsds.cfdp.protocol.pdu.EndOfFilePdu} and
      * check if closure must be handled.
      */
-    private void segmentAndForwardFileData() {
+    private void segmentAndForwardFileData() throws FaultDeclaredException {
         this.effectiveFileSize = 0;
         this.conditionCode = FileDirectivePdu.CC_NOERROR;
         // Initialise the chunk provider
         if(this.request.isSegmentationControl()) {
             this.segmentProvider = getEntity().getSegmentProvider(request.getSourceFileName(), getRemoteDestination().getRemoteEntityId());
         }
-        // If there is no segmentation available, or if no segmentation control is needed, use the fixed size segment provider
+        // 4.6.1.1.8 If the segmentation control service parameter has requested that record
+        // boundaries be respected and there is no observable record structure to the file, an Invalid File
+        // Structure fault shall be declared.
         if(this.segmentProvider == null) {
+            this.conditionCode = FileDirectivePdu.CC_INVALID_FILE_STRUCTURE;
+            fault(FileDirectivePdu.CC_INVALID_FILE_STRUCTURE, getLocalEntityId());
+            // If the fault is ignore, let's try with something that makes sense... the standard does not prevent this to happen
             this.segmentProvider = new FixedSizeSegmenter(getEntity().getFilestore(), request.getSourceFileName(), getRemoteDestination().getMaximumFileSegmentLength());
         }
         // Initialise the checksum computer
@@ -508,8 +528,8 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
             // Not available, then use the modular checksum
             this.checksum = CfdpChecksumRegistry.getModularChecksum().build();
         }
-        // Schedule the first task to send the first segment
-        handle(this::sendFileSegment);
+        // Send the first segment
+        sendFileSegment();
     }
 
     /**
@@ -546,7 +566,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
                 getEntity().notifyIndication(new EofSentIndication(getTransactionId()));
             }
             // Handle the closure of the transaction
-            handleClosure();
+            handleTransactionClosure();
         } else {
             // Construct the file data PDU
             this.effectiveFileSize += gs.getData().length;
@@ -574,6 +594,16 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
     }
 
     private void forwardPdu(CfdpPdu pdu, boolean retransmission) throws UtLayerException {
+        if(!this.txRunning) {
+            // Prevent sending PDUs
+            if(LOG.isLoggable(Level.FINE)) {
+                LOG.log(Level.FINE, String.format("Transaction %d with remote entity %d: forwardPdu(), %s to UT layer %s discarded, TX not enabled", getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu, getTransmissionLayer().getName()));
+            }
+            return;
+        }
+        if(LOG.isLoggable(Level.FINEST)) {
+            LOG.log(Level.FINEST, String.format("Transaction %d with remote entity %d: forwardPdu(), %s to UT layer %s - Retransmission: %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu, getTransmissionLayer().getName(), retransmission));
+        }
         if(isAcknowledged() && !retransmission) {
             // Remember the PDU
             this.sentPduList.add(pdu);
@@ -718,13 +748,13 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         b.setLargeFile(isLargeFile());
     }
 
-    private void handleClosure() {
+    private void handleTransactionClosure() {
         if(!isAcknowledged()) {
             // 4.6.3.2.1 Transmission of an EOF (No error) PDU shall cause the sending CFDP entity to
             // issue a Notice of Completion (Completed) unless transaction closure was requested.
             if(!isClosureRequested()) {
                 handleNoticeOfCompletion(true);
-                // Nothing to do here, clean up transaction resources
+                // Nothing to do here, clean up transaction resources, we are done
                 handleDispose();
             } else {
                 // 4.6.3.2.2 In the latter case, a transaction-specific Check timer shall be started. The expiry
@@ -745,7 +775,10 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         // 4.11.1.1.1 On Notice of Completion of the Copy File procedure, the sending CFDP entity
         // shall
         // a) release all unreleased portions of the file retransmission buffer
+        this.sentPduList.clear();
         // b) stop transmission of file segments and metadata.
+        this.pendingUtTransmissionPduList.clear();
+        this.txRunning = false;
 
         // 4.11.1.1.2 If sending in acknowledged mode,
         // a) any transmission of Prompt PDUs shall be terminated
@@ -763,8 +796,8 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         //      4) the Finished PDU whose arrival completed the transaction contained a Filestore
         //         Responses parameter,
         //    then that Filestore Responses parameter shall be passed in the TransactionFinished.indication primitive.
-
-        // TODO: sending entity is the transaction source?
+        // TODO: sending entity is the transaction source? (I assume for store-and-forward and perhaps for proxy operations,
+        //  leave it to be done for now
         if(!isAcknowledged()) {
             if(this.finishedPdu != null) {
                 getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
@@ -782,21 +815,12 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
                         null));
             }
         } else {
-            if(completed) {
-                getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
-                        this.finishedPdu.getConditionCode(),
-                        this.finishedPdu.getFileStatus(),
-                        this.finishedPdu.isDataComplete(),
-                        this.finishedPdu.getFilestoreResponses(),
-                        null));
-            } else {
-                getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
-                        this.conditionCode,
-                        FinishedPdu.FileStatus.STATUS_UNREPORTED,
-                        completed,
-                        null,
-                        null));
-            }
+            getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
+                    completed ? this.finishedPdu.getConditionCode() : this.conditionCode,
+                    completed ? this.finishedPdu.getFileStatus() : FinishedPdu.FileStatus.STATUS_UNREPORTED,
+                    completed && this.finishedPdu.isDataComplete(),
+                    completed ? this.finishedPdu.getFilestoreResponses() : null,
+                    null));
         }
         // We don't dispose here, as there might be things to be done after the Notice of Completion, prior to disposal
     }
@@ -806,20 +830,39 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         // 4.6.3.2.4 If the timer expires prior to reception of a Finished PDU for the associated
         // transaction, a Check Limit Reached fault shall be declared.
         if(this.transactionFinishCheckTimer != null) {
-            getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_CHECK_LIMIT_REACHED, this.effectiveFileSize));
-            handleDispose(); // TODO: fault handling
+            try {
+                fault(FileDirectivePdu.CC_CHECK_LIMIT_REACHED, getLocalEntityId());
+            } catch (FaultDeclaredException e) {
+                // Nothing to be done at this stage, everything already handled by the fault handler
+            }
         }
     }
 
     @Override
     protected void handlePreDispose() {
-        // TODO cleanup resources and memory
+        // Cleanup resources and memory
+        this.sentPduList.clear();
+        this.pendingUtTransmissionPduList.clear();
+        this.txRunning = false;
+        if(this.segmentProvider != null) {
+            this.segmentProvider.close();
+            this.segmentProvider = null;
+        }
+        this.checksum = null;
+        if(transactionFinishCheckTimer != null) {
+            transactionFinishCheckTimer.cancel();
+            transactionFinishCheckTimer = null;
+        }
+        // Done
     }
 
     @Override
     protected void handleTransactionInactivity() {
-        // TODO refactor fault handling
-        getEntity().notifyIndication(new FaultIndication(getTransactionId(), FileDirectivePdu.CC_INACTIVITY_DETECTED, this.effectiveFileSize));
+        try {
+            fault(FileDirectivePdu.CC_INACTIVITY_DETECTED, getLocalEntityId());
+        } catch (FaultDeclaredException e) {
+            // Nothing to be done at this stage, everything already handled by the fault handler
+        }
     }
 
     private boolean isFileToBeSent() {
@@ -830,7 +873,7 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         if(request.getSourceFileName() == null) {
             return false;
         } else {
-            long fileSize = 0;
+            long fileSize;
             try {
                 fileSize = getEntity().getFilestore().fileSize(request.getSourceFileName());
             } catch (FilestoreException e) {
@@ -844,7 +887,8 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
         }
     }
 
-    public boolean isAcknowledged() {
+    @Override
+    protected boolean isAcknowledged() {
         if(request.getAcknowledgedTransmissionMode() != null) {
             return request.getAcknowledgedTransmissionMode();
         } else {
