@@ -40,11 +40,11 @@ class FilesystemBasedFilestoreTest {
         assertEquals(new TreeSet<>(Arrays.asList("dir1/", "dir2/", "whatever2", "dir1/whatever2")), dirList2);
 
         byte[] data = new byte[] {1,2,3,4};
-        assertDoesNotThrow(() -> fs.appendFile("whatever2", data));
+        assertDoesNotThrow(() -> fs.appendContentsToFile("whatever2", data));
         assertArrayEquals(data, fs.getFile("whatever2"));
-        assertDoesNotThrow(() -> fs.appendFile("whatever2", data));
+        assertDoesNotThrow(() -> fs.appendContentsToFile("whatever2", data));
         assertArrayEquals(new byte[] {1,2,3,4,1,2,3,4}, fs.getFile("whatever2"));
-        assertDoesNotThrow(() -> fs.replaceFile("whatever2", data));
+        assertDoesNotThrow(() -> fs.replaceFileContents("whatever2", data));
         assertArrayEquals(data, fs.getFile("whatever2"));
         assertDoesNotThrow(() -> fs.renameFile("whatever2", "dir2/w"));
         assertTrue(fs.fileExists("dir2/w"));

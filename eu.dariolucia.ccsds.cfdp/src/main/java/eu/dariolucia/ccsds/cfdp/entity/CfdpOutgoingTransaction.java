@@ -546,7 +546,13 @@ public class CfdpOutgoingTransaction extends CfdpTransaction {
             return;
         }
         // Extract and send the file segment
-        FileSegment gs = this.segmentProvider.nextSegment();
+        FileSegment gs = null;
+        try {
+            gs = this.segmentProvider.nextSegment();
+        } catch (FilestoreException e) {
+            // TODO Cancel transaction? Raise fault?
+            // TODO Log
+        }
         // Check if there are no more segments to send
         if(gs.isEof()) {
             // Construct the EOF pdu

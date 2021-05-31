@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 public class FilesystemBasedFilestore implements IVirtualFilestore {
 
     public static final String DIR_FILE_SEPARATOR = "/";
+    public static final String APPEND = "append";
+    public static final String REPLACE = "replace";
     private final File root;
 
     public FilesystemBasedFilestore(String absoluteRootPath) {
@@ -87,7 +89,7 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
     }
 
     @Override
-    public void appendFile(String fullPath, byte[] data) throws FilestoreException {
+    public void appendContentsToFile(String fullPath, byte[] data) throws FilestoreException {
         File target = constructTarget(fullPath);
         if(!target.exists()) {
             throw new FilestoreException(String.format("Cannot append to file %s: destination file does not exist", fullPath));
@@ -102,7 +104,7 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
     }
 
     @Override
-    public void replaceFile(String fullPath, byte[] data) throws FilestoreException {
+    public void replaceFileContents(String fullPath, byte[] data) throws FilestoreException {
         File target = constructTarget(fullPath);
         if(!target.exists()) {
             throw new FilestoreException(String.format("Cannot replace file %s: destination file does not exist", fullPath));
@@ -114,6 +116,52 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
         } catch (IOException e) {
             throw new FilestoreException(String.format("Cannot replace file %s: %s", fullPath, e.getMessage()), e);
         }
+    }
+
+    @Override
+    public void appendFileToFile(String targetFilePath, String fileToAddPath) throws FilestoreException {
+        copyToFile(targetFilePath, fileToAddPath, true);
+    }
+
+    private void copyToFile(String targetFilePath, String fileToAddPath, boolean append) throws FilestoreException {
+        File target = constructTarget(targetFilePath);
+        if(!target.exists()) {
+            throw new FilestoreException(String.format("Cannot %s to file %s: destination file does not exist", append ? APPEND : REPLACE,  targetFilePath));
+        }
+        File toReadFrom = constructTarget(fileToAddPath);
+        if(!toReadFrom.exists()) {
+            throw new FilestoreException(String.format("Cannot %s from file %s: source file does not exist", append ? APPEND : REPLACE, fileToAddPath));
+        }
+        FileOutputStream fos = null;
+        FileInputStream fin = null;
+        try {
+            fos = new FileOutputStream(target, append);
+            fin = new FileInputStream(toReadFrom);
+            fin.transferTo(fos);
+            fos.close();
+            fin.close();
+        } catch (IOException e) {
+            if(fin != null) {
+                try {
+                    fin.close();
+                } catch (IOException ioException) {
+                    // Ignore
+                }
+            }
+            if(fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException ioException) {
+                    // Ignore
+                }
+            }
+            throw new FilestoreException(String.format("Cannot %s to file %s from file %s: %s", append ? APPEND : REPLACE, targetFilePath, fileToAddPath, e.getMessage()), e);
+        }
+    }
+
+    @Override
+    public void replaceFileWithFile(String targetFilePath, String fileToAddPath) throws FilestoreException {
+        copyToFile(targetFilePath, fileToAddPath, false);
     }
 
     @Override

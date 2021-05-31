@@ -1,10 +1,29 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
+import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
+
+import java.util.EnumMap;
+import java.util.Map;
 
 public class FilestoreRequestTLV implements TLV {
 
     public static final int TLV_TYPE = 0x00;
+
+    private static final Map<ActionCode, IInternalFileOperation> ACTON2OPERATION;
+
+    static {
+        ACTON2OPERATION = new EnumMap<>(ActionCode.class);
+        ACTON2OPERATION.put(ActionCode.CREATE, FilestoreRequestTLV::createFile);
+        ACTON2OPERATION.put(ActionCode.CREATE_DIRECTORY, FilestoreRequestTLV::createDirectory);
+        ACTON2OPERATION.put(ActionCode.APPEND, FilestoreRequestTLV::append);
+        ACTON2OPERATION.put(ActionCode.DELETE, FilestoreRequestTLV::deleteFile);
+        ACTON2OPERATION.put(ActionCode.DENY_DIRECTORY, FilestoreRequestTLV::denyDirectory);
+        ACTON2OPERATION.put(ActionCode.DENY_FILE, FilestoreRequestTLV::denyFile);
+        ACTON2OPERATION.put(ActionCode.REPLACE, FilestoreRequestTLV::replace);
+        ACTON2OPERATION.put(ActionCode.REMOVE_DIRECTORY, FilestoreRequestTLV::deleteDirectory);
+        ACTON2OPERATION.put(ActionCode.RENAME, FilestoreRequestTLV::rename);
+    }
 
     private final ActionCode actionCode;
 
@@ -86,7 +105,168 @@ public class FilestoreRequestTLV implements TLV {
     }
 
     public FilestoreResponseTLV execute(IVirtualFilestore filestore) {
-        // TODO
-        return null;
+        IInternalFileOperation task = ACTON2OPERATION.get(getActionCode());
+        if(task == null) {
+            return new FilestoreResponseTLV(getActionCode(), FilestoreResponseTLV.StatusCode.NOT_PERFORMED, getFirstFileName(), getSecondFileName(), "Operation not supported");
+        } else {
+            return task.apply(filestore, getFirstFileName(), getSecondFileName());
+        }
+
+    }
+
+    private static FilestoreResponseTLV createFile(IVirtualFilestore filestore, String first, String second) {
+        try {
+            if(filestore.fileExists(first)) {
+                return new FilestoreResponseTLV(ActionCode.CREATE,
+                        FilestoreResponseTLV.StatusCode.CREATE_NOT_ALLOWED, first, second, null);
+            }
+            filestore.createFile(first);
+            return new FilestoreResponseTLV(ActionCode.CREATE,
+                    FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+        } catch (FilestoreException e) {
+            return new FilestoreResponseTLV(ActionCode.CREATE,
+                    FilestoreResponseTLV.StatusCode.CREATE_NOT_ALLOWED, first, second, e.getMessage());
+        }
+    }
+
+    private static FilestoreResponseTLV createDirectory(IVirtualFilestore filestore, String first, String second) {
+        try {
+            if(filestore.directoryExists(first)) {
+                return new FilestoreResponseTLV(ActionCode.CREATE_DIRECTORY,
+                        FilestoreResponseTLV.StatusCode.DIRECTORY_CANNOT_BE_CREATED, first, second, null);
+            }
+            filestore.createDirectory(first);
+            return new FilestoreResponseTLV(ActionCode.CREATE_DIRECTORY,
+                    FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+        } catch (FilestoreException e) {
+            return new FilestoreResponseTLV(ActionCode.CREATE_DIRECTORY,
+                    FilestoreResponseTLV.StatusCode.DIRECTORY_CANNOT_BE_CREATED, first, second, e.getMessage());
+        }
+    }
+
+    private static FilestoreResponseTLV rename(IVirtualFilestore filestore, String first, String second) {
+        try {
+            if(!filestore.fileExists(first)) {
+                return new FilestoreResponseTLV(ActionCode.RENAME,
+                        FilestoreResponseTLV.StatusCode.OLD_FILE_DOES_NOT_EXIST, first, second, null);
+            }
+            if(filestore.fileExists(second)) {
+                return new FilestoreResponseTLV(ActionCode.RENAME,
+                        FilestoreResponseTLV.StatusCode.NEW_FILE_ALREADY_EXISTS, first, second, null);
+            }
+            filestore.renameFile(first,second);
+            return new FilestoreResponseTLV(ActionCode.RENAME,
+                    FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+        } catch (FilestoreException e) {
+            return new FilestoreResponseTLV(ActionCode.RENAME,
+                    FilestoreResponseTLV.StatusCode.RENAME_NOT_ALLOWED, first, second, e.getMessage());
+        }
+    }
+
+    private static FilestoreResponseTLV deleteFile(IVirtualFilestore filestore, String first, String second) {
+        try {
+            if(!filestore.fileExists(first)) {
+                return new FilestoreResponseTLV(ActionCode.DELETE,
+                        FilestoreResponseTLV.StatusCode.FILE_DOES_NOT_EXIST, first, second, null);
+            }
+            filestore.deleteFile(first);
+            return new FilestoreResponseTLV(ActionCode.DELETE,
+                    FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+        } catch (FilestoreException e) {
+            return new FilestoreResponseTLV(ActionCode.DELETE,
+                    FilestoreResponseTLV.StatusCode.DELETE_FILE_NOT_ALLOWED, first, second, e.getMessage());
+        }
+    }
+
+    private static FilestoreResponseTLV deleteDirectory(IVirtualFilestore filestore, String first, String second) {
+        try {
+            if(!filestore.directoryExists(first)) {
+                return new FilestoreResponseTLV(ActionCode.REMOVE_DIRECTORY,
+                        FilestoreResponseTLV.StatusCode.DIRECTORY_DOES_NOT_EXIST, first, second, null);
+            }
+            filestore.deleteDirectory(first);
+            return new FilestoreResponseTLV(ActionCode.REMOVE_DIRECTORY,
+                    FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+        } catch (FilestoreException e) {
+            return new FilestoreResponseTLV(ActionCode.REMOVE_DIRECTORY,
+                    FilestoreResponseTLV.StatusCode.REMOVE_DIRECTORY_NOT_ALLOWED, first, second, e.getMessage());
+        }
+    }
+
+    private static FilestoreResponseTLV append(IVirtualFilestore filestore, String first, String second) {
+        try {
+            if(!filestore.fileExists(first)) {
+                return new FilestoreResponseTLV(ActionCode.APPEND,
+                        FilestoreResponseTLV.StatusCode.FILE_1_DOES_NOT_EXIST, first, second, null);
+            }
+            if(!filestore.fileExists(second)) {
+                return new FilestoreResponseTLV(ActionCode.APPEND,
+                        FilestoreResponseTLV.StatusCode.FILE_2_DOES_NOT_EXIST, first, second, null);
+            }
+            filestore.appendFileToFile(first,second);
+            return new FilestoreResponseTLV(ActionCode.APPEND,
+                    FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+        } catch (FilestoreException e) {
+            return new FilestoreResponseTLV(ActionCode.APPEND,
+                    FilestoreResponseTLV.StatusCode.APPEND_NOT_ALLOWED, first, second, e.getMessage());
+        }
+    }
+
+    private static FilestoreResponseTLV replace(IVirtualFilestore filestore, String first, String second) {
+        try {
+            if(!filestore.fileExists(first)) {
+                return new FilestoreResponseTLV(ActionCode.REPLACE,
+                        FilestoreResponseTLV.StatusCode.FILE_1_NOT_EXIST, first, second, null);
+            }
+            if(!filestore.fileExists(second)) {
+                return new FilestoreResponseTLV(ActionCode.REPLACE,
+                        FilestoreResponseTLV.StatusCode.FILE_2_NOT_EXIST, first, second, null);
+            }
+            filestore.replaceFileWithFile(first,second);
+            return new FilestoreResponseTLV(ActionCode.REPLACE,
+                    FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+        } catch (FilestoreException e) {
+            return new FilestoreResponseTLV(ActionCode.REPLACE,
+                    FilestoreResponseTLV.StatusCode.REPLACE_NOT_ALLOWED, first, second, e.getMessage());
+        }
+    }
+
+    private static FilestoreResponseTLV denyFile(IVirtualFilestore filestore, String first, String second) {
+        try {
+            if(!filestore.fileExists(first)) {
+                return new FilestoreResponseTLV(ActionCode.DENY_FILE,
+                        FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+            }
+            filestore.deleteFile(first);
+            return new FilestoreResponseTLV(ActionCode.DENY_FILE,
+                    FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+        } catch (FilestoreException e) {
+            return new FilestoreResponseTLV(ActionCode.DENY_FILE,
+                    FilestoreResponseTLV.StatusCode.DENY_FILE_NOT_ALLOWED, first, second, e.getMessage());
+        }
+    }
+
+    private static FilestoreResponseTLV denyDirectory(IVirtualFilestore filestore, String first, String second) {
+        try {
+            if(!filestore.directoryExists(first)) {
+                return new FilestoreResponseTLV(ActionCode.DENY_DIRECTORY,
+                        FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+            }
+            filestore.deleteDirectory(first);
+            return new FilestoreResponseTLV(ActionCode.DENY_DIRECTORY,
+                    FilestoreResponseTLV.StatusCode.SUCCESSFUL, first, second, null);
+        } catch (FilestoreException e) {
+            return new FilestoreResponseTLV(ActionCode.DENY_DIRECTORY,
+                    FilestoreResponseTLV.StatusCode.DENY_DIRECTORY_NOT_ALLOWED, first, second, e.getMessage());
+        }
+    }
+
+    /**
+     * Internal functional interface to be used in the action-to-operation map.
+     */
+    private interface IInternalFileOperation {
+
+        FilestoreResponseTLV apply(IVirtualFilestore filestore, String first, String second);
+
     }
 }

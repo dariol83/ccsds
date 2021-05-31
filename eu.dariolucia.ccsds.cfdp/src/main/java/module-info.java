@@ -13,6 +13,8 @@ open module eu.dariolucia.ccsds.cfdp {
     exports eu.dariolucia.ccsds.cfdp.entity.request;
     exports eu.dariolucia.ccsds.cfdp.entity.segmenters;
     exports eu.dariolucia.ccsds.cfdp.ut;
+    exports eu.dariolucia.ccsds.cfdp.filestore;
+    exports eu.dariolucia.ccsds.cfdp.filestore.impl;
 
     uses eu.dariolucia.ccsds.cfdp.protocol.checksum.ICfdpChecksumFactory;
 

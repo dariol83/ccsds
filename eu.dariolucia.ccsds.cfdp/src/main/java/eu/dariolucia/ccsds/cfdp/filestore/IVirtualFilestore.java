@@ -12,9 +12,13 @@ public interface IVirtualFilestore {
 
     void renameFile(String fullPath, String newFullPath) throws FilestoreException;
 
-    void appendFile(String fullPath, byte[] data) throws FilestoreException;
+    void appendContentsToFile(String fullPath, byte[] data) throws FilestoreException;
 
-    void replaceFile(String fullPath, byte[] data) throws FilestoreException;
+    void replaceFileContents(String fullPath, byte[] data) throws FilestoreException;
+
+    void appendFileToFile(String targetFilePath, String fileToAddPath) throws FilestoreException;
+
+    void replaceFileWithFile(String targetFilePath, String fileToAddPath) throws FilestoreException;
 
     byte[] getFile(String fullPath) throws FilestoreException;
 

@@ -514,6 +514,7 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                             }
                         }
                     }
+                    // Let's dispose here
                     handleDispose();
                 } else {
                     // b) Otherwise, a transaction-specific Check timer shall be started. The timer shall have
@@ -696,6 +697,8 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                         LOG.log(Level.SEVERE, String.format("Transaction %d with remote entity %d: fail on Finished PDU transmission upon cancelling (unacknowledged): %s ", getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
                     }
                 }
+                // At this stage we should probably dispose the transaction
+                handleDispose();
             }
         }
     }
@@ -923,6 +926,7 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                         }
                     }
                 }
+                // Let's dispose everything
                 handleDispose();
             } else if(this.transactionFinishCheckTimerCount == getRemoteDestination().getCheckIntervalExpirationLimit()) {
                 this.transactionFinishCheckTimer.cancel();
@@ -1196,7 +1200,7 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
     }
 
     private void handleAckPdu(AckPdu pdu) {
-        // ACK of Finished PDU (only in case of closure requested or acknowledged mode)
+        // ACK of Finished PDU (only in case of acknowledged mode)
         if(pdu.getDirectiveCode() == FileDirectivePdu.DC_FINISHED_PDU) {
             if(LOG.isLoggable(Level.INFO)) {
                 LOG.log(Level.INFO, String.format("Transaction %d with remote entity %d: ACK PDU(Finished) received", getTransactionId(), getRemoteDestination().getRemoteEntityId()));
@@ -1205,7 +1209,7 @@ public class CfdpIncomingTransaction extends CfdpTransaction {
                 // Ack received
                 this.finishedPdu = null;
                 stopPositiveAckTimer();
-                // TODO: at this stage, probably the procedure must be disposed
+                // At this stage, probably the procedure must be disposed
                 handleDispose();
             }
         } else {
