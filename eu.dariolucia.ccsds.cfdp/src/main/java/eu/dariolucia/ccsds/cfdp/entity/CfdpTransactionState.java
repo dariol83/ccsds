@@ -4,6 +4,6 @@ public enum CfdpTransactionState {
     RUNNING,
     SUSPENDED,
     CANCELLED,
-    ABANDONED
-    // TODO: add COMPLETED?
+    ABANDONED,
+    COMPLETED
 }

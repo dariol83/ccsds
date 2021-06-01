@@ -731,7 +731,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     private AckPdu prepareAckPdu(FinishedPdu pdu) {
         AckPduBuilder b = new AckPduBuilder();
         setCommonPduValues(b);
-        b.setTransactionStatus(getOverallStatus());
+        b.setTransactionStatus(deriveCurrentAckTransactionStatus());
         b.setConditionCode(pdu.getConditionCode());
         b.setDirectiveCode(FileDirectivePdu.DC_FINISHED_PDU);
         b.setDirectiveSubtypeCode((byte) 0x01);

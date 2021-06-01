@@ -1,5 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.entity;
 
+import eu.dariolucia.ccsds.cfdp.entity.indication.EntityDisposedIndication;
 import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
 import eu.dariolucia.ccsds.cfdp.entity.request.*;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpFileSegmenter;
@@ -120,7 +121,7 @@ public class CfdpEntity implements IUtLayerSubscriber {
     }
 
     public void deregister(ICfdpEntitySubscriber s) {
-        this.subscribers.add(s);
+        this.subscribers.remove(s);
     }
 
     public void request(ICfdpRequest request) {
@@ -128,7 +129,7 @@ public class CfdpEntity implements IUtLayerSubscriber {
     }
 
     private void processRequest(ICfdpRequest request) {
-        if(disposed) {
+        if(isDisposed()) {
             if(LOG.isLoggable(Level.SEVERE)) {
                 LOG.severe(String.format("Entity %d disposed, request rejected", mib.getLocalEntity().getLocalEntityId()));
             }
@@ -293,14 +294,37 @@ public class CfdpEntity implements IUtLayerSubscriber {
     }
 
     public void dispose() {
-        // TODO: delegate to confiner
-            // TODO: set disposed to true
-            // TODO: manage transactions
-            // TODO: inform subscribers and clear
+        // Delegate to confiner
+        this.entityConfiner.submit(this::processDispose);
+    }
 
-        // Shutdown the thread pools
+    private boolean isDisposed() {
+        return disposed;
+    }
+
+    private void processDispose() {
+        // Set disposed to true
+        this.disposed = true;
+        // Deregister from UT layer
+        for(IUtLayer l : this.utLayers.values()) {
+            l.deregister(this);
+        }
+        // Cancel all transactions
+        for(CfdpTransaction t : this.id2transaction.values()) {
+            // Cancel running transactions
+            if(t.getCurrentState() == CfdpTransactionState.RUNNING || t.getCurrentState() == CfdpTransactionState.SUSPENDED) {
+                t.cancel(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED);
+            }
+        }
+        this.id2transaction.clear();
+        // Inform subscribers and clear
+        notifyIndication(new EntityDisposedIndication());
+        // Add job for subscription cleanup
+        this.subscriberNotifier.submit(this.subscribers::clear);
+        // Shutdown the thread pools (keep them running for the final notifications)
         this.subscriberNotifier.shutdown();
         this.entityConfiner.shutdown();
+        // All done
     }
 
     /* **********************************************************************************************************
@@ -316,6 +340,11 @@ public class CfdpEntity implements IUtLayerSubscriber {
         if(LOG.isLoggable(Level.FINEST)) {
             LOG.log(Level.FINEST, String.format("CFDP Entity %d: received PDU from UT layer %s: %s", mib.getLocalEntity().getLocalEntityId(), layer.getName(), pdu));
         }
+        // FIXME: not adequate, according to the standard:
+        //  Source Entity ID: Identifies the entity that originated the transaction.
+        //  Destination Entity ID: Identifies the entity that is the final destination of the transaction’s metadata and file data.
+        // The above means that, as long as the source OR the destination ID are equal to the local ID, the PDU must be processed
+
         // Three possibilities: 1) the pdu is not for this entity -> discard TODO: for store-and-foward this is not appropriate
         if(pdu.getDestinationEntityId() != mib.getLocalEntity().getLocalEntityId()) {
             if(LOG.isLoggable(Level.WARNING)) {
@@ -327,8 +356,11 @@ public class CfdpEntity implements IUtLayerSubscriber {
         if(transaction != null) {
             // 2) the PDU is for this entity and there is a transaction already running -> forward
             transaction.indication(pdu);
+            // FIXME: it actually depends: if it is a EOF with ACK request, or a Finished with ACK request, then you need to check the transaction state
+            //  and if it is not RUNNING/SUSPENDED, you have to reply accordingly -> TERMINATED.
         } else {
-            // 3) the PDU is for this entity and there is no transaction already running -> create
+            // FIXME: it actually depends: if it is a EOF with ACK request, or a Finished with ACK request, then you have to reply accordingly -> UNDEFINED.
+            // TODO: 3) the PDU is related to this entity (source or destination ID) and there is no transaction already running -> create
             createNewIncomingTransaction(pdu);
         }
     }

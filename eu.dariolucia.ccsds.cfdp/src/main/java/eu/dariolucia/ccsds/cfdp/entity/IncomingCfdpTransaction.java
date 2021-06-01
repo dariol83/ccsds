@@ -386,7 +386,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     private AckPdu prepareAckPdu(EndOfFilePdu pdu) {
         AckPduBuilder b = new AckPduBuilder();
         setCommonPduValues(b);
-        b.setTransactionStatus(getOverallStatus());
+        b.setTransactionStatus(deriveCurrentAckTransactionStatus());
         b.setConditionCode(pdu.getConditionCode());
         b.setDirectiveCode(FileDirectivePdu.DC_EOF_PDU);
         b.setDirectiveSubtypeCode((byte) 0x00);
@@ -1062,6 +1062,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     private <T extends CfdpPdu,K extends CfdpPduBuilder<T, K>> void setCommonPduValues(CfdpPduBuilder<T,K> b) {
         b.setAcknowledged(isAcknowledged());
         b.setCrcPresent(getRemoteDestination().isCrcRequiredOnTransmission());
+        // FIXME: the source and destination entity ID use must be encoded according to the standard
         b.setDestinationEntityId(getRemoteDestination().getRemoteEntityId());
         b.setSourceEntityId(getLocalEntityId());
         b.setDirection(CfdpPdu.Direction.TOWARD_FILE_RECEIVER);

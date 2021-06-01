@@ -44,9 +44,8 @@ public abstract class CfdpTransaction {
     private TimerTask transactionInactivityLimitTimer;
 
     // Inner status of active transactions
-    private CfdpTransactionState currentState = CfdpTransactionState.RUNNING;
-    // Overall status of the transaction
-    private AckPdu.TransactionStatus overallStatus = AckPdu.TransactionStatus.ACTIVE;
+    // This variable is volatile because it is allowed to read its state also by external threads
+    private volatile CfdpTransactionState currentState = CfdpTransactionState.RUNNING;
 
     // Ack timer for Positive Ack Procedure
     private TimerTask ackTimer;
@@ -233,6 +232,10 @@ public abstract class CfdpTransaction {
         stopPositiveAckTimer();
         this.confiner.shutdownNow();
         this.timer.cancel();
+        // Mark state as COMPLETED if running
+        if(getCurrentState() == CfdpTransactionState.RUNNING) {
+            this.currentState = CfdpTransactionState.COMPLETED;
+        }
     }
 
     public void activate() {
@@ -244,7 +247,7 @@ public abstract class CfdpTransaction {
     }
 
     public void cancel(byte conditionCode) {
-        handle(() -> handleCancel(conditionCode, getEntity().getMib().getLocalEntity().getLocalEntityId()));
+        handle(() -> handleCancel(conditionCode, getLocalEntityId()));
     }
 
     public void suspend() {
@@ -336,7 +339,6 @@ public abstract class CfdpTransaction {
 
     protected void setCancelled() {
         this.currentState = CfdpTransactionState.CANCELLED;
-        this.overallStatus = AckPdu.TransactionStatus.TERMINATED;
     }
 
     protected boolean isSuspended() {
@@ -367,13 +369,22 @@ public abstract class CfdpTransaction {
         return !txAllowed || !rxAllowed;
     }
 
-    protected CfdpTransactionState getCurrentState() {
+    public CfdpTransactionState getCurrentState() {
         return this.currentState;
     }
 
-    // TODO: this is not the way to handle ACK PDUs
-    protected AckPdu.TransactionStatus getOverallStatus() {
-        return this.overallStatus;
+    protected AckPdu.TransactionStatus deriveCurrentAckTransactionStatus() {
+        switch(getCurrentState()) {
+            case RUNNING:
+            case SUSPENDED:
+                return AckPdu.TransactionStatus.ACTIVE;
+            case ABANDONED:
+            case CANCELLED:
+            case COMPLETED:
+                return AckPdu.TransactionStatus.TERMINATED;
+            default:
+                throw new IllegalAccessError("Enumeration not recognized: " + getCurrentState());
+        }
     }
 
     protected void handleAbandon(byte condition) {
