@@ -1,5 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
+
 /**
  * The Report.indication primitive shall be used to report to the CFDP user on the status of
  * a transaction.
@@ -42,9 +44,9 @@ public class ReportIndication implements ICfdpIndication {
      * ReportIndication full constructor.
      *
      * @param transactionId The Transaction ID parameter shall uniquely identify a single instance of FDU delivery
-     * @param statusReport The Condition code parameter shall provide additional information on some change in the transaction status
+     * @param statusReport The status report provides additional information on some change in the transaction status
      */
-    public ReportIndication(long transactionId, Object statusReport) {
+    public ReportIndication(long transactionId, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
         this.statusReport = statusReport;
     }

@@ -1,5 +1,6 @@
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.FinishedPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreResponseTLV;
 
@@ -74,7 +75,7 @@ public class TransactionFinishedIndication implements ICfdpIndication {
      * entity.</li>
      * </ol>
      */
-    private final Object statusReport;
+    private final CfdpTransactionStatus statusReport;
 
     /**
      * TransactionFinishedIndication full constructor.
@@ -86,7 +87,7 @@ public class TransactionFinishedIndication implements ICfdpIndication {
      * @param filestoreResponses Can be null. The filestore responses if present
      * @param statusReport Can be null. Implementation specific
      */
-    public TransactionFinishedIndication(long transactionId, byte conditionCode, FinishedPdu.FileStatus fileStatus, boolean dataComplete, List<FilestoreResponseTLV> filestoreResponses, Object statusReport) {
+    public TransactionFinishedIndication(long transactionId, byte conditionCode, FinishedPdu.FileStatus fileStatus, boolean dataComplete, List<FilestoreResponseTLV> filestoreResponses, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
         this.conditionCode = conditionCode;
         this.fileStatus = fileStatus;
@@ -117,7 +118,7 @@ public class TransactionFinishedIndication implements ICfdpIndication {
         return Collections.unmodifiableList(filestoreResponses);
     }
 
-    public Object getStatusReport() {
+    public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }
 

@@ -172,7 +172,7 @@ public class CfdpEntity implements IUtLayerSubscriber {
         // Get a new transaction ID
         long transactionId = generateTransactionId();
         // Create a new transaction object to send the specified file
-        CfdpTransaction cfdpTransaction = new CfdpOutgoingTransaction(transactionId, this, r);
+        CfdpTransaction cfdpTransaction = new OutgoingCfdpTransaction(transactionId, this, r);
         // Register the transaction in the map
         this.id2transaction.put(transactionId, cfdpTransaction);
         // Start the transaction
@@ -185,8 +185,8 @@ public class CfdpEntity implements IUtLayerSubscriber {
         long transactionId = r.getTransactionId();
         // Get the transaction
         CfdpTransaction t = this.id2transaction.get(transactionId);
-        if(t instanceof CfdpOutgoingTransaction) {
-            ((CfdpOutgoingTransaction) t).requestKeepAlive();
+        if(t instanceof OutgoingCfdpTransaction) {
+            ((OutgoingCfdpTransaction) t).requestKeepAlive();
         } else {
             if(LOG.isLoggable(Level.WARNING)) {
                 LOG.log(Level.WARNING, String.format("Entity %d cannot request keep alive for transaction %d: transaction does not exist or has incorrect type", this.mib.getLocalEntity().getLocalEntityId(), transactionId));
@@ -200,8 +200,8 @@ public class CfdpEntity implements IUtLayerSubscriber {
         long transactionId = r.getTransactionId();
         // Get the transaction
         CfdpTransaction t = this.id2transaction.get(transactionId);
-        if(t instanceof CfdpOutgoingTransaction) {
-            ((CfdpOutgoingTransaction) t).requestNak();
+        if(t instanceof OutgoingCfdpTransaction) {
+            ((OutgoingCfdpTransaction) t).requestNak();
         } else {
             if(LOG.isLoggable(Level.WARNING)) {
                 LOG.log(Level.WARNING, String.format("Entity %d cannot request prompt NAK for transaction %d: transaction does not exist or has incorrect type", this.mib.getLocalEntity().getLocalEntityId(), transactionId));
@@ -335,7 +335,7 @@ public class CfdpEntity implements IUtLayerSubscriber {
 
     private void createNewIncomingTransaction(CfdpPdu pdu) {
         // Create a new transaction object to handle the requested transaction
-        CfdpTransaction cfdpTransaction = new CfdpIncomingTransaction(pdu, this);
+        CfdpTransaction cfdpTransaction = new IncomingCfdpTransaction(pdu, this);
         // Register the transaction in the map
         this.id2transaction.put(cfdpTransaction.getTransactionId(), cfdpTransaction);
         // Start the transaction

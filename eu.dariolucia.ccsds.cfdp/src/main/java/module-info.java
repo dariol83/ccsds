@@ -9,6 +9,7 @@ open module eu.dariolucia.ccsds.cfdp {
     exports eu.dariolucia.ccsds.cfdp.protocol.pdu;
     exports eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
     exports eu.dariolucia.ccsds.cfdp.mib;
+    exports eu.dariolucia.ccsds.cfdp.entity;
     exports eu.dariolucia.ccsds.cfdp.entity.indication;
     exports eu.dariolucia.ccsds.cfdp.entity.request;
     exports eu.dariolucia.ccsds.cfdp.entity.segmenters;
