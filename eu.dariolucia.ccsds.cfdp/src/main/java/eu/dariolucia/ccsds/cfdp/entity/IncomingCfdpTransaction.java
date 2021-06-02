@@ -1062,10 +1062,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     private <T extends CfdpPdu,K extends CfdpPduBuilder<T, K>> void setCommonPduValues(CfdpPduBuilder<T,K> b) {
         b.setAcknowledged(isAcknowledged());
         b.setCrcPresent(getRemoteDestination().isCrcRequiredOnTransmission());
-        // FIXME: the source and destination entity ID use must be encoded according to the standard
-        b.setDestinationEntityId(getRemoteDestination().getRemoteEntityId());
-        b.setSourceEntityId(getLocalEntityId());
-        b.setDirection(CfdpPdu.Direction.TOWARD_FILE_RECEIVER);
+        b.setDestinationEntityId(getLocalEntityId());
+        b.setSourceEntityId(this.initialPdu.getSourceEntityId());
+        b.setDirection(CfdpPdu.Direction.TOWARD_FILE_SENDER);
         b.setSegmentationControlPreserved(this.metadataPdu.isSegmentationControlPreserved());
         // Set the length for the entity ID
         long maxEntityId = Long.max(getRemoteDestination().getRemoteEntityId(), getLocalEntityId());
@@ -1089,7 +1088,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 if(LOG.isLoggable(Level.FINEST)) {
                     LOG.log(Level.FINEST, String.format("Transaction %d with remote entity %d: sending PDU %s to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), toSend, getTransmissionLayer().getName()));
                 }
-                getTransmissionLayer().request(toSend);
+                getTransmissionLayer().request(toSend, this.initialPdu.getSourceEntityId());
                 this.pendingUtTransmissionPduList.remove(0);
             } catch(UtLayerException e) {
                 if(LOG.isLoggable(Level.WARNING)) {

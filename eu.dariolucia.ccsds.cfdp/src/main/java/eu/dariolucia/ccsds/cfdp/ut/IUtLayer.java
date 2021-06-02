@@ -6,7 +6,7 @@ public interface IUtLayer {
 
     String getName();
 
-    void request(CfdpPdu pdu) throws UtLayerException;
+    void request(CfdpPdu pdu, long destinationEntityId) throws UtLayerException;
 
     void register(IUtLayerSubscriber s);
 

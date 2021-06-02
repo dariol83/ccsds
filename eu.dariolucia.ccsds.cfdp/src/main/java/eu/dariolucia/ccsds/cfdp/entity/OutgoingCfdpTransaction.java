@@ -638,7 +638,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
                 if(LOG.isLoggable(Level.FINEST)) {
                     LOG.log(Level.FINEST, String.format("Transaction %d with remote entity %d: sending PDU %s to UT layer %s", getTransactionId(), getRemoteDestination().getRemoteEntityId(), toSend, getTransmissionLayer().getName()));
                 }
-                getTransmissionLayer().request(toSend);
+                getTransmissionLayer().request(toSend, getRemoteDestination().getRemoteEntityId());
                 this.pendingUtTransmissionPduList.remove(0);
             } catch(UtLayerException e) {
                 if(LOG.isLoggable(Level.WARNING)) {
@@ -813,7 +813,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         //      4) the Finished PDU whose arrival completed the transaction contained a Filestore
         //         Responses parameter,
         //    then that Filestore Responses parameter shall be passed in the TransactionFinished.indication primitive.
-        // TODO: sending entity is the transaction source? (I assume for store-and-forward and perhaps for proxy operations,
+        // TODO: sending entity is the transaction source? (I assume for store-and-forward and for proxy operations,
         //  leave it to be done for now
         if(!isAcknowledged()) {
             if(this.finishedPdu != null) {

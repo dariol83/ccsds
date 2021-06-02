@@ -10,10 +10,11 @@ import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
 import eu.dariolucia.ccsds.cfdp.mib.RemoteEntityConfigurationInformation;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.builder.AckPduBuilder;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayerSubscriber;
+import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -340,28 +341,79 @@ public class CfdpEntity implements IUtLayerSubscriber {
         if(LOG.isLoggable(Level.FINEST)) {
             LOG.log(Level.FINEST, String.format("CFDP Entity %d: received PDU from UT layer %s: %s", mib.getLocalEntity().getLocalEntityId(), layer.getName(), pdu));
         }
-        // FIXME: not adequate, according to the standard:
-        //  Source Entity ID: Identifies the entity that originated the transaction.
-        //  Destination Entity ID: Identifies the entity that is the final destination of the transaction’s metadata and file data.
-        // The above means that, as long as the source OR the destination ID are equal to the local ID, the PDU must be processed
-
-        // Three possibilities: 1) the pdu is not for this entity -> discard TODO: for store-and-foward this is not appropriate
-        if(pdu.getDestinationEntityId() != mib.getLocalEntity().getLocalEntityId()) {
-            if(LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, String.format("CFDP Entity %d: PDU from UT layer %s from entity %d not for this entity: received %d", mib.getLocalEntity().getLocalEntityId(), layer.getName(), pdu.getSourceEntityId(), pdu.getDestinationEntityId()));
-            }
-            return;
-        }
+        // This entity got this PDU, so if this entity knows about the related transaction, it should process the PDU
         CfdpTransaction transaction = this.id2transaction.get(pdu.getTransactionSequenceNumber());
         if(transaction != null) {
-            // 2) the PDU is for this entity and there is a transaction already running -> forward
-            transaction.indication(pdu);
-            // FIXME: it actually depends: if it is a EOF with ACK request, or a Finished with ACK request, then you need to check the transaction state
-            //  and if it is not RUNNING/SUSPENDED, you have to reply accordingly -> TERMINATED.
+            if(transaction.getCurrentState() == CfdpTransactionState.RUNNING || transaction.getCurrentState() == CfdpTransactionState.SUSPENDED) {
+                // 1) the entity knows the transaction and the transaction is running -> forward
+                transaction.indication(pdu);
+            } else if(pdu.isAcknowledged() && (pdu instanceof EndOfFilePdu || pdu instanceof FinishedPdu)) {
+                // 2) the entity knows the transaction and it is a EOF in Acknowledged mode, or a Finished in Acknowledged mode,
+                // you have to reply accordingly -> send ACK(TERMINATED).
+                generateAck(pdu, AckPdu.TransactionStatus.TERMINATED);
+            }
+            // 3) the entity knows the transaction but the PDU is not to be acknowledged -> ignore
         } else {
-            // FIXME: it actually depends: if it is a EOF with ACK request, or a Finished with ACK request, then you have to reply accordingly -> UNDEFINED.
-            // TODO: 3) the PDU is related to this entity (source or destination ID) and there is no transaction already running -> create
-            createNewIncomingTransaction(pdu);
+            if(pdu.isAcknowledged() && pdu instanceof FinishedPdu) {
+                // 4) the entity does not know the transaction, so if it is a Finished in
+                // Acknowledged mode, then you have to reply accordingly -> send ACK(UNDEFINED).
+                generateAck(pdu, AckPdu.TransactionStatus.UNDEFINED);
+            } else if(pdu.getDestinationEntityId() == getMib().getLocalEntity().getLocalEntityId()) {
+                // 5) the entity does not know the transaction, but it is the destination of such transaction -> create
+                // an incoming transaction, will take care of the pdu processing
+                createNewIncomingTransaction(pdu);
+            } else {
+                // 6) the entity got a PDU that was completely unexepected -> log and ignore
+                if(LOG.isLoggable(Level.WARNING)) {
+                    LOG.log(Level.WARNING, String.format("CFDP Entity %d received PDU %s not linked to any transaction and not supposed to be handled, ignoring", getMib().getLocalEntity().getLocalEntityId(), pdu));
+                }
+            }
+        }
+    }
+
+    private void generateAck(CfdpPdu pdu, AckPdu.TransactionStatus transactionAckStatus) {
+        AckPduBuilder b = new AckPduBuilder();
+        b.setAcknowledged(pdu.isAcknowledged());
+        b.setCrcPresent(pdu.isCrcPresent());
+        b.setSegmentationControlPreserved(pdu.isSegmentationControlPreserved());
+        // Set the length for the entity ID
+        b.setEntityIdLength(pdu.getEntityIdLength());
+        // Set the transaction ID
+        b.setTransactionSequenceNumber(pdu.getTransactionSequenceNumber(), pdu.getTransactionSequenceNumberLength());
+        b.setLargeFile(pdu.isLargeFile());
+        b.setDestinationEntityId(pdu.getDestinationEntityId());
+        b.setSourceEntityId(pdu.getSourceEntityId());
+        b.setDestinationEntityId(pdu.getDestinationEntityId());
+        b.setSourceEntityId(pdu.getSourceEntityId());
+        b.setTransactionStatus(transactionAckStatus);
+        if(pdu instanceof EndOfFilePdu) {
+            // If the pdu is a EOF, then the EOF is generated by the sending entity, use such entity ID to send back the ACK
+            b.setDirection(CfdpPdu.Direction.TOWARD_FILE_SENDER);
+            b.setConditionCode(((EndOfFilePdu) pdu).getConditionCode());
+            b.setDirectiveCode(FileDirectivePdu.DC_EOF_PDU);
+            b.setDirectiveSubtypeCode((byte) 0x00);
+        } else if(pdu instanceof FinishedPdu) {
+            // If the pdu is a Finished, then the Finished is generated by the destination entity, use such entity ID to send back the ACK
+            b.setDirection(CfdpPdu.Direction.TOWARD_FILE_RECEIVER);
+            b.setConditionCode(((FinishedPdu) pdu).getConditionCode());
+            b.setDirectiveCode(FileDirectivePdu.DC_FINISHED_PDU);
+            b.setDirectiveSubtypeCode((byte) 0x01);
+        }
+        // Send it out
+        RemoteEntityConfigurationInformation remoteConf = b.getDirection() == CfdpPdu.Direction.TOWARD_FILE_RECEIVER ? getMib().getRemoteEntityById(b.getDestinationEntityId()) : getMib().getRemoteEntityById(b.getSourceEntityId());
+        IUtLayer utLayerToUse = this.utLayers.get(remoteConf.getUtLayer());
+        if(utLayerToUse == null) {
+            if (LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("Entity %d cannot acknowledge PDU %s to entity %s: no suitable UT layer found", getMib().getLocalEntity().getLocalEntityId(), pdu, remoteConf.getRemoteEntityId()));
+            }
+        } else {
+            try {
+                utLayerToUse.request(b.build(), remoteConf.getRemoteEntityId());
+            } catch (UtLayerException e) {
+                if (LOG.isLoggable(Level.SEVERE)) {
+                    LOG.log(Level.SEVERE, String.format("Entity %d cannot acknowledge PDU %s to entity %s on UT layer %s: %s", getMib().getLocalEntity().getLocalEntityId(), pdu, remoteConf.getRemoteEntityId(), utLayerToUse.getName(), e.getMessage()), e);
+                }
+            }
         }
     }
 
