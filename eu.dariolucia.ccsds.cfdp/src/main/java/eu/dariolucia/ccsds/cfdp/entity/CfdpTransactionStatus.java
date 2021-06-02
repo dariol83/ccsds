@@ -1,5 +1,7 @@
 package eu.dariolucia.ccsds.cfdp.entity;
 
+import eu.dariolucia.ccsds.cfdp.entity.internal.CfdpEntity;
+
 import java.time.Instant;
 
 public class CfdpTransactionStatus {

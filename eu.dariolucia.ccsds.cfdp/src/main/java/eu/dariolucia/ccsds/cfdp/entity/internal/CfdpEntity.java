@@ -1,5 +1,8 @@
-package eu.dariolucia.ccsds.cfdp.entity;
+package eu.dariolucia.ccsds.cfdp.entity.internal;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionState;
+import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntity;
+import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntitySubscriber;
 import eu.dariolucia.ccsds.cfdp.entity.indication.EntityDisposedIndication;
 import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
 import eu.dariolucia.ccsds.cfdp.entity.request.*;
@@ -25,7 +28,7 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class CfdpEntity implements IUtLayerSubscriber {
+public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
 
     private static final Logger LOG = Logger.getLogger(CfdpEntity.class.getName());
 
@@ -51,10 +54,6 @@ public class CfdpEntity implements IUtLayerSubscriber {
 
     // Disposed flag
     private boolean disposed;
-
-    public CfdpEntity(Mib mib, IVirtualFilestore filestore, IUtLayer... layers) {
-        this(mib, filestore, Arrays.asList(layers));
-    }
 
     public CfdpEntity(Mib mib, IVirtualFilestore filestore,  Collection<IUtLayer> layers) {
         this.mib = mib;
@@ -88,6 +87,7 @@ public class CfdpEntity implements IUtLayerSubscriber {
         startProcessing();
     }
 
+    @Override
     public void addSegmentationStrategy(ICfdpSegmentationStrategy strategy) {
         this.supportedSegmentationStrategies.add(0, strategy);
     }
@@ -100,31 +100,38 @@ public class CfdpEntity implements IUtLayerSubscriber {
         }
     }
 
+    @Override
     public Mib getMib() {
         return this.mib;
     }
 
+    @Override
     public IUtLayer getUtLayerByName(String name) {
         return this.utLayers.get(name);
     }
 
+    @Override
     public IUtLayer getUtLayerByDestinationEntity(long destinationEntityId) {
         RemoteEntityConfigurationInformation re = this.mib.getRemoteEntityById(destinationEntityId);
         return re != null ? this.utLayers.get(re.getUtLayer()) : null;
     }
 
+    @Override
     public IVirtualFilestore getFilestore() {
         return this.filestore;
     }
 
+    @Override
     public void register(ICfdpEntitySubscriber s) {
         this.subscribers.add(s);
     }
 
+    @Override
     public void deregister(ICfdpEntitySubscriber s) {
         this.subscribers.remove(s);
     }
 
+    @Override
     public void request(ICfdpRequest request) {
         this.entityConfiner.submit(() -> processRequest(request));
     }
@@ -248,7 +255,7 @@ public class CfdpEntity implements IUtLayerSubscriber {
     }
 
     /**
-     * This method can be invoked also by {@link CfdpTransaction} objects.
+     * This method is supposed to be invoked by {@link CfdpTransaction} objects.
      *
      * @param indication the indication to notify
      */
@@ -275,7 +282,7 @@ public class CfdpEntity implements IUtLayerSubscriber {
      * @return a new segmenter of first segmentation strategy that can be applied to the file, or null if no suitable
      * strategy can be found
      */
-    public ICfdpFileSegmenter getSegmentProvider(String sourceFileName, long destinationId) {
+    ICfdpFileSegmenter getSegmentProvider(String sourceFileName, long destinationId) {
         for(ICfdpSegmentationStrategy s : this.supportedSegmentationStrategies) {
             try {
                 if (s.support(this.mib, this.filestore, sourceFileName)) {
@@ -294,6 +301,7 @@ public class CfdpEntity implements IUtLayerSubscriber {
         return this.transactionIdSequencer.incrementAndGet();
     }
 
+    @Override
     public void dispose() {
         // Delegate to confiner
         this.entityConfiner.submit(this::processDispose);
@@ -329,7 +337,7 @@ public class CfdpEntity implements IUtLayerSubscriber {
     }
 
     /* **********************************************************************************************************
-     * IUtLayerSubscriber methods
+     * IUtLayerSubscriber methods and handlings
      * **********************************************************************************************************/
 
     @Override

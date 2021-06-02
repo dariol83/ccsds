@@ -1,6 +1,9 @@
-package eu.dariolucia.ccsds.cfdp.entity;
+package eu.dariolucia.ccsds.cfdp.entity.internal;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionState;
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
+import eu.dariolucia.ccsds.cfdp.entity.FaultDeclaredException;
 import eu.dariolucia.ccsds.cfdp.entity.indication.AbandonedIndication;
 import eu.dariolucia.ccsds.cfdp.entity.indication.FaultIndication;
 import eu.dariolucia.ccsds.cfdp.entity.indication.ReportIndication;
@@ -200,7 +203,7 @@ public abstract class CfdpTransaction {
         return entityIdLength;
     }
 
-    protected RemoteEntityConfigurationInformation getRemoteDestination() {
+    public RemoteEntityConfigurationInformation getRemoteDestination() {
         return remoteDestination;
     }
 
