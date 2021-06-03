@@ -5,42 +5,44 @@ import eu.dariolucia.ccsds.cfdp.mib.RemoteEntityConfigurationInformation;
 import eu.dariolucia.ccsds.cfdp.protocol.decoder.CfdpPduDecoder;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
-import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 
 import java.io.IOException;
-import java.net.*;
-import java.util.Arrays;
+import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class UdpLayer extends AbstractUtLayer {
+public class TcpLayer extends AbstractUtLayer {
 
-    private static final Logger LOG = Logger.getLogger(UdpLayer.class.getName());
+    private static final Logger LOG = Logger.getLogger(TcpLayer.class.getName());
 
     private volatile Thread readerThread; // NOSONAR: this rule is non-sense, as the language allows to do so
-    private volatile DatagramSocket serverSocket; // NOSONAR: this rule is non-sense, as the language allows to do so
-    private final int localUdpPort;
+    private volatile ServerSocket serverSocket; // NOSONAR: this rule is non-sense, as the language allows to do so
+    private final int localTcpPort;
 
-    private final Map<Long, DatagramSocket> id2sendingSocket = new ConcurrentHashMap<>();
+    private final Map<Long, Socket> id2sendingSocket = new ConcurrentHashMap<>();
 
-    public UdpLayer(Mib mib, int localUdpPort) {
+    public TcpLayer(Mib mib, int localTcpPort) {
         super(mib);
-        if(localUdpPort < 1 || localUdpPort > 65535) {
-            throw new IllegalArgumentException("UDP port must be in the range 1 - 65535");
+        if(localTcpPort < 1 || localTcpPort > 65535) {
+            throw new IllegalArgumentException("TCP port must be in the range 1 - 65535");
         }
-        this.localUdpPort = localUdpPort;
+        this.localTcpPort = localTcpPort;
     }
 
     @Override
     public String getName() {
-        return "UDP";
+        return "TCP";
     }
 
     @Override
     public void request(CfdpPdu pdu, long destinationEntityId) throws UtLayerException {
-        DatagramSocket ds;
+        Socket ds;
         synchronized (this) {
             // If the destination is not available for TX, exception
             if (!isActivated() || id2txAvailable.computeIfAbsent(destinationEntityId, k -> true)) {      // NOSONAR: concurrent hash maps do not accept null values
@@ -53,14 +55,14 @@ public class UdpLayer extends AbstractUtLayer {
                 if (conf == null) {
                     throw new UtLayerException("Cannot retrieve connection information for remote entity " + destinationEntityId);
                 }
-                // utAddress in the form of udp:<hostname>:<port>
+                // utAddress in the form of tcp:<hostname>:<port>
                 String utAddress = conf.getUtAddress();
                 String[] fields = utAddress.split(":", -1);
                 if (fields.length != 3) {
-                    throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, expected format is udp:<hostname>:<port> but got %s", destinationEntityId, utAddress));
+                    throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, expected format is tcp:<hostname>:<port> but got %s", destinationEntityId, utAddress));
                 }
-                if (!fields[0].equals("udp")) {
-                    throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, expected format is udp:<hostname>:<port> but got %s", destinationEntityId, utAddress));
+                if (!fields[0].equals("tcp")) {
+                    throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, expected format is tcp:<hostname>:<port> but got %s", destinationEntityId, utAddress));
                 }
                 InetAddress address;
                 try {
@@ -70,27 +72,28 @@ public class UdpLayer extends AbstractUtLayer {
                 }
                 int port = Integer.parseInt(fields[2]);
                 if (port < 1 || port > 65535) {
-                    throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, UDP port should be between 1 and 65535 but got %s", destinationEntityId, utAddress));
+                    throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, TCP port should be between 1 and 65535 but got %s", destinationEntityId, utAddress));
                 }
                 try {
-                    ds = new DatagramSocket();
-                } catch (SocketException e) {
+                    ds = new Socket(address, port);
+                } catch (IOException e) {
                     throw new UtLayerException(e);
                 }
-                ds.connect(address, port);
                 this.id2sendingSocket.put(destinationEntityId, ds);
             }
         }
 
-        // Build the datagram and send it to the socket
-        DatagramPacket dp = new DatagramPacket(pdu.getPdu(), pdu.getPdu().length);
-
+        // Send the PDU to the socket
         synchronized (ds) {
             try {
-                ds.send(dp);
+                ds.getOutputStream().write(pdu.getPdu());
             } catch (IOException e) {
                 this.id2sendingSocket.remove(destinationEntityId);
-                ds.close();
+                try {
+                    ds.close();
+                } catch (IOException ioException) {
+                    // Ignore here
+                }
                 throw new UtLayerException(e);
             }
         }
@@ -102,27 +105,25 @@ public class UdpLayer extends AbstractUtLayer {
         if(this.readerThread == null) {
             // open server socket
             try {
-                this.serverSocket = new DatagramSocket(this.localUdpPort);
-            } catch (SocketException e) {
+                this.serverSocket = new ServerSocket(this.localTcpPort);
+            } catch (IOException e) {
                 throw new UtLayerException(e);
             }
             // start processing thread
-            this.readerThread = new Thread(this::read, String.format("UDP UT Layer - %s receiver", getName()));
+            this.readerThread = new Thread(this::accept, String.format("TCP UT Layer - %s receiver", getName()));
             this.readerThread.setDaemon(true);
             this.readerThread.start();
         }
     }
 
-    private void read() {
-        DatagramSocket sock = this.serverSocket;
-        byte[] b = new byte[65536]; // 64K buffer
+    private void accept() {
         while(isActivated()) {
-            DatagramPacket dp = new DatagramPacket(b, 65536);
+            Socket sock;
             try {
-                sock.receive(dp);
+                sock = this.serverSocket.accept();
             } catch (IOException e) {
                 if(LOG.isLoggable(Level.SEVERE)) {
-                    LOG.log(Level.SEVERE, String.format("Error during UT layer %s reception: %s", getName(), e.getMessage()), e);
+                    LOG.log(Level.SEVERE, String.format("Error during UT layer %s reception (accept): %s", getName(), e.getMessage()), e);
                 }
                 // Something is wrong
                 try {
@@ -134,19 +135,48 @@ public class UdpLayer extends AbstractUtLayer {
                 }
                 return;
             }
-            byte[] pdu = Arrays.copyOfRange(dp.getData(), 0, dp.getLength());
-            try {
-                CfdpPdu decoded = CfdpPduDecoder.decode(pdu);
-                notifyPduReceived(decoded);
-            } catch (Exception e) {
-                // Error while decoding PDU
-                if(LOG.isLoggable(Level.SEVERE)) {
-                    LOG.log(Level.SEVERE, String.format("Cannot decode PDU received from UT layer %s, sender %s: %s", getName(), dp.getAddress(), e.getMessage()), e);
-                }
-                if(LOG.isLoggable(Level.FINE)) {
-                    LOG.log(Level.FINE, String.format("Problematic PDU dump: %s", StringUtil.toHexDump(pdu)));
-                }
+            final Socket fsock = sock;
+            Thread t = new Thread(() -> handle(fsock), "TCP UT Connection Handler");
+            t.setDaemon(true);
+            t.start();
+        }
+    }
+
+    private void handle(Socket sock) {
+        // Get the inputstream
+        InputStream is;
+        try {
+            is = sock.getInputStream();
+        } catch (IOException e) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("Error during UT layer %s reception: %s", getName(), e.getMessage()), e);
             }
+            // Something is wrong: close the connection
+            try {
+                sock.close();
+            } catch (IOException ioException) {
+                // Ignore
+            }
+            return;
+        }
+        // Start reading it
+        while(isActivated()) {
+            CfdpPdu data;
+            try {
+                data = CfdpPduDecoder.decode(is);
+            } catch (Exception e) {
+                if(LOG.isLoggable(Level.SEVERE)) {
+                    LOG.log(Level.SEVERE, String.format("Error during UT layer %s reception: %s", getName(), e.getMessage()), e);
+                }
+                // Something is wrong: close the connection
+                try {
+                    sock.close();
+                } catch (IOException ioException) {
+                    // Ignore
+                }
+                return;
+            }
+            notifyPduReceived(data);
         }
     }
 
@@ -156,16 +186,24 @@ public class UdpLayer extends AbstractUtLayer {
         synchronized (this) {
             // close server socket
             if (this.serverSocket != null) {
-                this.serverSocket.close();
+                try {
+                    this.serverSocket.close();
+                } catch (IOException e) {
+                    // Ignore
+                }
                 this.serverSocket = null;
             }
             // stop processing thread
             this.readerThread = null;
         }
         // close and cleanup all client sockets
-        for(Map.Entry<Long, DatagramSocket> entry : this.id2sendingSocket.entrySet()) {
+        for(Map.Entry<Long, Socket> entry : this.id2sendingSocket.entrySet()) {
             synchronized (entry.getValue()) {
-                entry.getValue().close();
+                try {
+                    entry.getValue().close();
+                } catch (IOException e) {
+                    // Ignore
+                }
             }
         }
         synchronized (this) {
