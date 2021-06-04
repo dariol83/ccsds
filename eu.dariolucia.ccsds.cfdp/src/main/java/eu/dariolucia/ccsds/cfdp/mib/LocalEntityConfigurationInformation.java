@@ -1,3 +1,19 @@
+/*
+ *   Copyright (c) 2021 Dario Lucia (https://www.dariolucia.eu)
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and 
+ *   limitations under the License.
+ */
+
 package eu.dariolucia.ccsds.cfdp.mib;
 
 import javax.xml.bind.annotation.*;
@@ -12,26 +28,26 @@ public class LocalEntityConfigurationInformation {
     @XmlAttribute(name = "id")
     private long localEntityId;
 
-    @XmlAttribute(name = "EOF_sent_indication")
+    @XmlAttribute(name = "EOF-sent-indication")
     private boolean eofSentIndicationRequired;
 
-    @XmlAttribute(name = "EOF_recv_indication")
+    @XmlAttribute(name = "EOF-recv-indication")
     private boolean eofRecvIndicationRequired;
 
-    @XmlAttribute(name = "file_segment_recv_indication")
+    @XmlAttribute(name = "file-segment-recv-indication")
     private boolean fileSegmentRecvIndicationRequired;
 
-    @XmlAttribute(name = "transaction_finished_indication")
+    @XmlAttribute(name = "transaction-finished-indication")
     private boolean transactionFinishedIndicationRequired; // When acting as receiving entity
 
-    @XmlAttribute(name = "suspended_indication")
+    @XmlAttribute(name = "suspended-indication")
     private boolean suspendedIndicationRequired; // When acting as receiving entity
 
-    @XmlAttribute(name = "resumed_indication")
+    @XmlAttribute(name = "resumed-indication")
     private boolean resumedIndicationRequired; // When acting as receiving entity
 
-    @XmlElementWrapper(name = "fault_handlers")
-    @XmlElement(name = "fault_handler")
+    @XmlElementWrapper(name = "fault-handlers")
+    @XmlElement(name = "fault-handler")
     private List<FaultHandlerStrategy> faultHandlerStrategyList = new LinkedList<>(); // For each type of fault condition, a default handler
 
     public long getLocalEntityId() {

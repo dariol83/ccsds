@@ -1,0 +1,64 @@
+<!--
+  ~   Copyright (c) 2021 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~   Licensed under the Apache License, Version 2.0 (the "License");
+  ~   you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  -->
+
+<ns1:mib xmlns:ns1="http://dariolucia.eu/ccsds/cfdp/mib">
+    <local-entity id="1"
+                  EOF-sent-indication="true"
+                  EOF-recv-indication="true"
+                  file-segment-recv-indication="true"
+                  transaction-finished-indication="true"
+                  suspended-indication="true"
+                  resumed-indication="true">
+        <fault-handlers>
+            <fault-handler condition="1" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_POS_ACK_LIMIT_REACHED -->
+            <fault-handler condition="2" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_KEEPALIVE_LIMIT_REACHED -->
+            <fault-handler condition="3" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INVALID_TX_MODE -->
+            <fault-handler condition="4" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILESTORE_REJECTION -->
+            <fault-handler condition="5" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILE_CHECKSUM_FAILURE -->
+            <fault-handler condition="6" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILE_SIZE_ERROR -->
+            <fault-handler condition="7" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_NAK_LIMIT_REACHED -->
+            <fault-handler condition="8" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INACTIVITY_DETECTED -->
+            <fault-handler condition="9" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INVALID_FILE_STRUCTURE -->
+            <fault-handler condition="10" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_CHECK_LIMIT_REACHED -->
+            <fault-handler condition="11" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_UNSUPPORTED_CHECKSUM_TYPE -->
+        </fault-handlers>
+    </local-entity>
+    <remote-entities>
+        <remote-entity id="2"
+                       version="1"
+                       positive-ack-timer-interval="100000"
+                       nak-timer-interval="100000"
+                       keep-alive-interval="30000"
+                       immediate-nak-mode="true"
+                       default-tx-mode-acknowledged="true"
+                       transaction-closure-requested="true"
+                       check-interval="10000"
+                       check-interval-expiration-limit="5"
+                       default-checksum="0"
+                       retain-incomplete-files-on-cancel="true"
+                       crc-required="true"
+                       max-file-segment-length="1024"
+                       keep-alive-limit="-1"
+                       positive-ack-expiration-limit="3"
+                       nak-expiration-limit="4"
+                       transaction-inactivity-limit="5"
+                       keep-alive-sending-interval="15000"
+                       nak-recomputation-interval="60000">
+            <ut-layer>TCP</ut-layer>
+            <address>127.0.0.1:23002</address>
+        </remote-entity>
+    </remote-entities>
+</ns1:mib>

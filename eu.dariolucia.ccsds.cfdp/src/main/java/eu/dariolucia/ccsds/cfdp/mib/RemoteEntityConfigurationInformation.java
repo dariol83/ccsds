@@ -1,3 +1,19 @@
+/*
+ *   Copyright (c) 2021 Dario Lucia (https://www.dariolucia.eu)
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and 
+ *   limitations under the License.
+ */
+
 package eu.dariolucia.ccsds.cfdp.mib;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -14,67 +30,67 @@ public class RemoteEntityConfigurationInformation {
     @XmlAttribute(name = "version")
     private long protocolVersion;
 
-    @XmlElement(name = "ut_layer")
+    @XmlElement(name = "ut-layer")
     private String utLayer;
 
     @XmlElement(name = "address")
     private String utAddress;
 
-    @XmlAttribute(name = "positive_ack_timer_interval")
+    @XmlAttribute(name = "positive-ack-timer-interval")
     private long positiveAckTimerInterval; // -1: N/A
 
-    @XmlAttribute(name = "nak_timer_interval")
+    @XmlAttribute(name = "nak-timer-interval")
     private long nakTimerInterval; // -1: N/A
 
-    @XmlAttribute(name = "keep_alive_interval")
+    @XmlAttribute(name = "keep-alive-interval")
     private long keepAliveInterval; // -1: N/A
 
-    @XmlAttribute(name = "immediate_nak_mode")
+    @XmlAttribute(name = "immediate-nak-mode")
     private boolean immediateNakModeEnabled;
 
-    @XmlAttribute(name = "default_tx_mode_acknowledged")
+    @XmlAttribute(name = "default-tx-mode-acknowledged")
     private boolean defaultTransmissionModeAcknowledged;
 
-    @XmlAttribute(name = "transaction_closure_requested")
+    @XmlAttribute(name = "transaction-closure-requested")
     private boolean transactionClosureRequested;
 
-    @XmlAttribute(name = "check_interval")
+    @XmlAttribute(name = "check-interval")
     private long checkInterval; // In the standard, this is referred as Check Limit
 
-    @XmlAttribute(name = "check_interval_expiration_limit")
+    @XmlAttribute(name = "check-interval-expiration-limit")
     private int checkIntervalExpirationLimit = 1;
 
-    @XmlAttribute(name = "default_checksum")
+    @XmlAttribute(name = "default-checksum")
     private int defaultChecksumType;
 
-    @XmlAttribute(name = "retain_incomplete_files_on_cancel")
+    @XmlAttribute(name = "retain-incomplete-files-on-cancel")
     private boolean retainIncompleteReceivedFilesOnCancellation;
 
-    @XmlAttribute(name = "crc_required")
+    @XmlAttribute(name = "crc-required")
     private boolean crcRequiredOnTransmission;
 
-    @XmlAttribute(name = "max_file_segment_length")
+    @XmlAttribute(name = "max-file-segment-length")
     private int maximumFileSegmentLength;
 
-    @XmlAttribute(name = "keep_alive_limit")
+    @XmlAttribute(name = "keep-alive-limit")
     private int keepAliveDiscrepancyLimit; // -1: N/A, max number of bytes that the receiver can stay behind
 
-    @XmlAttribute(name = "positive_ack_expiration_limit")
+    @XmlAttribute(name = "positive-ack-expiration-limit")
     private int positiveAckTimerExpirationLimit;
 
-    @XmlAttribute(name = "nak_expiration_limit")
+    @XmlAttribute(name = "nak-expiration-limit")
     private int nakTimerExpirationLimit;
 
-    @XmlAttribute(name = "transaction_inactivity_limit")
+    @XmlAttribute(name = "transaction-inactivity-limit")
     private int transactionInactivityLimit;
 
-    @XmlAttribute(name = "ack_mode_supported")
+    @XmlAttribute(name = "ack-mode-supported")
     private boolean acknowledgedModeSupported = true;
 
-    @XmlAttribute(name = "keep_alive_sending_interval")
+    @XmlAttribute(name = "keep-alive-sending-interval")
     private long keepAliveSendingInterval;
 
-    @XmlAttribute(name = "nak_recomputation_interval")
+    @XmlAttribute(name = "nak-recomputation-interval")
     private long nakRecomputationInterval;
 
     public long getRemoteEntityId() {
@@ -131,6 +147,7 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
+    // TODO check why not used
     public long getKeepAliveInterval() {
         return keepAliveInterval;
     }
@@ -221,6 +238,7 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
+    // TODO check why not used
     public int getPositiveAckTimerExpirationLimit() {
         return positiveAckTimerExpirationLimit;
     }
