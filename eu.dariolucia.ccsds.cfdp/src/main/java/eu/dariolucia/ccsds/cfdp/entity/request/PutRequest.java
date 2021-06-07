@@ -40,7 +40,9 @@ public class PutRequest implements ICfdpRequest {
      * @param destinationCfdpEntityId The destination CFDP entity ID parameter shall identify the CFDP entity to which the FDU is to be sent
      * @param sourceFileName The source file name, full path; to be set null if the FDU contains only metadata
      * @param destinationFileName The destination file name, full path; to be set null if the FDU contains only metadata
+     * @param segmentationControl true if segmentation control shall be used, otherwise false // TODO check if there is a mib default
      * @param flowLabel The flow label, can be null
+     * @return the request
      */
     public static PutRequest build(long destinationCfdpEntityId, String sourceFileName, String destinationFileName, boolean segmentationControl, byte[] flowLabel) {
         return new PutRequest(destinationCfdpEntityId, sourceFileName, destinationFileName, segmentationControl, flowLabel, null, null, null, null, null);

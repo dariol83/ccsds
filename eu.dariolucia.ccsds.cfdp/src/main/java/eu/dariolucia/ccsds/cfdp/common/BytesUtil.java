@@ -133,6 +133,14 @@ public class BytesUtil {
         }
     }
 
+    private static final long BYTE_1_LIMIT = (long) (Math.pow(256, 1)) - 1;
+    private static final long BYTE_2_LIMIT = (long) (Math.pow(256, 2)) - 1;
+    private static final long BYTE_3_LIMIT = (long) (Math.pow(256, 3)) - 1;
+    private static final long BYTE_4_LIMIT = (long) (Math.pow(256, 4)) - 1;
+    private static final long BYTE_5_LIMIT = (long) (Math.pow(256, 5)) - 1;
+    private static final long BYTE_6_LIMIT = (long) (Math.pow(256, 6)) - 1;
+    private static final long BYTE_7_LIMIT = (long) (Math.pow(256, 7)) - 1;
+
     /**
      * Return the minimum number of bytes that it is required to encode the provided long value.
      * Negative values always require 8 bytes.
@@ -147,7 +155,27 @@ public class BytesUtil {
         if(maxEntityId == 0) {
             return 1;
         }
-        int numBits = (int) Math.ceil(Math.log10(maxEntityId) / Math.log10(2));
-        return (int) Math.ceil(numBits / 8.0);
+        if(maxEntityId <= BYTE_1_LIMIT) {
+            return 1;
+        }
+        if(maxEntityId <= BYTE_2_LIMIT) {
+            return 2;
+        }
+        if(maxEntityId <= BYTE_3_LIMIT) {
+            return 3;
+        }
+        if(maxEntityId <= BYTE_4_LIMIT) {
+            return 4;
+        }
+        if(maxEntityId <= BYTE_5_LIMIT) {
+            return 5;
+        }
+        if(maxEntityId <= BYTE_6_LIMIT) {
+            return 6;
+        }
+        if(maxEntityId <= BYTE_7_LIMIT) {
+            return 7;
+        }
+        return 8;
     }
 }

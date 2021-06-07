@@ -22,8 +22,10 @@ import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayerSubscriber;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
@@ -52,6 +54,9 @@ public abstract class AbstractUtLayer implements IUtLayer {
 
     @Override
     public synchronized void register(IUtLayerSubscriber s) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("UT Layer subscriber %s registering to UT Layer %s", s, getName()));
+        }
         this.subscribers.add(s);
         // Inform subscriber
         for(Map.Entry<Long, Boolean> e : this.id2rxAvailable.entrySet()) {
@@ -72,11 +77,17 @@ public abstract class AbstractUtLayer implements IUtLayer {
 
     @Override
     public synchronized void deregister(IUtLayerSubscriber s) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("UT Layer subscriber %s deregistering from UT Layer %s", s, getName()));
+        }
         this.subscribers.remove(s);
     }
 
     @Override
     public void dispose() {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("Disposing UT Layer %s", getName()));
+        }
         try {
             deactivate();
         } catch (UtLayerException e) {
@@ -88,6 +99,9 @@ public abstract class AbstractUtLayer implements IUtLayer {
     }
 
     protected void notifyPduReceived(CfdpPdu decoded) {
+        if(LOG.isLoggable(Level.FINEST)) {
+            LOG.log(Level.FINEST, String.format("UT Layer %s received PDU %s", getName(), decoded));
+        }
         for(IUtLayerSubscriber s : this.subscribers) {
             try {
                 s.indication(this, decoded);
@@ -100,6 +114,9 @@ public abstract class AbstractUtLayer implements IUtLayer {
     }
 
     public synchronized void setTxAvailability(boolean available, long... entityIds) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("Setting TX availability to %s on UT Layer %s for entities %s", String.valueOf(available), getName(), Arrays.toString(entityIds)));
+        }
         // Mark the entities as available or unavailable for TX
         for(long l : entityIds) {
             this.id2txAvailable.put(l, available);
@@ -122,6 +139,9 @@ public abstract class AbstractUtLayer implements IUtLayer {
     }
 
     public synchronized void setRxAvailability(boolean available, long... entityIds) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("Setting RX availability to %s on UT Layer %s for entities %s", String.valueOf(available), getName(), Arrays.toString(entityIds)));
+        }
         // Mark the entities as available or unavailable for TX
         for(long l : entityIds) {
             this.id2rxAvailable.put(l, available);
@@ -143,38 +163,55 @@ public abstract class AbstractUtLayer implements IUtLayer {
         // Subclasses may override, but must call super
     }
 
-    public synchronized void activate() throws UtLayerException { // NOSONAR: exception declaration must stay
-        if(activated) {
-            return;
+    @Override
+    public synchronized boolean getRxAvailability(long destinationId) {
+        Boolean available = this.id2rxAvailable.get(destinationId);
+        return Objects.requireNonNullElse(available, false);
+    }
+
+    @Override
+    public synchronized boolean getTxAvailability(long destinationId) {
+        Boolean available = this.id2txAvailable.get(destinationId);
+        return Objects.requireNonNullElse(available, false);
+    }
+
+    public void activate() throws UtLayerException { // NOSONAR: exception declaration must stay
+        if (LOG.isLoggable(Level.INFO)) {
+            LOG.log(Level.INFO, String.format("Activating UT Layer %s", getName()));
         }
-        this.activated = true;
-        // inform all subscribers of the current state of ID, if any
-        for(Map.Entry<Long, Boolean> e : this.id2rxAvailable.entrySet()) {
-            for(IUtLayerSubscriber s : this.subscribers) {
-                try {
-                    if(e.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
-                        s.startRxPeriod(this, e.getKey());
-                    } else {
-                        s.endRxPeriod(this, e.getKey());
-                    }
-                } catch (Exception ex) {
-                    if(LOG.isLoggable(Level.WARNING)) {
-                        LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on RX activation: %s", s, getName(), ex.getMessage()), ex);
+        synchronized (this) {
+            if (activated) {
+                return;
+            }
+            this.activated = true;
+            // inform all subscribers of the current state of ID, if any
+            for (Map.Entry<Long, Boolean> e : this.id2rxAvailable.entrySet()) {
+                for (IUtLayerSubscriber s : this.subscribers) {
+                    try {
+                        if (e.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
+                            s.startRxPeriod(this, e.getKey());
+                        } else {
+                            s.endRxPeriod(this, e.getKey());
+                        }
+                    } catch (Exception ex) {
+                        if (LOG.isLoggable(Level.WARNING)) {
+                            LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on RX activation: %s", s, getName(), ex.getMessage()), ex);
+                        }
                     }
                 }
             }
-        }
-        for(Map.Entry<Long, Boolean> e : this.id2txAvailable.entrySet()) {
-            for(IUtLayerSubscriber s : this.subscribers) {
-                try {
-                    if(e.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
-                        s.startTxPeriod(this, e.getKey());
-                    } else {
-                        s.endTxPeriod(this, e.getKey());
-                    }
-                } catch (Exception ex) {
-                    if(LOG.isLoggable(Level.WARNING)) {
-                        LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on TX activation: %s", s, getName(), ex.getMessage()), ex);
+            for (Map.Entry<Long, Boolean> e : this.id2txAvailable.entrySet()) {
+                for (IUtLayerSubscriber s : this.subscribers) {
+                    try {
+                        if (e.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
+                            s.startTxPeriod(this, e.getKey());
+                        } else {
+                            s.endTxPeriod(this, e.getKey());
+                        }
+                    } catch (Exception ex) {
+                        if (LOG.isLoggable(Level.WARNING)) {
+                            LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on TX activation: %s", s, getName(), ex.getMessage()), ex);
+                        }
                     }
                 }
             }
@@ -183,6 +220,9 @@ public abstract class AbstractUtLayer implements IUtLayer {
     }
 
     public void deactivate() throws UtLayerException { // NOSONAR: exception declaration must stay
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.log(Level.INFO, String.format("Deactivating UT Layer %s", getName()));
+        }
         synchronized (this) {
             if (!activated) {
                 return;

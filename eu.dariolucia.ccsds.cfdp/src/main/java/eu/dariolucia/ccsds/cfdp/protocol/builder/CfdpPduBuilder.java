@@ -20,10 +20,13 @@ import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
 import eu.dariolucia.ccsds.tmtc.algorithm.Crc16Algorithm;
+import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Parent class for all PDU builder objects.
@@ -32,6 +35,8 @@ import java.nio.ByteBuffer;
  * @param <K> the CFDP PDU builder type (required to allow specific-type chains of builder method calls)
  */
 public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder<T, K>> {
+
+    private static final Logger LOG = Logger.getLogger(CfdpPduBuilder.class.getName());
 
     private static final int VERSION = 0b001;
     private static final int INITIAL_BYTE_OUTPUT_ALLOCATION_BYTES = 512;
@@ -224,9 +229,12 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
             // If CRC is enabled, compute the CRC and write the result in the last two bytes
             if (this.crcPresent) {
                 short crc = Crc16Algorithm.getCrc16(cfdpPdu, 0, len - 2);
-                ByteBuffer.wrap(cfdpPdu, len - 2, 2).putShort(crc);
+                ByteBuffer.wrap(cfdpPdu, cfdpPdu.length - 2, 2).putShort(crc);
             }
 
+            if(LOG.isLoggable(Level.FINEST)) {
+                LOG.log(Level.FINEST, String.format("CFDP PDU Builder %s: generated PDU: %s", getClass().getSimpleName(), StringUtil.toHexDump(cfdpPdu)));
+            }
             // Build the Pdu and return
             return buildObject(cfdpPdu);
         } catch (IOException e) {

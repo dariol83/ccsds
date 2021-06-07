@@ -75,7 +75,9 @@ public class MetadataPdu extends FileDirectivePdu {
         // - Messages to user.
         // - Fault Handler overrides.
         // - Flow Label.
-        while(currentOffset < pdu.length) {
+
+        int effectiveLength = pdu.length - (isCrcPresent() ? 2 : 0);
+        while(currentOffset < effectiveLength) {
             // TLV: Get the current tag
             byte type = pdu[currentOffset];
             switch(type) {

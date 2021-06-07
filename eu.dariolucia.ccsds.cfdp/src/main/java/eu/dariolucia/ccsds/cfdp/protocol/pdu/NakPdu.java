@@ -69,7 +69,9 @@ public class NakPdu extends FileDirectivePdu {
         currentOffset += isLargeFile() ? 8 : 4;
         this.endOfScope = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
         currentOffset += isLargeFile() ? 8 : 4;
-        while (currentOffset < pdu.length) {
+
+        int effectiveLength = pdu.length - (isCrcPresent() ? 2 : 0);
+        while (currentOffset < effectiveLength) {
             long startOffset = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
             currentOffset += isLargeFile() ? 8 : 4;
             long endOffset = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);

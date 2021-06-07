@@ -28,5 +28,9 @@ public interface IUtLayer {
 
     void deregister(IUtLayerSubscriber s);
 
+    boolean getRxAvailability(long destinationId);
+
+    boolean getTxAvailability(long destinationId);
+
     void dispose();
 }

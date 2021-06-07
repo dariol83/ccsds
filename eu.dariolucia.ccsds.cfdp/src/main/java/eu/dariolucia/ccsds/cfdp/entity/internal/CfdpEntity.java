@@ -155,7 +155,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     private void processRequest(ICfdpRequest request) {
         if(isDisposed()) {
             if(LOG.isLoggable(Level.SEVERE)) {
-                LOG.severe(String.format("Entity %d disposed, request rejected", mib.getLocalEntity().getLocalEntityId()));
+                LOG.severe(String.format("CFDP Entity [%d]: disposed, request rejected", getLocalEntityId()));
             }
             return;
         }
@@ -164,7 +164,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
             processor.accept(request);
         } else {
             if(LOG.isLoggable(Level.SEVERE)) {
-                LOG.severe(String.format("Entity %d cannot handle request %s: processor not found", mib.getLocalEntity().getLocalEntityId(), request));
+                LOG.severe(String.format("CFDP Entity [%d]: cannot handle request %s: request processor not found", getLocalEntityId(), request));
             }
         }
     }
@@ -193,6 +193,9 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
      * @param request the {@link PutRequest} object
      */
     private void processPutRequest(ICfdpRequest request) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: processing put request - %s", getLocalEntityId(), request));
+        }
         PutRequest r = (PutRequest) request;
         // Get a new transaction ID
         long transactionId = generateTransactionId();
@@ -200,11 +203,17 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         CfdpTransaction cfdpTransaction = new OutgoingCfdpTransaction(transactionId, this, r);
         // Register the transaction in the map
         this.id2transaction.put(transactionId, cfdpTransaction);
+        // Inform the TX/RX opportunity
+        cfdpTransaction.updateRxOpportunity(getUtLayerByDestinationEntity(r.getDestinationCfdpEntityId()).getRxAvailability(r.getDestinationCfdpEntityId()));
+        cfdpTransaction.updateTxOpportunity(getUtLayerByDestinationEntity(r.getDestinationCfdpEntityId()).getTxAvailability(r.getDestinationCfdpEntityId()));
         // Start the transaction
         cfdpTransaction.activate();
     }
 
     private void processKeepAliveRequest(ICfdpRequest request) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: processing Keep-Alive request - %s", getLocalEntityId(), request));
+        }
         KeepAliveRequest r = (KeepAliveRequest) request;
         // Get the transaction ID
         long transactionId = r.getTransactionId();
@@ -214,12 +223,15 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
             ((OutgoingCfdpTransaction) t).requestKeepAlive();
         } else {
             if(LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, String.format("Entity %d cannot request keep alive for transaction %d: transaction does not exist or has incorrect type", this.mib.getLocalEntity().getLocalEntityId(), transactionId));
+                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: cannot request keep alive for transaction %d: transaction does not exist or has incorrect type", this.mib.getLocalEntity().getLocalEntityId(), transactionId));
             }
         }
     }
 
     private void processPromptNakRequest(ICfdpRequest request) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: processing prompt NAK request - %s", getLocalEntityId(), request));
+        }
         PromptNakRequest r = (PromptNakRequest) request;
         // Get the transaction ID
         long transactionId = r.getTransactionId();
@@ -229,12 +241,15 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
             ((OutgoingCfdpTransaction) t).requestNak();
         } else {
             if(LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, String.format("Entity %d cannot request prompt NAK for transaction %d: transaction does not exist or has incorrect type", this.mib.getLocalEntity().getLocalEntityId(), transactionId));
+                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: cannot request prompt NAK for transaction %d: transaction does not exist or has incorrect type", this.mib.getLocalEntity().getLocalEntityId(), transactionId));
             }
         }
     }
 
     private void processCancelRequest(ICfdpRequest request) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: processing cancel - %s", getLocalEntityId(), request));
+        }
         CancelRequest r = (CancelRequest) request;
         // Get the transaction ID
         long transactionId = r.getTransactionId();
@@ -244,6 +259,9 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     }
 
     private void processSuspendRequest(ICfdpRequest request) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: processing suspend request - %s", getLocalEntityId(), request));
+        }
         SuspendRequest r = (SuspendRequest) request;
         // Get the transaction ID
         long transactionId = r.getTransactionId();
@@ -253,6 +271,9 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     }
 
     private void processResumeRequest(ICfdpRequest request) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: processing resume request - %s", getLocalEntityId(), request));
+        }
         ResumeRequest r = (ResumeRequest) request;
         // Get the transaction ID
         long transactionId = r.getTransactionId();
@@ -262,6 +283,9 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     }
 
     private void processReportRequest(ICfdpRequest request) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: processing report request - %s", getLocalEntityId(), request));
+        }
         ReportRequest r = (ReportRequest) request;
         // Get the transaction ID
         long transactionId = r.getTransactionId();
@@ -276,13 +300,16 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
      * @param indication the indication to notify
      */
     void notifyIndication(ICfdpIndication indication) {
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.log(Level.INFO, String.format("CFDP Entity [%d]: indication received - %s", getLocalEntityId(), indication));
+        }
         this.subscriberNotifier.submit(() -> {
             for(ICfdpEntitySubscriber s : this.subscribers) {
                 try {
                     s.indication(this, indication);
                 } catch (Exception e) {
                     if(LOG.isLoggable(Level.SEVERE)) {
-                        LOG.log(Level.SEVERE, String.format("Entity %d cannot notify subscriber %s: %s", this.mib.getLocalEntity().getLocalEntityId(), s, e.getMessage()), e);
+                        LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: cannot notify subscriber %s: %s", getLocalEntityId(), s, e.getMessage()), e);
                     }
                 }
             }
@@ -292,6 +319,8 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     /**
      * This method looks for a viable strategy to segment the provided file. If no such alternative is known, the
      * entity will fall back to a standard fixed-side segmenter.
+     *
+     * This method is supposed to be invoked by {@link CfdpTransaction} objects.
      *
      * @param sourceFileName the source file name for which the segmentation strategy is requested
      * @param destinationId the destination of the transaction
@@ -306,7 +335,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
                 }
             } catch (FilestoreException e) {
                 if(LOG.isLoggable(Level.WARNING)) {
-                    LOG.log(Level.WARNING, String.format("Problem when checking segmentation strategy for file %s to entity %d on strategy instance %s: %s", sourceFileName, destinationId, s, e.getMessage()), e);
+                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: Problem when checking segmentation strategy for file %s to entity %d on strategy instance %s: %s", getLocalEntityId(), sourceFileName, destinationId, s, e.getMessage()), e);
                 }
             }
         }
@@ -328,6 +357,9 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     }
 
     private void processDispose() {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: disposing entity", getLocalEntityId()));
+        }
         // Set disposed to true
         this.disposed = true;
         // Deregister from UT layer
@@ -363,7 +395,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
 
     private void processIndication(IUtLayer layer, CfdpPdu pdu) {
         if(LOG.isLoggable(Level.FINEST)) {
-            LOG.log(Level.FINEST, String.format("CFDP Entity %d: received PDU from UT layer %s: %s", mib.getLocalEntity().getLocalEntityId(), layer.getName(), pdu));
+            LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: received PDU from UT layer %s: %s", getLocalEntityId(), layer.getName(), pdu));
         }
         // This entity got this PDU, so if this entity knows about the related transaction, it should process the PDU
         CfdpTransaction transaction = this.id2transaction.get(pdu.getTransactionSequenceNumber());
@@ -389,7 +421,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
             } else {
                 // 6) the entity got a PDU that was completely unexepected -> log and ignore
                 if(LOG.isLoggable(Level.WARNING)) {
-                    LOG.log(Level.WARNING, String.format("CFDP Entity %d received PDU %s not linked to any transaction and not supposed to be handled, ignoring", getMib().getLocalEntity().getLocalEntityId(), pdu));
+                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: received PDU %s not linked to any transaction and not supposed to be handled, ignoring", getLocalEntityId(), pdu));
                 }
             }
         }
@@ -428,14 +460,14 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         IUtLayer utLayerToUse = this.utLayers.get(remoteConf.getUtLayer());
         if(utLayerToUse == null) {
             if (LOG.isLoggable(Level.SEVERE)) {
-                LOG.log(Level.SEVERE, String.format("Entity %d cannot acknowledge PDU %s to entity %s: no suitable UT layer found", getMib().getLocalEntity().getLocalEntityId(), pdu, remoteConf.getRemoteEntityId()));
+                LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: cannot acknowledge PDU %s to entity %s: no suitable UT layer found", getLocalEntityId(), pdu, remoteConf.getRemoteEntityId()));
             }
         } else {
             try {
                 utLayerToUse.request(b.build(), remoteConf.getRemoteEntityId());
             } catch (UtLayerException e) {
                 if (LOG.isLoggable(Level.SEVERE)) {
-                    LOG.log(Level.SEVERE, String.format("Entity %d cannot acknowledge PDU %s to entity %s on UT layer %s: %s", getMib().getLocalEntity().getLocalEntityId(), pdu, remoteConf.getRemoteEntityId(), utLayerToUse.getName(), e.getMessage()), e);
+                    LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: cannot acknowledge PDU %s to entity %s on UT layer %s: %s", getLocalEntityId(), pdu, remoteConf.getRemoteEntityId(), utLayerToUse.getName(), e.getMessage()), e);
                 }
             }
         }
@@ -446,13 +478,15 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         CfdpTransaction cfdpTransaction = new IncomingCfdpTransaction(pdu, this);
         // Register the transaction in the map
         this.id2transaction.put(cfdpTransaction.getTransactionId(), cfdpTransaction);
+        // Inform the TX/RX opportunity
+        cfdpTransaction.updateRxOpportunity(getUtLayerByDestinationEntity(pdu.getSourceEntityId()).getRxAvailability(pdu.getSourceEntityId()));
+        cfdpTransaction.updateTxOpportunity(getUtLayerByDestinationEntity(pdu.getSourceEntityId()).getTxAvailability(pdu.getSourceEntityId()));
         // Start the transaction
         cfdpTransaction.activate();
     }
 
     @Override
     public void startTxPeriod(IUtLayer layer, long entityId) {
-        // Check all transactions that are affected by this and update them
         updateTxOpportunity(entityId, true);
     }
 
@@ -487,5 +521,9 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
                 e.getValue().updateRxOpportunity(b);
             }
         }
+    }
+
+    public long getLocalEntityId() {
+        return this.mib.getLocalEntity().getLocalEntityId();
     }
 }

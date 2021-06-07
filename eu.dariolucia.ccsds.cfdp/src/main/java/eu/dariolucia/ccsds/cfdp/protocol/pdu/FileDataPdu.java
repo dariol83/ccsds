@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
+import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 
 import java.util.Arrays;
 
@@ -80,7 +81,7 @@ public class FileDataPdu extends CfdpPdu {
         //
         this.offset = BytesUtil.readInteger(pdu, currentOffset, isLargeFile() ? 8 : 4);
         currentOffset += isLargeFile() ? 8 : 4;
-        this.fileData = Arrays.copyOfRange(pdu, currentOffset, pdu.length); // This could be optimized only by storing the start of the file data
+        this.fileData = !isCrcPresent() ? Arrays.copyOfRange(pdu, currentOffset, pdu.length) : Arrays.copyOfRange(pdu, currentOffset, pdu.length - 2); // This could be optimized only by storing the start of the file data
     }
 
     public byte getRecordContinuationState() {
@@ -110,7 +111,7 @@ public class FileDataPdu extends CfdpPdu {
                 ", segmentMetadataLength=" + segmentMetadataLength +
                 ", segmentMetadata=" + Arrays.toString(segmentMetadata) +
                 ", offset=" + offset +
-                ", fileData=" + Arrays.toString(fileData) +
+                ", fileData=" + StringUtil.toHexDump(fileData) +
                 '}';
     }
 }

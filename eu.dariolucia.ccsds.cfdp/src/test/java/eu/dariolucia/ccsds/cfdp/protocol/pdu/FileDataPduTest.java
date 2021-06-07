@@ -50,7 +50,7 @@ class FileDataPduTest {
         assertEquals(4, pdu.getSegmentMetadataLength());
         assertArrayEquals(new byte[] {1,2,3,4}, pdu.getSegmentMetadata());
         assertEquals(7, pdu.getOffset());
-        assertArrayEquals(new byte[] {1,2,3,4,5,6,7,8,9,10,11}, pdu.getFileData());
+        assertArrayEquals(new byte[] {1,2,3,4,5,6,7,8,9}, pdu.getFileData());
 
         assertNotNull(pdu.toString());
 
@@ -79,7 +79,7 @@ class FileDataPduTest {
         assertEquals(4, ((FileDataPdu)pdu).getSegmentMetadataLength());
         assertArrayEquals(new byte[] {1,2,3,4}, ((FileDataPdu)pdu).getSegmentMetadata());
         assertEquals(7, ((FileDataPdu)pdu).getOffset());
-        assertArrayEquals(new byte[] {1,2,3,4,5,6,7,8,9,10,11}, ((FileDataPdu)pdu).getFileData());
+        assertArrayEquals(new byte[] {1,2,3,4,5,6,7,8,9}, ((FileDataPdu)pdu).getFileData());
     }
 
     @Test
@@ -104,6 +104,6 @@ class FileDataPduTest {
         assertEquals(4, ((FileDataPdu)pdu).getSegmentMetadataLength());
         assertArrayEquals(new byte[] {1,2,3,4}, ((FileDataPdu)pdu).getSegmentMetadata());
         assertEquals(7, ((FileDataPdu)pdu).getOffset());
-        assertArrayEquals(new byte[] {1,2,3,4,5,6,7,8,9,10,11}, ((FileDataPdu)pdu).getFileData());
+        assertArrayEquals(new byte[] {1,2,3,4,5,6,7,8,9}, ((FileDataPdu)pdu).getFileData());
     }
 }

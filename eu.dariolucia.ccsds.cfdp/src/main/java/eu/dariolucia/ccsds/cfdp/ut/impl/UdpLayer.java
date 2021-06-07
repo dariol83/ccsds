@@ -58,8 +58,8 @@ public class UdpLayer extends AbstractUtLayer {
     public void request(CfdpPdu pdu, long destinationEntityId) throws UtLayerException {
         DatagramSocket ds;
         synchronized (this) {
-            // If the destination is not available for TX, exception
-            if (!isActivated() || id2txAvailable.computeIfAbsent(destinationEntityId, k -> true)) {      // NOSONAR: concurrent hash maps do not accept null values
+            // If the destination is not available for TX, exception // TODO: refactor, move in parent class, introduce abstract methods
+            if (!isActivated() || !getTxAvailability(destinationEntityId)) {      // NOSONAR: concurrent hash maps do not accept null values
                 throw new UtLayerException(String.format("TX not available for destination entity %d", destinationEntityId));
             }
             // For each destination ID, we have a specific socket

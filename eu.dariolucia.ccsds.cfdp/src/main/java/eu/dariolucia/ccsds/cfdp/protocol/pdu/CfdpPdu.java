@@ -178,7 +178,7 @@ public class CfdpPdu {
                 "version=" + version +
                 ", type=" + type +
                 ", direction=" + direction +
-                ", unacknowledged=" + acknowledged +
+                ", acknowledged=" + acknowledged +
                 ", crcPresent=" + crcPresent +
                 ", largeFile=" + largeFile +
                 ", dataFieldLength=" + dataFieldLength +

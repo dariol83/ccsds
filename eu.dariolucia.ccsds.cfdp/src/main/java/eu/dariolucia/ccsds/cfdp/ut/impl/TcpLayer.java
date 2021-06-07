@@ -58,10 +58,13 @@ public class TcpLayer extends AbstractUtLayer {
 
     @Override
     public void request(CfdpPdu pdu, long destinationEntityId) throws UtLayerException {
+        if(LOG.isLoggable(Level.FINEST)) {
+            LOG.log(Level.FINEST, String.format("UT Layer %s: requesting transmission of PDU %s to entity %d", getName(), pdu, destinationEntityId));
+        }
         Socket ds;
         synchronized (this) {
             // If the destination is not available for TX, exception
-            if (!isActivated() || id2txAvailable.computeIfAbsent(destinationEntityId, k -> true)) {      // NOSONAR: concurrent hash maps do not accept null values
+            if (!isActivated() || !getTxAvailability(destinationEntityId)) {      // NOSONAR: concurrent hash maps do not accept null values
                 throw new UtLayerException(String.format("TX not available for destination entity %d", destinationEntityId));
             }
             // For each destination ID, we have a specific socket
@@ -70,6 +73,9 @@ public class TcpLayer extends AbstractUtLayer {
                 RemoteEntityConfigurationInformation conf = getMib().getRemoteEntityById(destinationEntityId);
                 if (conf == null) {
                     throw new UtLayerException("Cannot retrieve connection information for remote entity " + destinationEntityId);
+                }
+                if(LOG.isLoggable(Level.FINER)) {
+                    LOG.log(Level.FINER, String.format("UT Layer %s: connection to entity %d using address string %s", getName(), destinationEntityId, conf.getUtAddress()));
                 }
                 // utAddress in the form of tcp:<hostname>:<port>
                 String utAddress = conf.getUtAddress();
@@ -92,6 +98,9 @@ public class TcpLayer extends AbstractUtLayer {
                 }
                 try {
                     ds = new Socket(address, port);
+                    if(LOG.isLoggable(Level.INFO)) {
+                        LOG.log(Level.INFO, String.format("UT Layer %s: connection to entity %d at %s:%d string %s established", getName(), destinationEntityId, address, port, conf.getUtAddress()));
+                    }
                 } catch (IOException e) {
                     throw new UtLayerException(e);
                 }
@@ -104,6 +113,9 @@ public class TcpLayer extends AbstractUtLayer {
             try {
                 ds.getOutputStream().write(pdu.getPdu());
             } catch (IOException e) {
+                if(LOG.isLoggable(Level.WARNING)) {
+                    LOG.log(Level.WARNING, String.format("UT Layer %s: exception when sending PDU to entity %d: %s", getName(), destinationEntityId, e.getMessage()), e);
+                }
                 this.id2sendingSocket.remove(destinationEntityId);
                 try {
                     ds.close();
@@ -120,6 +132,9 @@ public class TcpLayer extends AbstractUtLayer {
         super.activate();
         if(this.readerThread == null) {
             // open server socket
+            if(LOG.isLoggable(Level.INFO)) {
+                LOG.log(Level.INFO, String.format("UT Layer %s: opening server socket at port %d", getName(), this.localTcpPort));
+            }
             try {
                 this.serverSocket = new ServerSocket(this.localTcpPort);
             } catch (IOException e) {
@@ -138,21 +153,27 @@ public class TcpLayer extends AbstractUtLayer {
             try {
                 sock = this.serverSocket.accept();
             } catch (IOException e) {
-                if(LOG.isLoggable(Level.SEVERE)) {
-                    LOG.log(Level.SEVERE, String.format("Error during UT layer %s reception (accept): %s", getName(), e.getMessage()), e);
-                }
-                // Something is wrong
-                try {
-                    deactivate();
-                } catch (UtLayerException utLayerException) {
-                    if(LOG.isLoggable(Level.SEVERE)) {
-                        LOG.log(Level.SEVERE, String.format("Error while deactivating UT layer %s after failure in reception: %s", getName(), e.getMessage()), utLayerException);
+                // If it was activated and nobody triggered the deactivation, then we have to do something about it
+                if(isActivated()) {
+                    if (LOG.isLoggable(Level.SEVERE)) {
+                        LOG.log(Level.SEVERE, String.format("Error during UT layer %s reception (accept): %s", getName(), e.getMessage()), e);
+                    }
+                    // Something is wrong
+                    try {
+                        deactivate();
+                    } catch (UtLayerException utLayerException) {
+                        if (LOG.isLoggable(Level.SEVERE)) {
+                            LOG.log(Level.SEVERE, String.format("Error while deactivating UT layer %s after failure in reception: %s", getName(), e.getMessage()), utLayerException);
+                        }
                     }
                 }
                 return;
             }
+            if(LOG.isLoggable(Level.INFO)) {
+                LOG.log(Level.INFO, String.format("UT Layer %s: new connection received from %s", getName(), sock.getRemoteSocketAddress()));
+            }
             final Socket fsock = sock;
-            Thread t = new Thread(() -> handle(fsock), "TCP UT Connection Handler");
+            Thread t = new Thread(() -> handle(fsock), "TCP UT Connection Handler - " + sock.getRemoteSocketAddress());
             t.setDaemon(true);
             t.start();
         }
@@ -164,7 +185,7 @@ public class TcpLayer extends AbstractUtLayer {
         try {
             is = sock.getInputStream();
         } catch (IOException e) {
-            if(LOG.isLoggable(Level.SEVERE)) {
+            if(isActivated() && LOG.isLoggable(Level.SEVERE)) {
                 LOG.log(Level.SEVERE, String.format("Error during UT layer %s reception: %s", getName(), e.getMessage()), e);
             }
             // Something is wrong: close the connection
@@ -180,8 +201,11 @@ public class TcpLayer extends AbstractUtLayer {
             CfdpPdu data;
             try {
                 data = CfdpPduDecoder.decode(is);
+                if(LOG.isLoggable(Level.FINEST)) {
+                    LOG.log(Level.FINEST, String.format("UT Layer %s: new PDU received from %s - %s", getName(), sock.getRemoteSocketAddress(), data));
+                }
             } catch (Exception e) {
-                if(LOG.isLoggable(Level.SEVERE)) {
+                if(isActivated() && LOG.isLoggable(Level.SEVERE)) {
                     LOG.log(Level.SEVERE, String.format("Error during UT layer %s reception: %s", getName(), e.getMessage()), e);
                 }
                 // Something is wrong: close the connection
@@ -202,6 +226,9 @@ public class TcpLayer extends AbstractUtLayer {
         synchronized (this) {
             // close server socket
             if (this.serverSocket != null) {
+                if(LOG.isLoggable(Level.INFO)) {
+                    LOG.log(Level.INFO, String.format("UT Layer %s: closing server socket at port %d", getName(), this.localTcpPort));
+                }
                 try {
                     this.serverSocket.close();
                 } catch (IOException e) {

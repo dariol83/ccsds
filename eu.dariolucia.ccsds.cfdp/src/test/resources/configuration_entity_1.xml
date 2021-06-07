@@ -54,11 +54,11 @@
                        keep-alive-limit="-1"
                        positive-ack-expiration-limit="3"
                        nak-expiration-limit="4"
-                       transaction-inactivity-limit="5"
+                       transaction-inactivity-limit="3600000"
                        keep-alive-sending-interval="15000"
                        nak-recomputation-interval="60000">
             <ut-layer>TCP</ut-layer>
-            <address>127.0.0.1:23002</address>
+            <address>tcp:127.0.0.1:23002</address>
         </remote-entity>
     </remote-entities>
 </ns1:mib>

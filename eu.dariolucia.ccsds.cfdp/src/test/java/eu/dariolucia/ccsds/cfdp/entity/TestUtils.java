@@ -20,6 +20,7 @@ import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.filestore.impl.FilesystemBasedFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
+import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 import eu.dariolucia.ccsds.cfdp.ut.impl.TcpLayer;
 
 import java.io.File;
@@ -30,12 +31,13 @@ import java.nio.file.Files;
 
 public class TestUtils {
 
-    public static ICfdpEntity createTcpEntity(String mibFile, int port) throws IOException {
+    public static ICfdpEntity createTcpEntity(String mibFile, int port) throws IOException, UtLayerException {
         InputStream in = TestUtils.class.getClassLoader().getResourceAsStream(mibFile);
         Mib conf1File = Mib.load(in);
         File fs1Folder = Files.createTempDirectory("cfdp").toFile();
         FilesystemBasedFilestore fs1 = new FilesystemBasedFilestore(fs1Folder);
         TcpLayer tcpLayer = new TcpLayer(conf1File, port);
+        tcpLayer.activate();
         return ICfdpEntity.create(conf1File, fs1, tcpLayer);
     }
 
@@ -51,5 +53,22 @@ public class TestUtils {
         }
         os.close();
         return file;
+    }
+
+    public static boolean compareFiles(IVirtualFilestore v1, String p1, IVirtualFilestore v2, String p2) throws FilestoreException, IOException {
+        long s1 = v1.fileSize(p1);
+        long s2 = v2.fileSize(p2);
+        if(s1 != s2) {
+            return false;
+        } else {
+            InputStream is1 = v1.readFile(p1);
+            InputStream is2 = v2.readFile(p2);
+            for(long i = 0; i < s1; ++i) {
+                if(is1.read() != is2.read()) { // Slowwwwwwwwwwwwwwwwwwww ... but I do not care at the moment
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }

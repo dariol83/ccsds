@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.cfdp.common;
 
+import eu.dariolucia.ccsds.cfdp.entity.TestUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -132,5 +133,30 @@ class BytesUtilTest {
         assertArrayEquals(new byte[] { (byte) 0x98, (byte) 0x43, (byte) 0x25 }, BytesUtil.encodeInteger(0x00984325L, 3));
         assertArrayEquals(new byte[] { 0, (byte) 0x98, (byte) 0x43, (byte) 0x25 }, BytesUtil.encodeInteger(0x00984325L, 4));
         assertArrayEquals(new byte[] { 0, 0, (byte) 0x98, (byte) 0x43, (byte) 0x25 }, BytesUtil.encodeInteger(0x00984325L, 5));
+    }
+
+    @Test
+    public void testNbBytes() {
+        assertEquals(1, BytesUtil.getEncodingOctetsNb(1));
+        assertEquals(1, BytesUtil.getEncodingOctetsNb(0));
+        assertEquals(1, BytesUtil.getEncodingOctetsNb(2));
+        assertEquals(1, BytesUtil.getEncodingOctetsNb(127));
+        assertEquals(1, BytesUtil.getEncodingOctetsNb(128));
+        assertEquals(1, BytesUtil.getEncodingOctetsNb(254));
+        assertEquals(1, BytesUtil.getEncodingOctetsNb(255));
+        assertEquals(2, BytesUtil.getEncodingOctetsNb(256));
+        assertEquals(2, BytesUtil.getEncodingOctetsNb(1024));
+        assertEquals(2, BytesUtil.getEncodingOctetsNb(65534));
+        assertEquals(2, BytesUtil.getEncodingOctetsNb(65535));
+        assertEquals(3, BytesUtil.getEncodingOctetsNb(65536));
+        assertEquals(4, BytesUtil.getEncodingOctetsNb(Integer.MAX_VALUE));
+        assertEquals(4, BytesUtil.getEncodingOctetsNb(Integer.MAX_VALUE * 2L - 1));
+        assertEquals(4, BytesUtil.getEncodingOctetsNb(Integer.MAX_VALUE * 2L));
+        assertEquals(4, BytesUtil.getEncodingOctetsNb(Integer.MAX_VALUE * 2L + 1));
+        assertEquals(5, BytesUtil.getEncodingOctetsNb(Integer.MAX_VALUE * 2L + 2));
+        assertEquals(6, BytesUtil.getEncodingOctetsNb(((Integer.MAX_VALUE * 2L + 2) * 256)));
+        assertEquals(7, BytesUtil.getEncodingOctetsNb(((Integer.MAX_VALUE * 2L + 2) * 256 * 256)));
+        assertEquals(8, BytesUtil.getEncodingOctetsNb(Long.MAX_VALUE - 1));
+        assertEquals(8, BytesUtil.getEncodingOctetsNb(Long.MAX_VALUE));
     }
 }
