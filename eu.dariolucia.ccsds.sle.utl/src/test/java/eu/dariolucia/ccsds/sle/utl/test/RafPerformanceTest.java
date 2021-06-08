@@ -103,7 +103,6 @@ public class RafPerformanceTest {
         System.out.println(rs2);
         assertNotNull(rs2.getInstant());
         assertNotNull(rs2.getByteSample().getDate());
-        assertEquals(162, rs2.getByteSample().getTotalOutUnits());
 
         System.out.println("PDU  RX in " + secondsToWait + " seconds: " + (rs2.getPduSample().getTotalInUnits() - rs1.getPduSample().getTotalInUnits()));
         System.out.println("PDU  RX data rate: " + rs2.getPduSample().getInRate());
