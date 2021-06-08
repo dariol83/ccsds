@@ -169,7 +169,7 @@ public class PduFactoryUtil {
             // Current time, as per CCSDS 913.1-B-2, 3.1.2.1.1
             long time = System.currentTimeMillis();
             // Random number (positive), as per CCSDS 913.1-B-2, 3.1.2.1.1
-            long randomNumber = (new Random(time).nextLong()) & 0x7FFFFFFFFFFFFFFFL;
+            long randomNumber = (new Random(time).nextInt()) & 0x7FFFFFFFL;
             // No support for microsecond resolution
             byte[] buffer = hashCredentialsData(time, 0, randomNumber, username, password);
             // The next variable is what the standard calls 'the protected'
