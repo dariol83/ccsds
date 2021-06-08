@@ -608,7 +608,7 @@ public abstract class ServiceInstance implements ITmlChannelObserver {
         SleBindInvocation pdu = new SleBindInvocation();
         pdu.setVersionNumber(new VersionNumber(version));
         pdu.setInitiatorIdentifier(new AuthorityIdentifier(getInitiatorIdentifier().getBytes()));
-        pdu.setResponderPortIdentifier(new PortId(getResponderIdentifier().getBytes()));
+        pdu.setResponderPortIdentifier(new PortId(getResponderPortIdentifier().getBytes()));
         pdu.setServiceType(new ApplicationIdentifier(getApplicationIdentifier().getCode()));
         pdu.setServiceInstanceIdentifier(PduFactoryUtil.buildServiceInstanceIdentifier(getServiceInstanceIdentifier(),
                 getApplicationIdentifier()));
