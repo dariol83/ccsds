@@ -23,6 +23,7 @@ import eu.dariolucia.ccsds.cfdp.entity.FaultDeclaredException;
 import eu.dariolucia.ccsds.cfdp.entity.indication.AbandonedIndication;
 import eu.dariolucia.ccsds.cfdp.entity.indication.FaultIndication;
 import eu.dariolucia.ccsds.cfdp.entity.indication.ReportIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.TransactionDisposedIndication;
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
 import eu.dariolucia.ccsds.cfdp.mib.RemoteEntityConfigurationInformation;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.AckPdu;
@@ -276,12 +277,15 @@ public abstract class CfdpTransaction {
         // This class cleanup
         stopTransactionInactivityTimer();
         stopPositiveAckTimer();
-        this.confiner.shutdownNow();
-        this.timer.cancel();
         // Mark state as COMPLETED if running
         if(getCurrentState() == CfdpTransactionState.RUNNING) {
             this.currentState = CfdpTransactionState.COMPLETED;
         }
+        // Raise a final indication, to indicate that the transaction is actually finalised
+        getEntity().notifyIndication(new TransactionDisposedIndication(getTransactionId(), createStateObject()));
+        this.confiner.shutdownNow();
+        this.timer.cancel();
+
     }
 
     public void activate() {

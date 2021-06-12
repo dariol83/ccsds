@@ -393,6 +393,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     private void handleForwardingOfEofAckPdu(EndOfFilePdu eofPdu) {
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwarding ACK for EOF PDU %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), eofPdu));
+        }
         AckPdu pdu = prepareAckPdu(eofPdu);
         try {
             forwardPdu(pdu);
@@ -615,6 +618,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     private void sendMetadataNak() {
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: sending Metadata PDU NAK", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+        }
         NakPduBuilder b = new NakPduBuilder();
         setCommonPduValues(b);
         b.setStartOfScope(this.receivedContiguousFileBytes);
@@ -631,11 +637,17 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     private void handleNakComputation() {
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: starting NAK computation", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+        }
         if(!isRunning()) {
             return;
         }
         // First of all, check if the metadata arrived, and if not, request the NAK
         if(this.metadataPdu == null) {
+            if(LOG.isLoggable(Level.FINER)) {
+                LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: missing Metadata PDU detected", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+            }
             sendMetadataNak();
         }
         // Then, inspect what you have in terms of file reconstruction
@@ -651,6 +663,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 tmpFilePartOffset += e.getValue().getFileData().length;
             } else if(e.getKey() > tmpFilePartOffset) {
                 // The file part from tmpFilePartOffset and e.getValue().getOffset() is missing, create segment request
+                if(LOG.isLoggable(Level.FINER)) {
+                    LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: missing segment detected [%d - %d]", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), tmpFilePartOffset, e.getKey()));
+                }
                 missingSegments.add(new NakPdu.SegmentRequest(tmpFilePartOffset, e.getKey()));
                 // Set the progress to e.getValue().getOffset() + e.getValue().getFileData().length
                 tmpFilePartOffset = e.getValue().getOffset() + e.getValue().getFileData().length;
@@ -659,6 +674,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         long endOfScope = tmpFilePartOffset;
         // If EOF(No error) PDU was received, then add a segment from tmpFilePartOffset and the expected file size
         if(this.eofPdu != null && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR && tmpFilePartOffset < this.eofPdu.getFileSize()) {
+            if(LOG.isLoggable(Level.FINER)) {
+                LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: missing segment detected (last) [%d - %d]", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), tmpFilePartOffset, this.eofPdu.getFileSize()));
+            }
             missingSegments.add(new NakPdu.SegmentRequest(tmpFilePartOffset, this.eofPdu.getFileSize()));
             endOfScope = this.eofPdu.getFileSize();
         }
@@ -678,7 +696,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 forwardPdu(pdu);
             } catch (UtLayerException e) {
                 if(LOG.isLoggable(Level.SEVERE)) {
-                    LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: fail on Nak PDU transmission: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                    LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: fail on NAK PDU transmission: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
                 }
             }
         }
@@ -969,6 +987,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     private void handleNoticeOfCompletion(boolean completed) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: notice of completion (%s) called", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), completed));
+        }
         // 4.11.1.2.1 If receiving in acknowledged mode,
         // a) transmission of NAK PDUs, whether in response to NAK timer expiration or in
         //    response to any other events, shall be terminated
@@ -1128,15 +1149,27 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
      * @return false if the file cannot be closed yet, true otherwise (no more PDUs are expected)
      */
     private boolean checkForFullFileReconstruction() throws FaultDeclaredException {
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: checking for full file reconstruction", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+        }
         if(this.fileCompleted) {
+            if(LOG.isLoggable(Level.FINEST)) {
+                LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: file already completed, nothing to be done", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+            }
             return true;
         }
         if(this.metadataPdu == null || this.eofPdu == null) {
+            if(LOG.isLoggable(Level.FINEST)) {
+                LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: Metadata PDU/EOF PDU missing, cannot start reconstruction", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+            }
             // Cannot start the reconstruction
             return false;
         }
         // Check the file progress, it must match the file size in the EOF PDU
         if(this.receivedContiguousFileBytes != this.eofPdu.getFileSize()) {
+            if(LOG.isLoggable(Level.FINEST)) {
+                LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: not all bytes received, expected %d but got %d", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.receivedContiguousFileBytes, this.eofPdu.getFileSize()));
+            }
             // Still something missing
             return false;
         }
@@ -1219,17 +1252,32 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     private void storeFile() throws FaultDeclaredException {
         if(this.fileCompleted) {
+            if(LOG.isLoggable(Level.INFO)) {
+                LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: file already attempted for storage, won't store it again", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+            }
             return;
+        }
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: storing file to disk", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
         }
         IVirtualFilestore filestore = getEntity().getFilestore();
         try {
+            if(LOG.isLoggable(Level.FINE)) {
+                LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: creating file %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.metadataPdu.getDestinationFileName()));
+            }
             filestore.createFile(this.metadataPdu.getDestinationFileName());
+            if(LOG.isLoggable(Level.FINE)) {
+                LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: writing contents to file %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.metadataPdu.getDestinationFileName()));
+            }
             OutputStream os = filestore.writeFile(this.metadataPdu.getDestinationFileName(), false);
             for(Map.Entry<Long, FileDataPdu> e : this.fileReconstructionMap.entrySet()) {
                 os.write(e.getValue().getFileData());
             }
             os.flush();
             os.close();
+            if(LOG.isLoggable(Level.FINE)) {
+                LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: file %s stored", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.metadataPdu.getDestinationFileName()));
+            }
             this.fileCompleted = true;
         } catch (FilestoreException | IOException e) {
             if(LOG.isLoggable(Level.SEVERE)) {
@@ -1251,7 +1299,13 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         for(TLV req : this.metadataPdu.getOptions()) {
             if(req instanceof FilestoreRequestTLV) {
                 FilestoreRequestTLV freq = (FilestoreRequestTLV) req;
+                if(LOG.isLoggable(Level.INFO)) {
+                    LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: filestore request to execute: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), freq));
+                }
                 if(faultDetected) {
+                    if(LOG.isLoggable(Level.WARNING)) {
+                        LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: execution of filestore request %s not performed, due to previous fault", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), freq));
+                    }
                     // 4.9.5 If any filestore request obtained from a given Metadata PDU does not succeed, no
                     // subsequent filestore requests from the same Metadata PDU shall be executed. For each of
                     // these non-executed subsequent filestore requests, the filestore request status code returned in
@@ -1267,6 +1321,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                     // Finished (complete) PDU.
                     FilestoreResponseTLV resp = freq.execute(getEntity().getFilestore());
                     this.filestoreResponses.add(resp);
+                    if(LOG.isLoggable(Level.INFO)) {
+                        LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: filestore request to execute: %s - Response: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), freq, resp));
+                    }
                     if(resp.getStatusCode() != FilestoreResponseTLV.StatusCode.SUCCESSFUL) {
                         faultDetected = true;
                     }

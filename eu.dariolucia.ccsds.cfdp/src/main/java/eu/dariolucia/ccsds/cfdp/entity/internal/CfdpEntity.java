@@ -348,8 +348,10 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
 
     @Override
     public void dispose() {
-        // Delegate to confiner
-        this.entityConfiner.submit(this::processDispose);
+        if(!this.entityConfiner.isShutdown()) {
+            // Delegate to confiner
+            this.entityConfiner.submit(this::processDispose);
+        }
     }
 
     private boolean isDisposed() {

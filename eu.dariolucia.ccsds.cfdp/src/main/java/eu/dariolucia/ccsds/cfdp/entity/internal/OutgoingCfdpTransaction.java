@@ -841,6 +841,9 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     }
 
     private void handleNoticeOfCompletion(boolean completed) {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: notice of completion (%s) called", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), completed));
+        }
         // 4.11.1.1.1 On Notice of Completion of the Copy File procedure, the sending CFDP entity
         // shall
         // a) release all unreleased portions of the file retransmission buffer
