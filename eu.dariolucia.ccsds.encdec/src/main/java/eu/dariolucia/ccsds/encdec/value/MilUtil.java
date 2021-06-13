@@ -55,7 +55,7 @@ public class MilUtil {
     public static double fromMil32Real(long rawBits) {
         long mantissa = convertToNative( ( rawBits & 0xffffff00L ) >> 8, 24 );
         long exponent = convertToNative( ( rawBits & 0x000000ffL ), 8 );
-        return (double) mantissa * Math.pow( 2.0, ( exponent - 23.0 ) );
+        return mantissa * Math.pow( 2.0, ( exponent - 23.0 ) );
     }
 
     /**
@@ -68,7 +68,7 @@ public class MilUtil {
         long exponent = convertToNative( ( rawBits & 0x000000ff0000L ) >> 16, 8 );
         long mantissa = convertToNative( ( rawBits & 0x00000000ffffL ) +
                 ( ( rawBits & 0xffffff000000L ) >> 8 ), 40 );
-        return (double)mantissa * Math.pow( 2.0, ( exponent - 39.0 ) );
+        return mantissa * Math.pow( 2.0, ( exponent - 39.0 ) );
     }
 
     // I believe this can be done better
