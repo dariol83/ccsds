@@ -14,31 +14,49 @@
  *   limitations under the License.
  */
 
-package eu.dariolucia.ccsds.cfdp.entity;
+package eu.dariolucia.ccsds.cfdp.util;
 
+import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntity;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.filestore.impl.FilesystemBasedFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 import eu.dariolucia.ccsds.cfdp.ut.impl.TcpLayer;
+import eu.dariolucia.ccsds.cfdp.ut.impl.UdpLayer;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.function.Function;
 
 public class TestUtils {
 
-    public static ICfdpEntity createTcpEntity(String mibFile, int port) throws IOException, UtLayerException {
+    public static ICfdpEntity createTcpEntity(String mibFile, int port, Function<CfdpPdu, Boolean>... discardingRules) throws IOException, UtLayerException {
         InputStream in = TestUtils.class.getClassLoader().getResourceAsStream(mibFile);
         Mib conf1File = Mib.load(in);
         File fs1Folder = Files.createTempDirectory("cfdp").toFile();
         FilesystemBasedFilestore fs1 = new FilesystemBasedFilestore(fs1Folder);
         TcpLayer tcpLayer = new TcpLayer(conf1File, port);
         tcpLayer.activate();
-        return ICfdpEntity.create(conf1File, fs1, tcpLayer);
+        // Add UT Layer decorator
+        UtLayerTxPduDecorator decorator = new UtLayerTxPduDecorator(tcpLayer, discardingRules);
+        return ICfdpEntity.create(conf1File, fs1, decorator);
+    }
+
+    public static ICfdpEntity createUdpEntity(String mibFile, int port, Function<CfdpPdu, Boolean>... discardingRules) throws IOException, UtLayerException {
+        InputStream in = TestUtils.class.getClassLoader().getResourceAsStream(mibFile);
+        Mib conf1File = Mib.load(in);
+        File fs1Folder = Files.createTempDirectory("cfdp").toFile();
+        FilesystemBasedFilestore fs1 = new FilesystemBasedFilestore(fs1Folder);
+        UdpLayer udpLayer = new UdpLayer(conf1File, port);
+        udpLayer.activate();
+        // Add UT Layer decorator
+        UtLayerTxPduDecorator decorator = new UtLayerTxPduDecorator(udpLayer, discardingRules);
+        return ICfdpEntity.create(conf1File, fs1, decorator);
     }
 
     public static String createRandomFileIn(IVirtualFilestore filestore, String file, int numKB) throws FilestoreException, IOException {

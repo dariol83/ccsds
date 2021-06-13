@@ -18,11 +18,15 @@ package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 import eu.dariolucia.ccsds.cfdp.ut.impl.AbstractUtLayer;
 import eu.dariolucia.ccsds.cfdp.util.EntityIndicationSubscriber;
+import eu.dariolucia.ccsds.cfdp.util.TestUtils;
+import eu.dariolucia.ccsds.cfdp.util.UtLayerTxPduDecorator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,8 +34,7 @@ import java.util.logging.Logger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-// TODO: add a way to check the exchanged PDUs
-public class CfdpEntityBasicTcpTest {
+public class CfdpEntityNominalTcpTest {
 
     @BeforeEach
     public void setup() {
@@ -53,10 +56,10 @@ public class CfdpEntityBasicTcpTest {
             EntityIndicationSubscriber s2 = new EntityIndicationSubscriber();
             e2.register(s2);
             // Enable reachability of the two entities
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).setRxAvailability(true, 2);
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).setRxAvailability(true, 1);
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).setTxAvailability(true, 2);
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).setTxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 1);
             // Create file in filestore
             String path = TestUtils.createRandomFileIn(e1.getFilestore(), "testfile_ack.bin", 10); // 10 KB
             String destPath = "recv_testfile_ack.bin";
@@ -70,8 +73,8 @@ public class CfdpEntityBasicTcpTest {
             assertTrue(e2.getFilestore().fileExists(destPath));
             assertTrue(TestUtils.compareFiles(e1.getFilestore(), path, e2.getFilestore(), destPath));
             // Deactivate the UT layers
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).deactivate();
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).deactivate();
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
             // Dispose the entities
             e1.dispose();
             e2.dispose();
@@ -109,10 +112,41 @@ public class CfdpEntityBasicTcpTest {
             s2.assertPresentAt(12, TransactionFinishedIndication.class);
             s2.assertPresentAt(13, TransactionDisposedIndication.class);
             s2.assertPresentAt(14, EntityDisposedIndication.class);
+
+            // Assert TX PDUs: sender
+            UtLayerTxPduDecorator l1 = (UtLayerTxPduDecorator) e1.getUtLayerByName("TCP");
+            List<CfdpPdu> txPdu1 = l1.getTxPdus();
+            assertEquals(13, txPdu1.size());
+            // First: metadata + 10 file data + EOF + Finished ACK
+            assertEquals(MetadataPdu.class, txPdu1.get(0).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(1).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(2).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(3).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(4).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(5).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(6).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(7).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(8).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
+            assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
+            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(AckPdu.class, txPdu1.get(12).getClass());
+            assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
+
+            // Assert TX PDUs: receiver
+            UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
+            List<CfdpPdu> txPdu2 = l2.getTxPdus();
+            assertEquals(2, txPdu2.size());
+            // First: EOF ACK + Finished
+            assertEquals(AckPdu.class, txPdu2.get(0).getClass());
+            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
+            assertEquals(FinishedPdu.class, txPdu2.get(1).getClass());
+            assertEquals(FinishedPdu.FileStatus.RETAINED_IN_FILESTORE, ((FinishedPdu) txPdu2.get(1)).getFileStatus());
         } catch (Throwable e) {
             // Deactivate the UT layers
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).deactivate();
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).deactivate();
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
             // Dispose the entities
             e1.dispose();
             e2.dispose();
@@ -132,10 +166,10 @@ public class CfdpEntityBasicTcpTest {
             EntityIndicationSubscriber s2 = new EntityIndicationSubscriber();
             e2.register(s2);
             // Enable reachability of the two entities
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).setRxAvailability(true, 2);
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).setRxAvailability(true, 1);
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).setTxAvailability(true, 2);
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).setTxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 1);
             // Create file in filestore
             String path = TestUtils.createRandomFileIn(e1.getFilestore(), "testfile_ack.bin", 10); // 10 KB
             String destPath = "recv_testfile_ack.bin";
@@ -148,8 +182,8 @@ public class CfdpEntityBasicTcpTest {
             assertTrue(e2.getFilestore().fileExists(destPath));
             assertTrue(TestUtils.compareFiles(e1.getFilestore(), path, e2.getFilestore(), destPath));
 
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).deactivate();
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).deactivate();
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
 
             e1.dispose();
             e2.dispose();
@@ -186,10 +220,37 @@ public class CfdpEntityBasicTcpTest {
             s2.assertPresentAt(12, TransactionFinishedIndication.class);
             s2.assertPresentAt(13, TransactionDisposedIndication.class);
             s2.assertPresentAt(14, EntityDisposedIndication.class);
+
+            // Assert TX PDUs: sender
+            UtLayerTxPduDecorator l1 = (UtLayerTxPduDecorator) e1.getUtLayerByName("TCP");
+            List<CfdpPdu> txPdu1 = l1.getTxPdus();
+            assertEquals(12, txPdu1.size());
+            // First: metadata + 10 file data + EOF + Finished ACK
+            assertEquals(MetadataPdu.class, txPdu1.get(0).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(1).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(2).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(3).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(4).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(5).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(6).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(7).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(8).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
+            assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
+            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+
+            // Assert TX PDUs: receiver
+            UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
+            List<CfdpPdu> txPdu2 = l2.getTxPdus();
+            assertEquals(1, txPdu2.size());
+            // First: Finished
+            assertEquals(FinishedPdu.class, txPdu2.get(0).getClass());
+            assertEquals(FinishedPdu.FileStatus.RETAINED_IN_FILESTORE, ((FinishedPdu) txPdu2.get(0)).getFileStatus());
         } catch (Throwable e) {
             // Deactivate the UT layers
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).deactivate();
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).deactivate();
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
             // Dispose the entities
             e1.dispose();
             e2.dispose();
@@ -209,10 +270,10 @@ public class CfdpEntityBasicTcpTest {
             EntityIndicationSubscriber s2 = new EntityIndicationSubscriber();
             e2.register(s2);
             // Enable reachability of the two entities
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).setRxAvailability(true, 2);
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).setRxAvailability(true, 1);
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).setTxAvailability(true, 2);
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).setTxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 1);
             // Create file in filestore
             String path = TestUtils.createRandomFileIn(e1.getFilestore(), "testfile_ack.bin", 10); // 10 KB
             String destPath = "recv_testfile_ack.bin";
@@ -226,15 +287,39 @@ public class CfdpEntityBasicTcpTest {
             assertTrue(e2.getFilestore().fileExists(destPath));
             assertTrue(TestUtils.compareFiles(e1.getFilestore(), path, e2.getFilestore(), destPath));
 
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).deactivate();
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).deactivate();
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
 
             e1.dispose();
             e2.dispose();
+
+            // Assert TX PDUs: sender
+            UtLayerTxPduDecorator l1 = (UtLayerTxPduDecorator) e1.getUtLayerByName("TCP");
+            List<CfdpPdu> txPdu1 = l1.getTxPdus();
+            assertEquals(12, txPdu1.size());
+            // First: metadata + 10 file data + EOF + Finished ACK
+            assertEquals(MetadataPdu.class, txPdu1.get(0).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(1).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(2).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(3).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(4).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(5).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(6).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(7).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(8).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
+            assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
+            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+
+            // Assert TX PDUs: receiver
+            UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
+            List<CfdpPdu> txPdu2 = l2.getTxPdus();
+            assertEquals(0, txPdu2.size());
         } catch (Throwable e) {
             // Deactivate the UT layers
-            ((AbstractUtLayer) e1.getUtLayerByName("TCP")).deactivate();
-            ((AbstractUtLayer) e2.getUtLayerByName("TCP")).deactivate();
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
             // Dispose the entities
             e1.dispose();
             e2.dispose();

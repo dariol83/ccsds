@@ -37,17 +37,35 @@ public class NakPdu extends FileDirectivePdu {
             this.endOffset = endOffset;
         }
 
+        /**
+         * Offset of start of requested segment.
+         *
+         * @return Offset of start of requested segment
+         */
         public long getStartOffset() {
             return startOffset;
         }
 
+        /**
+         * Offset of first octet after end of requested segment.
+         *
+         * @return offset of first octet after end of requested segment
+         */
         public long getEndOffset() {
             return endOffset;
         }
 
         public boolean overlapWith(long start, long end) {
-            return (start >= startOffset && start <= endOffset) ||
-                    (end >= startOffset && end <= endOffset);
+            return (start >= startOffset && start < endOffset) ||
+                    (end > startOffset && end <= endOffset);
+        }
+
+        @Override
+        public String toString() {
+            return "SegmentRequest{" +
+                    "startOffset=" + startOffset +
+                    ", endOffset=" + endOffset +
+                    '}';
         }
     }
 

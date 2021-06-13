@@ -1168,7 +1168,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         // Check the file progress, it must match the file size in the EOF PDU
         if(this.receivedContiguousFileBytes != this.eofPdu.getFileSize()) {
             if(LOG.isLoggable(Level.FINEST)) {
-                LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: not all bytes received, expected %d but got %d", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.receivedContiguousFileBytes, this.eofPdu.getFileSize()));
+                LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: not all bytes received, expected %d but contiguously received are %d", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.eofPdu.getFileSize(), this.receivedContiguousFileBytes));
             }
             // Still something missing
             return false;

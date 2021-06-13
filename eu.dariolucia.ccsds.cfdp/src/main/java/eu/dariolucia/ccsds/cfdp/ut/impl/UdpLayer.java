@@ -137,7 +137,7 @@ public class UdpLayer extends AbstractUtLayer {
             try {
                 sock.receive(dp);
             } catch (IOException e) {
-                if(LOG.isLoggable(Level.SEVERE)) {
+                if(isActivated() && LOG.isLoggable(Level.SEVERE)) {
                     LOG.log(Level.SEVERE, String.format("Error during UT layer %s reception: %s", getName(), e.getMessage()), e);
                 }
                 // Something is wrong

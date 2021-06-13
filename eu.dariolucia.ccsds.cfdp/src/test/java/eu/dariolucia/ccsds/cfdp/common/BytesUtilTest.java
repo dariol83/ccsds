@@ -16,7 +16,6 @@
 
 package eu.dariolucia.ccsds.cfdp.common;
 
-import eu.dariolucia.ccsds.cfdp.entity.TestUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

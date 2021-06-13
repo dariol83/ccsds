@@ -376,7 +376,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
                         filePdu.getOffset() > endOfScope) {
                     continue;
                 }
-                // File is in offset, so check if there is a segment request
+                // File data is in offset, so check if there is a segment request
                 checkAndRetransmitFileDataPdu(filePdu, pdu.getSegmentRequests());
             }
             // Ignore EOF PDUs
@@ -387,6 +387,9 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         for(NakPdu.SegmentRequest segmentRequest : segmentRequests) {
             // If there is an overlap with the file data pdu, send the pdu again
             if(segmentRequest.overlapWith(filePdu.getOffset(), filePdu.getOffset() + filePdu.getFileData().length)) {
+                if(LOG.isLoggable(Level.FINER)) {
+                    LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: missing segment request %s overlaps File Data PDU %s: sending again", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), segmentRequest, filePdu));
+                }
                 try {
                     forwardPdu(filePdu, true);
                 } catch (UtLayerException e) {
@@ -403,6 +406,9 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         for(NakPdu.SegmentRequest segmentRequest : segmentRequests) {
             // If there is a segment with start and end equal to 0, then retransmit the metadata PDU
             if(segmentRequest.getStartOffset() == 0 && segmentRequest.getEndOffset() == 0) {
+                if(LOG.isLoggable(Level.FINER)) {
+                    LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: missing metadata request %s detected: sending again", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), segmentRequest));
+                }
                 try {
                     forwardPdu(sentPdu, true);
                 } catch (UtLayerException e) {
