@@ -23,11 +23,9 @@ jobs:
       with:
         java-version: '11'
         distribution: 'adopt'
-    - name: Build with Maven
-      run: mvn -B package
-    - name: Analyze with SonarCloud
+    - name: Build and Analyze
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+      run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar --file pom.xml
       
