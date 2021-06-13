@@ -73,6 +73,10 @@
         <maven.version>2.5</maven.version>
         <maven.bundle.version>4.2.1</maven.bundle.version>
         <maven.eclipse>1.0.0</maven.eclipse>
+        <!-- SonarCloud scan -->
+        <sonar.projectKey>eu.dariolucia.ccsds:eu.dariolucia.ccsds</sonar.projectKey>
+        <sonar.organization>dariol83</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
 
     <modules>
