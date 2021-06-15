@@ -326,4 +326,6 @@ public class CfdpEntityNominalTcpTest {
             throw e;
         }
     }
+
+    // TODO: add test for metadata only transaction
 }

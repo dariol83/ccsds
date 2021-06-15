@@ -368,7 +368,8 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         long startOfScope = pdu.getStartOfScope();
         long endOfScope = pdu.getEndOfScope();
         for(CfdpPdu sentPdu : this.sentPduList) {
-            if(sentPdu instanceof MetadataPdu && startOfScope == 0) {
+            if(sentPdu instanceof MetadataPdu) {
+                // A metadata retransmission is requested if the segment request has offsets both set to 0
                 checkAndRetransmitMetadataPdu((MetadataPdu) sentPdu, pdu.getSegmentRequests());
             } else if(sentPdu instanceof FileDataPdu) {
                 FileDataPdu filePdu = (FileDataPdu) sentPdu;
