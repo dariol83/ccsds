@@ -118,7 +118,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         if(!isAcknowledged()) {
             return;
         }
-        if(getRemoteDestination().getKeepAliveSendingInterval() == 0) {
+        if(getRemoteDestination().getKeepAliveInterval() == -1) {
             // Keep alive disabled
             return;
         }
@@ -133,7 +133,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 });
             }
         };
-        schedule(this.keepAliveSendingTimer, getRemoteDestination().getKeepAliveSendingInterval(), true);
+        schedule(this.keepAliveSendingTimer, getRemoteDestination().getKeepAliveInterval(), true);
     }
 
     private void stopKeepAliveSendingTimer() {
@@ -213,7 +213,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         if(isAcknowledged()) {
             if(pdu.isNakResponseRequired()) {
                 // Run immediately the task that computes and sends the required NAKs
-                handleNakComputation();
+                handleNakComputation(false);
                 // Reset the timer
                 restartNakComputation();
             } else if(pdu.isKeepAliveResponseRequired()) {
@@ -342,7 +342,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         // If this is the first PDU ever, then it means that the metadata PDU got lost but still allocates the reconstruction map
         if(this.fileReconstructionMap == null) {
             this.fileReconstructionMap = new TreeMap<>();
-            if(this.metadataPdu == null) {
+            if(this.metadataPdu == null && getRemoteDestination().isImmediateNakModeEnabled()) {
                 sendMetadataNak();
             }
         }
@@ -490,10 +490,12 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         }
 
         // If this is the first PDU ever, then it means that the metadata PDU got lost but still allocates the reconstruction map
+        boolean metadataNakJustSent = false;
         if(this.fileReconstructionMap == null) {
             this.fileReconstructionMap = new TreeMap<>();
             if(isAcknowledged() && this.metadataPdu == null) {
                 sendMetadataNak();
+                metadataNakJustSent = true;
             }
         }
         // Check if there is already a EOF (No error) PDU
@@ -592,7 +594,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                     // Stop the as-you-go timer
                     stopNakComputation();
                     // Run immediately the task that computes and sends the required NAKs
-                    handleNakComputation();
+                    handleNakComputation(metadataNakJustSent);
                     // Start the NAK timer, as per 4.6.4.6
                     // Upon initial receipt of the EOF (No error) PDU for a transaction, the receiving entity shall
                     // determine whether or not any of the transaction’s file data or metadata have yet to be
@@ -636,7 +638,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         }
     }
 
-    private void handleNakComputation() {
+    private void handleNakComputation(boolean metadataNakJustSent) {
         if(LOG.isLoggable(Level.FINER)) {
             LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: starting NAK computation", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
         }
@@ -644,7 +646,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             return;
         }
         // First of all, check if the metadata arrived, and if not, request the NAK
-        if(this.metadataPdu == null) {
+        if(this.metadataPdu == null && !metadataNakJustSent) {
             if(LOG.isLoggable(Level.FINER)) {
                 LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: missing Metadata PDU detected", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
             }
@@ -889,6 +891,10 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         if(this.nakTimer != null) {
             return;
         }
+        if(getRemoteDestination().getNakTimerInterval() == -1) {
+            // No NAK timer defined
+            return;
+        }
         this.nakTimer = new TimerTask() {
             @Override
             public void run() {
@@ -907,7 +913,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                         // successive times the NAK timer is allowed to expire without intervening
                         // reception of file data and/or metadata that had not previously been received.
                         if(nakTimerCount < getRemoteDestination().getNakTimerExpirationLimit()) {
-                            handleNakComputation();
+                            handleNakComputation(false);
                             schedule(nakTimer, getRemoteDestination().getNakTimerInterval(), false);
                         } else {
                             try {
@@ -941,7 +947,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 final TimerTask expiredTimer = this;
                 handle(() -> {
                     if (IncomingCfdpTransaction.this.nakComputationTimer == expiredTimer) {
-                        handleNakComputation();
+                        handleNakComputation(false);
                     }
                 });
             }

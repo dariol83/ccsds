@@ -153,6 +153,10 @@ public abstract class CfdpTransaction {
     }
 
     protected void startPositiveAckTimer(CfdpPdu pdu) {
+        if(getRemoteDestination().getPositiveAckTimerInterval() == -1) {
+            // Positive ACK timer N/A
+            return;
+        }
         if(LOG.isLoggable(Level.FINE)) {
             LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: starting positive ACK timer for PDU %s", getLocalEntityId(), transactionId, getRemoteDestination().getRemoteEntityId(), pdu));
         }
@@ -193,7 +197,7 @@ public abstract class CfdpTransaction {
                 }
                 // c) the sending CFDP entity shall keep a tally of the number of transmission retries
                 ++this.ackTimerCount;
-                if (this.ackTimerCount == getRemoteDestination().getCheckIntervalExpirationLimit()) {
+                if (this.ackTimerCount == getRemoteDestination().getPositiveAckTimerExpirationLimit()) {
                     // d) if a preset limit is exceeded, the sending CFDP entity shall declare a Positive ACK
                     //    Limit Reached fault
                     this.ackTimer.cancel();

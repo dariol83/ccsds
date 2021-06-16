@@ -423,6 +423,9 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     }
 
     private void handleFinishedPdu(FinishedPdu pdu) {
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: Finished PDU received - %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu));
+        }
         this.finishedPdu = pdu;
         if(!isAcknowledged()) {
             // 4.6.3.2.3 Reception of a Finished PDU shall cause

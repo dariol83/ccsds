@@ -303,17 +303,19 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         if(LOG.isLoggable(Level.INFO)) {
             LOG.log(Level.INFO, String.format("CFDP Entity [%d]: indication received - %s", getLocalEntityId(), indication));
         }
-        this.subscriberNotifier.submit(() -> {
-            for(ICfdpEntitySubscriber s : this.subscribers) {
-                try {
-                    s.indication(this, indication);
-                } catch (Exception e) {
-                    if(LOG.isLoggable(Level.SEVERE)) {
-                        LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: cannot notify subscriber %s: %s", getLocalEntityId(), s, e.getMessage()), e);
+        if(!this.subscriberNotifier.isShutdown()) {
+            this.subscriberNotifier.submit(() -> {
+                for (ICfdpEntitySubscriber s : this.subscribers) {
+                    try {
+                        s.indication(this, indication);
+                    } catch (Exception e) {
+                        if (LOG.isLoggable(Level.SEVERE)) {
+                            LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: cannot notify subscriber %s: %s", getLocalEntityId(), s, e.getMessage()), e);
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
     /**

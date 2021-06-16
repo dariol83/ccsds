@@ -55,7 +55,6 @@
                        positive-ack-expiration-limit="3"
                        nak-expiration-limit="4"
                        transaction-inactivity-limit="3600000"
-                       keep-alive-sending-interval="15000"
                        nak-recomputation-interval="60000">
             <ut-layer>UDP</ut-layer>
             <address>udp:127.0.0.1:23002</address>

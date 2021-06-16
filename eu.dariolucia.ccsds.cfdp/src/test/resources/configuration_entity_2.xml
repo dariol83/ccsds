@@ -39,7 +39,7 @@
     <remote-entities>
         <remote-entity id="1"
                        version="1"
-                       positive-ack-timer-interval="100000"
+                       positive-ack-timer-interval="2000"
                        nak-timer-interval="100000"
                        keep-alive-interval="30000"
                        immediate-nak-mode="true"
@@ -55,7 +55,6 @@
                        positive-ack-expiration-limit="3"
                        nak-expiration-limit="4"
                        transaction-inactivity-limit="3600000"
-                       keep-alive-sending-interval="15000"
                        nak-recomputation-interval="60000">
             <ut-layer>TCP</ut-layer>
             <address>tcp:127.0.0.1:23001</address>

@@ -48,11 +48,12 @@ public class CfdpEntityErrorTcpTest {
     @Test
     public void testAcknowledgedTransactionMissingFileSegment() throws Exception {
         // Create the two entities
-        ICfdpEntity e1 = TestUtils.createTcpEntity("configuration_entity_1.xml", 23001, UtLayerTxPduDecorator.rule("Drop 5th file metadata PDU", new Function<CfdpPdu, Boolean>() {
+        ICfdpEntity e1 = TestUtils.createTcpEntity("configuration_entity_1.xml", 23001, UtLayerTxPduDecorator.rule("Drop 5th file metadata PDU", new Function<>() {
             int filePduCount = 0;
+
             @Override
             public Boolean apply(CfdpPdu cfdpPdu) {
-                if(cfdpPdu instanceof FileDataPdu) {
+                if (cfdpPdu instanceof FileDataPdu) {
                     ++filePduCount;
                     return filePduCount == 5;
                 } else {
@@ -171,16 +172,17 @@ public class CfdpEntityErrorTcpTest {
     @Test
     public void testAcknowledgedTransactionMissingMetadataFileSegment() throws Exception {
         // Create the two entities
-        ICfdpEntity e1 = TestUtils.createTcpEntity("configuration_entity_1.xml", 23001, UtLayerTxPduDecorator.rule("Drop 5th file metadata PDU", new Function<CfdpPdu, Boolean>() {
+        ICfdpEntity e1 = TestUtils.createTcpEntity("configuration_entity_1.xml", 23001, UtLayerTxPduDecorator.rule("Drop 5th file & metadata PDU", new Function<>() {
             int filePduCount = 0;
             boolean metadataDropped = false;
+
             @Override
             public Boolean apply(CfdpPdu cfdpPdu) {
-                if(cfdpPdu instanceof FileDataPdu) {
+                if (cfdpPdu instanceof FileDataPdu) {
                     ++filePduCount;
                     return filePduCount == 5;
-                } else if(cfdpPdu instanceof MetadataPdu) {
-                    if(metadataDropped) {
+                } else if (cfdpPdu instanceof MetadataPdu) {
+                    if (metadataDropped) {
                         return false;
                     } else {
                         metadataDropped = true;
@@ -238,8 +240,6 @@ public class CfdpEntityErrorTcpTest {
             // I cannot assert the TX PDUs on the sender side, because the order depends on the time the Metadata NAK PDU arrives,
             // and it can even arrive more than one (NAK generated upon reception of the first FileData PDU and NAK generated
             // upon reception of the EOF.
-            // TODO: make generated upon reception of the first FileData PDU configurable, e.g. to have NAKs generated only at
-            //  EOF reception time, using the immediate NAK mode already present in the MIB
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
@@ -278,9 +278,210 @@ public class CfdpEntityErrorTcpTest {
         }
     }
 
-    // TODO add test to miss Metadata and all FileData PDUs except EOF and trigger complete resending
-    // TODO add test to miss the EndOfFilePdu and trigger the ACK timeout on the sending side
-    // TODO add test to miss the FinishedPdu and trigger the ACK timeout on the receiving side
+    @Test
+    public void testAcknowledgedTransactionMissingAllUntilEOF() throws Exception {
+        // Create the two entities
+        ICfdpEntity e1 = TestUtils.createTcpEntity("configuration_entity_1.xml", 23001, UtLayerTxPduDecorator.rule("Drop all till EOF PDU", new Function<>() {
+            boolean eofMet;
+
+            @Override
+            public Boolean apply(CfdpPdu cfdpPdu) {
+                if (cfdpPdu instanceof EndOfFilePdu) {
+                    eofMet = true;
+                }
+                return !eofMet;
+            }
+        }));
+        ICfdpEntity e2 = TestUtils.createTcpEntity("configuration_entity_2.xml", 23002);
+        try {
+            // Subscription to the entities
+            EntityIndicationSubscriber s1 = new EntityIndicationSubscriber();
+            e1.register(s1);
+            EntityIndicationSubscriber s2 = new EntityIndicationSubscriber();
+            e2.register(s2);
+            // Enable reachability of the two entities
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 1);
+            // Create file in filestore
+            String path = TestUtils.createRandomFileIn(e1.getFilestore(), "testfile_ack.bin", 10); // 10 KB
+            String destPath = "recv_testfile_ack.bin";
+            // Create request and start transaction
+            PutRequest fduTxReq = PutRequest.build(2, path, destPath, false, null);
+            e1.request(fduTxReq);
+            // Wait for the transaction to be disposed on the two entities
+            s1.waitForIndication(TransactionDisposedIndication.class, 10000);
+            s2.waitForIndication(TransactionDisposedIndication.class, 10000);
+            // Check that the file was transferred and it has exactly the same contents of the source file
+            assertTrue(e2.getFilestore().fileExists(destPath));
+            assertTrue(TestUtils.compareFiles(e1.getFilestore(), path, e2.getFilestore(), destPath));
+            // Deactivate the UT layers
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
+            // Dispose the entities
+            e1.dispose();
+            e2.dispose();
+
+            // Wait for the entity disposition
+            s1.waitForIndication(EntityDisposedIndication.class, 1000);
+            s2.waitForIndication(EntityDisposedIndication.class, 1000);
+
+            // Assert indications: sender
+            s1.print();
+            s1.assertPresentAt(0, TransactionIndication.class);
+            s1.assertPresentAt(1, EofSentIndication.class);
+            s1.assertPresentAt(2, TransactionFinishedIndication.class);
+            TransactionDisposedIndication dispInd = s1.assertPresentAt(3, TransactionDisposedIndication.class);
+            assertEquals(CfdpTransactionState.COMPLETED, dispInd.getStatusReport().getCfdpTransactionState());
+            s1.assertPresentAt(4, EntityDisposedIndication.class);
+
+            s2.print();
+            s2.assertPresentAt(0, EofRecvIndication.class);
+
+            // I cannot assert the TX PDUs on the sender side, because the order depends on the time the NAK PDUs arrive.
+
+            // Assert TX PDUs: receiver
+            UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
+            List<CfdpPdu> txPdu2 = l2.getTxPdus();
+            assertEquals(4, txPdu2.size());
+            assertEquals(AckPdu.class, txPdu2.get(0).getClass()); // Ack of EOF
+            assertEquals(NakPdu.class, txPdu2.get(1).getClass()); // Metadata NAK
+            assertEquals(1, ((NakPdu) txPdu2.get(1)).getSegmentRequests().size());
+            assertEquals(NakPdu.class, txPdu2.get(2).getClass()); // File NAK
+            assertEquals(1, ((NakPdu) txPdu2.get(2)).getSegmentRequests().size());
+            assertEquals(FinishedPdu.class, txPdu2.get(3).getClass()); // Finished PDU
+        } catch (Throwable e) {
+            // Deactivate the UT layers
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
+            // Dispose the entities
+            e1.dispose();
+            e2.dispose();
+            throw e;
+        }
+    }
+
+    @Test
+    public void testAcknowledgedTransactionMissingEofAck() throws Exception {
+        // Create the two entities
+        ICfdpEntity e1 = TestUtils.createTcpEntity("configuration_entity_1.xml", 23001);
+        ICfdpEntity e2 = TestUtils.createTcpEntity("configuration_entity_2.xml", 23002, UtLayerTxPduDecorator.rule("Drop all till EOF PDU", new Function<>() {
+            boolean firstAck;
+
+            @Override
+            public Boolean apply(CfdpPdu cfdpPdu) {
+                if (cfdpPdu instanceof AckPdu && !firstAck) {
+                    firstAck = true;
+                    return true;
+                }
+                return false;
+            }
+        }));
+        try {
+            // Subscription to the entities
+            EntityIndicationSubscriber s1 = new EntityIndicationSubscriber();
+            e1.register(s1);
+            EntityIndicationSubscriber s2 = new EntityIndicationSubscriber();
+            e2.register(s2);
+            // Enable reachability of the two entities
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 1);
+            // Create file in filestore
+            String path = TestUtils.createRandomFileIn(e1.getFilestore(), "testfile_ack.bin", 10); // 10 KB
+            String destPath = "recv_testfile_ack.bin";
+            // Create request and start transaction
+            PutRequest fduTxReq = PutRequest.build(2, path, destPath, false, null);
+            e1.request(fduTxReq);
+            // Wait for the transaction to be disposed on the two entities
+            s1.waitForIndication(TransactionDisposedIndication.class, 10000);
+            s2.waitForIndication(TransactionDisposedIndication.class, 10000);
+            // Check that the file was transferred and it has exactly the same contents of the source file
+            assertTrue(e2.getFilestore().fileExists(destPath));
+            assertTrue(TestUtils.compareFiles(e1.getFilestore(), path, e2.getFilestore(), destPath));
+            // Deactivate the UT layers
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
+            // Dispose the entities
+            e1.dispose();
+            e2.dispose();
+
+            // Wait for the entity disposition
+            s1.waitForIndication(EntityDisposedIndication.class, 1000);
+            s2.waitForIndication(EntityDisposedIndication.class, 1000);
+
+            // Assert indications: sender
+            s1.print();
+            s1.assertPresentAt(0, TransactionIndication.class);
+            s1.assertPresentAt(1, EofSentIndication.class);
+            s1.assertPresentAt(2, TransactionFinishedIndication.class);
+            TransactionDisposedIndication dispInd = s1.assertPresentAt(3, TransactionDisposedIndication.class);
+            assertEquals(CfdpTransactionState.COMPLETED, dispInd.getStatusReport().getCfdpTransactionState());
+            s1.assertPresentAt(4, EntityDisposedIndication.class);
+
+            s2.print();
+            s2.assertPresentAt(0, MetadataRecvIndication.class);
+            s2.assertPresentAt(1, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(2, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(3, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(4, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(5, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(6, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(7, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(8, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(9, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(10, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(11, EofRecvIndication.class);
+            s2.assertPresentAt(12, TransactionFinishedIndication.class);
+            s2.assertPresentAt(13, TransactionDisposedIndication.class);
+            s2.assertPresentAt(14, EntityDisposedIndication.class);
+
+            // Assert TX PDUs: sender
+            UtLayerTxPduDecorator l1 = (UtLayerTxPduDecorator) e1.getUtLayerByName("TCP");
+            List<CfdpPdu> txPdu1 = l1.getTxPdus();
+            assertEquals(14, txPdu1.size());
+            // First: metadata + 11 file data + EOF + Finished ACK
+            assertEquals(MetadataPdu.class, txPdu1.get(0).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(1).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(2).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(3).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(4).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(5).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(6).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(7).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(8).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
+            assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
+            assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
+            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(EndOfFilePdu.class, txPdu1.get(12).getClass());
+            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(12)).getConditionCode());
+            assertEquals(AckPdu.class, txPdu1.get(13).getClass());
+            assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
+
+            // Assert TX PDUs: receiver
+            UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
+            List<CfdpPdu> txPdu2 = l2.getTxPdus();
+            assertEquals(4, txPdu2.size());
+            assertEquals(AckPdu.class, txPdu2.get(0).getClass()); // Ack of EOF
+            assertEquals(FinishedPdu.class, txPdu2.get(1).getClass()); //
+            assertEquals(AckPdu.class, txPdu2.get(2).getClass()); // Ack of EOF resent after receiving it again
+            assertEquals(FinishedPdu.class, txPdu2.get(3).getClass()); // Finished resent after local timeout
+
+        } catch (Throwable e) {
+            // Deactivate the UT layers
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
+            // Dispose the entities
+            e1.dispose();
+            e2.dispose();
+            throw e;
+        }
+    }
+
+    // TODO add test to miss the FinishedPdu (send dropped by receiver) and trigger the ACK timeout on the receiving side
     // TODO add test to miss the NakPdu and trigger the NAK retrasmission on the receiving side
     // TODO add test to miss all PDUs and trigger the transaction inactivity on the receiving side
     // TODO add tests with missing PDUs for Class 1 delivery, with and without closure

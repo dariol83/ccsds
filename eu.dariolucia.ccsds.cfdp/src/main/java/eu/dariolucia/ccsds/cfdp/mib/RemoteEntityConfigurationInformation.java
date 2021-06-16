@@ -28,7 +28,7 @@ public class RemoteEntityConfigurationInformation {
     private long remoteEntityId;
 
     @XmlAttribute(name = "version")
-    private long protocolVersion;
+    private long protocolVersion = 1;
 
     @XmlElement(name = "ut-layer")
     private String utLayer;
@@ -37,13 +37,13 @@ public class RemoteEntityConfigurationInformation {
     private String utAddress;
 
     @XmlAttribute(name = "positive-ack-timer-interval")
-    private long positiveAckTimerInterval; // -1: N/A
+    private long positiveAckTimerInterval = -1; // -1: N/A
 
     @XmlAttribute(name = "nak-timer-interval")
-    private long nakTimerInterval; // -1: N/A
+    private long nakTimerInterval = -1; // -1: N/A
 
     @XmlAttribute(name = "keep-alive-interval")
-    private long keepAliveInterval; // -1: N/A
+    private long keepAliveInterval = -1; // -1: N/A
 
     @XmlAttribute(name = "immediate-nak-mode")
     private boolean immediateNakModeEnabled;
@@ -73,7 +73,7 @@ public class RemoteEntityConfigurationInformation {
     private int maximumFileSegmentLength;
 
     @XmlAttribute(name = "keep-alive-limit")
-    private int keepAliveDiscrepancyLimit; // -1: N/A, max number of bytes that the receiver can stay behind
+    private int keepAliveDiscrepancyLimit = -1; // -1: N/A, max number of bytes that the receiver can stay behind
 
     @XmlAttribute(name = "positive-ack-expiration-limit")
     private int positiveAckTimerExpirationLimit;
@@ -86,9 +86,6 @@ public class RemoteEntityConfigurationInformation {
 
     @XmlAttribute(name = "ack-mode-supported")
     private boolean acknowledgedModeSupported = true;
-
-    @XmlAttribute(name = "keep-alive-sending-interval")
-    private long keepAliveSendingInterval;
 
     @XmlAttribute(name = "nak-recomputation-interval")
     private long nakRecomputationInterval;
@@ -147,7 +144,13 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
-    // TODO check why not used
+    /**
+     * 4.6.5.2.1 In all acknowledged modes, the receiving CFDP entity may periodically send a
+     * Keep Alive PDU to the sending CFDP entity reporting on the transaction’s reception
+     * progress so far at this entity.
+     *
+     * @return the keep alive interval in milliseconds
+     */
     public long getKeepAliveInterval() {
         return keepAliveInterval;
     }
@@ -157,6 +160,12 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
+    /**
+     * If enabled, then the metadata PDU is requested to be retransmitted (in case missing) at the reception of the
+     * first File Data PDU.
+     *
+     * @return true to enable the immediate metadata PDU NAK
+     */
     public boolean isImmediateNakModeEnabled() {
         return immediateNakModeEnabled;
     }
@@ -238,7 +247,6 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
-    // TODO check why not used
     public int getPositiveAckTimerExpirationLimit() {
         return positiveAckTimerExpirationLimit;
     }
@@ -284,15 +292,6 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
-    public long getKeepAliveSendingInterval() {
-        return keepAliveSendingInterval;
-    }
-
-    public RemoteEntityConfigurationInformation setKeepAliveSendingInterval(long keepAliveSendingInterval) {
-        this.keepAliveSendingInterval = keepAliveSendingInterval;
-        return this;
-    }
-
     public long getNakRecomputationInterval() {
         return nakRecomputationInterval;
     }
@@ -326,7 +325,6 @@ public class RemoteEntityConfigurationInformation {
                 ", transactionInactivityLimit=" + transactionInactivityLimit +
                 ", acknowledgedModeSupported=" + acknowledgedModeSupported +
                 ", checkIntervalExpirationLimit=" + checkIntervalExpirationLimit +
-                ", keepAliveSendingInterval=" + keepAliveSendingInterval +
                 ", nakRecomputationInterval=" + nakRecomputationInterval +
                 '}';
     }
