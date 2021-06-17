@@ -369,7 +369,12 @@ public abstract class CfdpTransaction {
     }
 
     public void report() {
-        handle(this::handleReport);
+        // This method is the only one that does not strictly use the confinement, because it can do it (no changes are expected)
+        if(!confiner.isShutdown()) {
+            handle(this::handleReport);
+        } else {
+            handleReport();
+        }
     }
 
     protected void startTransactionInactivityTimer() {

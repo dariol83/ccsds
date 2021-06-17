@@ -36,6 +36,7 @@ import eu.dariolucia.ccsds.cfdp.ut.IUtLayerSubscriber;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,11 +61,11 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     // Confinement thread
     private final ExecutorService entityConfiner;
     // Map of ongoing transactions
-    private final Map<Long, CfdpTransaction> id2transaction = new HashMap<>();
+    private final Map<Long, CfdpTransaction> id2transaction = new ConcurrentHashMap<>();
     // Request processor map
     private final Map<Class<? extends ICfdpRequest>, Consumer<ICfdpRequest>> requestProcessors = new HashMap<>();
     // Transaction ID sequencer
-    private final AtomicLong transactionIdSequencer = new AtomicLong(0); // XXX: this will need to be revised
+    private final AtomicLong transactionIdSequencer = new AtomicLong(0); // TODO: this will need to be revised, use an external supplier
     // File segmentation strategies
     private final List<ICfdpSegmentationStrategy> supportedSegmentationStrategies = new CopyOnWriteArrayList<>();
 
@@ -76,6 +77,9 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         this.filestore = filestore;
         for(IUtLayer l : layers) {
             this.utLayers.put(l.getName(), l);
+        }
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.fine(String.format("CFDP Entity [%d]: creation in progress", getLocalEntityId()));
         }
         // 1 separate thread to notify all listeners
         this.subscriberNotifier = Executors.newFixedThreadPool(1, r -> {
@@ -101,6 +105,9 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         this.supportedSegmentationStrategies.add(new FixedSizeSegmentationStrategy());
         // Ready to go
         startProcessing();
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.info(String.format("CFDP Entity [%d]: creation completed", getLocalEntityId()));
+        }
     }
 
     @Override
@@ -135,6 +142,11 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     @Override
     public IVirtualFilestore getFilestore() {
         return this.filestore;
+    }
+
+    @Override
+    public Set<Long> getTransactionIds() {
+        return Collections.unmodifiableSet(id2transaction.keySet());
     }
 
     @Override
@@ -345,7 +357,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     }
 
     private long generateTransactionId() {
-        return this.transactionIdSequencer.incrementAndGet();
+        return (getLocalEntityId() << 16) | this.transactionIdSequencer.incrementAndGet(); // 65536 transactions from the same entity ID
     }
 
     @Override
@@ -529,5 +541,12 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
 
     public long getLocalEntityId() {
         return this.mib.getLocalEntity().getLocalEntityId();
+    }
+
+    @Override
+    public String toString() {
+        return "CfdpEntity{" +
+                "entity=" + getLocalEntityId() +
+                '}';
     }
 }

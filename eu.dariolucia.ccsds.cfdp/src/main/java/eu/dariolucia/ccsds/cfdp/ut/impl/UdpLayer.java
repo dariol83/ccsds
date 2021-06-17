@@ -116,6 +116,9 @@ public class UdpLayer extends AbstractUtLayer {
     public synchronized void activate() throws UtLayerException {
         super.activate();
         if(this.readerThread == null) {
+            if(LOG.isLoggable(Level.INFO)) {
+                LOG.log(Level.INFO, String.format("UT Layer %s: opening server socket at port %d", getName(), this.localUdpPort));
+            }
             // open server socket
             try {
                 this.serverSocket = new DatagramSocket(this.localUdpPort);
@@ -187,5 +190,12 @@ public class UdpLayer extends AbstractUtLayer {
         synchronized (this) {
             this.id2sendingSocket.clear();
         }
+    }
+
+    @Override
+    public String toString() {
+        return "UdpLayer{" +
+                "localUdpPort=" + localUdpPort +
+                '}';
     }
 }

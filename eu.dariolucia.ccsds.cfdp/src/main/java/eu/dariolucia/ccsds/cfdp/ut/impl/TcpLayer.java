@@ -253,4 +253,11 @@ public class TcpLayer extends AbstractUtLayer {
             this.id2sendingSocket.clear();
         }
     }
+
+    @Override
+    public String toString() {
+        return "TcpLayer{" +
+                "localTcpPort=" + localTcpPort +
+                '}';
+    }
 }

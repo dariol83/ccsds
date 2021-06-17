@@ -314,4 +314,11 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
             return new File(root.getAbsolutePath() + File.separator + splt[0]);
         }
     }
+
+    @Override
+    public String toString() {
+        return "FilesystemBasedFilestore{" +
+                "root=" + root +
+                '}';
+    }
 }

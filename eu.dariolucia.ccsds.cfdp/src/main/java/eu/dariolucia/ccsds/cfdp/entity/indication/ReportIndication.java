@@ -54,7 +54,7 @@ public class ReportIndication implements ICfdpIndication {
      * entity.</li>
      * </ol>
      */
-    private final Object statusReport;
+    private final CfdpTransactionStatus statusReport;
 
     /**
      * ReportIndication full constructor.
@@ -71,7 +71,7 @@ public class ReportIndication implements ICfdpIndication {
         return transactionId;
     }
 
-    public Object getStatusReport() {
+    public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }
 

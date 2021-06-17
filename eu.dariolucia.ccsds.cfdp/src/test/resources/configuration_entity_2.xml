@@ -39,7 +39,7 @@
     <remote-entities>
         <remote-entity id="1"
                        version="1"
-                       positive-ack-timer-interval="2000"
+                       positive-ack-timer-interval="3000"
                        nak-timer-interval="100000"
                        keep-alive-interval="30000"
                        immediate-nak-mode="true"

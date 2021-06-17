@@ -25,6 +25,7 @@ import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Set;
 
 public interface ICfdpEntity {
 
@@ -46,6 +47,8 @@ public interface ICfdpEntity {
 
     IVirtualFilestore getFilestore();
 
+    Set<Long> getTransactionIds();
+
     void register(ICfdpEntitySubscriber s);
 
     void deregister(ICfdpEntitySubscriber s);
@@ -53,4 +56,5 @@ public interface ICfdpEntity {
     void request(ICfdpRequest request);
 
     void dispose();
+
 }

@@ -481,6 +481,25 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         this.active = true;
         // Notify the creation of the new transaction to the subscriber
         getEntity().notifyIndication(new TransactionIndication(getTransactionId(), request));
+        // Before we even start doing something, check if the file is there
+        if(isFileToBeSent()) {
+            String fileToSend = this.request.getSourceFileName();
+            try {
+                if (!getEntity().getFilestore().fileExists(fileToSend)) {
+                    if (LOG.isLoggable(Level.SEVERE)) {
+                        LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: source file %s does not exist", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), fileToSend));
+                    }
+                    handleAbandon(FileDirectivePdu.CC_FILESTORE_REJECTION);
+                    return;
+                }
+            } catch (FilestoreException e) {
+                if (LOG.isLoggable(Level.SEVERE)) {
+                    LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: problem when querying for source file %s: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), fileToSend, e.getMessage()), e);
+                }
+                handleAbandon(FileDirectivePdu.CC_FILESTORE_REJECTION);
+                return;
+            }
+        }
         // Start the transaction inactivity timer
         startTransactionInactivityTimer();
         // Handle the start of the transaction
