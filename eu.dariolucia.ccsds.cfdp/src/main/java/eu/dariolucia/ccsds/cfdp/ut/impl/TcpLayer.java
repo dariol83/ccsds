@@ -24,6 +24,7 @@ import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -111,6 +112,10 @@ public class TcpLayer extends AbstractUtLayer {
         // Send the PDU to the socket
         synchronized (ds) {
             try {
+                OutputStream ostr = ds.getOutputStream();
+                if(ostr == null) {
+                    throw new IOException("No output stream available: null");
+                }
                 ds.getOutputStream().write(pdu.getPdu());
             } catch (IOException e) {
                 if(LOG.isLoggable(Level.WARNING)) {

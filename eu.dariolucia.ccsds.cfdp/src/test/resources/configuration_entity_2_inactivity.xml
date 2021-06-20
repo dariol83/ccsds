@@ -30,7 +30,7 @@
             <fault-handler condition="5" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILE_CHECKSUM_FAILURE -->
             <fault-handler condition="6" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILE_SIZE_ERROR -->
             <fault-handler condition="7" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_NAK_LIMIT_REACHED -->
-            <fault-handler condition="8" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INACTIVITY_DETECTED -->
+            <fault-handler condition="8" strategy="ABANDON" /> <!-- CC_INACTIVITY_DETECTED -->
             <fault-handler condition="9" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INVALID_FILE_STRUCTURE -->
             <fault-handler condition="10" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_CHECK_LIMIT_REACHED -->
             <fault-handler condition="11" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_UNSUPPORTED_CHECKSUM_TYPE -->
@@ -39,9 +39,9 @@
     <remote-entities>
         <remote-entity id="1"
                        version="1"
-                       positive-ack-timer-interval="3000"
-                       nak-timer-interval="3000"
-                       keep-alive-interval="30000"
+                       positive-ack-timer-interval="30000"
+                       nak-timer-interval="30000"
+                       keep-alive-interval="300000"
                        immediate-nak-mode="true"
                        default-tx-mode-acknowledged="true"
                        transaction-closure-requested="true"

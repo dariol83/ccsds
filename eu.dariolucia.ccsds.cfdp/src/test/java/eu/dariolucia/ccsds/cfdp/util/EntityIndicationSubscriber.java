@@ -76,11 +76,11 @@ public class EntityIndicationSubscriber implements ICfdpEntitySubscriber {
         throw new AssertionError("Indication " + indication + " not found after position " + position);
     }
 
-    public synchronized void waitForIndication(Class<? extends ICfdpIndication> indication, long timeoutMillis) {
+    public synchronized ICfdpIndication waitForIndication(Class<? extends ICfdpIndication> indication, long timeoutMillis) {
         long now = System.currentTimeMillis();
         long target = now + timeoutMillis;
-        boolean present = indicationPresent(indication);
-        while(!present) {
+        ICfdpIndication present = indicationPresent(indication);
+        while(present == null) {
             long toWait = target - System.currentTimeMillis();
             if(toWait > 0) {
                 try {
@@ -95,16 +95,17 @@ public class EntityIndicationSubscriber implements ICfdpEntitySubscriber {
 
         }
         // If you reach this stage, the indication is present
+        return present;
     }
 
     // To be called under monitor
-    private boolean indicationPresent(Class<? extends ICfdpIndication> indication) {
+    private ICfdpIndication indicationPresent(Class<? extends ICfdpIndication> indication) {
         for(int i = this.indicationList.size() - 1; i >= 0; --i) {
             ICfdpIndication ind = this.indicationList.get(i);
             if(indication.isAssignableFrom(ind.getClass())) {
-                return true;
+                return ind;
             }
         }
-        return false;
+        return null;
     }
 }

@@ -706,6 +706,15 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     @Override
     protected void handleCancel(byte conditionCode, long faultEntityId) {
+        if(isCancelled()) {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: transaction already in cancelled state, not repeating procedure (new condition code %d)", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode));
+            }
+            return;
+        }
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: handling cancel with condition code %d and fault entity ID %d", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode, faultEntityId));
+        }
         setLastConditionCode(conditionCode, faultEntityId);
         this.finalFileStatus = FinishedPdu.FileStatus.STATUS_UNREPORTED;
         setCancelled();
@@ -1076,7 +1085,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     private FinishedPdu handleForwardingOfFinishedPdu() throws UtLayerException {
-        if(isRunning()) {
+        if(isRunning() || isCancelled()) { // This PDU must be forwarded even if it the transaction is cancelled
             this.finishedPdu = prepareFinishedPdu();
             forwardPdu(finishedPdu);
             return finishedPdu;
@@ -1092,8 +1101,10 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         b.setFileStatus(this.finalFileStatus);
         b.setConditionCode(getLastConditionCode(), getLastFaultEntity());
         // Add filestore responses
-        for(FilestoreResponseTLV tlv : this.filestoreResponses) {
-            b.addFilestoreResponse(tlv);
+        if(filestoreResponses != null) {
+            for (FilestoreResponseTLV tlv : this.filestoreResponses) {
+                b.addFilestoreResponse(tlv);
+            }
         }
         return b.build();
     }
@@ -1216,7 +1227,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         IVirtualFilestore filestore = getEntity().getFilestore();
         try {
             filestore.createFile(this.metadataPdu.getDestinationFileName() + PARTIAL_FILE_EXTENSION);
-            OutputStream os = filestore.writeFile(this.metadataPdu.getDestinationFileName(), false);
+            OutputStream os = filestore.writeFile(this.metadataPdu.getDestinationFileName() + PARTIAL_FILE_EXTENSION, false);
             // Iterate of the map (sorted by offset) and write either the segment, or 0 byte filling and the segment
             long currentOffset = 0;
             for(Map.Entry<Long, FileDataPdu> e : this.fileReconstructionMap.entrySet()) {
@@ -1361,6 +1372,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     @Override
     protected void handleTransactionInactivity() {
+        if(LOG.isLoggable(Level.SEVERE)) {
+            LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: transaction inactivity detected", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+        }
         try {
             fault(FileDirectivePdu.CC_INACTIVITY_DETECTED, getLocalEntityId());
         } catch (FaultDeclaredException e) {
@@ -1374,7 +1388,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         this.pendingUtTransmissionPduList.clear();
         this.fileReconstructionMap.clear();
         this.checksum = null;
-        this.filestoreResponses.clear();
+        if(this.filestoreResponses != null) {
+            this.filestoreResponses.clear();
+        }
         if(transactionFinishCheckTimer != null) {
             transactionFinishCheckTimer.cancel();
             transactionFinishCheckTimer = null;

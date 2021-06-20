@@ -65,6 +65,8 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     private boolean txRunning;
     // Flag to indicated that activate() was called
     private boolean active;
+    // Flag to indicate that a EOF PDU due to cancelation was already sent
+    private boolean alreadySentEoFforCancelled;
 
     public OutgoingCfdpTransaction(long transactionId, CfdpEntity entity, PutRequest r) {
         super(transactionId, entity, r.getDestinationCfdpEntityId());
@@ -157,6 +159,12 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
 
     @Override
     protected void handleCancel(byte conditionCode, long faultEntityId) {
+        if(isCancelled()) {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: transaction already in cancelled state, not repeating procedure (new condition code %d)", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode));
+            }
+            return;
+        }
         if(LOG.isLoggable(Level.FINE)) {
             LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: handling cancel with condition code %d and fault entity ID %d", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode, faultEntityId));
         }
@@ -178,7 +186,8 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             EndOfFilePdu pdu = prepareEndOfFilePdu(finalChecksum);
             forwardPdu(pdu);
             // Send the EOF indication
-            if (getEntity().getMib().getLocalEntity().isEofSentIndicationRequired()) {
+            if (getEntity().getMib().getLocalEntity().isEofSentIndicationRequired() && !this.alreadySentEoFforCancelled) {
+                this.alreadySentEoFforCancelled = true;
                 getEntity().notifyIndication(new EofSentIndication(getTransactionId()));
             }
         } catch (UtLayerException e) {
