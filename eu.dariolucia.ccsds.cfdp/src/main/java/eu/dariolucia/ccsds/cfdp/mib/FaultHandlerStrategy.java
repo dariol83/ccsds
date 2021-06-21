@@ -61,4 +61,12 @@ public class FaultHandlerStrategy {
         this.strategy = strategy;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "FaultHandlerStrategy{" +
+                "condition=" + condition +
+                ", strategy=" + strategy +
+                '}';
+    }
 }
