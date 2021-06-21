@@ -342,7 +342,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         // If this is the first PDU ever, then it means that the metadata PDU got lost but still allocates the reconstruction map
         if(this.fileReconstructionMap == null) {
             this.fileReconstructionMap = new TreeMap<>();
-            if(this.metadataPdu == null && getRemoteDestination().isImmediateNakModeEnabled()) {
+            if(this.metadataPdu == null && getRemoteDestination().isImmediateNakModeEnabled() && isAcknowledged()) {
                 sendMetadataNak();
             }
         }
@@ -869,10 +869,12 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     private void handleResumeActions(boolean sendNotification) {
         // 4.6.7.3.1 On receipt of a Resume.request primitive, the receiving CFDP entity shall
         // a) resume transmission of NAK PDUs
-        restartNakComputation();
-        startNakTimer();
+        if(isAcknowledged()) {
+            restartNakComputation(); // Only if acknowledged
+            startNakTimer(); // Only if acknowledged
+        }
         // b) resume any suspended transmission of Keep Alive PDUs
-        startKeepAliveSendingTimer();
+        startKeepAliveSendingTimer(); // Only if acknowledged: handled inside the method
         // c) issue a Resumed.indication.
         if(sendNotification) {
             getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.receivedContiguousFileBytes));
@@ -904,13 +906,18 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             // No NAK timer defined
             return;
         }
-        this.nakTimer = new TimerTask() {
+        this.nakTimer = createNakTimerTask();
+        schedule(this.nakTimer, getRemoteDestination().getNakTimerInterval(), false);
+    }
+
+    private TimerTask createNakTimerTask() {
+        return new TimerTask() {
             @Override
             public void run() {
                 handle(() -> {
-                    if(IncomingCfdpTransaction.this.nakTimer != null) {
+                    if (IncomingCfdpTransaction.this.nakTimer == this) {
                         ++nakTimerCount;
-                        if(fileCompleted) {
+                        if (fileCompleted) {
                             // Timer expired but file completed in the meantime... Should this ever happen?
                             return;
                         }
@@ -921,9 +928,13 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                         // NOTE – A typical implementation of NAK activity limit is a limit on the number of
                         // successive times the NAK timer is allowed to expire without intervening
                         // reception of file data and/or metadata that had not previously been received.
-                        if(nakTimerCount < getRemoteDestination().getNakTimerExpirationLimit()) {
+                        if (nakTimerCount < getRemoteDestination().getNakTimerExpirationLimit()) {
+                            if(LOG.isLoggable(Level.WARNING)) {
+                                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: NAK timer expired, count %d  ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), nakTimerCount));
+                            }
                             handleNakComputation(false);
-                            schedule(nakTimer, getRemoteDestination().getNakTimerInterval(), false);
+                            IncomingCfdpTransaction.this.nakTimer = createNakTimerTask();
+                            schedule(IncomingCfdpTransaction.this.nakTimer, getRemoteDestination().getNakTimerInterval(), false);
                         } else {
                             try {
                                 fault(FileDirectivePdu.CC_NAK_LIMIT_REACHED, getLocalEntityId());
@@ -935,10 +946,12 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 });
             }
         };
-        schedule(this.nakTimer, getRemoteDestination().getNakTimerInterval(), false);
     }
 
     private void stopNakComputation() {
+        if(LOG.isLoggable(Level.FINEST)) {
+            LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: stopping NAK computation timer", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+        }
         if(this.nakComputationTimer != null) {
             this.nakComputationTimer.cancel();
             this.nakComputationTimer = null;
@@ -946,6 +959,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     private void restartNakComputation() {
+        if(LOG.isLoggable(Level.FINEST)) {
+            LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: restarting NAK computation timer, interval %d ms", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), getRemoteDestination().getNakRecomputationInterval()));
+        }
         if(this.nakComputationTimer != null) {
             this.nakComputationTimer.cancel();
             this.nakComputationTimer = null;
@@ -956,6 +972,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 final TimerTask expiredTimer = this;
                 handle(() -> {
                     if (IncomingCfdpTransaction.this.nakComputationTimer == expiredTimer) {
+                        if(LOG.isLoggable(Level.INFO)) {
+                            LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: NAK computation timer expired", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+                        }
                         handleNakComputation(false);
                     }
                 });

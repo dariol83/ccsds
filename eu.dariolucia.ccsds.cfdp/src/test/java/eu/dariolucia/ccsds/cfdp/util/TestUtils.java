@@ -89,4 +89,16 @@ public class TestUtils {
             return true;
         }
     }
+
+    public static ICfdpEntity createTcpEntityEnhanced(String mibFile, int port, UtLayerTxPduSwapperDecorator.TriConsumer dispatchRule, Function<CfdpPdu, Boolean>... discardingRules) throws IOException, UtLayerException {
+        InputStream in = TestUtils.class.getClassLoader().getResourceAsStream(mibFile);
+        Mib conf1File = Mib.load(in);
+        File fs1Folder = Files.createTempDirectory("cfdp").toFile();
+        FilesystemBasedFilestore fs1 = new FilesystemBasedFilestore(fs1Folder);
+        TcpLayer tcpLayer = new TcpLayer(conf1File, port);
+        tcpLayer.activate();
+        // Add UT Layer decorator
+        UtLayerTxPduSwapperDecorator decorator = new UtLayerTxPduSwapperDecorator(new UtLayerTxPduDecorator(tcpLayer, discardingRules), dispatchRule);
+        return ICfdpEntity.create(conf1File, fs1, decorator);
+    }
 }

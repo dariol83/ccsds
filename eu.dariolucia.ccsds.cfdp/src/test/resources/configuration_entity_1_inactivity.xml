@@ -23,7 +23,7 @@
                   suspended-indication="true"
                   resumed-indication="true">
         <fault-handlers>
-            <fault-handler condition="1" strategy="ABANDON" /> <!-- CC_POS_ACK_LIMIT_REACHED -->
+            <fault-handler condition="1" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_POS_ACK_LIMIT_REACHED -->
             <fault-handler condition="2" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_KEEPALIVE_LIMIT_REACHED -->
             <fault-handler condition="3" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INVALID_TX_MODE -->
             <fault-handler condition="4" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILESTORE_REJECTION -->
@@ -39,7 +39,7 @@
     <remote-entities>
         <remote-entity id="2"
                        version="1"
-                       positive-ack-timer-interval="10000"
+                       positive-ack-timer-interval="8000"
                        nak-timer-interval="100000"
                        keep-alive-interval="30000"
                        immediate-nak-mode="true"
