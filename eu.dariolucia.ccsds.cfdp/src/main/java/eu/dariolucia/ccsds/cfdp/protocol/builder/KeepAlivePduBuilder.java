@@ -65,4 +65,8 @@ public class KeepAlivePduBuilder extends CfdpPduBuilder<KeepAlivePdu, KeepAliveP
     protected KeepAlivePdu buildObject(byte[] pdu) {
         return new KeepAlivePdu(pdu);
     }
+
+    public long getProgress() {
+        return progress;
+    }
 }

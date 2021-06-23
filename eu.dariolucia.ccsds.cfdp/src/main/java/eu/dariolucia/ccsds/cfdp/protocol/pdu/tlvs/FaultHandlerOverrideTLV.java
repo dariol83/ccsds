@@ -18,6 +18,8 @@ package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
 
+import java.nio.ByteBuffer;
+
 public class FaultHandlerOverrideTLV implements TLV {
 
     public static final int TLV_TYPE = 0x04;
@@ -45,7 +47,7 @@ public class FaultHandlerOverrideTLV implements TLV {
                 case ISSUE_NOTICE_OF_CANCELLATION: return FaultHandlerStrategy.Action.NOTICE_OF_CANCELLATION;
                 case ISSUE_NOTICE_OF_SUSPENSION: return FaultHandlerStrategy.Action.NOTICE_OF_SUSPENSION;
                 case IGNORE_ERROR: return FaultHandlerStrategy.Action.NO_ACTION;
-                default: return null;
+                default: throw new Error("Fault strategy action " + this + " not recognized. Software problem."); // NOSONAR this is my way of dealing with potentially catastrophic errors
             }
         }
     }
@@ -90,7 +92,19 @@ public class FaultHandlerOverrideTLV implements TLV {
 
     @Override
     public byte[] encode(boolean withTypeLength) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        ByteBuffer bb;
+        if(withTypeLength) {
+            bb = ByteBuffer.allocate(2 + this.encodedLength);
+            bb.put((byte) TLV_TYPE);
+            bb.put((byte) (this.encodedLength & 0xFF));
+        } else {
+            bb = ByteBuffer.allocate(this.encodedLength);
+        }
+        byte tmp = getConditionCode();
+        tmp <<= 4;
+        tmp |= (byte) getHandlerCode().ordinal();
+        bb.put(tmp);
+        return bb.array();
     }
 
     @Override

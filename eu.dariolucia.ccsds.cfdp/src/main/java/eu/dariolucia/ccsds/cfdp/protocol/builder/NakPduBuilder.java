@@ -70,16 +70,6 @@ public class NakPduBuilder extends CfdpPduBuilder<NakPdu, NakPduBuilder> {
     }
 
     /**
-     * Clear all currently added segment requests.
-     *
-     * @return this
-     */
-    public NakPduBuilder clearSegmentRequests() {
-        this.segmentRequests.clear();
-        return this;
-    }
-
-    /**
      * Set the end of scope.
      *
      * @param endOfScope the end of the scope (offset in bytes)

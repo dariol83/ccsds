@@ -72,4 +72,12 @@ public class PromptPduBuilder extends CfdpPduBuilder<PromptPdu, PromptPduBuilder
     protected PromptPdu buildObject(byte[] pdu) {
         return new PromptPdu(pdu);
     }
+
+    public boolean isNakResponse() {
+        return nakResponseRequired;
+    }
+
+    public boolean isKeepAliveResponse() {
+        return !nakResponseRequired;
+    }
 }

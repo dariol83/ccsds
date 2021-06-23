@@ -43,7 +43,7 @@ public class FileDataPduBuilder extends CfdpPduBuilder<FileDataPdu, FileDataPduB
      */
     public FileDataPduBuilder() {
         setType(CfdpPdu.PduType.FILE_DATA);
-        setRecordContinuationState(FileDataPdu.RCS_NOT_PRESENT);
+        setRecordContinuationState(FileDataPdu.RCS_NO_START_NO_END);
         setSegmentMetadata(null);
     }
 

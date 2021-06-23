@@ -17,21 +17,20 @@
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDataPdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.KeepAlivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.PromptPdu;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class FileDataPduBuilderTest {
+class KeepAlivePduBuilderTest {
 
     @Test
-    public void testFileDataPduBuilding() {
-        FileDataPduBuilder builder = new FileDataPduBuilder()
-                .setDirection(CfdpPdu.Direction.TOWARD_FILE_RECEIVER)
+    public void testKeepAlivePduBuilding() {
+        KeepAlivePduBuilder builder = new KeepAlivePduBuilder()
+                .setDirection(CfdpPdu.Direction.TOWARD_FILE_SENDER)
                 .setLargeFile(false)
-                .setSegmentMetadataPresent(true)
+                .setSegmentMetadataPresent(false)
                 .setSegmentationControlPreserved(false)
                 .setAcknowledged(true)
                 .setCrcPresent(false)
@@ -39,34 +38,29 @@ class FileDataPduBuilderTest {
                 .setDestinationEntityId(0x00A2A1A3)
                 .setSourceEntityId(0x00F11204)
                 .setTransactionSequenceNumber(123456, 3)
-                .setOffset(14)
-                .setFileData(new byte[] {14, 15, 16})
-                .setSegmentMetadata(new byte[] { 1, 2});
+                .setProgress(234);
 
-        FileDataPdu pdu = builder.build();
+        KeepAlivePdu pdu = builder.build();
 
         // PDU check
         assertEquals(0b001, pdu.getVersion());
         assertFalse(pdu.isLargeFile());
+        assertFalse(pdu.isSegmentMetadata());
         assertFalse(pdu.isSegmentationControlPreserved());
         assertFalse(pdu.isCrcPresent());
         assertTrue(pdu.isAcknowledged());
-        assertEquals(10, pdu.getDataFieldLength());
+        assertEquals(5, pdu.getDataFieldLength());
         assertEquals(4, pdu.getEntityIdLength());
         assertEquals(3, pdu.getTransactionSequenceNumberLength());
         assertEquals(0x0000000000F11204L, pdu.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(123456L, pdu.getTransactionSequenceNumber());
-        assertEquals(FileDataPdu.RCS_NO_START_NO_END, pdu.getRecordContinuationState());
-        assertEquals(2, pdu.getSegmentMetadataLength());
-        assertEquals(14, pdu.getOffset());
-        assertArrayEquals(new byte[] {14, 15, 16}, pdu.getFileData());
-        assertTrue(pdu.isSegmentMetadata());
-        assertArrayEquals(new byte[] { 1, 2}, pdu.getSegmentMetadata());
+        assertEquals(234, pdu.getProgress());
 
         // Builder check
         assertEquals(0b001, builder.getVersion());
         assertFalse(builder.isLargeFile());
+        assertFalse(builder.isSegmentMetadataPresent());
         assertFalse(builder.isSegmentationControlPreserved());
         assertFalse(builder.isCrcPresent());
         assertTrue(builder.isAcknowledged());
@@ -75,11 +69,6 @@ class FileDataPduBuilderTest {
         assertEquals(0x0000000000F11204L, builder.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, builder.getDestinationEntityId());
         assertEquals(123456L, builder.getTransactionSequenceNumber());
-        assertEquals(FileDataPdu.RCS_NO_START_NO_END, builder.getRecordContinuationState());
-        assertEquals(2, builder.getSegmentMetadataLength());
-        assertEquals(14, builder.getOffset());
-        assertArrayEquals(new byte[] {14, 15, 16}, builder.getFileData());
-        assertTrue(builder.isSegmentMetadataPresent());
-        assertArrayEquals(new byte[] { 1, 2}, builder.getSegmentMetadata());
+        assertEquals(234, builder.getProgress());
     }
 }

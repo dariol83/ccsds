@@ -105,16 +105,6 @@ public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduB
         return this;
     }
 
-    /**
-     * Clear all currently added filestore response TLVs.
-     *
-     * @return this
-     */
-    public FinishedPduBuilder clearFilestoreResponses() {
-        this.filestoreResponses.clear();
-        return this;
-    }
-
     @Override
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;

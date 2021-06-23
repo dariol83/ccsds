@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class MessageToUserTLV implements TLV {
@@ -33,7 +34,7 @@ public class MessageToUserTLV implements TLV {
 
     public MessageToUserTLV(byte[] pdu, int offset, int len) {
         // Starting from offset, assume that there is an encoded message with length len
-        this.data = len > 0 ? Arrays.copyOfRange(pdu, offset, len) : null;
+        this.data = len > 0 ? Arrays.copyOfRange(pdu, offset, offset + len) : null;
         // Encoded length
         this.encodedLength = this.data == null ? 0 : this.data.length;
     }
@@ -54,7 +55,17 @@ public class MessageToUserTLV implements TLV {
 
     @Override
     public byte[] encode(boolean withTypeLength) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        if(withTypeLength) {
+            ByteBuffer bb = ByteBuffer.allocate(2 + this.encodedLength);
+            bb.put((byte) TLV_TYPE);
+            bb.put((byte) (this.encodedLength & 0xFF));
+            if(encodedLength > 0) {
+                bb.put(data);
+            }
+            return bb.array();
+        } else {
+            return data;
+        }
     }
 
     @Override

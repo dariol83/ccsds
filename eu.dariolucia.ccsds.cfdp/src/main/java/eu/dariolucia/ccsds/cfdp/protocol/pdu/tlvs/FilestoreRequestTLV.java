@@ -16,9 +16,11 @@
 
 package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
+import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 
+import java.nio.ByteBuffer;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -62,23 +64,13 @@ public class FilestoreRequestTLV implements TLV {
         this.actionCode = ActionCode.values()[(data[offset] & 0xF0) >>> 4];
         offset += 1;
         // First file name
-        int len = Byte.toUnsignedInt(data[offset]);
-        offset += 1;
-        if(len > 0) {
-            this.firstFileName = new String(data, offset, len);
-            offset += len;
-        } else {
-            this.firstFileName = null;
-        }
+        String name1 = BytesUtil.readLVString(data, offset);
+        offset += (name1.isEmpty()) ? 1 : 1 + name1.length();
+        this.firstFileName = name1.isEmpty() ? null : name1;
         // Second file name
-        len = Byte.toUnsignedInt(data[offset]);
-        offset += 1;
-        if(len > 0) {
-            this.secondFileName = new String(data, offset, len);
-            offset += len;
-        } else {
-            this.secondFileName = null;
-        }
+        String name2 = BytesUtil.readLVString(data, offset);
+        offset += (name1.isEmpty()) ? 1 : 1 + name2.length();
+        this.secondFileName = name2.isEmpty() ? null : name2;
         // Encoded length
         this.encodedLength = offset - originalOffset;
     }
@@ -107,7 +99,18 @@ public class FilestoreRequestTLV implements TLV {
 
     @Override
     public byte[] encode(boolean withTypeLength) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        ByteBuffer bb;
+        if(withTypeLength) {
+            bb = ByteBuffer.allocate(2 + this.encodedLength);
+            bb.put((byte) TLV_TYPE);
+            bb.put((byte) (this.encodedLength & 0xFF));
+        } else {
+            bb = ByteBuffer.allocate(this.encodedLength);
+        }
+        bb.put((byte)((getActionCode().ordinal() << 4) & 0xFF));
+        BytesUtil.writeLVString(bb, getFirstFileName());
+        BytesUtil.writeLVString(bb, getSecondFileName());
+        return bb.array();
     }
 
     @Override

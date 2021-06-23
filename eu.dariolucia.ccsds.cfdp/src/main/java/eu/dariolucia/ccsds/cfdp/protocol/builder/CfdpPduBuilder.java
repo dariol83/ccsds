@@ -228,7 +228,7 @@ public abstract class CfdpPduBuilder<T extends CfdpPdu, K extends CfdpPduBuilder
 
             // If CRC is enabled, compute the CRC and write the result in the last two bytes
             if (this.crcPresent) {
-                short crc = Crc16Algorithm.getCrc16(cfdpPdu, 0, len - 2);
+                short crc = Crc16Algorithm.getCrc16(cfdpPdu, 0, cfdpPdu.length - 2);
                 ByteBuffer.wrap(cfdpPdu, cfdpPdu.length - 2, 2).putShort(crc);
             }
 

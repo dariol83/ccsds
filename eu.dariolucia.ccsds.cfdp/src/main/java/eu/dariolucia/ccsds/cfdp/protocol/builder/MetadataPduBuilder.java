@@ -25,6 +25,7 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -135,16 +136,6 @@ public class MetadataPduBuilder extends CfdpPduBuilder<MetadataPdu, MetadataPduB
         }
     }
 
-    /**
-     * Clear all currently added options.
-     *
-     * @return this
-     */
-    public MetadataPduBuilder clearOptions() {
-        this.options.clear();
-        return this;
-    }
-
     @Override
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;
@@ -181,5 +172,29 @@ public class MetadataPduBuilder extends CfdpPduBuilder<MetadataPdu, MetadataPduB
     @Override
     protected MetadataPdu buildObject(byte[] pdu) {
         return new MetadataPdu(pdu);
+    }
+
+    public boolean isClosureRequested() {
+        return closureRequested;
+    }
+
+    public byte getChecksumType() {
+        return checksumType;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public String getSourceFileName() {
+        return sourceFileName;
+    }
+
+    public String getDestinationFileName() {
+        return destinationFileName;
+    }
+
+    public List<TLV> getOptions() {
+        return Collections.unmodifiableList(options);
     }
 }

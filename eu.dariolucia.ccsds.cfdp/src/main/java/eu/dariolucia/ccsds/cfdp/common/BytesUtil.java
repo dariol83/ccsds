@@ -109,7 +109,7 @@ public class BytesUtil {
         }
         if(toWrite != null && toWrite.length() > 0) {
             bb.put((byte) (toWrite.length() & 0xFF));
-            bb.put(toWrite.getBytes(StandardCharsets.ISO_8859_1));
+            bb.put(toWrite.getBytes(StandardCharsets.US_ASCII));
         } else {
             bb.put((byte) 0);
         }
@@ -127,7 +127,7 @@ public class BytesUtil {
         int len = Byte.toUnsignedInt(data[offset]);
         offset += 1;
         if(len > 0) {
-            return new String(data, offset, len, StandardCharsets.ISO_8859_1);
+            return new String(data, offset, len, StandardCharsets.US_ASCII);
         } else {
             return "";
         }
