@@ -76,6 +76,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     // The last Finished Pdu, once sent while pending acknowledgement
     private FinishedPdu finishedPdu;
+    // Inform the transaction if a NAK timer was started by the reception of a EOF PDU. In such case, a resume operation
+    // will resume also the NAK timer.
+    private boolean nakTimerOnEofActivated;
 
 
     public IncomingCfdpTransaction(CfdpPdu pdu, CfdpEntity entity) {
@@ -607,6 +610,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                     // shall determine whether or not any of the transaction’s file data or metadata have yet to
                     // be received. If so, the receiving entity shall issue a NAK sequence whose scope begins
                     // at zero and extends through the entire length of the file, and the timer shall be reset.
+                    this.nakTimerOnEofActivated = true;
                     startNakTimer();
                 }
             } else {
@@ -871,7 +875,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         // a) resume transmission of NAK PDUs
         if(isAcknowledged()) {
             restartNakComputation(); // Only if acknowledged
-            startNakTimer(); // Only if acknowledged
+            if(this.nakTimerOnEofActivated) {
+                startNakTimer(); // Only if acknowledged and already started by EOF
+            }
         }
         // b) resume any suspended transmission of Keep Alive PDUs
         startKeepAliveSendingTimer(); // Only if acknowledged: handled inside the method
