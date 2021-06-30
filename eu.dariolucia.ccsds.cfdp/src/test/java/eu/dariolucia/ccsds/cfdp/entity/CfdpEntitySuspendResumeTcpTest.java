@@ -43,8 +43,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CfdpEntitySuspendResumeTcpTest {
 
-    // TODO: suspend/resume also on reception side (to be added to existing test)
-
     private static final Logger LOG = Logger.getLogger(CfdpEntitySuspendResumeTcpTest.class.getName());
 
     @BeforeEach
@@ -110,12 +108,15 @@ public class CfdpEntitySuspendResumeTcpTest {
             e1.request(new SuspendRequest(65537));
             // Activate again the sending and wait a bit
             suspendSem.release();
-            Thread.sleep(4000);
+            Thread.sleep(3000);
+            e2.request(new SuspendRequest(65537));
+            Thread.sleep(3000);
             // Verify that the receiving end got only 3 FileDataPdus and it is not receiving more
             s2.print();
-            // Depending on the suspend/release timing between the two threads, you can have that the sending thread can send 4 FileDataPdu or 3 FileDataPdu,
-            // before the suspend request kicks in
-            assertTrue(s2.getIndicationListSize() >= 4 && s2.getIndicationListSize() <= 5 );
+            // Depending on the suspend/release timing between the two threads, you can have that the sending thread can
+            // send 4 FileDataPdu or 3 FileDataPdu, before the suspend request kicks in
+            LOG.info("s2 size: " + s2.getIndicationListSize());
+            assertTrue(s2.getIndicationListSize() >= 5 && s2.getIndicationListSize() <= 6 );
             MetadataRecvIndication metaInd = s2.assertPresentAt(0, MetadataRecvIndication.class);
             assertEquals(1L, metaInd.getSourceEntityId());
             assertEquals(1024 * 10, metaInd.getFileSize());
@@ -123,11 +124,14 @@ public class CfdpEntitySuspendResumeTcpTest {
             s2.assertPresentAt(1, FileSegmentRecvIndication.class);
             s2.assertPresentAt(2, FileSegmentRecvIndication.class);
             s2.assertPresentAt(3, FileSegmentRecvIndication.class);
+            s2.assertPresentAt(s2.getIndicationListSize() - 1, SuspendedIndication.class);
             // Verify that the sending side sent a SuspendIndication
             s1.print();
             s1.assertPresentAt(0, TransactionIndication.class);
             s1.assertPresentAt(1, SuspendedIndication.class);
             // Resume the transaction
+            e2.request(new ResumeRequest(65537));
+            Thread.sleep(2000);
             e1.request(new ResumeRequest(65537));
             // Wait for the transaction to be disposed on the two entities
             s1.waitForIndication(TransactionDisposedIndication.class, 10000);
@@ -166,18 +170,33 @@ public class CfdpEntitySuspendResumeTcpTest {
             s2.assertPresentAt(1, FileSegmentRecvIndication.class);
             s2.assertPresentAt(2, FileSegmentRecvIndication.class);
             s2.assertPresentAt(3, FileSegmentRecvIndication.class);
-            s2.assertPresentAt(4, FileSegmentRecvIndication.class);
-            s2.assertPresentAt(5, FileSegmentRecvIndication.class);
-            s2.assertPresentAt(6, FileSegmentRecvIndication.class);
-            s2.assertPresentAt(7, FileSegmentRecvIndication.class);
-            s2.assertPresentAt(8, FileSegmentRecvIndication.class);
-            s2.assertPresentAt(9, FileSegmentRecvIndication.class);
-            s2.assertPresentAt(10, FileSegmentRecvIndication.class);
-            s2.assertPresentAt(11, EofRecvIndication.class);
-            s2.assertPresentAt(12, TransactionFinishedIndication.class);
-            s2.assertPresentAt(13, TransactionDisposedIndication.class);
-            s2.assertPresentAt(14, EntityDisposedIndication.class);
-
+            int pos = s2.assertPresentAfter(3, SuspendedIndication.class);
+            s2.assertPresentAt(pos + 1, ResumedIndication.class);
+            if(pos == 4) {
+                s2.assertPresentAt(6, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(7, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(8, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(9, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(10, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(11, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(12, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(13, EofRecvIndication.class);
+                s2.assertPresentAt(14, TransactionFinishedIndication.class);
+                s2.assertPresentAt(15, TransactionDisposedIndication.class);
+                s2.assertPresentAt(16, EntityDisposedIndication.class);
+            } else { // pos == 5
+                s2.assertPresentAt(4, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(7, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(8, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(9, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(10, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(11, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(12, FileSegmentRecvIndication.class);
+                s2.assertPresentAt(13, EofRecvIndication.class);
+                s2.assertPresentAt(14, TransactionFinishedIndication.class);
+                s2.assertPresentAt(15, TransactionDisposedIndication.class);
+                s2.assertPresentAt(16, EntityDisposedIndication.class);
+            }
             // Assert TX PDUs: sender
             UtLayerTxPduDecorator l1 = (UtLayerTxPduDecorator) e1.getUtLayerByName("TCP");
             List<CfdpPdu> txPdu1 = l1.getTxPdus();

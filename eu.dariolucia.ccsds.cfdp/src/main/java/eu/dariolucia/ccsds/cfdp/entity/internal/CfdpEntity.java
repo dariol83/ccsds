@@ -416,8 +416,8 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         // This entity got this PDU, so if this entity knows about the related transaction, it should process the PDU
         CfdpTransaction transaction = this.id2transaction.get(pdu.getTransactionSequenceNumber());
         if(transaction != null) {
-            if(transaction.getCurrentState() == CfdpTransactionState.RUNNING || transaction.getCurrentState() == CfdpTransactionState.SUSPENDED) {
-                // 1) the entity knows the transaction and the transaction is running -> forward
+            if(!transaction.isDisposed()) {
+                // 1) the entity knows the transaction and the transaction is not disposed -> forward
                 transaction.indication(pdu);
             } else if(pdu.isAcknowledged() && (pdu instanceof EndOfFilePdu || pdu instanceof FinishedPdu)) {
                 // 2) the entity knows the transaction and it is a EOF in Acknowledged mode, or a Finished in Acknowledged mode,

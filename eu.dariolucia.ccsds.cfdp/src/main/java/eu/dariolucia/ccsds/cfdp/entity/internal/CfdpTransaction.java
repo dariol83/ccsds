@@ -283,6 +283,10 @@ public abstract class CfdpTransaction {
         handle(this::handleDispose);
     }
 
+    public boolean isDisposed() {
+        return this.confiner.isShutdown();
+    }
+
     protected void handleDispose() {
         if(LOG.isLoggable(Level.INFO)) {
             LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: handling dispose", getLocalEntityId(), transactionId, getRemoteDestination().getRemoteEntityId()));

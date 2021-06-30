@@ -80,6 +80,7 @@ class MibCoverageTest {
         assertNotNull(m.getRemoteEntityById(2));
         assertNull(m.getRemoteEntityById(1));
         assertNull(m.getRemoteEntityById(-1));
+        assertEquals(1, m.getRemoteEntityById(2).getProtocolVersion());
 
         Path tempFile = Files.createTempFile("cfdp_mib", ".xml");
         assertDoesNotThrow(() -> Mib.save(m, new FileOutputStream(tempFile.toFile())));

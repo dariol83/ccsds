@@ -95,17 +95,17 @@ public class CfdpTransactionStatus {
     @Override
     public String toString() {
         return "CfdpTransactionStatus{" +
-                "time=" + time +
-                ", managingEntity=" + managingEntity +
-                ", transactionId=" + transactionId +
-                ", sourceEntityId=" + sourceEntityId +
-                ", destinationEntityId=" + destinationEntityId +
-                ", isDestination=" + isDestination +
-                ", lastConditionCode=" + lastConditionCode +
-                ", lastFaultEntity=" + lastFaultEntity +
-                ", cfdpTransactionState=" + cfdpTransactionState +
-                ", progress=" + progress +
-                ", totalFileSize=" + totalFileSize +
+                "time=" + getTime() +
+                ", managingEntity=" + getManagingEntity() +
+                ", transactionId=" + getTransactionId() +
+                ", sourceEntityId=" + getSourceEntityId() +
+                ", destinationEntityId=" + getDestinationEntityId() +
+                ", isDestination=" + isDestination() +
+                ", lastConditionCode=" + getLastConditionCode() +
+                ", lastFaultEntity=" + getLastFaultEntity() +
+                ", cfdpTransactionState=" + getCfdpTransactionState() +
+                ", progress=" + getProgress() +
+                ", totalFileSize=" + getTotalFileSize() +
                 '}';
     }
 }

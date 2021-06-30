@@ -61,7 +61,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     private boolean metadataPduSent;
     // EOF PDU once sent
     private EndOfFilePdu eofPdu;
-    // Flag to indicate that PDU transmission can go on and the notice of completion was not called
+    // Flag to indicate that PDU transmission of file segments and metadata can go on and the notice of completion was not called
     private boolean txRunning;
     // Flag to indicated that activate() was called
     private boolean active;
@@ -362,6 +362,11 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
                 // Ack received
                 this.eofPdu = null;
                 stopPositiveAckTimer();
+                // At this stage, if I am in CANCELLED, I can dispose the transaction:
+                // in fact, according to 4.6.6.1, the receiving end is not supposed to send a Finished PDU
+                if(isCancelled()) {
+                    handleDispose();
+                }
             }
         } else {
             if(LOG.isLoggable(Level.WARNING)) {
@@ -708,7 +713,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     }
 
     private void forwardPdu(CfdpPdu pdu, boolean retransmission) throws UtLayerException {
-        if(!this.txRunning) {
+        if(!this.txRunning && (pdu instanceof MetadataPdu || pdu instanceof FileDataPdu)) {
             // Prevent sending PDUs
             if(LOG.isLoggable(Level.FINE)) {
                 LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), %s to UT layer %s discarded, TX not enabled", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu, getTransmissionLayer().getName()));

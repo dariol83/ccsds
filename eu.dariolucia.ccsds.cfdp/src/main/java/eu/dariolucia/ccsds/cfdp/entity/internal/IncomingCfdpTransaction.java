@@ -487,6 +487,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         // Notice of Completion (Canceled).
         if(pdu.getConditionCode() == FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED) {
             this.eofPdu = pdu;
+            setLastConditionCode(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, getRemoteDestination().getRemoteEntityId());
             handleNoticeOfCompletion(false);
             handleDispose();
             return;
@@ -894,8 +895,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         }
         // b) resume any suspended transmission of Keep Alive PDUs
         startKeepAliveSendingTimer(); // Only if acknowledged: handled inside the method
-        // c) issue a Resumed.indication.
-        if(sendNotification) {
+        // c) issue a Resumed.indication. // XXX: this clause conflicts with the MIB property:
+        // Resumed.indication required when acting as receiving entity (Table 8-1)
+        if(sendNotification && getEntity().getMib().getLocalEntity().isResumedIndicationRequired()) {
             getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.receivedContiguousFileBytes));
         }
         // XXX: What about the transaction inactivity timer? I think it should be started
