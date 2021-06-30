@@ -18,6 +18,11 @@ package eu.dariolucia.ccsds.cfdp.mib;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedList;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class MibCoverageTest {
 
     @Test
-    public void testMibCoverage() {
+    public void testMibCoverage() throws IOException {
         Mib m = new Mib();
         m.setLocalEntity(new LocalEntityConfigurationInformation());
         m.setRemoteEntities(new LinkedList<>());
@@ -71,6 +76,15 @@ class MibCoverageTest {
 
         assertEquals(m.getRemoteEntities().get(0), m.getRemoteEntityById(2));
         assertNotNull(m.toString());
+
+        assertNotNull(m.getRemoteEntityById(2));
+        assertNull(m.getRemoteEntityById(1));
+        assertNull(m.getRemoteEntityById(-1));
+
+        Path tempFile = Files.createTempFile("cfdp_mib", ".xml");
+        assertDoesNotThrow(() -> Mib.save(m, new FileOutputStream(tempFile.toFile())));
+        Mib m2 = Mib.load(new FileInputStream(tempFile.toFile()));
+        assertEquals(m.getLocalEntity().getLocalEntityId(), m2.getLocalEntity().getLocalEntityId());
     }
 
 }

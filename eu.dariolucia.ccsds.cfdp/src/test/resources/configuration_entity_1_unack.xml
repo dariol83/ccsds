@@ -15,7 +15,7 @@
   -->
 
 <ns1:mib xmlns:ns1="http://dariolucia.eu/ccsds/cfdp/mib">
-    <local-entity id="2"
+    <local-entity id="1"
                   EOF-sent-indication="true"
                   EOF-recv-indication="true"
                   file-segment-recv-indication="true"
@@ -37,16 +37,16 @@
         </fault-handlers>
     </local-entity>
     <remote-entities>
-        <remote-entity id="1"
+        <remote-entity id="2"
                        version="1"
-                       positive-ack-timer-interval="3000"
-                       nak-timer-interval="3000"
+                       positive-ack-timer-interval="2000"
+                       nak-timer-interval="100000"
                        keep-alive-interval="30000"
                        immediate-nak-mode="true"
                        default-tx-mode-acknowledged="true"
                        transaction-closure-requested="true"
-                       check-interval="3000"
-                       check-interval-expiration-limit="1"
+                       check-interval="10000"
+                       check-interval-expiration-limit="5"
                        default-checksum="0"
                        retain-incomplete-files-on-cancel="true"
                        crc-required="true"
@@ -54,10 +54,10 @@
                        keep-alive-limit="-1"
                        positive-ack-expiration-limit="3"
                        nak-expiration-limit="4"
-                       transaction-inactivity-limit="6000"
+                       transaction-inactivity-limit="3600000"
                        nak-recomputation-interval="60000">
             <ut-layer>TCP</ut-layer>
-            <address>tcp:127.0.0.1:23001</address>
+            <address>tcp:127.0.0.1:23002</address>
         </remote-entity>
     </remote-entities>
 </ns1:mib>

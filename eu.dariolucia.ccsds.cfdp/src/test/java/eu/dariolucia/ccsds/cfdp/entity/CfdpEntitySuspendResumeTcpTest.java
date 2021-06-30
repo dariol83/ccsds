@@ -43,11 +43,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CfdpEntitySuspendResumeTcpTest {
 
+    // TODO: suspend/resume also on reception side (to be added to existing test)
+
     private static final Logger LOG = Logger.getLogger(CfdpEntitySuspendResumeTcpTest.class.getName());
 
     @BeforeEach
     public void setup() {
-        Logger.getLogger("").setLevel(Level.ALL);
+        Logger.getLogger("").setLevel(Level.OFF);
+        Logger.getLogger("eu.dariolucia.ccsds.cfdp").setLevel(Level.ALL);
         for(Handler h : Logger.getLogger("").getHandlers()) {
             h.setLevel(Level.ALL);
         }

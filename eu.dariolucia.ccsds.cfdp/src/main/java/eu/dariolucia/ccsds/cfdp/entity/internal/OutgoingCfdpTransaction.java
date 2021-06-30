@@ -432,8 +432,8 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     }
 
     private void handleFinishedPdu(FinishedPdu pdu) {
-        if(LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: Finished PDU received - %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu));
+        if(LOG.isLoggable(Level.INFO)) {
+            LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: Finished PDU received - %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu));
         }
         this.finishedPdu = pdu;
         if(!isAcknowledged()) {
@@ -445,7 +445,13 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
                 this.transactionFinishCheckTimer.cancel();
                 this.transactionFinishCheckTimer = null;
             }
-            handleNoticeOfCompletion(deriveCompletedStatus(pdu));
+
+            boolean completed = deriveCompletedStatus(pdu);
+            if(!completed) {
+                // In case it is not completed, it means that the other side had a fault and you have to report it
+                setLastConditionCode(this.finishedPdu.getConditionCode(), getDestinationEntityId());
+            }
+            handleNoticeOfCompletion(completed);
             // Clean up the transaction resources
             handleDispose();
         } else {

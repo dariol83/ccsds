@@ -496,6 +496,10 @@ public abstract class CfdpTransaction {
         return lastFaultEntity;
     }
 
+    public Long getLastFaultEntityAsLong() {
+        return lastFaultEntity != null ? lastFaultEntity.getEntityId() : null;
+    }
+
     protected void setLastConditionCode(byte lastConditionCode, Long faultEntity) {
         this.lastConditionCode = lastConditionCode;
         if(faultEntity != null) {
@@ -511,7 +515,7 @@ public abstract class CfdpTransaction {
 
     protected CfdpTransactionStatus createStateObject() {
         return new CfdpTransactionStatus(Instant.now(), getEntity(), getTransactionId(), getSourceEntityId(), getDestinationEntityId(), getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId(),
-                getLastConditionCode(), getCurrentState(), getProgress(), getTotalFileSize());
+                getLastConditionCode(), getLastFaultEntityAsLong(), getCurrentState(), getProgress(), getTotalFileSize());
     }
 
     protected abstract long getSourceEntityId();

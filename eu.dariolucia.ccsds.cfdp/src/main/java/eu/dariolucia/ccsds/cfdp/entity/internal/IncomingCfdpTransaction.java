@@ -563,6 +563,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                     // b) Otherwise, a transaction-specific Check timer shall be started. The timer shall have
                     // an implementation-specific expiry period, and there shall be an implementation specific limit on
                     // the number of times the Check timer for any single transaction may expire.
+                    if(LOG.isLoggable(Level.INFO)) {
+                        LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: starting check limit timer: %d ms", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), getRemoteDestination().getCheckInterval()));
+                    }
                     this.transactionFinishCheckTimer = new TimerTask() {
                         @Override
                         public void run() {
@@ -764,9 +767,19 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                         LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: fail on Finished PDU transmission upon cancelling (unacknowledged): %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
                     }
                 }
-                // At this stage we should probably dispose the transaction
-                handleDispose();
             }
+            // At this stage we should probably dispose the transaction: if we do not do it here, the transaction inactivity timer will actually
+            // stay open (implementation-dependant).
+
+            // 4.10.1 For a particular transaction, if there is a cessation of PDU reception for a specified
+            // time period (the transaction inactivity limit), then an Inactivity fault condition shall be
+            // declared.
+            // NOTE – The 'cessation of PDU reception' that indicates inactivity is not limited to the
+            // cessation of File Data PDU reception at the receiving entity. The cessation of
+            // expected File Directive PDU reception (dependent upon the transaction's
+            // transmission mode) at either the sending or the receiving entity may likewise
+            // indicate inactivity. Detection of this condition is a local implementation matter.
+            handleDispose();
         }
     }
 
@@ -991,7 +1004,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     private void handleTransactionFinishedCheckTimerElapsed() {
         // This method can be called ONLY if the transaction is unacknowledged.
-
+        if(LOG.isLoggable(Level.WARNING)) {
+            LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: check limit timer elapsed ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+        }
         // When the timer expires, the receiving entity shall determine whether or not
         // file reception is now deemed complete. If so, the receiving entity shall issue a Notice
         // of Completion (Completed) and, if the Closure Requested flag in the transaction’s
@@ -1110,6 +1125,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     private FinishedPdu handleForwardingOfFinishedPdu() throws UtLayerException {
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: handling forwarding of Finished PDU ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+        }
         if(isRunning() || isCancelled()) { // This PDU must be forwarded even if it the transaction is cancelled
             this.finishedPdu = prepareFinishedPdu();
             forwardPdu(finishedPdu);
