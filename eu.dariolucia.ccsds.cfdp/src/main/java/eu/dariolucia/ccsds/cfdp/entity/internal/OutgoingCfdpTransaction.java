@@ -131,17 +131,21 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     }
 
     public void requestKeepAlive() {
-        if(LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: sending Keep-Alive Prompt PDU", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
-        }
-        sendPromptPdu(true);
+        handle(() -> {
+            if(LOG.isLoggable(Level.FINER)) {
+                LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: sending Keep-Alive Prompt PDU", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+            }
+            sendPromptPdu(true);
+        });
     }
 
     public void requestNak() {
-        if(LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: sending NAK Prompt PDU", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
-        }
-        sendPromptPdu(false);
+        handle(() -> {
+            if(LOG.isLoggable(Level.FINER)) {
+                LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: sending NAK Prompt PDU", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+            }
+            sendPromptPdu(false);
+        });
     }
 
     private void sendPromptPdu(boolean isKeepAlive) {
@@ -731,19 +735,22 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         this.pendingUtTransmissionPduList.add(pdu);
         // Send all PDUs you have to send, stop if you fail
         if(LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: sending %d pending PDUs to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), getTransmissionLayer().getName()));
+            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), sending %d pending PDUs to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), getTransmissionLayer().getName()));
         }
-        while(!pendingUtTransmissionPduList.isEmpty()) {
+        while(!this.pendingUtTransmissionPduList.isEmpty()) {
             CfdpPdu toSend = pendingUtTransmissionPduList.get(0);
             try {
                 if(LOG.isLoggable(Level.FINEST)) {
-                    LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: sending PDU %s to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), toSend, getTransmissionLayer().getName()));
+                    LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), pending %d, sending PDU %s to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), toSend, getTransmissionLayer().getName()));
                 }
                 getTransmissionLayer().request(toSend, getRemoteDestination().getRemoteEntityId());
+                if(LOG.isLoggable(Level.FINEST)) {
+                    LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), PDU %s sent, pending %d - 1", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), toSend, this.pendingUtTransmissionPduList.size()));
+                }
                 this.pendingUtTransmissionPduList.remove(0);
             } catch(UtLayerException e) {
                 if(LOG.isLoggable(Level.WARNING)) {
-                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: PDU rejected by UT layer %s: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName(), e.getMessage()), e);
+                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), PDU rejected by UT layer %s: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName(), e.getMessage()), e);
                 }
                 throw e;
             }

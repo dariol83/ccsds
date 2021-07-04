@@ -69,8 +69,8 @@ public class TransactionIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "TransactionIndication{" +
-                "transactionId=" + transactionId +
-                ", originatingRequest=" + originatingRequest +
+                "transactionId=" + getTransactionId() +
+                ", originatingRequest=" + getOriginatingRequest() +
                 '}';
     }
 }

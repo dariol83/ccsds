@@ -78,8 +78,8 @@ public class ReportIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "ReportIndication{" +
-                "transactionId=" + transactionId +
-                ", statusReport=" + statusReport +
+                "transactionId=" + getTransactionId() +
+                ", statusReport=" + getStatusReport() +
                 '}';
     }
 }

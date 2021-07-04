@@ -67,8 +67,8 @@ public class SuspendedIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "SuspendedIndication{" +
-                "transactionId=" + transactionId +
-                ", conditionCode=" + conditionCode +
+                "transactionId=" + getTransactionId() +
+                ", conditionCode=" + getConditionCode() +
                 '}';
     }
 }

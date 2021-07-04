@@ -60,7 +60,7 @@ public class EofSentIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "EofSentIndication{" +
-                "transactionId=" + transactionId +
+                "transactionId=" + getTransactionId() +
                 '}';
     }
 }

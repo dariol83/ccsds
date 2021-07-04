@@ -141,12 +141,12 @@ public class TransactionFinishedIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "TransactionFinishedIndication{" +
-                "transactionId=" + transactionId +
-                ", conditionCode=" + conditionCode +
-                ", fileStatus=" + fileStatus +
-                ", dataComplete=" + dataComplete +
+                "transactionId=" + getTransactionId() +
+                ", conditionCode=" + getConditionCode() +
+                ", fileStatus=" + getFileStatus() +
+                ", dataComplete=" + isDataComplete() +
                 ", filestoreResponses=" + filestoreResponses +
-                ", statusReport=" + statusReport +
+                ", statusReport=" + getStatusReport() +
                 '}';
     }
 }

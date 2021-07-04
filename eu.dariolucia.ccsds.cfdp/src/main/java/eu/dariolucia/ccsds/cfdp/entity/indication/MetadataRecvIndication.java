@@ -131,11 +131,11 @@ public class MetadataRecvIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "MetadataRecvIndication{" +
-                "transactionId=" + transactionId +
-                ", sourceEntityId=" + sourceEntityId +
-                ", fileSize=" + fileSize +
-                ", sourceFileName='" + sourceFileName + '\'' +
-                ", destinationFileName='" + destinationFileName + '\'' +
+                "transactionId=" + getTransactionId() +
+                ", sourceEntityId=" + getSourceEntityId() +
+                ", fileSize=" + getFileSize() +
+                ", sourceFileName='" + getSourceFileName() + '\'' +
+                ", destinationFileName='" + getDestinationFileName() + '\'' +
                 ", messagesToUser=" + messagesToUser +
                 '}';
     }

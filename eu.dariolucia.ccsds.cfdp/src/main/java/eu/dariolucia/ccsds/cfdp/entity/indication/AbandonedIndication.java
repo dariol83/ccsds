@@ -83,9 +83,9 @@ public class AbandonedIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "AbandonedIndication{" +
-                "transactionId=" + transactionId +
-                ", conditionCode=" + conditionCode +
-                ", progress=" + progress +
+                "transactionId=" + getTransactionId() +
+                ", conditionCode=" + getConditionCode() +
+                ", progress=" + getProgress() +
                 '}';
     }
 }

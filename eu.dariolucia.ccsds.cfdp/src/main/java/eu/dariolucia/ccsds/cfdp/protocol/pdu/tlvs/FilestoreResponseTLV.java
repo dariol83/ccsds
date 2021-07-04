@@ -93,13 +93,13 @@ public class FilestoreResponseTLV implements TLV {
         offset += 1;
         // First file name
         this.firstFileName = BytesUtil.readLVString(data, offset);
-        offset += this.firstFileName.length();
+        offset += 1 + this.firstFileName.length();
         // Second file name
         this.secondFileName = BytesUtil.readLVString(data, offset);
-        offset += this.secondFileName.length();
+        offset += 1 + this.secondFileName.length();
         // Filestore message
         this.filestoreMessage = BytesUtil.readLVString(data, offset);
-        offset += this.filestoreMessage.length();
+        offset += 1 + this.filestoreMessage.length();
         // Encoded length
         this.encodedLength = offset - originalOffset;
     }

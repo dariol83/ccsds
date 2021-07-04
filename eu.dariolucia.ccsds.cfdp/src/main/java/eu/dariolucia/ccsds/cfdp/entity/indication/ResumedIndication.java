@@ -70,8 +70,8 @@ public class ResumedIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "ResumedIndication{" +
-                "transactionId=" + transactionId +
-                ", progress=" + progress +
+                "transactionId=" + getTransactionId() +
+                ", progress=" + getProgress() +
                 '}';
     }
 }

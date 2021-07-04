@@ -71,8 +71,8 @@ public class TransactionDisposedIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "TransactionDisposedIndication{" +
-                "transactionId=" + transactionId +
-                ", statusReport=" + statusReport +
+                "transactionId=" + getTransactionId() +
+                ", statusReport=" + getStatusReport() +
                 '}';
     }
 }

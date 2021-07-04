@@ -122,12 +122,12 @@ public class FileSegmentRecvIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "FileSegmentRecvIndication{" +
-                "transactionId=" + transactionId +
-                ", offset=" + offset +
-                ", length=" + length +
-                ", recordContinuationState=" + recordContinuationState +
-                ", segmentMetadataLength=" + segmentMetadataLength +
-                ", segmentMetadata=" + Arrays.toString(segmentMetadata) +
+                "transactionId=" + getTransactionId() +
+                ", offset=" + getOffset() +
+                ", length=" + getLength() +
+                ", recordContinuationState=" + getRecordContinuationState() +
+                ", segmentMetadataLength=" + getSegmentMetadataLength() +
+                ", segmentMetadata=" + Arrays.toString(getSegmentMetadata()) +
                 '}';
     }
 }

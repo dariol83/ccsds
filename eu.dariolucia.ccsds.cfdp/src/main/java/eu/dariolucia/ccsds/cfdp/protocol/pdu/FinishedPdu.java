@@ -78,7 +78,8 @@ public class FinishedPdu extends FileDirectivePdu {
         this.fileStatus = FileStatus.values()[pdu[getDirectiveParameterIndex()] & 0x03];
         // Filestore responses
         int currentOffset = getDirectiveParameterIndex() + 1;
-        while(currentOffset < pdu.length) {
+        int effectiveLength = pdu.length - (isCrcPresent() ? 2 : 0);
+        while(currentOffset < effectiveLength) {
             // TLV: Get the current tag
             byte type = pdu[currentOffset];
             if(type == 0x01) {

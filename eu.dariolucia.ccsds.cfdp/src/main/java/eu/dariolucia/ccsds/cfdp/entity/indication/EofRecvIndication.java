@@ -57,7 +57,7 @@ public class EofRecvIndication implements ICfdpIndication {
     @Override
     public String toString() {
         return "EofRecvIndication{" +
-                "transactionId=" + transactionId +
+                "transactionId=" + getTransactionId() +
                 '}';
     }
 }
