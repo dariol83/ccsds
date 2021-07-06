@@ -17,7 +17,6 @@
 package eu.dariolucia.ccsds.inspector.connectors.file;
 
 import eu.dariolucia.ccsds.inspector.api.*;
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
 
 public class TcFileConnectorFactory implements IConnectorFactory {
 
@@ -45,14 +44,14 @@ public class TcFileConnectorFactory implements IConnectorFactory {
 	public ConnectorConfigurationDescriptor getConfigurationDescriptor() {
 		ConnectorConfigurationDescriptor ccd = new ConnectorConfigurationDescriptor();
 		ccd.add(
-				ConnectorPropertyDescriptor.fileDescriptor(AbstractFileConnector.FILE_PATH_ID, "File Path", "Absolute path to the file containing the TC frames/CLTUs", null),
-				ConnectorPropertyDescriptor.booleanDescriptor(AbstractFileConnector.FECF_PRESENT_ID, "Presence of the FECF", "If selected, the FECF is part of the transfer frame", false),
+				ConnectorPropertyDescriptor.fileDescriptor(AbstractAsciiFileConnector.FILE_PATH_ID, "File Path", "Absolute path to the file containing the TC frames/CLTUs", null),
+				ConnectorPropertyDescriptor.booleanDescriptor(AbstractAsciiFileConnector.FECF_PRESENT_ID, "Presence of the FECF", "If selected, the FECF is part of the transfer frame", false),
 				ConnectorPropertyDescriptor.booleanDescriptor(TcFileConnector.SEGMENTED_ID, "Segmentation", "If selected, the connector assumes that the TC frames contain TC segments", true),
 				ConnectorPropertyDescriptor.booleanDescriptor(TcFileConnector.DERANDOMIZE_ID, "Derandomization", "If selected, the connector will de-randomize the TC frame", false),
 				ConnectorPropertyDescriptor.integerDescriptor(TcFileConnector.SEC_HEADER_LENGTH_ID, "Security Header Length", "Number of bytes composing the security header, 0 if not present", 0),
 				ConnectorPropertyDescriptor.integerDescriptor(TcFileConnector.SEC_TRAILER_LENGTH_ID, "Security Trailer Length", "Number of bytes composing the security trailer, 0 if not present", 0),
-				ConnectorPropertyDescriptor.integerDescriptor(AbstractFileConnector.DATA_RATE_ID, "Bitrate (bps)", "Number of bits per second that must be read and distributed (approx) by the connector", 8192),
-				ConnectorPropertyDescriptor.booleanDescriptor(AbstractFileConnector.CYCLE_ID, "Cyclic read", "If selected, the connector will loop over the provided file. TC frames will not be updated (e.g. frame counters).", false)
+				ConnectorPropertyDescriptor.integerDescriptor(AbstractAsciiFileConnector.DATA_RATE_ID, "Bitrate (bps)", "Number of bits per second that must be read and distributed (approx) by the connector", 8192),
+				ConnectorPropertyDescriptor.booleanDescriptor(AbstractAsciiFileConnector.CYCLE_ID, "Cyclic read", "If selected, the connector will loop over the provided file. TC frames will not be updated (e.g. frame counters).", false)
 		);
 		return ccd;
 	}

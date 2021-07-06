@@ -19,10 +19,9 @@ package eu.dariolucia.ccsds.inspector.connectors.file;
 import eu.dariolucia.ccsds.inspector.api.ConnectorConfiguration;
 import eu.dariolucia.ccsds.inspector.api.IConnectorObserver;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.util.AnnotatedObject;
 
-public class AosFileConnector extends AbstractFileConnector {
+public class AosFileConnector extends AbstractAsciiFileConnector {
 
 	public static final String OCF_PRESENT_ID = "ocf";
 	public static final String FHCF_PRESENT_ID = "fhcf";

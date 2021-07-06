@@ -23,7 +23,7 @@ import eu.dariolucia.ccsds.tmtc.algorithm.RandomizerAlgorithm;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame;
 import eu.dariolucia.ccsds.tmtc.util.AnnotatedObject;
 
-public class TcFileConnector extends AbstractFileConnector {
+public class TcFileConnector extends AbstractAsciiFileConnector {
 
 	public static final String SEGMENTED_ID = "segmented";
 	public static final String DERANDOMIZE_ID = "derandomize";

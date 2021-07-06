@@ -17,14 +17,12 @@
 package eu.dariolucia.ccsds.inspector.connectors.file;
 
 import eu.dariolucia.ccsds.inspector.api.*;
-import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.util.AnnotatedObject;
-import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 
 import java.io.*;
 import java.time.Instant;
 
-public abstract class AbstractFileConnector extends AbstractConnector {
+public abstract class AbstractBinaryFileConnector extends AbstractConnector {
 
 	public static final String FILE_PATH_ID = "file";
 	public static final String FECF_PRESENT_ID = "fecf";
@@ -38,17 +36,17 @@ public abstract class AbstractFileConnector extends AbstractConnector {
 	private final boolean cycle;
 	private final int bitrate;
 
-	private volatile BufferedReader fileReader;
+	private volatile InputStream fileReader;
 
 	// Readible by subclasses
 	protected final boolean fecfPresent;
 
-	public AbstractFileConnector(String name, String description, String version, ConnectorConfiguration configuration, IConnectorObserver observer) {
+	public AbstractBinaryFileConnector(String name, String description, String version, ConnectorConfiguration configuration, IConnectorObserver observer) {
 		super(name, description, version, configuration, observer);
-		this.cycle = configuration.getBooleanProperty(AbstractFileConnector.CYCLE_ID);
-		this.fecfPresent = configuration.getBooleanProperty(AbstractFileConnector.FECF_PRESENT_ID);
-		this.bitrate = configuration.getIntProperty(AbstractFileConnector.DATA_RATE_ID);
-		this.filePath = configuration.getFileProperty(AbstractFileConnector.FILE_PATH_ID);
+		this.cycle = configuration.getBooleanProperty(AbstractBinaryFileConnector.CYCLE_ID);
+		this.fecfPresent = configuration.getBooleanProperty(AbstractBinaryFileConnector.FECF_PRESENT_ID);
+		this.bitrate = configuration.getIntProperty(AbstractBinaryFileConnector.DATA_RATE_ID);
+		this.filePath = configuration.getFileProperty(AbstractBinaryFileConnector.FILE_PATH_ID);
 	}
 
 	@Override
@@ -70,30 +68,27 @@ public abstract class AbstractFileConnector extends AbstractConnector {
 		try {
 			openFileReader();
 			// Read the next line
-			String line = readNextLine();
-			if (running && line != null) {
-				processFrameLine(line);
+			byte[] block = readNextBlock(this.fileReader);
+			if (running && block != null) {
+				processFrameBlock(block);
 			} else {
 				closeFileReader();
 			}
-		} catch (IOException e) {
-			notifyInfo(SeverityEnum.ALARM, "Error processing file " + this.filePath.getAbsolutePath() + ": " + e.getMessage());
-			closeFileReader();
 		} catch (Exception e) {
 			e.printStackTrace();
-			notifyInfo(SeverityEnum.ALARM, "Error processing file " + this.filePath.getAbsolutePath() + ": " + e.getMessage());
+			notifyInfo(SeverityEnum.ALARM, String.format("Error processing file %s: %s", this.filePath.getAbsolutePath(), e.getMessage()));
 			closeFileReader();
 		}
 	}
 
-	private void openFileReader() throws FileNotFoundException {
+	protected void openFileReader() throws FileNotFoundException {
 		if(this.fileReader == null) {
 			// Open the file
-			this.fileReader = new BufferedReader(new InputStreamReader(new FileInputStream(this.filePath)));
+			this.fileReader = new FileInputStream(this.filePath);
 		}
 	}
 
-	private void closeFileReader() {
+	protected void closeFileReader() {
 		if (this.fileReader != null) {
 			try {
 				this.fileReader.close();
@@ -112,19 +107,19 @@ public abstract class AbstractFileConnector extends AbstractConnector {
 				closeFileReader();
 				// Open the file
 				openFileReader();
-				// Read the first line and use it to compute the frame size
-				String line = readNextLine();
-				int frameSizeInBits = line.length() * 4; // line.length() / 2 * 8
+				// Read the next block
+				byte[] block = readNextBlock(this.fileReader);
+				int frameSizeInBits = block.length * 8;
 				// Compute the interleave time
 				int msecBetweenFrames = (int) (1000.0 / ((double) bitrate / (double)(frameSizeInBits)));
-				while (running && line != null) {
-					processFrameLine(line);
+				while (running && block != null) {
+					processFrameBlock(block);
 					try {
 						Thread.sleep(msecBetweenFrames);
 					} catch (InterruptedException e) {
 						Thread.interrupted();
 					}
-					line = readNextLine();
+					block = readNextBlock(this.fileReader);
 				}
 			} while(this.cycle && this.running);
 		} catch (IOException e) {
@@ -136,25 +131,15 @@ public abstract class AbstractFileConnector extends AbstractConnector {
 		closeFileReader();
 	}
 
-	private void processFrameLine(String line) {
-		byte[] frame = StringUtil.toByteArray(line.toUpperCase());
-		AnnotatedObject ttf = getData(frame);
-		if(!ttf.isAnnotationPresent(AbstractConnector.ANNOTATION_TIME_KEY)) {
-			ttf.setAnnotationValue(AbstractConnector.ANNOTATION_TIME_KEY, Instant.now());
+	private void processFrameBlock(byte[] block) {
+		AnnotatedObject ttf = getData(block);
+		if(!ttf.isAnnotationPresent(IConnector.ANNOTATION_TIME_KEY)) {
+			ttf.setAnnotationValue(IConnector.ANNOTATION_TIME_KEY, Instant.now());
 		}
 		notifyData(ttf);
 	}
 
-	private String readNextLine() throws IOException {
-		while(true) {
-			String line = this.fileReader.readLine();
-			if (line == null) {
-				return null;
-			} else if (!line.isBlank()) {
-				return line;
-			}
-		}
-	}
+	protected abstract byte[] readNextBlock(InputStream is) throws IOException;
 
 	protected abstract AnnotatedObject getData(byte[] frame);
 

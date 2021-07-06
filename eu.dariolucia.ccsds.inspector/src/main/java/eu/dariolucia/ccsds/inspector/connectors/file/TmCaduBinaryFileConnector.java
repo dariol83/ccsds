@@ -21,24 +21,36 @@ import eu.dariolucia.ccsds.inspector.api.IConnectorObserver;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.util.AnnotatedObject;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
-public class TmCaduFileConnector extends AbstractAsciiFileConnector {
+public class TmCaduBinaryFileConnector extends AbstractBinaryFileConnector {
 
+	public static final String CADU_LENGTH = "cadu-length";
 	public static final String CADU_ASM_LENGTH = "asm-length";
 	public static final String CADU_RS_LENGTH = "rs-length";
 
 	private final int asmLength;
 	private final int rsLength;
+	private final int caduLength;
 
-	public TmCaduFileConnector(String name, String description, String version, ConnectorConfiguration configuration, IConnectorObserver observer) {
+	public TmCaduBinaryFileConnector(String name, String description, String version, ConnectorConfiguration configuration, IConnectorObserver observer) {
 		super(name, description, version, configuration, observer);
-		this.asmLength = configuration.getIntProperty(TmCaduFileConnector.CADU_ASM_LENGTH);
-		this.rsLength = configuration.getIntProperty(TmCaduFileConnector.CADU_RS_LENGTH);
+		this.asmLength = configuration.getIntProperty(TmCaduBinaryFileConnector.CADU_ASM_LENGTH);
+		this.rsLength = configuration.getIntProperty(TmCaduBinaryFileConnector.CADU_RS_LENGTH);
+		this.caduLength = configuration.getIntProperty(TmCaduBinaryFileConnector.CADU_LENGTH);
 	}
 
 	@Override
-	protected AnnotatedObject getData(byte[] frame) {
-		return new TmTransferFrame(Arrays.copyOfRange(frame, asmLength, frame.length - rsLength), this.fecfPresent);
+	protected byte[] readNextBlock(InputStream is) throws IOException {
+		return is.readNBytes(this.caduLength);
 	}
+
+	@Override
+	protected AnnotatedObject getData(byte[] cadu) {
+		// This read assumes that the CADU is good
+		return new TmTransferFrame(Arrays.copyOfRange(cadu, asmLength, cadu.length - rsLength), this.fecfPresent);
+	}
+
 }

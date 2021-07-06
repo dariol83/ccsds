@@ -27,7 +27,7 @@ public class TmCaduFileConnectorFactory implements IConnectorFactory {
 
 	@Override
 	public String getName() {
-		return "TM CADU Frame File Connector";
+		return "TM Frame CADU File Connector";
 	}
 
 	@Override
@@ -44,10 +44,10 @@ public class TmCaduFileConnectorFactory implements IConnectorFactory {
 	public ConnectorConfigurationDescriptor getConfigurationDescriptor() {
 		ConnectorConfigurationDescriptor ccd = new ConnectorConfigurationDescriptor();
 		ccd.add(
-				ConnectorPropertyDescriptor.fileDescriptor(AbstractFileConnector.FILE_PATH_ID, "File Path", "Absolute path to the file containing the TM frames", null),
-				ConnectorPropertyDescriptor.booleanDescriptor(AbstractFileConnector.FECF_PRESENT_ID, "Presence of the FECF", "If selected, the FECF is part of the transfer frame", false),
-				ConnectorPropertyDescriptor.integerDescriptor(AbstractFileConnector.DATA_RATE_ID, "Bitrate (bps)", "Number of bits per second that must be read and distributed (approx) by the connector", 8192),
-				ConnectorPropertyDescriptor.booleanDescriptor(AbstractFileConnector.CYCLE_ID, "Cyclic read", "If selected, the connector will loop over the provided file. TM frames will not be updated (e.g. frame counters).", false),
+				ConnectorPropertyDescriptor.fileDescriptor(AbstractAsciiFileConnector.FILE_PATH_ID, "File Path", "Absolute path to the file containing the TM frames", null),
+				ConnectorPropertyDescriptor.booleanDescriptor(AbstractAsciiFileConnector.FECF_PRESENT_ID, "Presence of the FECF", "If selected, the FECF is part of the transfer frame", false),
+				ConnectorPropertyDescriptor.integerDescriptor(AbstractAsciiFileConnector.DATA_RATE_ID, "Bitrate (bps)", "Number of bits per second that must be read and distributed (approx) by the connector", 8192),
+				ConnectorPropertyDescriptor.booleanDescriptor(AbstractAsciiFileConnector.CYCLE_ID, "Cyclic read", "If selected, the connector will loop over the provided file. TM frames will not be updated (e.g. frame counters).", false),
 				ConnectorPropertyDescriptor.integerDescriptor(TmCaduFileConnector.CADU_ASM_LENGTH, "ASM length", "Length of the Attached Sync Marker", 4),
 				ConnectorPropertyDescriptor.integerDescriptor(TmCaduFileConnector.CADU_RS_LENGTH, "Cyclic read", "Length of the RS codeblock", 160)
 		);

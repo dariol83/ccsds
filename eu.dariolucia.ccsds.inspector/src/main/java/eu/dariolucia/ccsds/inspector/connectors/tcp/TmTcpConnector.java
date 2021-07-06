@@ -18,7 +18,6 @@ package eu.dariolucia.ccsds.inspector.connectors.tcp;
 
 import eu.dariolucia.ccsds.inspector.api.ConnectorConfiguration;
 import eu.dariolucia.ccsds.inspector.api.IConnectorObserver;
-import eu.dariolucia.ccsds.inspector.connectors.file.AbstractFileConnector;
 import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
 import eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder;
 import eu.dariolucia.ccsds.tmtc.coding.decoder.ReedSolomonDecoder;
@@ -46,7 +45,7 @@ public class TmTcpConnector extends AbstractTcpConnector {
 	private final int frameLength;
 
 	private final ChannelDecoder<TmTransferFrame> decoder;
-	private volatile IChannelReader reader;
+	private volatile IChannelReader reader; // NOSONAR
 
 	public TmTcpConnector(String name, String description, String version, ConnectorConfiguration configuration, IConnectorObserver observer) {
 		super(name, description, version, configuration, observer);
