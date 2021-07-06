@@ -98,15 +98,11 @@ public class FilestoreRequestTLV implements TLV {
     }
 
     @Override
-    public byte[] encode(boolean withTypeLength) {
+    public byte[] encode() {
         ByteBuffer bb;
-        if(withTypeLength) {
-            bb = ByteBuffer.allocate(2 + this.encodedLength);
-            bb.put((byte) TLV_TYPE);
-            bb.put((byte) (this.encodedLength & 0xFF));
-        } else {
-            bb = ByteBuffer.allocate(this.encodedLength);
-        }
+        bb = ByteBuffer.allocate(2 + this.encodedLength);
+        bb.put((byte) TLV_TYPE);
+        bb.put((byte) (this.encodedLength & 0xFF));
         bb.put((byte)((getActionCode().ordinal() << 4) & 0xFF));
         BytesUtil.writeLVString(bb, getFirstFileName());
         BytesUtil.writeLVString(bb, getSecondFileName());

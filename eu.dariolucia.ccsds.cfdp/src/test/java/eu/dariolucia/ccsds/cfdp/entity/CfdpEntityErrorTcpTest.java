@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.entity.request.CancelRequest;
+import eu.dariolucia.ccsds.cfdp.entity.request.ICfdpRequest;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
@@ -81,6 +82,8 @@ public class CfdpEntityErrorTcpTest {
             // Create file in filestore
             String path = TestUtils.createRandomFileIn(e1.getFilestore(), "testfile_ack.bin", 10); // 10 KB
             String destPath = "recv_testfile_ack.bin";
+            // Create unknown request
+            e1.request(new ICfdpRequest() { });
             // Create request and start transaction
             PutRequest fduTxReq = PutRequest.build(2, path, destPath, false, null);
             e1.request(fduTxReq);

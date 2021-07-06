@@ -162,7 +162,7 @@ public class MetadataPduBuilder extends CfdpPduBuilder<MetadataPdu, MetadataPduB
         totalLength += tempBuffer.capacity();
         // Options
         for(TLV r : this.options) {
-            byte[] encoded = r.encode(true);
+            byte[] encoded = r.encode();
             bos.write(encoded);
             totalLength += encoded.length;
         }

@@ -54,18 +54,14 @@ public class MessageToUserTLV implements TLV {
     }
 
     @Override
-    public byte[] encode(boolean withTypeLength) {
-        if(withTypeLength) {
-            ByteBuffer bb = ByteBuffer.allocate(2 + this.encodedLength);
-            bb.put((byte) TLV_TYPE);
-            bb.put((byte) (this.encodedLength & 0xFF));
-            if(encodedLength > 0) {
-                bb.put(data);
-            }
-            return bb.array();
-        } else {
-            return data;
+    public byte[] encode() {
+        ByteBuffer bb = ByteBuffer.allocate(2 + this.encodedLength);
+        bb.put((byte) TLV_TYPE);
+        bb.put((byte) (this.encodedLength & 0xFF));
+        if(encodedLength > 0) {
+            bb.put(data);
         }
+        return bb.array();
     }
 
     @Override

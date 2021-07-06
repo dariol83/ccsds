@@ -22,5 +22,5 @@ public interface TLV {
 
     int getLength();
 
-    byte[] encode(boolean withTypeLength);
+    byte[] encode();
 }

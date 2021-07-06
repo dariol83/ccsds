@@ -38,7 +38,7 @@ public class CfdpEntityNominalTcpTest {
 
     @BeforeEach
     public void setup() {
-        Logger.getLogger("").setLevel(Level.OFF);
+        Logger.getLogger("").setLevel(Level.ALL);
         Logger.getLogger("eu.dariolucia.ccsds.cfdp").setLevel(Level.ALL);
         for(Handler h : Logger.getLogger("").getHandlers()) {
             h.setLevel(Level.ALL);

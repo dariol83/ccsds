@@ -70,9 +70,9 @@ public class ModularChecksum implements ICfdpChecksumFactory {
             // The checksum shall initially be set to all 'zeroes'
             long accumulator = 0;
             int i = 0;
-            for(; i < len; i += 4) {
+            for(;i < len; i += 4) {
                 if(len - i >= 4) {
-                    // The checksum shall be calculated by modulo 232 addition of all 4-octet words, aligned from the
+                    // The checksum shall be calculated by modulo 2^32 addition of all 4-octet words, aligned from the
                     // start of the file
 
                     // Read 4 bytes in a row as integer (unsigned and increment the accumulator)
@@ -81,7 +81,7 @@ public class ModularChecksum implements ICfdpChecksumFactory {
                 } else {
                     // I need to pad at the end
                     byte[] tmp = new byte[] {0,0,0,0};
-                    System.arraycopy(data, i, tmp, 0, len - i);
+                    System.arraycopy(data, i + offset, tmp, 0, len - i);
                     long read = Integer.toUnsignedLong(ByteBuffer.wrap(tmp, 0, 4).getInt());
                     accumulator += read;
                 }
@@ -97,15 +97,29 @@ public class ModularChecksum implements ICfdpChecksumFactory {
             // Check the file offset: if not 4-bytes aligned, do so and just the first 4-bytes word
             int leadingZeroes = (int) fileOffset % 4;
             if(leadingZeroes > 0) {
-                // I need to pad at the beginning
-                byte[] tmp = new byte[] {0,0,0,0};
-                System.arraycopy(data, 0, tmp, leadingZeroes, 4 - leadingZeroes);
-                long read = Integer.toUnsignedLong(ByteBuffer.wrap(tmp, 0, 4).getInt());
-                currentChecksum += read;
+                if(data.length > 4 - leadingZeroes) {
+                    // I need to pad at the beginning
+                    byte[] tmp = new byte[]{0, 0, 0, 0};
+                    System.arraycopy(data, 0, tmp, leadingZeroes, 4 - leadingZeroes);
+                    long read = Integer.toUnsignedLong(ByteBuffer.wrap(tmp, 0, 4).getInt());
+                    currentChecksum += read;
+                    currentChecksum &= 0xFFFFFFFF;
+                } else {
+                    // Everything fits into a single byte array of 4 bytes
+                    byte[] tmp = new byte[]{0, 0, 0, 0};
+                    System.arraycopy(data, 0, tmp, leadingZeroes, data.length);
+                    long read = Integer.toUnsignedLong(ByteBuffer.wrap(tmp, 0, 4).getInt());
+                    currentChecksum += read;
+                    currentChecksum &= 0xFFFFFFFF;
+                }
+                // Then compute the checksum using the standard approach
+                currentChecksum += Integer.toUnsignedLong(checksum(data, 4 - leadingZeroes, data.length - (4 - leadingZeroes)));
+                currentChecksum &= 0xFFFFFFFF;
+            } else {
+                currentChecksum += Integer.toUnsignedLong(checksum(data, 0, data.length));
+                currentChecksum &= 0xFFFFFFFF;
             }
-            // Then compute the checksum using the standard approach
-            currentChecksum += Integer.toUnsignedLong(checksum(data, 4 - leadingZeroes, data.length - (4 - leadingZeroes)));
-            currentChecksum &= 0xFFFFFFFF;
+
             return (int) currentChecksum;
         }
 
@@ -116,7 +130,7 @@ public class ModularChecksum implements ICfdpChecksumFactory {
 
         @Override
         public int type() {
-            return CfdpChecksumRegistry.NULL_CHECKSUM_TYPE;
+            return CfdpChecksumRegistry.MODULAR_CHECKSUM_TYPE;
         }
     }
 }

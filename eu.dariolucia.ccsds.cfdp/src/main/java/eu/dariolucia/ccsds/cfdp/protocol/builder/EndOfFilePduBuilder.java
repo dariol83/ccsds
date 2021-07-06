@@ -121,7 +121,7 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
         totalLength += isLargeFile() ? 8 : 4;
         // Fault location
         if(this.conditionCode != FileDirectivePdu.CC_NOERROR) {
-            byte[] encoded = this.faultLocation.encode(true);
+            byte[] encoded = this.faultLocation.encode();
             bos.write(encoded);
             totalLength += encoded.length;
         }

@@ -119,13 +119,13 @@ public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduB
         totalLength += 1;
         // Filestore responses
         for(FilestoreResponseTLV r : this.filestoreResponses) {
-            byte[] encoded = r.encode(true);
+            byte[] encoded = r.encode();
             bos.write(encoded);
             totalLength += encoded.length;
         }
         // Fault location
         if(this.conditionCode != FileDirectivePdu.CC_NOERROR && this.conditionCode != FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE) {
-            byte[] encoded = this.faultLocation.encode(true);
+            byte[] encoded = this.faultLocation.encode();
             bos.write(encoded);
             totalLength += encoded.length;
         }

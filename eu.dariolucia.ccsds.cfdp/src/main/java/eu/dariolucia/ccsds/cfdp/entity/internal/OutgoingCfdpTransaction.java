@@ -458,7 +458,11 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             boolean completed = deriveCompletedStatus(pdu);
             if(!completed) {
                 // In case it is not completed, it means that the other side had a fault and you have to report it
-                setLastConditionCode(this.finishedPdu.getConditionCode(), getDestinationEntityId());
+                if(this.finishedPdu.getFaultLocation() != null) {
+                    setLastConditionCode(this.finishedPdu.getConditionCode(), this.finishedPdu.getFaultLocation().getEntityId());
+                } else {
+                    setLastConditionCode(this.finishedPdu.getConditionCode(), getDestinationEntityId());
+                }
             }
             handleNoticeOfCompletion(completed);
             // Clean up the transaction resources
