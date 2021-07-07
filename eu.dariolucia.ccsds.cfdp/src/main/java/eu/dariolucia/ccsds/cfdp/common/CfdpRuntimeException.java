@@ -18,9 +18,6 @@ package eu.dariolucia.ccsds.cfdp.common;
 
 public class CfdpRuntimeException extends RuntimeException {
 
-    public CfdpRuntimeException() {
-    }
-
     public CfdpRuntimeException(String message) {
         super(message);
     }
@@ -29,4 +26,7 @@ public class CfdpRuntimeException extends RuntimeException {
         super(cause);
     }
 
+    public CfdpRuntimeException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

@@ -563,6 +563,14 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: CFDP Copy File procedure started, file to be sent: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), isFileToBeSent()));
         }
         if(isRunning()) {
+            // Initialise the checksum computer
+            try {
+                this.checksum = CfdpChecksumRegistry.getChecksum(getRemoteDestination().getDefaultChecksumType()).build();
+            } catch (CfdpUnsupportedChecksumType e) {
+                setLastConditionCode(FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE, getLocalEntityId());
+                // Not available, then use the modular checksum
+                this.checksum = CfdpChecksumRegistry.getModularChecksum().build();
+            }
             // Initiation of the Copy File procedures shall cause the sending CFDP entity to
             // forward a Metadata PDU to the receiving CFDP entity.
             try {
@@ -626,14 +634,6 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             fault(FileDirectivePdu.CC_INVALID_FILE_STRUCTURE, getLocalEntityId());
             // If the fault is ignore, let's try with something that makes sense... the standard does not prevent this to happen
             this.segmentProvider = new FixedSizeSegmenter(getEntity().getFilestore(), request.getSourceFileName(), getRemoteDestination().getMaximumFileSegmentLength());
-        }
-        // Initialise the checksum computer
-        try {
-            this.checksum = CfdpChecksumRegistry.getChecksum(getRemoteDestination().getDefaultChecksumType()).build();
-        } catch (CfdpUnsupportedChecksumType e) {
-            setLastConditionCode(FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE, getLocalEntityId());
-            // Not available, then use the modular checksum
-            this.checksum = CfdpChecksumRegistry.getModularChecksum().build();
         }
         // Send the first segment
         sendFileSegment();
@@ -770,7 +770,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         // Metadata specific
         b.setSegmentationControlPreserved(false); // Always 0 for file directive PDUs
         b.setClosureRequested(isClosureRequested());
-        b.setChecksumType((byte) getRemoteDestination().getDefaultChecksumType());
+        b.setChecksumType((byte) this.checksum.type()); // This is the effective checksum
         if(isFileToBeSent()) {
             // File data
             b.setSourceFileName(request.getSourceFileName());
@@ -834,7 +834,13 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         // EOF specific
         b.setFileChecksum(finalChecksum);
         b.setFileSize(this.sentContiguousFileBytes);
-        b.setConditionCode(getLastConditionCode(), getLastFaultEntity());
+        if(getLastConditionCode() == FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE) {
+            // Assume no error, after all you used the modular checksum
+            b.setConditionCode(FileDirectivePdu.CC_NOERROR, null);
+        } else {
+            // If else, go on
+            b.setConditionCode(getLastConditionCode(), getLastFaultEntity());
+        }
 
         this.eofPdu = b.build();
         return this.eofPdu;

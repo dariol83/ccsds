@@ -100,10 +100,15 @@ public abstract class CfdpTransaction {
     }
 
     protected void overrideHandlers(Map<Integer, FaultHandlerStrategy.Action> faultHandlerMap) {
-        this.faultHandlers.putAll(faultHandlerMap);
+        for(Map.Entry<Integer, FaultHandlerStrategy.Action> e : faultHandlerMap.entrySet()) {
+            overrideHandler(e.getKey(), e.getValue());
+        }
     }
 
     protected void overrideHandler(int conditionCode, FaultHandlerStrategy.Action toAction) {
+        if(LOG.isLoggable(Level.FINEST)) {
+            LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: overriding handler for code 0x%02X with %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode, toAction));
+        }
         this.faultHandlers.put(conditionCode, toAction);
     }
 

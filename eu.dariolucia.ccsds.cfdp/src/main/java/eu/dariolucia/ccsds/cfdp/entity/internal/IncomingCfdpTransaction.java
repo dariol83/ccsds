@@ -266,6 +266,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             try {
                 this.checksum = CfdpChecksumRegistry.getChecksum(this.metadataPdu.getChecksumType()).build();
             } catch (CfdpUnsupportedChecksumType e) {
+                if(LOG.isLoggable(Level.WARNING)) {
+                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: checksum unsupported: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                }
                 // 4.2.2.8 If the preferred checksum computation algorithm is not one of the available
                 // checksum computation algorithms, an Unsupported Checksum Type fault shall be raised, and
                 // the applicable checksum computation algorithm shall be selected as follows:

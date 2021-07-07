@@ -20,9 +20,6 @@ import eu.dariolucia.ccsds.cfdp.common.CfdpException;
 
 public class FilestoreException extends CfdpException {
 
-    public FilestoreException() {
-    }
-
     public FilestoreException(String message) {
         super(message);
     }

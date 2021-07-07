@@ -74,8 +74,8 @@ public class FileSegment {
     public String toString() {
         return "FileSegment{" +
                 "offset=" + offset +
-                ", data=" + StringUtil.toHexDump(data) +
-                ", metadata=" + StringUtil.toHexDump(metadata) +
+                ", data=" + (data != null ? StringUtil.toHexDump(data) : "<null>") +
+                ", metadata=" + (metadata != null ? StringUtil.toHexDump(metadata) : "<null>") +
                 ", recordContinuationState=" + recordContinuationState +
                 ", eof=" + eof +
                 '}';

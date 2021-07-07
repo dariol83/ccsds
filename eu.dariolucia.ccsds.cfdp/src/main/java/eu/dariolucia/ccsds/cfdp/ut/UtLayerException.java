@@ -20,9 +20,6 @@ import eu.dariolucia.ccsds.cfdp.common.CfdpException;
 
 public class UtLayerException extends CfdpException {
 
-    public UtLayerException() {
-    }
-
     public UtLayerException(String message) {
         super(message);
     }

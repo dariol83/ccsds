@@ -108,4 +108,8 @@ public class EntityIndicationSubscriber implements ICfdpEntitySubscriber {
         }
         return null;
     }
+
+    public synchronized void clear() {
+        this.indicationList.clear();
+    }
 }
