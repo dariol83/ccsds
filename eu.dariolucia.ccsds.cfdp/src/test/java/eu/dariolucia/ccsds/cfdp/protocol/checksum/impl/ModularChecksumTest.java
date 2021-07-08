@@ -51,5 +51,6 @@ class ModularChecksumTest {
         ck3.checksum(new byte[] {1, 2, 3}, 1);
         result = ck3.getCurrentChecksum();
         assertEquals(0x00010203, result);
+        assertNotNull(CfdpChecksumRegistry.getModularChecksum());
     }
 }

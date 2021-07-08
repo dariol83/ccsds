@@ -122,5 +122,7 @@ class MetadataPduBuilderTest {
         assertEquals(FileDirectivePdu.CC_INACTIVITY_DETECTED, ((FaultHandlerOverrideTLV) builder.getOptions().get(3)).getConditionCode());
         assertEquals(FaultHandlerOverrideTLV.HandlerCode.IGNORE_ERROR, ((FaultHandlerOverrideTLV) builder.getOptions().get(3)).getHandlerCode());
 
+        assertThrows(IllegalArgumentException.class, () -> builder.addOption(new EntityIdTLV(32L,3)));
+        assertThrows(NullPointerException.class, () -> builder.addOption(null));
     }
 }

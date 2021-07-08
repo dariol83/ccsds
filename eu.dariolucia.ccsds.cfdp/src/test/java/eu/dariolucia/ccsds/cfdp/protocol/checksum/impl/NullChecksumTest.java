@@ -46,6 +46,9 @@ class NullChecksumTest {
 
         result = ck2.getCurrentChecksum();
         assertEquals(0, result);
+
+        assertEquals(0, ck2.checksum(new byte[3], 0, 3));
+        assertNotNull(CfdpChecksumRegistry.getNullChecksum());
     }
 
 }
