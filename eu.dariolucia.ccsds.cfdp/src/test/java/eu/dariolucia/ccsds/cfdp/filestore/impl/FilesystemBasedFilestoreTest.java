@@ -68,5 +68,61 @@ class FilesystemBasedFilestoreTest {
         assertArrayEquals(data, fs.getFile("dir2/w"));
         assertDoesNotThrow(() -> fs.deleteFile("dir2/w"));
         assertDoesNotThrow(() -> fs.deleteDirectory("dir2"));
+
+        assertNotNull(fs.toString());
+    }
+
+    @Test
+    public void testExceptions() throws IOException {
+        assertThrows(NullPointerException.class, () -> new FilesystemBasedFilestore((File) null));
+        assertThrows(IllegalArgumentException.class, () -> new FilesystemBasedFilestore(new File("IdoubtThisWillEverExist")));
+
+        Path tempPath = Files.createTempDirectory("CFDP_VFS_");
+        File root = tempPath.toFile();
+        File testFile = new File(root.getAbsolutePath() + "/testfile.bin");
+        testFile.createNewFile();
+        assertThrows(IllegalArgumentException.class, () -> new FilesystemBasedFilestore(testFile));
+        testFile.delete();
+
+        FilesystemBasedFilestore fs = new FilesystemBasedFilestore(root.getAbsolutePath());
+
+        assertDoesNotThrow(() -> fs.createDirectory("testDir"));
+        assertThrows(FilestoreException.class, () -> {
+            fs.createFile("testDir");
+        });
+        assertThrows(FilestoreException.class, () -> {
+            fs.deleteFile("testDir");
+        });
+        assertThrows(FilestoreException.class, () -> {
+            fs.renameFile("testDir2", "whatever");
+        });
+        assertThrows(FilestoreException.class, () -> {
+            fs.appendContentsToFile("testDir2", "whatever".getBytes());
+        });
+        assertThrows(FilestoreException.class, () -> {
+            fs.replaceFileContents("testDir2", "whatever".getBytes());
+        });
+        assertThrows(FilestoreException.class, () -> {
+            fs.appendFileToFile("testDir2", "whatever");
+        });
+        testFile.createNewFile();
+        assertThrows(FilestoreException.class, () -> {
+            fs.appendFileToFile("testfile.bin", "whatever");
+        });
+        assertThrows(FilestoreException.class, () -> {
+            fs.getFile("whatever");
+        });
+        assertThrows(FilestoreException.class, () -> {
+            fs.deleteDirectory("whatever");
+        });
+        assertThrows(FilestoreException.class, () -> {
+            fs.fileSize("whatever");
+        });
+        assertThrows(FilestoreException.class, () -> {
+            fs.readFile("whatever");
+        });
+        assertThrows(FilestoreException.class, () -> {
+            fs.writeFile("whatever", false);
+        });
     }
 }

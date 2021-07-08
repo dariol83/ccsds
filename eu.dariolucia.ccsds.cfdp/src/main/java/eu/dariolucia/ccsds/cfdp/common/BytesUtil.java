@@ -48,7 +48,7 @@ public class BytesUtil {
         if(size > 8) {
             throw new CfdpRuntimeException("Cannot read an unsigned integer larger than 8, actual is " + size);
         }
-        if(size < -1) {
+        if(size <= -1) {
             throw new CfdpRuntimeException("Cannot read an unsigned integer with a negative size, actual is " + size);
         }
         if(size == 0) {
@@ -84,7 +84,7 @@ public class BytesUtil {
         if(size > 8) {
             throw new CfdpRuntimeException("Cannot encode an unsigned integer larger than 8, actual is " + size);
         }
-        if(size < -1) {
+        if(size <= -1) {
             throw new CfdpRuntimeException("Cannot encode an unsigned integer with a negative size, actual is " + size);
         }
         byte[] toReturn = new byte[size];

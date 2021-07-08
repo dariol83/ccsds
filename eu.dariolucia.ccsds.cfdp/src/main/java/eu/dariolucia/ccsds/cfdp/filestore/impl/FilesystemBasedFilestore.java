@@ -110,10 +110,8 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
         if(!target.exists()) {
             throw new FilestoreException(String.format("Cannot append to file %s: destination file does not exist", fullPath));
         }
-        try {
-            try (FileOutputStream fos = new FileOutputStream(target, true)) {
-                fos.write(data);
-            }
+        try (FileOutputStream fos = new FileOutputStream(target, true)) {
+            fos.write(data);
         } catch (IOException e) {
             throw new FilestoreException(String.format("Cannot append to file %s: %s", fullPath, e.getMessage()), e);
         }
@@ -148,29 +146,11 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
         if(!toReadFrom.exists()) {
             throw new FilestoreException(String.format("Cannot %s from file %s: source file does not exist", append ? APPEND : REPLACE, fileToAddPath));
         }
-        FileOutputStream fos = null;
-        FileInputStream fin = null;
-        try {
-            fos = new FileOutputStream(target, append);
-            fin = new FileInputStream(toReadFrom);
-            fin.transferTo(fos);
-            fos.close();
-            fin.close();
+        try(FileOutputStream fos = new FileOutputStream(target, append)) {
+            try (FileInputStream fin = new FileInputStream(toReadFrom)) {
+                fin.transferTo(fos);
+            }
         } catch (IOException e) {
-            if(fin != null) {
-                try {
-                    fin.close();
-                } catch (IOException ioException) {
-                    // Ignore
-                }
-            }
-            if(fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException ioException) {
-                    // Ignore
-                }
-            }
             throw new FilestoreException(String.format("Cannot %s to file %s from file %s: %s", append ? APPEND : REPLACE, targetFilePath, fileToAddPath, e.getMessage()), e);
         }
     }

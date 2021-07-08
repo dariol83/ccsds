@@ -18,6 +18,8 @@ package eu.dariolucia.ccsds.cfdp.common;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class BytesUtilTest {
@@ -98,6 +100,18 @@ class BytesUtilTest {
         assertEquals(0x00984325L, BytesUtil.readInteger(new byte[] { 0, (byte) 0x98, (byte) 0x43, (byte) 0x25}, 0, 4));
         // Test 0x984325, 5 bytes
         assertEquals(0x00984325L, BytesUtil.readInteger(new byte[] { 0, 0, (byte) 0x98, (byte) 0x43, (byte) 0x25}, 0, 5));
+
+        assertThrows(CfdpRuntimeException.class, () -> {
+            BytesUtil.readInteger(new byte[] { 0, 0 , 0, 0, 0, 0, 0,(byte) 221}, 0, 9);
+        });
+
+        assertThrows(CfdpRuntimeException.class, () -> {
+            BytesUtil.readInteger(new byte[] { 0, 0 , 0, 0, 0, 0, 0,(byte) 221}, 0, -1);
+        });
+        assertThrows(CfdpRuntimeException.class, () -> {
+            BytesUtil.readInteger(new byte[] { 0, 0 , 0, 0, 0, 0, 0,(byte) 221}, 0, -2);
+        });
+        assertNull(BytesUtil.readInteger(new byte[] { 0, 0 , 0, 0, 0, 0, 0,(byte) 221}, 0, 0));
     }
 
     @Test
@@ -132,6 +146,16 @@ class BytesUtilTest {
         assertArrayEquals(new byte[] { (byte) 0x98, (byte) 0x43, (byte) 0x25 }, BytesUtil.encodeInteger(0x00984325L, 3));
         assertArrayEquals(new byte[] { 0, (byte) 0x98, (byte) 0x43, (byte) 0x25 }, BytesUtil.encodeInteger(0x00984325L, 4));
         assertArrayEquals(new byte[] { 0, 0, (byte) 0x98, (byte) 0x43, (byte) 0x25 }, BytesUtil.encodeInteger(0x00984325L, 5));
+
+        assertThrows(CfdpRuntimeException.class, () -> {
+            BytesUtil.encodeInteger(102, 9);
+        });
+        assertThrows(CfdpRuntimeException.class, () -> {
+            BytesUtil.encodeInteger(1, -1);
+        });
+        assertThrows(CfdpRuntimeException.class, () -> {
+            BytesUtil.encodeInteger(1, -2);
+        });
     }
 
     @Test
@@ -157,5 +181,14 @@ class BytesUtilTest {
         assertEquals(7, BytesUtil.getEncodingOctetsNb(((Integer.MAX_VALUE * 2L + 2) * 256 * 256)));
         assertEquals(8, BytesUtil.getEncodingOctetsNb(Long.MAX_VALUE - 1));
         assertEquals(8, BytesUtil.getEncodingOctetsNb(Long.MAX_VALUE));
+        assertEquals(8, BytesUtil.getEncodingOctetsNb(-1));
+        assertEquals(8, BytesUtil.getEncodingOctetsNb(-2));
+    }
+
+    @Test
+    public void testStringEncodingDecoding() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            BytesUtil.writeLVString(ByteBuffer.allocate(1024), "T".repeat(256));
+        });
     }
 }
