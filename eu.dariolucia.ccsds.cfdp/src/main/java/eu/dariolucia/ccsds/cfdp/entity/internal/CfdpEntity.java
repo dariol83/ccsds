@@ -413,6 +413,12 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         if(LOG.isLoggable(Level.FINEST)) {
             LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: received PDU from UT layer %s: %s", getLocalEntityId(), layer.getName(), pdu));
         }
+        if(!pdu.isCrcPresent()) {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: received corrupted PDU from UT layer %s, PDU ignored: %s", getLocalEntityId(), layer.getName(), pdu));
+            }
+            return;
+        }
         // This entity got this PDU, so if this entity knows about the related transaction, it should process the PDU
         CfdpTransaction transaction = this.id2transaction.get(pdu.getTransactionSequenceNumber());
         if(transaction != null) {
@@ -435,7 +441,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
                 // an incoming transaction, will take care of the pdu processing
                 createNewIncomingTransaction(pdu);
             } else {
-                // 6) the entity got a PDU that was completely unexepected -> log and ignore
+                // 6) the entity got a PDU that was completely unexpected -> log and ignore
                 if(LOG.isLoggable(Level.WARNING)) {
                     LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: received PDU %s not linked to any transaction and not supposed to be handled, ignoring", getLocalEntityId(), pdu));
                 }

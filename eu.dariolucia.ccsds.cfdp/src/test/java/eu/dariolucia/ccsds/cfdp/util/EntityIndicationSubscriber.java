@@ -19,7 +19,6 @@ package eu.dariolucia.ccsds.cfdp.util;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntity;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntitySubscriber;
 import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
-import eu.dariolucia.ccsds.cfdp.entity.indication.TransactionDisposedIndication;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -76,7 +75,7 @@ public class EntityIndicationSubscriber implements ICfdpEntitySubscriber {
         throw new AssertionError("Indication " + indication + " not found after position " + position);
     }
 
-    public synchronized ICfdpIndication waitForIndication(Class<? extends ICfdpIndication> indication, long timeoutMillis) {
+    public synchronized <T extends ICfdpIndication> T waitForIndication(Class<T> indication, long timeoutMillis) {
         long now = System.currentTimeMillis();
         long target = now + timeoutMillis;
         ICfdpIndication present = indicationPresent(indication);
@@ -95,7 +94,7 @@ public class EntityIndicationSubscriber implements ICfdpEntitySubscriber {
 
         }
         // If you reach this stage, the indication is present
-        return present;
+        return (T) present;
     }
 
     // To be called under monitor

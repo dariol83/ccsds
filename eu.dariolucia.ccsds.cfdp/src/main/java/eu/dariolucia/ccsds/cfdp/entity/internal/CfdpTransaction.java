@@ -277,10 +277,12 @@ public abstract class CfdpTransaction {
     }
 
     protected void schedule(TimerTask t, long period, boolean periodic) {
-        if(periodic) {
-            this.timer.schedule(t, period, period);
-        } else {
-            this.timer.schedule(t, period);
+        if(!this.confiner.isShutdown()) { // Use the confiner status as a sentry to detect timer cancel
+            if (periodic) {
+                this.timer.schedule(t, period, period);
+            } else {
+                this.timer.schedule(t, period);
+            }
         }
     }
 

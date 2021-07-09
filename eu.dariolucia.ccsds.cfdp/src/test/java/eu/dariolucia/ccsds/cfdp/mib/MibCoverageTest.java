@@ -18,9 +18,9 @@ package eu.dariolucia.ccsds.cfdp.mib;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import javax.xml.bind.JAXBException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedList;
@@ -86,6 +86,15 @@ class MibCoverageTest {
         assertDoesNotThrow(() -> Mib.save(m, new FileOutputStream(tempFile.toFile())));
         Mib m2 = Mib.load(new FileInputStream(tempFile.toFile()));
         assertEquals(m.getLocalEntity().getLocalEntityId(), m2.getLocalEntity().getLocalEntityId());
+
+        assertThrows(IOException.class, () -> {
+            Mib.load(new ByteArrayInputStream("<xml></xml>".getBytes(StandardCharsets.UTF_8)));
+        });
+        m2.setLocalEntity(null);
+        m2.setRemoteEntities(null);
+        // assertThrows(IOException.class, () -> {
+        //     Mib.save(m2, new ByteArrayOutputStream());
+        // });
     }
 
 }

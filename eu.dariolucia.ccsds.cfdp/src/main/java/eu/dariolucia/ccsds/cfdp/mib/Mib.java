@@ -67,10 +67,10 @@ public class Mib {
         }
     }
 
-    @XmlElement(name = "local-entity")
+    @XmlElement(name = "local-entity", required = true)
     private LocalEntityConfigurationInformation localEntity;
 
-    @XmlElementWrapper(name = "remote-entities")
+    @XmlElementWrapper(name = "remote-entities", required = true)
     @XmlElement(name = "remote-entity")
     private List<RemoteEntityConfigurationInformation> remoteEntities = new LinkedList<>();
 
