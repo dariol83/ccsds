@@ -20,6 +20,7 @@ import eu.dariolucia.ccsds.cfdp.entity.FaultDeclaredException;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -68,5 +69,15 @@ public class ExceptionTest {
             assertEquals(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, e.getConditionCode());
             assertEquals(3, e.getGeneratingEntityId());
         }
+
+        assertThrows(UtLayerException.class, () -> {
+            throw new UtLayerException("Test");
+        });
+        assertThrows(UtLayerException.class, () -> {
+            throw new UtLayerException(new RuntimeException());
+        });
+        assertThrows(UtLayerException.class, () -> {
+            throw new UtLayerException("Test", new RuntimeException());
+        });
     }
 }

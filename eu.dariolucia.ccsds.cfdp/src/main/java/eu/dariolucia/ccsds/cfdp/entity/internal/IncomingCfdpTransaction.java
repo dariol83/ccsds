@@ -93,14 +93,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         // contained in the first received PDU of a transaction and use it for subsequent processing of
         // the transaction. If the receiving CFDP entity is incapable of operating in this mode, an
         // Invalid Transmission Mode fault shall be declared.
-        if(this.initialPdu.isAcknowledged() && !getRemoteDestination().isAcknowledgedModeSupported()) {
-            try {
-                fault(FileDirectivePdu.CC_INVALID_TX_MODE, getLocalEntityId());
-            } catch (FaultDeclaredException e) {
-                // Stop everything: clean up already done
-                return;
-            }
-        }
+
+        // This implementation can operate in Ack mode, so no reason to check.
+
         // Start the transaction inactivity timer
         startTransactionInactivityTimer();
         // Process the first PDU
@@ -676,7 +671,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: handling cancel with condition code %d and fault entity ID %d", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode, faultEntityId));
         }
         setLastConditionCode(conditionCode, faultEntityId);
-        this.finalFileStatus = FinishedPdu.FileStatus.STATUS_UNREPORTED;
+        
         setCancelled();
         // 4.11.2.3.1 On Notice of Cancellation of the Copy File procedure, the receiving CFDP entity
         // shall issue a Notice of Completion (Canceled).
@@ -1056,7 +1051,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             //           to discard or retain.
 
             // If I do not have the metadata I do not even know how to call this file, how long is this, so sorry... discarded
-            if(this.metadataPdu != null && this.metadataPdu.getDestinationEntityId() == getLocalEntityId() &&
+            if(!this.fileCompleted && this.metadataPdu != null && this.metadataPdu.getDestinationEntityId() == getLocalEntityId() &&
                     getRemoteDestination().isRetainIncompleteReceivedFilesOnCancellation() &&
                     this.metadataPdu.getDestinationFileName() != null) { // You need to have a file to store!
                 // Just a way to store a partial file with gaps: as an exception to the usual approach, this method below
@@ -1064,7 +1059,10 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 storePartialFile();
                 this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
             } else {
-                this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_DELIBERATLY;
+                // If the status is still unreported, then move it to DISCARDED_DELIBERATLY
+                if(this.finalFileStatus == FinishedPdu.FileStatus.STATUS_UNREPORTED) {
+                    this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_DELIBERATLY;
+                }
             }
         }
         // c) if the receiving entity is the transaction’s destination, then it may optionally issue a
@@ -1314,6 +1312,10 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         if(LOG.isLoggable(Level.INFO)) {
             LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: storing file to disk", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
         }
+
+        // No matter what, the file was completed
+        this.fileCompleted = true;
+
         IVirtualFilestore filestore = getEntity().getFilestore();
         try {
             if(LOG.isLoggable(Level.FINE)) {
@@ -1330,13 +1332,12 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             if(LOG.isLoggable(Level.FINE)) {
                 LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: file %s stored", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.metadataPdu.getDestinationFileName()));
             }
-            this.fileCompleted = true;
         } catch (FilestoreException | IOException e) {
             if(LOG.isLoggable(Level.SEVERE)) {
                 LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: problem when storing file %s to filestore: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.metadataPdu.getDestinationFileName(), e.getMessage()), e);
             }
-            this.fileCompleted = true;
             this.filestoreProblemDetected = true;
+            this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_BY_FILESTORE;
             fault(FileDirectivePdu.CC_FILESTORE_REJECTION, getLocalEntityId());
         }
     }
@@ -1484,6 +1485,6 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     @Override
     protected boolean isAcknowledged() {
-        return this.initialPdu.isAcknowledged() && getRemoteDestination().isAcknowledgedModeSupported();
+        return this.initialPdu.isAcknowledged();
     }
 }

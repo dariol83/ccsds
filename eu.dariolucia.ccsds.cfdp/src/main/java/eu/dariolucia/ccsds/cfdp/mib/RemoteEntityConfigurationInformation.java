@@ -84,9 +84,6 @@ public class RemoteEntityConfigurationInformation {
     @XmlAttribute(name = "transaction-inactivity-limit")
     private int transactionInactivityLimit;
 
-    @XmlAttribute(name = "ack-mode-supported")
-    private boolean acknowledgedModeSupported = true;
-
     @XmlAttribute(name = "nak-recomputation-interval")
     private long nakRecomputationInterval;
 
@@ -274,15 +271,6 @@ public class RemoteEntityConfigurationInformation {
         return this;
     }
 
-    public boolean isAcknowledgedModeSupported() {
-        return acknowledgedModeSupported;
-    }
-
-    public RemoteEntityConfigurationInformation setAcknowledgedModeSupported(boolean acknowledgedModeSupported) {
-        this.acknowledgedModeSupported = acknowledgedModeSupported;
-        return this;
-    }
-
     public int getCheckIntervalExpirationLimit() {
         return checkIntervalExpirationLimit;
     }
@@ -323,7 +311,6 @@ public class RemoteEntityConfigurationInformation {
                 ", positiveAckTimerExpirationLimit=" + positiveAckTimerExpirationLimit +
                 ", nakTimerExpirationLimit=" + nakTimerExpirationLimit +
                 ", transactionInactivityLimit=" + transactionInactivityLimit +
-                ", acknowledgedModeSupported=" + acknowledgedModeSupported +
                 ", checkIntervalExpirationLimit=" + checkIntervalExpirationLimit +
                 ", nakRecomputationInterval=" + nakRecomputationInterval +
                 '}';

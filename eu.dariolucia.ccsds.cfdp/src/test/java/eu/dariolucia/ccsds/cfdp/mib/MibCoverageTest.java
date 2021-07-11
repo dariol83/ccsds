@@ -18,8 +18,10 @@ package eu.dariolucia.ccsds.cfdp.mib;
 
 import org.junit.jupiter.api.Test;
 
-import javax.xml.bind.JAXBException;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,7 +53,6 @@ class MibCoverageTest {
         m.getLocalEntity().getFaultHandlerStrategyList().add(fhs2);
         m.getLocalEntity().setEofRecvIndicationRequired(true);
 
-        m.getRemoteEntities().get(0).setAcknowledgedModeSupported(true);
         m.getRemoteEntities().get(0).setCheckInterval(20);
         m.getRemoteEntities().get(0).setCheckIntervalExpirationLimit(3);
         m.getRemoteEntities().get(0).setCrcRequiredOnTransmission(true);

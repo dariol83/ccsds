@@ -24,6 +24,7 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreResponseTLV;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -135,5 +136,25 @@ public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduB
     @Override
     protected FinishedPdu buildObject(byte[] pdu) {
         return new FinishedPdu(pdu);
+    }
+
+    public byte getConditionCode() {
+        return conditionCode;
+    }
+
+    public boolean isDataComplete() {
+        return dataComplete;
+    }
+
+    public FinishedPdu.FileStatus getFileStatus() {
+        return fileStatus;
+    }
+
+    public List<FilestoreResponseTLV> getFilestoreResponses() {
+        return Collections.unmodifiableList(filestoreResponses);
+    }
+
+    public EntityIdTLV getFaultLocation() {
+        return faultLocation;
     }
 }
