@@ -671,7 +671,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: handling cancel with condition code %d and fault entity ID %d", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode, faultEntityId));
         }
         setLastConditionCode(conditionCode, faultEntityId);
-        
+
         setCancelled();
         // 4.11.2.3.1 On Notice of Cancellation of the Copy File procedure, the receiving CFDP entity
         // shall issue a Notice of Completion (Canceled).
