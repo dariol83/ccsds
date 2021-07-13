@@ -189,11 +189,6 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         try {
             EndOfFilePdu pdu = prepareEndOfFilePdu(finalChecksum);
             forwardPdu(pdu);
-            // Send the EOF indication
-            if (getEntity().getMib().getLocalEntity().isEofSentIndicationRequired() && !this.alreadySentEoFforCancelled) {
-                this.alreadySentEoFforCancelled = true;
-                getEntity().notifyIndication(new EofSentIndication(getTransactionId()));
-            }
         } catch (UtLayerException e) {
             // 4.11.2.2.3 Any fault declared in the course of transferring the EOF (cancel) PDU must result
             // in abandonment of the transaction.
@@ -202,6 +197,11 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             }
             handleAbandon(conditionCode); // Assuming to use the last condition code of this transaction here
             return;
+        }
+        // Send the EOF indication (per attempt)
+        if (getEntity().getMib().getLocalEntity().isEofSentIndicationRequired() && !this.alreadySentEoFforCancelled) {
+            this.alreadySentEoFforCancelled = true;
+            getEntity().notifyIndication(new EofSentIndication(getTransactionId()));
         }
 
         // 4.11.2.2.2 If sending in acknowledged mode,
@@ -679,14 +679,14 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             EndOfFilePdu pdu = prepareEndOfFilePdu(finalChecksum);
             try {
                 forwardPdu(pdu);
-                // Send the EOF indication
-                if(getEntity().getMib().getLocalEntity().isEofSentIndicationRequired()) {
-                    getEntity().notifyIndication(new EofSentIndication(getTransactionId()));
-                }
             } catch (UtLayerException e) {
                 if(LOG.isLoggable(Level.SEVERE)) {
                     LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: fail on EOF PDU transmission: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
                 }
+            }
+            // Send the EOF indication (per attempt, regardless whether you have an exception or not)
+            if(getEntity().getMib().getLocalEntity().isEofSentIndicationRequired()) {
+                getEntity().notifyIndication(new EofSentIndication(getTransactionId()));
             }
             // Start the ACK procedure in case of acknowledged transactions
             if(isAcknowledged()) {

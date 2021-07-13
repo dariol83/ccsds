@@ -59,5 +59,27 @@
             <ut-layer>TCP</ut-layer>
             <address>tcp:127.0.0.1:23001</address>
         </remote-entity>
+        <remote-entity id="7"
+                       version="1"
+                       positive-ack-timer-interval="3000"
+                       nak-timer-interval="3000"
+                       keep-alive-interval="30000"
+                       immediate-nak-mode="true"
+                       default-tx-mode-acknowledged="true"
+                       transaction-closure-requested="true"
+                       check-interval="3000"
+                       check-interval-expiration-limit="1"
+                       default-checksum="0"
+                       retain-incomplete-files-on-cancel="true"
+                       crc-required="true"
+                       max-file-segment-length="1024"
+                       keep-alive-limit="-1"
+                       positive-ack-expiration-limit="3"
+                       nak-expiration-limit="4"
+                       transaction-inactivity-limit="6000"
+                       nak-recomputation-interval="60000">
+            <ut-layer>UNKNOWN</ut-layer>
+            <address>unknown</address>
+        </remote-entity>
     </remote-entities>
 </ns1:mib>

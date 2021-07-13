@@ -384,11 +384,13 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         }
         // Cancel all transactions
         for(CfdpTransaction t : this.id2transaction.values()) {
-            // Cancel running transactions
+            // Cancel running transactions and dispose them
             if(t.getCurrentState() == CfdpTransactionState.RUNNING || t.getCurrentState() == CfdpTransactionState.SUSPENDED) {
                 t.cancel(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED);
+                t.dispose();
             }
         }
+        // Forget the state
         this.id2transaction.clear();
         // Inform subscribers and clear
         notifyIndication(new EntityDisposedIndication());
@@ -413,7 +415,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         if(LOG.isLoggable(Level.FINEST)) {
             LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: received PDU from UT layer %s: %s", getLocalEntityId(), layer.getName(), pdu));
         }
-        if(!pdu.isCrcPresent()) {
+        if(!pdu.isCrcValid()) {
             if(LOG.isLoggable(Level.WARNING)) {
                 LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: received corrupted PDU from UT layer %s, PDU ignored: %s", getLocalEntityId(), layer.getName(), pdu));
             }
@@ -479,6 +481,12 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         }
         // Send it out
         RemoteEntityConfigurationInformation remoteConf = b.getDirection() == CfdpPdu.Direction.TOWARD_FILE_RECEIVER ? getMib().getRemoteEntityById(b.getDestinationEntityId()) : getMib().getRemoteEntityById(b.getSourceEntityId());
+        if(remoteConf == null) {
+            if (LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: cannot acknowledge PDU %s to entity %s: destination entity not found", getLocalEntityId(), pdu, b.getDestinationEntityId()));
+            }
+            return;
+        }
         IUtLayer utLayerToUse = this.utLayers.get(remoteConf.getUtLayer());
         if(utLayerToUse == null) {
             if (LOG.isLoggable(Level.SEVERE)) {

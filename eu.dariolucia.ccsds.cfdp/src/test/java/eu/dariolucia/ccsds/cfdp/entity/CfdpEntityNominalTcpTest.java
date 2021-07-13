@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
+import eu.dariolucia.ccsds.cfdp.entity.request.ReportRequest;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpFileSegmenter;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpSegmentationStrategy;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.impl.FixedSizeSegmenter;
@@ -193,6 +194,12 @@ public class CfdpEntityNominalTcpTest {
             assertTrue(e2.getFilestore().fileExists(destPath));
             assertTrue(TestUtils.compareFiles(e1.getFilestore(), path, e2.getFilestore(), destPath));
 
+            // Disable reachability of the two entities
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(false, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(false, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(false, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(false, 1);
+
             ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
             ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
 
@@ -301,9 +308,6 @@ public class CfdpEntityNominalTcpTest {
             ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
             ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
 
-            e1.dispose();
-            e2.dispose();
-
             // Assert TX PDUs: sender
             UtLayerTxPduDecorator l1 = (UtLayerTxPduDecorator) e1.getUtLayerByName("TCP");
             List<CfdpPdu> txPdu1 = l1.getTxPdus();
@@ -327,6 +331,13 @@ public class CfdpEntityNominalTcpTest {
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
             List<CfdpPdu> txPdu2 = l2.getTxPdus();
             assertEquals(0, txPdu2.size());
+
+            // Before disposing the entities, ask for a report
+            e1.request(new ReportRequest(65537));
+            s1.waitForIndication(ReportIndication.class, 1000);
+
+            e1.dispose();
+            e2.dispose();
         } catch (Throwable e) {
             // Deactivate the UT layers
             ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();

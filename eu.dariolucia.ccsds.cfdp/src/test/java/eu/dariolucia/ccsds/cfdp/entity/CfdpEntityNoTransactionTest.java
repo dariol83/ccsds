@@ -118,6 +118,22 @@ public class CfdpEntityNoTransactionTest {
                 sendTo(2, pdu);
                 Thread.sleep(2000);
             }
+            // Send a corrupted Finished PDU to e2 from entity 1
+            {
+                LOG.info("Send a corrupted Finished PDU to e2 from entity 1");
+                FinishedPdu pdu = prepareFinishedPdu(1, 2);
+                byte[] data = pdu.getPdu();
+                data[data.length - 1] = 0;
+                sendTo(2, pdu);
+                Thread.sleep(2000);
+            }
+            // Send a Finished PDU to e2 from entity 7
+            {
+                LOG.info("Send a Finished PDU to e2 from entity 7");
+                FinishedPdu pdu = prepareFinishedPdu(2, 7);
+                sendTo(2, pdu);
+                Thread.sleep(2000);
+            }
             // Deactivate the UT layers
             ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
             ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
