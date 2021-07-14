@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.ut.impl;
 
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
+import eu.dariolucia.ccsds.cfdp.mib.RemoteEntityConfigurationInformation;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayerSubscriber;
@@ -73,6 +74,11 @@ public abstract class AbstractUtLayer implements IUtLayer {
                 s.endTxPeriod(this, e.getKey());
             }
         }
+        handleRegister(s);
+    }
+
+    protected void handleRegister(IUtLayerSubscriber s) {
+        // Subclasses can override
     }
 
     @Override
@@ -81,21 +87,28 @@ public abstract class AbstractUtLayer implements IUtLayer {
             LOG.log(Level.FINE, String.format("UT Layer subscriber %s deregistering from UT Layer %s", s, getName()));
         }
         this.subscribers.remove(s);
+        handleDeregister(s);
+    }
+
+    protected void handleDeregister(IUtLayerSubscriber s) {
+        // Subclasses can override
     }
 
     @Override
-    public void dispose() {
+    public synchronized void dispose() {
         if(LOG.isLoggable(Level.FINE)) {
             LOG.log(Level.FINE, String.format("Disposing UT Layer %s", getName()));
         }
-        try {
+        // Deactivate first
+        if(isActivated()) {
             deactivate();
-        } catch (UtLayerException e) {
-            if(LOG.isLoggable(Level.SEVERE)) {
-                LOG.log(Level.SEVERE, String.format("Exception when disposing UT Layer %s: %s", getName(), e.getMessage()), e);
-            }
         }
-        // Subclasses may override and call super
+        //
+        handleDispose();
+    }
+
+    protected void handleDispose() {
+        // Subclasses can override
     }
 
     protected void notifyPduReceived(CfdpPdu decoded) {
@@ -135,7 +148,12 @@ public abstract class AbstractUtLayer implements IUtLayer {
                 }
             }
         }
-        // Subclasses may override, but must call super
+        //
+        handleTxAvailability(available, entityIds);
+    }
+
+    protected void handleTxAvailability(boolean available, long... entityIds) {
+        // Subclasses can override
     }
 
     public synchronized void setRxAvailability(boolean available, long... entityIds) {
@@ -160,7 +178,12 @@ public abstract class AbstractUtLayer implements IUtLayer {
                 }
             }
         }
-        // Subclasses may override, but must call super
+        //
+        handleRxAvailability(available, entityIds);
+    }
+
+    protected void handleRxAvailability(boolean available, long... entityIds) {
+        // Subclasses can override
     }
 
     @Override
@@ -175,87 +198,120 @@ public abstract class AbstractUtLayer implements IUtLayer {
         return Objects.requireNonNullElse(available, false);
     }
 
-    public void activate() throws UtLayerException { // NOSONAR: exception declaration must stay
+    public synchronized void activate() throws UtLayerException { // NOSONAR: exception declaration must stay
         if (LOG.isLoggable(Level.INFO)) {
             LOG.log(Level.INFO, String.format("Activating UT Layer %s", getName()));
         }
-        synchronized (this) {
-            if (activated) {
-                return;
+        if (activated) {
+            if (LOG.isLoggable(Level.FINE)) {
+                LOG.log(Level.FINE, String.format("UT Layer %s already active, nothing to be done", getName()));
             }
-            this.activated = true;
-            // inform all subscribers of the current state of ID, if any
-            for (Map.Entry<Long, Boolean> e : this.id2rxAvailable.entrySet()) {
-                for (IUtLayerSubscriber s : this.subscribers) {
-                    try {
-                        if (e.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
-                            s.startRxPeriod(this, e.getKey());
-                        } else {
-                            s.endRxPeriod(this, e.getKey());
-                        }
-                    } catch (Exception ex) {
-                        if (LOG.isLoggable(Level.WARNING)) {
-                            LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on RX activation: %s", s, getName(), ex.getMessage()), ex);
-                        }
+            return;
+        }
+        this.activated = true;
+        // inform all subscribers of the current state of ID, if any
+        for (Map.Entry<Long, Boolean> e : this.id2rxAvailable.entrySet()) {
+            for (IUtLayerSubscriber s : this.subscribers) {
+                try {
+                    if (e.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
+                        s.startRxPeriod(this, e.getKey());
+                    } else {
+                        s.endRxPeriod(this, e.getKey());
                     }
-                }
-            }
-            for (Map.Entry<Long, Boolean> e : this.id2txAvailable.entrySet()) {
-                for (IUtLayerSubscriber s : this.subscribers) {
-                    try {
-                        if (e.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
-                            s.startTxPeriod(this, e.getKey());
-                        } else {
-                            s.endTxPeriod(this, e.getKey());
-                        }
-                    } catch (Exception ex) {
-                        if (LOG.isLoggable(Level.WARNING)) {
-                            LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on TX activation: %s", s, getName(), ex.getMessage()), ex);
-                        }
+                } catch (Exception ex) {
+                    if (LOG.isLoggable(Level.WARNING)) {
+                        LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on RX activation: %s", s, getName(), ex.getMessage()), ex);
                     }
                 }
             }
         }
-        // Subclasses may override, but must call super
+        for (Map.Entry<Long, Boolean> e : this.id2txAvailable.entrySet()) {
+            for (IUtLayerSubscriber s : this.subscribers) {
+                try {
+                    if (e.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
+                        s.startTxPeriod(this, e.getKey());
+                    } else {
+                        s.endTxPeriod(this, e.getKey());
+                    }
+                } catch (Exception ex) {
+                    if (LOG.isLoggable(Level.WARNING)) {
+                        LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on TX activation: %s", s, getName(), ex.getMessage()), ex);
+                    }
+                }
+            }
+        }
+        // If you have an exception at this stage, deactivate and throw e
+        try {
+            handleActivate();
+        } catch (UtLayerException e) {
+            deactivate();
+            throw e;
+        }
     }
 
-    public void deactivate() throws UtLayerException { // NOSONAR: exception declaration must stay
+    protected abstract void handleActivate() throws UtLayerException;
+
+    public synchronized void deactivate() {
         if(LOG.isLoggable(Level.INFO)) {
             LOG.log(Level.INFO, String.format("Deactivating UT Layer %s", getName()));
         }
-        synchronized (this) {
-            if (!activated) {
-                return;
+        if (!activated) {
+            if (LOG.isLoggable(Level.FINE)) {
+                LOG.log(Level.FINE, String.format("UT Layer %s already inactive, nothing to be done", getName()));
             }
-            this.activated = false;
-            // inform all subscribers of the unavailability
-            for (Map.Entry<Long, Boolean> e : this.id2rxAvailable.entrySet()) {
-                for (IUtLayerSubscriber s : this.subscribers) {
-                    try {
-                        s.endRxPeriod(this, e.getKey());
-                    } catch (Exception ex) {
-                        if (LOG.isLoggable(Level.WARNING)) {
-                            LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on RX deactivation: %s", s, getName(), ex.getMessage()), ex);
-                        }
-                    }
-                }
-            }
-            for (Map.Entry<Long, Boolean> e : this.id2txAvailable.entrySet()) {
-                for (IUtLayerSubscriber s : this.subscribers) {
-                    try {
-                        s.endTxPeriod(this, e.getKey());
-                    } catch (Exception ex) {
-                        if (LOG.isLoggable(Level.WARNING)) {
-                            LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on TX deactivation: %s", s, getName(), ex.getMessage()), ex);
-                        }
+            return;
+        }
+        this.activated = false;
+        // inform all subscribers of the unavailability
+        for (Map.Entry<Long, Boolean> e : this.id2rxAvailable.entrySet()) {
+            for (IUtLayerSubscriber s : this.subscribers) {
+                try {
+                    s.endRxPeriod(this, e.getKey());
+                } catch (Exception ex) {
+                    if (LOG.isLoggable(Level.WARNING)) {
+                        LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on RX deactivation: %s", s, getName(), ex.getMessage()), ex);
                     }
                 }
             }
         }
-        // Subclasses may override, but must call super
+        for (Map.Entry<Long, Boolean> e : this.id2txAvailable.entrySet()) {
+            for (IUtLayerSubscriber s : this.subscribers) {
+                try {
+                    s.endTxPeriod(this, e.getKey());
+                } catch (Exception ex) {
+                    if (LOG.isLoggable(Level.WARNING)) {
+                        LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on TX deactivation: %s", s, getName(), ex.getMessage()), ex);
+                    }
+                }
+            }
+        }
+        // No exception possible on deactivation here
+        handleDeactivate();
     }
+
+    protected abstract void handleDeactivate();
 
     public synchronized boolean isActivated() {
         return activated;
     }
+
+    @Override
+    public void request(CfdpPdu pdu, long destinationEntityId) throws UtLayerException {
+        if(LOG.isLoggable(Level.FINEST)) {
+            LOG.log(Level.FINEST, String.format("UT Layer %s: requesting transmission of PDU %s to entity %d", getName(), pdu, destinationEntityId));
+        }
+        // If the destination is not available for TX, exception
+        if (!isActivated() || !getTxAvailability(destinationEntityId)) {      // NOSONAR: concurrent hash maps do not accept null values
+            throw new UtLayerException(String.format("TX not available for destination entity %d", destinationEntityId));
+        }
+        RemoteEntityConfigurationInformation conf = getMib().getRemoteEntityById(destinationEntityId);
+        if (conf == null) {
+            throw new UtLayerException("Cannot retrieve connection information for remote entity " + destinationEntityId);
+        }
+        // Delegate to subclass
+        handleRequest(pdu, conf);
+    }
+
+    protected abstract void handleRequest(CfdpPdu pdu, RemoteEntityConfigurationInformation destinationInformation) throws UtLayerException;
+
 }

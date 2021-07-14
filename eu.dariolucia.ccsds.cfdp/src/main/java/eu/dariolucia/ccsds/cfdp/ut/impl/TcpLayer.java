@@ -58,28 +58,20 @@ public class TcpLayer extends AbstractUtLayer {
     }
 
     @Override
-    public void request(CfdpPdu pdu, long destinationEntityId) throws UtLayerException {
-        if(LOG.isLoggable(Level.FINEST)) {
-            LOG.log(Level.FINEST, String.format("UT Layer %s: requesting transmission of PDU %s to entity %d", getName(), pdu, destinationEntityId));
-        }
-        Socket ds;
-        synchronized (this) {
-            // If the destination is not available for TX, exception
-            if (!isActivated() || !getTxAvailability(destinationEntityId)) {      // NOSONAR: concurrent hash maps do not accept null values
-                throw new UtLayerException(String.format("TX not available for destination entity %d", destinationEntityId));
-            }
-            // For each destination ID, we have a specific socket
-            ds = this.id2sendingSocket.get(destinationEntityId);
-            if (ds == null) {
-                RemoteEntityConfigurationInformation conf = getMib().getRemoteEntityById(destinationEntityId);
-                if (conf == null) {
-                    throw new UtLayerException("Cannot retrieve connection information for remote entity " + destinationEntityId);
-                }
-                if(LOG.isLoggable(Level.FINER)) {
-                    LOG.log(Level.FINER, String.format("UT Layer %s: connection to entity %d using address string %s", getName(), destinationEntityId, conf.getUtAddress()));
+    protected void handleRequest(CfdpPdu pdu, RemoteEntityConfigurationInformation destinationInfo) throws UtLayerException {
+        long destinationEntityId = destinationInfo.getRemoteEntityId();
+        Socket destinationSocket;
+        // For each destination ID, we have a specific socket.
+
+        // The only purpose of this synchronized block is to avoid potential double insertion
+        synchronized (id2sendingSocket) {
+            destinationSocket = this.id2sendingSocket.get(destinationEntityId);
+            if (destinationSocket == null) {
+                if (LOG.isLoggable(Level.FINER)) {
+                    LOG.log(Level.FINER, String.format("UT Layer %s: connection to entity %d using address string %s", getName(), destinationEntityId, destinationInfo.getUtAddress()));
                 }
                 // utAddress in the form of tcp:<hostname>:<port>
-                String utAddress = conf.getUtAddress();
+                String utAddress = destinationInfo.getUtAddress();
                 String[] fields = utAddress.split(":", -1);
                 if (fields.length != 3) {
                     throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, expected format is tcp:<hostname>:<port> but got %s", destinationEntityId, utAddress));
@@ -98,43 +90,42 @@ public class TcpLayer extends AbstractUtLayer {
                     throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, TCP port should be between 1 and 65535 but got %s", destinationEntityId, utAddress));
                 }
                 try {
-                    ds = new Socket(address, port);
-                    if(LOG.isLoggable(Level.INFO)) {
-                        LOG.log(Level.INFO, String.format("UT Layer %s: connection to entity %d at %s:%d string %s established", getName(), destinationEntityId, address, port, conf.getUtAddress()));
+                    destinationSocket = new Socket(address, port);
+                    if (LOG.isLoggable(Level.INFO)) {
+                        LOG.log(Level.INFO, String.format("UT Layer %s: connection to entity %d at %s:%d string %s established", getName(), destinationEntityId, address, port, destinationInfo.getUtAddress()));
                     }
                 } catch (IOException e) {
                     throw new UtLayerException(e);
                 }
-                this.id2sendingSocket.put(destinationEntityId, ds);
+                this.id2sendingSocket.put(destinationEntityId, destinationSocket);
             }
         }
+        // Out of the monitor, try to send, monitor on the socket, just to serialize multiple write calls on the same socket
 
-        // Send the PDU to the socket
-        synchronized (ds) {
-            try {
-                OutputStream ostr = ds.getOutputStream();
-                if(ostr == null) {
+        try {
+            synchronized (destinationSocket) {
+                OutputStream ostr = destinationSocket.getOutputStream();
+                if (ostr == null) {
                     throw new IOException("No output stream available: null");
                 }
-                ds.getOutputStream().write(pdu.getPdu());
-            } catch (IOException e) {
-                if(LOG.isLoggable(Level.WARNING)) {
-                    LOG.log(Level.WARNING, String.format("UT Layer %s: exception when sending PDU to entity %d: %s", getName(), destinationEntityId, e.getMessage()), e);
-                }
-                this.id2sendingSocket.remove(destinationEntityId);
-                try {
-                    ds.close();
-                } catch (IOException ioException) {
-                    // Ignore here
-                }
-                throw new UtLayerException(e);
+                destinationSocket.getOutputStream().write(pdu.getPdu());
             }
+        } catch (IOException e) {
+            if (LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("UT Layer %s: exception when sending PDU to entity %d: %s", getName(), destinationEntityId, e.getMessage()), e);
+            }
+            this.id2sendingSocket.remove(destinationEntityId);
+            try {
+                destinationSocket.close();
+            } catch (IOException ioException) {
+                // Ignore here
+            }
+            throw new UtLayerException(e);
         }
     }
 
     @Override
-    public synchronized void activate() throws UtLayerException {
-        super.activate();
+    protected void handleActivate() throws UtLayerException {
         if(this.readerThread == null) {
             // open server socket
             if(LOG.isLoggable(Level.INFO)) {
@@ -164,13 +155,7 @@ public class TcpLayer extends AbstractUtLayer {
                         LOG.log(Level.SEVERE, String.format("Error during UT layer %s reception (accept): %s", getName(), e.getMessage()), e);
                     }
                     // Something is wrong
-                    try {
-                        deactivate();
-                    } catch (UtLayerException utLayerException) {
-                        if (LOG.isLoggable(Level.SEVERE)) {
-                            LOG.log(Level.SEVERE, String.format("Error while deactivating UT layer %s after failure in reception: %s", getName(), e.getMessage()), utLayerException);
-                        }
-                    }
+                    deactivate();
                 }
                 return;
             }
@@ -226,37 +211,31 @@ public class TcpLayer extends AbstractUtLayer {
     }
 
     @Override
-    public void deactivate() throws UtLayerException {
-        super.deactivate();
-        synchronized (this) {
-            // close server socket
-            if (this.serverSocket != null) {
-                if(LOG.isLoggable(Level.INFO)) {
-                    LOG.log(Level.INFO, String.format("UT Layer %s: closing server socket at port %d", getName(), this.localTcpPort));
-                }
-                try {
-                    this.serverSocket.close();
-                } catch (IOException e) {
-                    // Ignore
-                }
-                this.serverSocket = null;
+    protected void handleDeactivate() {
+        // Close server socket
+        if (this.serverSocket != null) {
+            if(LOG.isLoggable(Level.INFO)) {
+                LOG.log(Level.INFO, String.format("UT Layer %s: closing server socket at port %d", getName(), this.localTcpPort));
             }
-            // stop processing thread
-            this.readerThread = null;
+            try {
+                this.serverSocket.close();
+            } catch (IOException e) {
+                // Ignore
+            }
+            this.serverSocket = null;
         }
-        // close and cleanup all client sockets
+        // Stop processing thread
+        this.readerThread = null;
+
+        // Close and cleanup all client sockets
         for(Map.Entry<Long, Socket> entry : this.id2sendingSocket.entrySet()) {
-            synchronized (entry.getValue()) {
-                try {
-                    entry.getValue().close();
-                } catch (IOException e) {
-                    // Ignore
-                }
+            try {
+                entry.getValue().close();
+            } catch (IOException e) {
+                // Ignore
             }
         }
-        synchronized (this) {
-            this.id2sendingSocket.clear();
-        }
+        this.id2sendingSocket.clear();
     }
 
     @Override
