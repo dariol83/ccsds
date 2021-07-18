@@ -104,7 +104,8 @@ public class CfdpEntitySuspendResumeTcpTest {
             e1.request(fduTxReq);
             // Wait to transmit 3 PDUs and then suspend
             waitForSuspendSem.acquire();
-            // At this stage, suspend the sending side
+            // At this stage, suspend the sending side (twice to check also that no problem is introduced)
+            e1.request(new SuspendRequest(65537));
             e1.request(new SuspendRequest(65537));
             // Activate again the sending and wait a bit
             suspendSem.release();

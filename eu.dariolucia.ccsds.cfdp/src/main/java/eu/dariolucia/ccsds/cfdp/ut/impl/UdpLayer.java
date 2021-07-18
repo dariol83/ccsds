@@ -79,9 +79,14 @@ public class UdpLayer extends AbstractUtLayer {
                 } catch (UnknownHostException e) {
                     throw new UtLayerException(e);
                 }
-                int port = Integer.parseInt(fields[2]);
-                if (port < 1 || port > 65535) {
-                    throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, UDP port should be between 1 and 65535 but got %s", destinationEntityId, utAddress));
+                int port;
+                try {
+                    port = Integer.parseInt(fields[2]);
+                    if (port < 1 || port > 65535) {
+                        throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, UDP port should be between 1 and 65535 but got %s", destinationEntityId, utAddress));
+                    }
+                } catch (NumberFormatException e) {
+                    throw new UtLayerException(String.format("Cannot retrieve proper UT address for remote entity %d, TCP port should be an integer between 1 and 65535 but got %s", destinationEntityId, utAddress));
                 }
                 try {
                     destinationSocket = new DatagramSocket();

@@ -60,18 +60,30 @@ public abstract class AbstractUtLayer implements IUtLayer {
         }
         this.subscribers.add(s);
         // Inform subscriber
-        for(Map.Entry<Long, Boolean> e : this.id2rxAvailable.entrySet()) {
-            if(e.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
-                s.startRxPeriod(this, e.getKey());
-            } else {
-                s.endRxPeriod(this, e.getKey());
+        for(Map.Entry<Long, Boolean> entry : this.id2rxAvailable.entrySet()) {
+            try {
+                if (entry.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
+                    s.startRxPeriod(this, entry.getKey());
+                } else {
+                    s.endRxPeriod(this, entry.getKey());
+                }
+            } catch (Exception e) {
+                if(LOG.isLoggable(Level.WARNING)) {
+                    LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on RX availability: %s", s, getName(), e.getMessage()), e);
+                }
             }
         }
-        for(Map.Entry<Long, Boolean> e : this.id2txAvailable.entrySet()) {
-            if(e.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
-                s.startTxPeriod(this, e.getKey());
-            } else {
-                s.endTxPeriod(this, e.getKey());
+        for(Map.Entry<Long, Boolean> entry : this.id2txAvailable.entrySet()) {
+            try {
+                if(entry.getValue()) { // NOSONAR: Boolean cannot be null, see ConcurrentHashMap contract
+                    s.startTxPeriod(this, entry.getKey());
+                } else {
+                    s.endTxPeriod(this, entry.getKey());
+                }
+            } catch (Exception e) {
+                if(LOG.isLoggable(Level.WARNING)) {
+                    LOG.log(Level.WARNING, String.format("Cannot notify subscriber %s from UT Layer %s on TX availability: %s", s, getName(), e.getMessage()), e);
+                }
             }
         }
         handleRegister(s);

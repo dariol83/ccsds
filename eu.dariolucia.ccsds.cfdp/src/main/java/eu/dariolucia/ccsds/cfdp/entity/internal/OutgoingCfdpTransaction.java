@@ -815,6 +815,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         // FileData specific
         b.setOffset(gs.getOffset());
         b.setFileData(gs.getData());
+        // TODO: add test
         if(gs.getRecordContinuationState() != FileDataPdu.RCS_NOT_PRESENT) {
             b.setSegmentMetadataPresent(true);
             b.setRecordContinuationState(gs.getRecordContinuationState());
@@ -967,6 +968,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         // If you reach this point, then according to the standard:
         // 4.6.3.2.4 If the timer expires prior to reception of a Finished PDU for the associated
         // transaction, a Check Limit Reached fault shall be declared.
+        // TODO: add test
         if(this.transactionFinishCheckTimer != null) {
             try {
                 fault(FileDirectivePdu.CC_CHECK_LIMIT_REACHED, getLocalEntityId());
@@ -996,6 +998,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
 
     @Override
     protected void handleTransactionInactivity() {
+        // TODO: add test
         try {
             fault(FileDirectivePdu.CC_INACTIVITY_DETECTED, getLocalEntityId());
         } catch (FaultDeclaredException e) {

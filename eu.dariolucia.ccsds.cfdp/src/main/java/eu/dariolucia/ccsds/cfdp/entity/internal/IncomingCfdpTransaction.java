@@ -928,6 +928,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             this.nakComputationTimer.cancel();
             this.nakComputationTimer = null;
         }
+        // TODO: add test
         this.nakComputationTimer = new TimerTask() {
             @Override
             public void run() {
