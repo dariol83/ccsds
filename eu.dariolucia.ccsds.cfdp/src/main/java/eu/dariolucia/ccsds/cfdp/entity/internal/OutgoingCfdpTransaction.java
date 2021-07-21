@@ -163,15 +163,6 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
 
     @Override
     protected void handleCancel(byte conditionCode, long faultEntityId) {
-        if(isCancelled()) {
-            if(LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: transaction already in cancelled state, not repeating procedure (new condition code %d)", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode));
-            }
-            return;
-        }
-        if(LOG.isLoggable(Level.FINE)) {
-            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: handling cancel with condition code %d and fault entity ID %d", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode, faultEntityId));
-        }
         setLastConditionCode(conditionCode, faultEntityId);
         setCancelled();
         // Handling of a cancellation request from user
@@ -815,7 +806,6 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         // FileData specific
         b.setOffset(gs.getOffset());
         b.setFileData(gs.getData());
-        // TODO: add test
         if(gs.getRecordContinuationState() != FileDataPdu.RCS_NOT_PRESENT) {
             b.setSegmentMetadataPresent(true);
             b.setRecordContinuationState(gs.getRecordContinuationState());
@@ -935,8 +925,9 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         //      4) the Finished PDU whose arrival completed the transaction contained a Filestore
         //         Responses parameter,
         //    then that Filestore Responses parameter shall be passed in the TransactionFinished.indication primitive.
-        // TODO: sending entity is the transaction source? (I assume for store-and-forward and for proxy operations,
-        //  leave it to be done for now
+
+        // It is assumed that the sending entity is the transaction source (I assume for store-and-forward and for proxy
+        // operations might be different, leave it to be done for now.
         if(!isAcknowledged()) {
             if(this.finishedPdu != null) {
                 getEntity().notifyIndication(new TransactionFinishedIndication(getTransactionId(),
@@ -968,7 +959,6 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         // If you reach this point, then according to the standard:
         // 4.6.3.2.4 If the timer expires prior to reception of a Finished PDU for the associated
         // transaction, a Check Limit Reached fault shall be declared.
-        // TODO: add test
         if(this.transactionFinishCheckTimer != null) {
             try {
                 fault(FileDirectivePdu.CC_CHECK_LIMIT_REACHED, getLocalEntityId());
@@ -998,7 +988,6 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
 
     @Override
     protected void handleTransactionInactivity() {
-        // TODO: add test
         try {
             fault(FileDirectivePdu.CC_INACTIVITY_DETECTED, getLocalEntityId());
         } catch (FaultDeclaredException e) {

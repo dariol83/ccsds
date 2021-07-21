@@ -143,7 +143,7 @@ public abstract class CfdpTransaction {
         switch(action) {
             // a) issuance of a Notice of Cancellation
             case NOTICE_OF_CANCELLATION:
-                handleCancel(conditionCode, generatingEntityId);
+                doInternalCancel(conditionCode, generatingEntityId);
                 throw new FaultDeclaredException(getTransactionId(), NOTICE_OF_CANCELLATION, conditionCode, generatingEntityId);
             // b) issuance of a Notice of Suspension, but only if the affected transaction was sent in
             //    'acknowledged' transmission mode, or the fault condition was declared at the source
@@ -323,7 +323,20 @@ public abstract class CfdpTransaction {
     }
 
     public void cancel(byte conditionCode) {
-        handle(() -> handleCancel(conditionCode, getLocalEntityId()));
+        handle(() -> doInternalCancel(conditionCode, getLocalEntityId()));
+    }
+
+    private void doInternalCancel(byte conditionCode, long faultEntityId) {
+        if(isCancelled()) {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: transaction already in cancelled state, not repeating procedure (new condition code %d)", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode));
+            }
+            return;
+        }
+        if(LOG.isLoggable(Level.FINE)) {
+            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: handling cancel with condition code %d and fault entity ID %d", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode, faultEntityId));
+        }
+        handleCancel(conditionCode, faultEntityId);
     }
 
     public void suspend() {

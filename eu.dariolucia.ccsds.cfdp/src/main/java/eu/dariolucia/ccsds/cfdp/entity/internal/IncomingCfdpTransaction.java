@@ -661,17 +661,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     @Override
     protected void handleCancel(byte conditionCode, long faultEntityId) {
-        if(isCancelled()) {
-            if(LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: transaction already in cancelled state, not repeating procedure (new condition code %d)", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode));
-            }
-            return;
-        }
-        if(LOG.isLoggable(Level.FINE)) {
-            LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: handling cancel with condition code %d and fault entity ID %d", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), conditionCode, faultEntityId));
-        }
         setLastConditionCode(conditionCode, faultEntityId);
-
         setCancelled();
         // 4.11.2.3.1 On Notice of Cancellation of the Copy File procedure, the receiving CFDP entity
         // shall issue a Notice of Completion (Canceled).
@@ -928,7 +918,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             this.nakComputationTimer.cancel();
             this.nakComputationTimer = null;
         }
-        // TODO: add test
+        // Start the recomputation timer here
         this.nakComputationTimer = new TimerTask() {
             @Override
             public void run() {

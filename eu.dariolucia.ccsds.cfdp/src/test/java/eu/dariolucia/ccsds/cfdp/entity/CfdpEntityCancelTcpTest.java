@@ -103,7 +103,8 @@ public class CfdpEntityCancelTcpTest {
             e1.request(fduTxReq);
             // Wait to transmit 3 PDUs and then suspend
             waitForSuspendSem.acquire();
-            // At this stage, cancel the sending side
+            // At this stage, cancel the sending side (twice)
+            e1.request(new CancelRequest(65537));
             e1.request(new CancelRequest(65537));
             // Activate again the sending and wait a bit
             suspendSem.release();
