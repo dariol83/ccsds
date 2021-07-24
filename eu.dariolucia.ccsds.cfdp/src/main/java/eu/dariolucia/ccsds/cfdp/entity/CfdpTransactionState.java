@@ -16,10 +16,28 @@
 
 package eu.dariolucia.ccsds.cfdp.entity;
 
+/**
+ * This enumeration encapsulate the possible states, a CFDP transaction can be in.
+ */
 public enum CfdpTransactionState {
+    /**
+     * The transaction is active and running.
+     */
     RUNNING,
+    /**
+     * The transaction is active and suspended
+     */
     SUSPENDED,
+    /**
+     * The transaction is cancelled.
+     */
     CANCELLED,
+    /**
+     * The transaction is abandoned.
+     */
     ABANDONED,
+    /**
+     * The transaction is completed with success.
+     */
     COMPLETED
 }

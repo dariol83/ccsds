@@ -18,6 +18,9 @@ package eu.dariolucia.ccsds.cfdp.entity.segmenters;
 
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 
+/**
+ * This interface allows to extract segments from a specified files in an iterator-like fashion.
+ */
 public interface ICfdpFileSegmenter {
 
     /**

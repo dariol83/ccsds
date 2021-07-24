@@ -45,52 +45,16 @@ import java.util.List;
  */
 public class TransactionFinishedIndication implements ICfdpIndication {
 
-    /**
-     * The Transaction ID parameter shall uniquely identify a single instance of FDU
-     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
-     * that is specific to that entity.
-     *
-     * At any moment, any given transaction ID is unique within the CFDP addressing
-     * domain that encompasses the source CFDP entity.
-     */
     private final long transactionId;
 
-    /**
-     * The Condition code parameter shall provide additional information on some change
-     * in transaction status.
-     */
     private final byte conditionCode;
 
-    /**
-     * The file status.
-     */
     private final FinishedPdu.FileStatus fileStatus;
 
-    /**
-     * In the CCSDS Blue Book, this parameter is defined as "delivery code" in the {@link FinishedPdu}.
-     *
-     * If true, means that metadata, all file data, and EOF have been received, and the
-     * checksum has been verified.
-     */
     private final boolean dataComplete;
 
-    /**
-     * Optionally present.
-     */
     private final List<FilestoreResponseTLV> filestoreResponses = new LinkedList<>();
 
-    /**
-     * Optionally present. The Status report parameter shall indicate the status of the indicated file delivery
-     * transaction. The format and scope of the status report parameter are specific to the
-     * implementation. It could contain information such as:
-     * <ol>
-     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
-     *     <li>what extents of the FDU are known to have been successfully received by the
-     * receiving CFDP entity;</li>
-     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
-     * entity.</li>
-     * </ol>
-     */
     private final CfdpTransactionStatus statusReport;
 
     /**
@@ -114,26 +78,74 @@ public class TransactionFinishedIndication implements ICfdpIndication {
         }
     }
 
+    /**
+     * The Transaction ID parameter shall uniquely identify a single instance of FDU
+     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
+     * that is specific to that entity.
+     *
+     * At any moment, any given transaction ID is unique within the CFDP addressing
+     * domain that encompasses the source CFDP entity.
+     *
+     * @return the transaction ID
+     */
     public long getTransactionId() {
         return transactionId;
     }
 
+    /**
+     * The Condition code parameter shall provide additional information on some change
+     * in transaction status.
+     *
+     * @return the condition code
+     */
     public byte getConditionCode() {
         return conditionCode;
     }
 
+    /**
+     * The file status.
+     *
+     * @return the file status
+     */
     public FinishedPdu.FileStatus getFileStatus() {
         return fileStatus;
     }
 
+    /**
+     * In the CCSDS Blue Book, this parameter is defined as "delivery code" in the {@link FinishedPdu}.
+     *
+     * If true, means that metadata, all file data, and EOF have been received, and the
+     * checksum has been verified.
+     *
+     * @return true if the data is complete (everything was received correctly)
+     */
     public boolean isDataComplete() {
         return dataComplete;
     }
 
+    /**
+     * The filestore responses. Optionally present.
+     *
+     * return the filestore responses (can be empty, never null)
+     */
     public List<FilestoreResponseTLV> getFilestoreResponses() {
         return Collections.unmodifiableList(filestoreResponses);
     }
 
+    /**
+     * The Status report parameter shall indicate the status of the indicated file delivery
+     * transaction. The format and scope of the status report parameter are specific to the
+     * implementation. It could contain information such as:
+     * <ol>
+     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
+     *     <li>what extents of the FDU are known to have been successfully received by the
+     * receiving CFDP entity;</li>
+     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
+     * entity.</li>
+     * </ol>
+     *
+     * @return the status report
+     */
     public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }

@@ -16,5 +16,8 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
+/**
+ * Marker interface for CFDP indications.
+ */
 public interface ICfdpIndication {
 }

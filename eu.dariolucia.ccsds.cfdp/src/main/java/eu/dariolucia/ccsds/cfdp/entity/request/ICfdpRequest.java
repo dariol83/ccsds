@@ -16,5 +16,8 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.request;
 
+/**
+ * Marker interface for CFDP requests.
+ */
 public interface ICfdpRequest {
 }

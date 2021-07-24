@@ -18,6 +18,10 @@ package eu.dariolucia.ccsds.cfdp.entity;
 
 import java.time.Instant;
 
+/**
+ * Class to report the status of a CFDP transaction. This class is implementation specific and not defined by the CCSDS
+ * CFDP standard.
+ */
 public class CfdpTransactionStatus {
 
     private final Instant time;

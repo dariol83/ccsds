@@ -32,19 +32,8 @@ import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
  */
 public class TransactionIndication implements ICfdpIndication {
 
-    /**
-     * The Transaction ID parameter shall uniquely identify a single instance of FDU
-     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
-     * that is specific to that entity.
-     *
-     * At any moment, any given transaction ID is unique within the CFDP addressing
-     * domain that encompasses the source CFDP entity.
-     */
     private final long transactionId;
 
-    /**
-     * The {@link PutRequest} that originated this transaction.
-     */
     private final PutRequest originatingRequest;
 
     /**
@@ -58,10 +47,25 @@ public class TransactionIndication implements ICfdpIndication {
         this.originatingRequest = originatingRequest;
     }
 
+    /**
+     * The Transaction ID parameter shall uniquely identify a single instance of FDU
+     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
+     * that is specific to that entity.
+     *
+     * At any moment, any given transaction ID is unique within the CFDP addressing
+     * domain that encompasses the source CFDP entity.
+     *
+     * @return the transaction ID
+     */
     public long getTransactionId() {
         return transactionId;
     }
 
+    /**
+     * The {@link PutRequest} that originated this transaction.
+     *
+     * @return the originating {@link PutRequest}
+     */
     public PutRequest getOriginatingRequest() {
         return originatingRequest;
     }

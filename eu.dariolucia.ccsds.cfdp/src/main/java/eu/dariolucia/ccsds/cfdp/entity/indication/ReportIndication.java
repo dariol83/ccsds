@@ -32,28 +32,8 @@ import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
  */
 public class ReportIndication implements ICfdpIndication {
 
-    /**
-     * The Transaction ID parameter shall uniquely identify a single instance of FDU
-     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
-     * that is specific to that entity.
-     *
-     * At any moment, any given transaction ID is unique within the CFDP addressing
-     * domain that encompasses the source CFDP entity.
-     */
     private final long transactionId;
 
-    /**
-     * The Status report parameter shall indicate the status of the indicated file delivery
-     * transaction. The format and scope of the status report parameter are specific to the
-     * implementation. It could contain information such as:
-     * <ol>
-     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
-     *     <li>what extents of the FDU are known to have been successfully received by the
-     * receiving CFDP entity;</li>
-     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
-     * entity.</li>
-     * </ol>
-     */
     private final CfdpTransactionStatus statusReport;
 
     /**
@@ -67,10 +47,34 @@ public class ReportIndication implements ICfdpIndication {
         this.statusReport = statusReport;
     }
 
+    /**
+     * The Transaction ID parameter shall uniquely identify a single instance of FDU
+     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
+     * that is specific to that entity.
+     *
+     * At any moment, any given transaction ID is unique within the CFDP addressing
+     * domain that encompasses the source CFDP entity.
+     *
+     * @return the transaction ID
+     */
     public long getTransactionId() {
         return transactionId;
     }
 
+    /**
+     * The Status report parameter shall indicate the status of the indicated file delivery
+     * transaction. The format and scope of the status report parameter are specific to the
+     * implementation. It could contain information such as:
+     * <ol>
+     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
+     *     <li>what extents of the FDU are known to have been successfully received by the
+     * receiving CFDP entity;</li>
+     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
+     * entity.</li>
+     * </ol>
+     *
+     * @return the status report
+     */
     public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }

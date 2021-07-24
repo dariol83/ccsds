@@ -19,6 +19,9 @@ package eu.dariolucia.ccsds.cfdp.common;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Class with utility methods for byte manipulation.
+ */
 public class BytesUtil {
 
     private BytesUtil() {

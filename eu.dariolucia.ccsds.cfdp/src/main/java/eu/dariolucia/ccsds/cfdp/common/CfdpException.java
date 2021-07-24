@@ -16,16 +16,32 @@
 
 package eu.dariolucia.ccsds.cfdp.common;
 
+/**
+ * Generic base checked exception thrown by the CFDP module.
+ */
 public class CfdpException extends Exception {
 
+    /**
+     * Construct a {@link CfdpException} with the provided message
+     * @param message the exception message
+     */
     public CfdpException(String message) {
         super(message);
     }
 
+    /**
+     * Construct a {@link CfdpException} with the provided message and cause
+     * @param message the exception message
+     * @param cause the exception cause
+     */
     public CfdpException(String message, Throwable cause) {
         super(message, cause);
     }
 
+    /**
+     * Construct a {@link CfdpException} with the provided cause
+     * @param cause the exception cause
+     */
     public CfdpException(Throwable cause) {
         super(cause);
     }

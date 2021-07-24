@@ -26,6 +26,9 @@ import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * This {@link ICfdpFileSegmenter} splits a file in blocks of the specified maximum length.
+ */
 public class FixedSizeSegmenter implements ICfdpFileSegmenter {
 
     private static final Logger LOG = Logger.getLogger(FixedSizeSegmenter.class.getName());

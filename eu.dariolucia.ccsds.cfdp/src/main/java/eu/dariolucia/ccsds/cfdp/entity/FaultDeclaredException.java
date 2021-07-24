@@ -19,6 +19,9 @@ package eu.dariolucia.ccsds.cfdp.entity;
 import eu.dariolucia.ccsds.cfdp.common.CfdpException;
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
 
+/**
+ * This exception is raised in case of a Fault, as defined by the CCSDS CFDP standard.
+ */
 public class FaultDeclaredException extends CfdpException {
 
     private final FaultHandlerStrategy.Action action;

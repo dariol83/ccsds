@@ -27,14 +27,6 @@ package eu.dariolucia.ccsds.cfdp.entity.request;
  */
 public class PromptNakRequest implements ICfdpRequest {
 
-    /**
-     * The Transaction ID parameter shall uniquely identify a single instance of FDU
-     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
-     * that is specific to that entity.
-     *
-     * At any moment, any given transaction ID is unique within the CFDP addressing
-     * domain that encompasses the source CFDP entity.
-     */
     private final long transactionId;
 
     /**
@@ -46,6 +38,16 @@ public class PromptNakRequest implements ICfdpRequest {
         this.transactionId = transactionId;
     }
 
+    /**
+     * The Transaction ID parameter shall uniquely identify a single instance of FDU
+     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
+     * that is specific to that entity.
+     *
+     * At any moment, any given transaction ID is unique within the CFDP addressing
+     * domain that encompasses the source CFDP entity.
+     *
+     * @return the transaction ID
+     */
     public long getTransactionId() {
         return transactionId;
     }

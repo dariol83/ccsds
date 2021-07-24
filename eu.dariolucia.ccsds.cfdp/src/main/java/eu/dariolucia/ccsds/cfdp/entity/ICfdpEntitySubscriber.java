@@ -18,7 +18,16 @@ package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
 
+/**
+ * Subscription interface to {@link ICfdpEntity} instances.
+ */
 public interface ICfdpEntitySubscriber {
 
+    /**
+     * Receive an indication from a {@link ICfdpEntity}.
+     *
+     * @param emitter the indication emitter
+     * @param indication the indication
+     */
     void indication(ICfdpEntity emitter, ICfdpIndication indication);
 }

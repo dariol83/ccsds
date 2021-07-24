@@ -29,20 +29,8 @@ package eu.dariolucia.ccsds.cfdp.entity.indication;
  */
 public class SuspendedIndication implements ICfdpIndication {
 
-    /**
-     * The Transaction ID parameter shall uniquely identify a single instance of FDU
-     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
-     * that is specific to that entity.
-     *
-     * At any moment, any given transaction ID is unique within the CFDP addressing
-     * domain that encompasses the source CFDP entity.
-     */
     private final long transactionId;
 
-    /**
-     * The Condition code parameter shall provide additional information on some change
-     * in transaction status.
-     */
     private final byte conditionCode;
 
     /**
@@ -56,10 +44,26 @@ public class SuspendedIndication implements ICfdpIndication {
         this.conditionCode = conditionCode;
     }
 
+    /**
+     * The Transaction ID parameter shall uniquely identify a single instance of FDU
+     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
+     * that is specific to that entity.
+     *
+     * At any moment, any given transaction ID is unique within the CFDP addressing
+     * domain that encompasses the source CFDP entity.
+     *
+     * @return the transaction ID
+     */
     public long getTransactionId() {
         return transactionId;
     }
 
+    /**
+     * The Condition code parameter shall provide additional information on some change
+     * in transaction status.
+     *
+     * @return the condition code
+     */
     public byte getConditionCode() {
         return conditionCode;
     }

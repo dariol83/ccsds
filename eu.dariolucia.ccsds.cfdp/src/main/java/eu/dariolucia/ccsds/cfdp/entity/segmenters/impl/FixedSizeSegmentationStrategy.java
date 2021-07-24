@@ -21,6 +21,10 @@ import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpSegmentationStrategy;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
 
+/**
+ * This segmentation strategy can be used on all files. It creates a {@link ICfdpFileSegmenter} that splits files in a sequence
+ * of blocks of maximum defined length, as provided by the max-file-segment-length in the MIB, for the specific destination.
+ */
 public class FixedSizeSegmentationStrategy implements ICfdpSegmentationStrategy {
 
     @Override

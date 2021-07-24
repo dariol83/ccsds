@@ -33,47 +33,16 @@ import java.util.Arrays;
  */
 public class FileSegmentRecvIndication implements ICfdpIndication {
 
-    /**
-     * The Transaction ID parameter shall uniquely identify a single instance of FDU
-     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
-     * that is specific to that entity.
-     *
-     * At any moment, any given transaction ID is unique within the CFDP addressing
-     * domain that encompasses the source CFDP entity.
-     */
     private final long transactionId;
 
-    /**
-     * The offset parameter shall indicate a displacement from the beginning of the file,
-     * expressed as a number of octets.
-     */
     private final long offset;
 
-    /**
-     * The length parameter shall indicate the number of octets of file data received.
-     */
     private final long length;
 
-    /**
-     * Optionally present. Present if and only if the value of the segment metadata flag in the PDU header is 1.
-     * Possible values are defined as constants in {@link eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDataPdu}.
-     */
     private final byte recordContinuationState;
 
-    /**
-     * Optionally present. Present if and only if the value of the segment metadata flag in the PDU header is 1.
-     * 0 to 63.
-     */
     private final int segmentMetadataLength;
 
-    /**
-     * Optionally present. The optional segment metadata parameter shall comprise from 0 to 63 octets of
-     * metadata pertaining to a received file segment. The length and nature of this metadata are an
-     * implementation matter.
-     *
-     * Present if and only if the value of the segment metadata flag in the PDU header is 1 and the
-     * segment metadata length is greater than zero.
-     */
     private final byte[] segmentMetadata;
 
     /**
@@ -95,26 +64,69 @@ public class FileSegmentRecvIndication implements ICfdpIndication {
         this.segmentMetadata = segmentMetadata;
     }
 
+    /**
+     * The Transaction ID parameter shall uniquely identify a single instance of FDU
+     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
+     * that is specific to that entity.
+     *
+     * At any moment, any given transaction ID is unique within the CFDP addressing
+     * domain that encompasses the source CFDP entity.
+     *
+     * @return the transaction ID
+     */
     public long getTransactionId() {
         return transactionId;
     }
 
+    /**
+     * The offset parameter shall indicate a displacement from the beginning of the file,
+     * expressed as a number of octets.
+     *
+     * @return the offset (octets)
+     */
     public long getOffset() {
         return offset;
     }
 
+    /**
+     * The length parameter shall indicate the number of octets of file data received.
+     *
+     * @return number of octets of file data received
+     */
     public long getLength() {
         return length;
     }
 
+    /**
+     * Optionally present. Present if and only if the value of the segment metadata flag in the PDU header is 1.
+     * Possible values are defined as constants in {@link eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDataPdu}.
+     *
+     * @return the recording continuation state
+     */
     public byte getRecordContinuationState() {
         return recordContinuationState;
     }
 
+    /**
+     * Optionally present. Present if and only if the value of the segment metadata flag in the PDU header is 1.
+     * If so, the value is from 0 to 63. If not present, it is set to -1.
+     *
+     * @return the length of the segmented metadata, or -1 if not present
+     */
     public int getSegmentMetadataLength() {
         return segmentMetadataLength;
     }
 
+    /**
+     * Optionally present. The optional segment metadata parameter shall comprise from 0 to 63 octets of
+     * metadata pertaining to a received file segment. The length and nature of this metadata are an
+     * implementation matter.
+     *
+     * Present if and only if the value of the segment metadata flag in the PDU header is 1 and the
+     * segment metadata length is greater or equal than zero.
+     *
+     * @return the segment metadata (can have 0 length)
+     */
     public byte[] getSegmentMetadata() {
         return segmentMetadata;
     }

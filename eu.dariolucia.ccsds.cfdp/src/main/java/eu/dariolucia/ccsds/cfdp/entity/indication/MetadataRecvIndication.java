@@ -35,52 +35,16 @@ import java.util.List;
  */
 public class MetadataRecvIndication implements ICfdpIndication {
 
-    /**
-     * The Transaction ID parameter shall uniquely identify a single instance of FDU
-     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
-     * that is specific to that entity.
-     *
-     * At any moment, any given transaction ID is unique within the CFDP addressing
-     * domain that encompasses the source CFDP entity.
-     */
     private final long transactionId;
 
-    /**
-     * The source CFDP entity ID parameter shall identify the CFDP entity from which the
-     * FDU is to be sent.
-     */
     private final long sourceEntityId;
 
-    /**
-     * Optionally present (-1 means not present). The file size parameter shall indicate the length in octets of the file that is being
-     * conveyed by means of the indicated transaction.
-     */
     private final long fileSize;
 
-    /**
-     * Optionally present. The source file name parameter
-     * a) shall contain the full path name at which the file to be copied is located at the
-     * filestore associated with the source entity;
-     * b) shall be omitted when the FDU to be Put contains only metadata, such as a message
-     * to a user or a standalone filestore request.
-     */
     private final String sourceFileName;
 
-    /**
-     * Optionally present. The destination file name parameter
-     * a) shall contain the full path name to which the file to be copied will be placed at the
-     * filestore associated with the destination entity;
-     * b) shall be omitted when the FDU to be Put contains only metadata, such as a message
-     * to a user or a standalone filestore request.
-     */
     private final String destinationFileName;
 
-    /**
-     * Optionally present. If included, the optional Messages to User parameter shall be transmitted at the
-     * beginning of the transaction and delivered to the destination CFDP user upon receipt. Certain
-     * messages are defined in the User Operations section to allow remote initiation of CFDP
-     * transactions.
-     */
     private final List<MessageToUserTLV> messagesToUser = new LinkedList<>();
 
     /**
@@ -104,26 +68,76 @@ public class MetadataRecvIndication implements ICfdpIndication {
         }
     }
 
+    /**
+     * The Transaction ID parameter shall uniquely identify a single instance of FDU
+     * delivery and shall contain the ID of the source CFDP entity together with a sequence number
+     * that is specific to that entity.
+     *
+     * At any moment, any given transaction ID is unique within the CFDP addressing
+     * domain that encompasses the source CFDP entity.
+     *
+     * @return the transaction ID
+     */
     public long getTransactionId() {
         return transactionId;
     }
 
+    /**
+     * The source CFDP entity ID parameter shall identify the CFDP entity from which the
+     * FDU is to be sent.
+     *
+     * @return the source entity ID
+     */
     public long getSourceEntityId() {
         return sourceEntityId;
     }
 
+    /**
+     * Optionally present (-1 means not present). The file size parameter shall indicate the length in octets of the file that is being
+     * conveyed by means of the indicated transaction.
+     *
+     * @return the file size in bytes, or -1 if not present
+     */
     public long getFileSize() {
         return fileSize;
     }
 
+    /**
+     * Optionally present. The source file name parameter
+     * <ol>
+     * <li>shall contain the full path name at which the file to be copied is located at the
+     * filestore associated with the source entity;</li>
+     * <li>b) shall be omitted when the FDU to be Put contains only metadata, such as a message
+     * to a user or a standalone filestore request.</li>
+     * </ol>
+     * @return the full path name of the source file, or null if not present
+     */
     public String getSourceFileName() {
         return sourceFileName;
     }
 
+    /**
+     * Optionally present. The destination file name parameter
+     * <ol>
+     * <li>shall contain the full path name to which the file to be copied will be placed at the
+     * filestore associated with the destination entity;</li>
+     * <li>shall be omitted when the FDU to be Put contains only metadata, such as a message
+     * to a user or a standalone filestore request.</li>
+     * </ol>
+     * @return the full path name of the destination file, or null if not present
+     */
     public String getDestinationFileName() {
         return destinationFileName;
     }
 
+    /**
+     * Optionally present. If included, the optional Messages to User parameter shall be transmitted at the
+     * beginning of the transaction and delivered to the destination CFDP user upon receipt. Certain
+     * messages are defined in the User Operations section to allow remote initiation of CFDP
+     * transactions.
+     *
+     * @return the list of messages to user (can be empty, it is never null)
+     */
     public List<MessageToUserTLV> getMessagesToUser() {
         return Collections.unmodifiableList(messagesToUser);
     }

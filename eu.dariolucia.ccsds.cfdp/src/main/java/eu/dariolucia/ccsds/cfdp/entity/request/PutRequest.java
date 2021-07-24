@@ -48,82 +48,24 @@ public class PutRequest implements ICfdpRequest {
         return new PutRequest(destinationCfdpEntityId, sourceFileName, destinationFileName, segmentationControl, flowLabel, null, null, null, null, null);
     }
 
-    /**
-     * The destination CFDP entity ID parameter shall identify the CFDP entity to which
-     * the FDU is to be sent.
-     */
     private final long destinationCfdpEntityId;
 
-    /**
-     * The source file name parameter:
-     * a) shall contain the full path name at which the file to be copied is located at the
-     * filestore associated with the source entity;
-     * b) shall be omitted when the FDU to be Put contains only metadata, such as a message
-     * to a user or a standalone filestore request.
-     */
     private final String sourceFileName;
 
-    /**
-     * The destination file name parameter:
-     * a) shall contain the full path name to which the file to be copied will be placed at the
-     * filestore associated with the destination entity;
-     * b) shall be omitted when the FDU to be Put contains only metadata, such as a message
-     * to a user or a standalone filestore request.
-     */
     private final String destinationFileName;
 
-    /**
-     * The segmentation control parameter:
-     * a) shall indicate whether the file being delivered is to be segmented as an array of octets
-     * or as an array of variable-length records;
-     * b) shall be omitted when local and remote file names are omitted.
-     */
     private final boolean segmentationControl;
 
-    /**
-     * If included, the optional fault handler overrides shall indicate the actions to be taken
-     * upon detection of one or more types of fault condition. Each fault handler override shall
-     * identify both a type of fault condition to be handled and the action to be taken in the
-     * event that a fault of this type is detected.
-     */
     private final Map<Integer, FaultHandlerStrategy.Action> faultHandlerOverrideMap = new HashMap<>();
 
-    /**
-     * The flow label parameter may optionally be used to support prioritization and
-     * preemption schemes. The flow label parameter should be taken as a hint to the order in which PDUs
-     * should be transmitted when the opportunity arises, but the manner in which flow
-     * labels are used is strictly an implementation matter.
-     */
     private final byte[] flowLabel;
 
-    /**
-     * If included, the optional transmission mode parameter shall override the default
-     * transmission mode. The values of the transmission mode parameter are 'acknowledged' or
-     * 'unacknowledged'.
-     */
     private final Boolean acknowledgedTransmissionMode;
 
-    /**
-     * If included, the optional closure requested parameter shall override the 'transaction
-     * closure requested' setting in the MIB. The values of the closure requested parameter are
-     * 'true' (indicating that transaction closure is requested) or 'false' (indicating that transaction
-     * closure is not requested).
-     */
     private final Boolean closureRequested;
 
-    /**
-     * If included, the optional Messages to User parameter shall be transmitted at the
-     * beginning of the transaction and delivered to the destination CFDP user upon receipt. Certain
-     * messages are defined in the User Operations section to allow remote initiation of CFDP
-     * transactions.
-     */
     private final List<MessageToUserTLV> messageToUserList = new LinkedList<>();
 
-    /**
-     * If included, the optional filestore requests shall be transmitted at the beginning of the
-     * transaction and shall be acted upon by the destination entity when all data transfer
-     * activities of the transaction are completed;
-     */
     private final List<FilestoreRequestTLV> fileStoreRequestList = new LinkedList<>();
 
     /**
@@ -159,42 +101,120 @@ public class PutRequest implements ICfdpRequest {
         }
     }
 
+    /**
+     * The destination CFDP entity ID parameter shall identify the CFDP entity to which
+     * the FDU is to be sent.
+     *
+     * @return the destination CFDP entity
+     */
     public long getDestinationCfdpEntityId() {
         return destinationCfdpEntityId;
     }
 
+    /**
+     * The source file name parameter:
+     * a) shall contain the full path name at which the file to be copied is located at the
+     * filestore associated with the source entity;
+     * b) shall be omitted when the FDU to be Put contains only metadata, such as a message
+     * to a user or a standalone filestore request.
+     *
+     * @return the file name or null, if not present
+     */
     public String getSourceFileName() {
         return sourceFileName;
     }
 
+    /**
+     * The destination file name parameter:
+     * a) shall contain the full path name to which the file to be copied will be placed at the
+     * filestore associated with the destination entity;
+     * b) shall be omitted when the FDU to be Put contains only metadata, such as a message
+     * to a user or a standalone filestore request.
+     *
+     * @return the file name or null, if not present
+     */
     public String getDestinationFileName() {
         return destinationFileName;
     }
 
+    /**
+     * The segmentation control parameter:
+     * a) shall indicate whether the file being delivered is to be segmented as an array of octets
+     * or as an array of variable-length records;
+     * b) shall be omitted when local and remote file names are omitted.
+     *
+     * @return true if segmentation control is active, false otherwise
+     */
     public boolean isSegmentationControl() {
         return segmentationControl;
     }
 
+    /**
+     * If included, the optional fault handler overrides shall indicate the actions to be taken
+     * upon detection of one or more types of fault condition. Each fault handler override shall
+     * identify both a type of fault condition to be handled and the action to be taken in the
+     * event that a fault of this type is detected.
+     *
+     * @return the override map (can be empty, never null)
+     */
     public Map<Integer, FaultHandlerStrategy.Action> getFaultHandlerOverrideMap() {
         return Collections.unmodifiableMap(faultHandlerOverrideMap);
     }
 
+    /**
+     * The flow label parameter may optionally be used to support prioritization and
+     * preemption schemes. The flow label parameter should be taken as a hint to the order in which PDUs
+     * should be transmitted when the opportunity arises, but the manner in which flow
+     * labels are used is strictly an implementation matter.
+     *
+     * @return the flow label, can be null
+     */
     public byte[] getFlowLabel() {
         return flowLabel;
     }
 
+    /**
+     * If included, the optional transmission mode parameter shall override the default
+     * transmission mode. The values of the transmission mode parameter are 'acknowledged' or
+     * 'unacknowledged'.
+     *
+     * @return true if explicitly set to true (ack), false if explicitly set to false (unack), null if not set (use configured default)
+     */
     public Boolean getAcknowledgedTransmissionMode() {
         return acknowledgedTransmissionMode;
     }
 
+    /**
+     * If included, the optional closure requested parameter shall override the 'transaction
+     * closure requested' setting in the MIB. The values of the closure requested parameter are
+     * 'true' (indicating that transaction closure is requested) or 'false' (indicating that transaction
+     * closure is not requested). Ignored if the transaction is acknowledged.
+     *
+     * @return true if explicitly set to true (closure), false if explicitly set to false (no closure), null if not set (use configured default)
+     */
     public Boolean getClosureRequested() {
         return closureRequested;
     }
 
+    /**
+     * If included, the optional Messages to User parameter shall be transmitted at the
+     * beginning of the transaction and delivered to the destination CFDP user upon receipt. Certain
+     * messages are defined in the User Operations section to allow remote initiation of CFDP
+     * transactions.
+     *
+     * @return the messages to user (can be empty, never null)
+     */
     public List<MessageToUserTLV> getMessageToUserList() {
         return Collections.unmodifiableList(messageToUserList);
     }
 
+    /**
+     * If included, the optional filestore requests shall be transmitted at the beginning of the
+     * transaction and shall be acted upon by the destination entity when all data transfer
+     * activities of the transaction are completed.
+     *
+     * @return the filestore requests (can be empty, never null)
+     */
     public List<FilestoreRequestTLV> getFileStoreRequestList() {
         return Collections.unmodifiableList(fileStoreRequestList);
     }

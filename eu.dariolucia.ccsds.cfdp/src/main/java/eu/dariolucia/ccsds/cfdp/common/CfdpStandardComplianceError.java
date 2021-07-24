@@ -16,7 +16,14 @@
 
 package eu.dariolucia.ccsds.cfdp.common;
 
+/**
+ * This error is thrown when the library detects a clear violation of the CCSDS CFDP standard.
+ */
 public class CfdpStandardComplianceError extends Error {
+    /**
+     * Construct a {@link CfdpStandardComplianceError} with the provided description
+     * @param message the error description
+     */
     public CfdpStandardComplianceError(String message) {
         super(message);
     }

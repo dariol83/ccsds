@@ -20,6 +20,9 @@ import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
 
+/**
+ * This interface allows to implement a specific strategy for the segmentation of specific file types.
+ */
 public interface ICfdpSegmentationStrategy {
 
     /**
