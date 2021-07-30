@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<!--
+  ~  Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~  Licensed under the Apache License, Version 2.0 (the "License");
+  ~  you may not use this file except in compliance with the License.
+  ~  You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="806.0" prefWidth="1258.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.cfdp.fx.controller.MainController">
+   <children>
+      <ToolBar prefHeight="40.0" prefWidth="200.0">
+        <items>
+          <Button fx:id="putRequestButton" mnemonicParsing="false" onAction="#putRequestButtonSelected" prefWidth="120.0" text="New Transaction...">
+               <tooltip>
+                  <Tooltip text="Create a new transaction via Put Request" />
+               </tooltip>
+          </Button>
+          <Button fx:id="suspendButton" mnemonicParsing="false" onAction="#suspendButtonSelected" prefWidth="120.0" text="Suspend...">
+                <tooltip>
+                    <Tooltip text="Suspend the selected transaction via Suspend Request" />
+                </tooltip>
+          </Button>
+            <Button fx:id="resumeButton" mnemonicParsing="false" onAction="#resumeButtonSelected" prefWidth="120.0" text="Resume...">
+                <tooltip>
+                    <Tooltip text="Resume the selected transaction via Resume Request" />
+                </tooltip>
+            </Button>
+            <Button fx:id="cancelButton" mnemonicParsing="false" onAction="#cancelButtonSelected" prefWidth="120.0" text="Cancel...">
+                <tooltip>
+                    <Tooltip text="Cancel the selected transaction via Cancel Request" />
+                </tooltip>
+            </Button>
+            <Button fx:id="reportButton" mnemonicParsing="false" onAction="#reportButtonSelected" prefWidth="120.0" text="Report">
+                <tooltip>
+                    <Tooltip text="Refresh the selected transaction via Report Request" />
+                </tooltip>
+            </Button>
+            <Button fx:id="promptNakButton" mnemonicParsing="false" onAction="#promptNakButtonSelected" prefWidth="120.0" text="Prompt NAK...">
+                <tooltip>
+                    <Tooltip text="Request NAK recomputation via Prompt NAK Request" />
+                </tooltip>
+            </Button>
+            <Button fx:id="keepAliveButton" mnemonicParsing="false" onAction="#keepAliveButtonSelected" prefWidth="120.0" text="Keep-Alive...">
+                <tooltip>
+                    <Tooltip text="Request keep-alive via Keep Alive Request" />
+                </tooltip>
+            </Button>
+        </items>
+      </ToolBar>
+      <SplitPane fx:id="mainSplitPane" dividerPositions="0.9" orientation="VERTICAL" VBox.vgrow="ALWAYS">
+         <items>
+            <HBox prefHeight="100.0" prefWidth="300.0">
+               <children>
+                  <TableView prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="transactionIdColumn" prefWidth="75.0" text="Tr. ID" />
+                        <TableColumn fx:id="sourceIdColumn" prefWidth="75.0" text="Source ID" />
+                        <TableColumn fx:id="destinationIdColumn" prefWidth="75.0" text="Dest. ID" />
+                        <TableColumn fx:id="directionColumn" prefWidth="75.0" text="Direction" />
+                        <TableColumn fx:id="sourceFileNameColumn" prefWidth="175.0" text="Source File" />
+                        <TableColumn fx:id="destinationFileNameColumn" prefWidth="175.0" text="Dest. File" />
+                        <TableColumn fx:id="fileSizeColumn" prefWidth="75.0" text="Size" />
+                        <TableColumn fx:id="ackTypeColumn" prefWidth="75.0" text="Class" />
+                        <TableColumn fx:id="statusColumn" prefWidth="75.0" text="Status" />
+                        <TableColumn fx:id="progressColumn" prefWidth="200.0" text="Progress" />
+                    </columns>
+                  </TableView>
+               </children></HBox>
+            <Accordion fx:id="logAccordion" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="1.0" style="-fx-background-color: -fx-background;" VBox.vgrow="ALWAYS">
+		        <panes>
+		          <TitledPane fx:id="logTitledPane" animated="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Application Log">
+		               <content>
+		               <ScrollPane fitToHeight="true" fitToWidth="true" minHeight="160.0" pannable="false">
+						<content>
+				            <VBox minHeight="140">
+				               <children>
+				               	       <ToolBar minHeight="40.0" prefHeight="40.0" prefWidth="200.0">
+											<items>
+												<ToggleButton fx:id="enableLogButton" mnemonicParsing="false" onAction="#collectLogsMenuItemSelected" prefWidth="120.0" selected="true" text="Enable" />
+												<Button fx:id="saveAsLogButton" mnemonicParsing="false" onAction="#saveLogsMenuItemSelected" prefWidth="120.0" text="Save As..." />
+												<Button fx:id="clearLogButton" mnemonicParsing="false" onAction="#clearLogMenuItemSelected" prefWidth="120.0" text="Clear..." />
+											</items>
+										</ToolBar>
+				                  		<TableView fx:id="logTableView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="100" VBox.vgrow="ALWAYS">
+											<columns>
+												<TableColumn prefWidth="170.0" resizable="false" text="Time" />
+												<TableColumn prefWidth="80.0" resizable="false" text="Severity" />
+												<TableColumn prefWidth="840.0" resizable="false" text="Message" />
+											</columns>
+										</TableView>
+				               </children>
+				            </VBox>
+			             </content>
+			            </ScrollPane>
+		        	   </content>
+		       	  </TitledPane>
+		     	</panes>
+		    </Accordion>
+         </items>
+      </SplitPane>
+   </children>
+</VBox>

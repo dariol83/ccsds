@@ -1610,7 +1610,6 @@ public class CfdpEntityErrorTcpTest {
             s1.print();
             s1.assertPresentAt(0, TransactionIndication.class);
             s1.assertPresentAt(1, EofSentIndication.class);
-            s1.assertPresentAt(2, EntityDisposedIndication.class);
 
             // Assert indications: receiver
             s2.print();
