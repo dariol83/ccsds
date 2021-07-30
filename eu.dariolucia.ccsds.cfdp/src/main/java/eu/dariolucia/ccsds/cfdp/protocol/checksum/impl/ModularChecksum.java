@@ -93,30 +93,32 @@ public class ModularChecksum implements ICfdpChecksumFactory {
         }
 
         @Override
-        public int checksum(byte[] data, long fileOffset) {
+        public int checksum(byte[] data, int offset, int length, long fileOffset) {
             // Check the file offset: if not 4-bytes aligned, do so and just the first 4-bytes word
             int leadingZeroes = (int) fileOffset % 4;
             if(leadingZeroes > 0) {
-                if(data.length > 4 - leadingZeroes) {
+                if(length > 4 - leadingZeroes) {
                     // I need to pad at the beginning
                     byte[] tmp = new byte[]{0, 0, 0, 0};
-                    System.arraycopy(data, 0, tmp, leadingZeroes, 4 - leadingZeroes);
+                    System.arraycopy(data, offset, tmp, leadingZeroes, 4 - leadingZeroes);
                     long read = Integer.toUnsignedLong(ByteBuffer.wrap(tmp, 0, 4).getInt());
                     currentChecksum += read;
                     currentChecksum &= 0xFFFFFFFF;
+                    offset += 4 - leadingZeroes;
                 } else {
                     // Everything fits into a single byte array of 4 bytes
                     byte[] tmp = new byte[]{0, 0, 0, 0};
-                    System.arraycopy(data, 0, tmp, leadingZeroes, data.length);
+                    System.arraycopy(data, offset, tmp, leadingZeroes, length);
                     long read = Integer.toUnsignedLong(ByteBuffer.wrap(tmp, 0, 4).getInt());
                     currentChecksum += read;
                     currentChecksum &= 0xFFFFFFFF;
+                    offset += length;
                 }
                 // Then compute the checksum using the standard approach
-                currentChecksum += Integer.toUnsignedLong(checksum(data, 4 - leadingZeroes, data.length - (4 - leadingZeroes)));
+                currentChecksum += Integer.toUnsignedLong(checksum(data, offset, length - (4 - leadingZeroes)));
                 currentChecksum &= 0xFFFFFFFF;
             } else {
-                currentChecksum += Integer.toUnsignedLong(checksum(data, 0, data.length));
+                currentChecksum += Integer.toUnsignedLong(checksum(data, offset, length));
                 currentChecksum &= 0xFFFFFFFF;
             }
 

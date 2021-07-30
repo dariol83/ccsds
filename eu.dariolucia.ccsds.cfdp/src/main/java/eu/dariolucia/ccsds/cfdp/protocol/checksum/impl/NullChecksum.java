@@ -46,7 +46,7 @@ public class NullChecksum implements ICfdpChecksumFactory {
         }
 
         @Override
-        public int checksum(byte[] data, long fileOffset) {
+        public int checksum(byte[] data, int offset, int length, long fileOffset) {
             return 0;
         }
 

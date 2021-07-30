@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.entity.internal;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
+import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
 import eu.dariolucia.ccsds.cfdp.entity.FaultDeclaredException;
 import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
@@ -30,8 +31,11 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.*;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -49,7 +53,10 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     private MetadataPdu metadataPdu;
 
-    private Map<Long, FileDataPdu> fileReconstructionMap; // TODO: optimisation: use a temporary random access file, use a stripped down version of the FileDataPdu, only offset, length
+    private Map<Long, FileDataPduSummary> fileReconstructionMap; // optimisation: use a temporary random access file, use a stripped down version of the FileDataPdu, only offset, length
+    private RandomAccessFile temporaryReconstructionFileMap;
+    private final File temporaryReconstructionFile;
+
     private ICfdpChecksum checksum;
     private long receivedContiguousFileBytes = 0;
     private boolean gapDetected = false;
@@ -84,6 +91,15 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     public IncomingCfdpTransaction(CfdpPdu pdu, CfdpEntity entity) {
         super(pdu.getTransactionSequenceNumber(), entity, pdu.getSourceEntityId());
         this.initialPdu = pdu;
+        try {
+            this.temporaryReconstructionFile = Files.createTempFile("cfdp_in_file_" + pdu.getDestinationEntityId() + "_" + pdu.getTransactionSequenceNumber() + "_", ".tmp").toFile();
+            this.temporaryReconstructionFileMap = new RandomAccessFile(this.temporaryReconstructionFile, "rw");
+        } catch (IOException e) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: fail on local temp file creation: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+            }
+            throw new CfdpRuntimeException(e);
+        }
         overrideHandlers(entity.getMib().getLocalEntity().getFaultHandlerMap());
     }
 
@@ -149,15 +165,13 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         sendPdu(pdu);
     }
 
-    private boolean sendPdu(CfdpPdu pdu) {
+    private void sendPdu(CfdpPdu pdu) {
         try {
             forwardPdu(pdu);
-            return true;
         } catch (UtLayerException e) {
             if(LOG.isLoggable(Level.SEVERE)) {
                 LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: fail on PDU transmission: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
             }
-            return false;
         }
     }
 
@@ -335,16 +349,27 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             }
         }
         // Check if there is already a FileData PDU like you in the map
-        FileDataPdu existing = this.fileReconstructionMap.get(pdu.getOffset());
+        FileDataPduSummary existing = this.fileReconstructionMap.get(pdu.getOffset());
         // We cannot rely on the behaviour of other implementations, therefore here we need to overwrite the entry,
         // if the length of the data is greater than the one currently in the map, or skip it if it is a subset of what
         // we already have
-        if(existing != null && existing.getFileData().length >= pdu.getFileData().length) {
+        if(existing != null && existing.length >= pdu.getFileData().length) {
             // 4.6.1.2.7 any repeated data shall be discarded
             return;
         }
         // Add the PDU in the map
-        this.fileReconstructionMap.put(pdu.getOffset(), pdu);
+        this.fileReconstructionMap.put(pdu.getOffset(), new FileDataPduSummary(pdu.getOffset(), pdu.getFileData().length));
+        // Write it to the temp file
+        try {
+            this.temporaryReconstructionFileMap.seek(pdu.getOffset());
+            this.temporaryReconstructionFileMap.write(pdu.getFileData());
+        } catch (IOException e) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: failure in adding received FileDataPdu contents to temporary storage: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+            }
+            fault(FileDirectivePdu.CC_FILESTORE_REJECTION, getLocalEntityId());
+        }
+
         // Identify the fully completed part offset and if there are gaps (to request retransmission if enabled), compute progress
         verifyGapPresence(pdu);
 
@@ -412,11 +437,11 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             this.receivedContiguousFileBytes += pdu.getFileData().length;
             // If there was a gap detected beforehand, then it could be that fullyCompletedPartSize is actually larger
             if(this.gapDetected) {
-                for(Map.Entry<Long, FileDataPdu> e : this.fileReconstructionMap.entrySet()) {
+                for(Map.Entry<Long, FileDataPduSummary> e : this.fileReconstructionMap.entrySet()) {
                     // All segments having an offset lower than fullyCompletedPartSize can be safely skipped
                     if(e.getKey() == receivedContiguousFileBytes) {
                         // We found a segment that can contribute to the progress of the file, so we take this into account and we go on
-                        this.receivedContiguousFileBytes += e.getValue().getFileData().length;
+                        this.receivedContiguousFileBytes += e.getValue().length;
                         // At this stage we reset the gap indicator, but we keep iterating on the map, since further gaps can be detected
                         this.gapDetected = false;
                     } else if(e.getKey() > receivedContiguousFileBytes) {
@@ -623,19 +648,19 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         long startOfScope = receivedContiguousFileBytes;
 
         long tmpFilePartOffset = receivedContiguousFileBytes;
-        for(Map.Entry<Long, FileDataPdu> e : this.fileReconstructionMap.entrySet()) {
+        for(Map.Entry<Long, FileDataPduSummary> e : this.fileReconstructionMap.entrySet()) {
             // All segments having an offset lower than tmpFilePartOffset can be safely skipped
             if(e.getKey() == tmpFilePartOffset) {
                 // We found a segment that can contribute to the progress of the file, so we take this into account and we go on
-                tmpFilePartOffset += e.getValue().getFileData().length;
+                tmpFilePartOffset += e.getValue().length;
             } else if(e.getKey() > tmpFilePartOffset) {
                 // The file part from tmpFilePartOffset and e.getValue().getOffset() is missing, create segment request
                 if(LOG.isLoggable(Level.FINER)) {
                     LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: missing segment detected [%d - %d]", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), tmpFilePartOffset, e.getKey()));
                 }
                 missingSegments.add(new NakPdu.SegmentRequest(tmpFilePartOffset, e.getKey()));
-                // Set the progress to e.getValue().getOffset() + e.getValue().getFileData().length
-                tmpFilePartOffset = e.getValue().getOffset() + e.getValue().getFileData().length;
+                // Set the progress to e.getValue().offset + e.getValue().length
+                tmpFilePartOffset = e.getValue().offset + e.getValue().length;
             }
         }
         long endOfScope = tmpFilePartOffset;
@@ -1224,44 +1249,30 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     /**
-     * This method computes the checksum from the file reconstruction map, and consider overlaps and gaps in the received
-     * {@link FileDataPdu}. It is supposed to be invoked only once, at the supposed end of the file transaction.
+     * This method computes the checksum from the temporary random access file.
      *
      * @return the computed checksum
      */
     private int computeFinalChecksum() {
-        long currentlyWritten = 0;
-        for(Map.Entry<Long, FileDataPdu> e : this.fileReconstructionMap.entrySet()) {
-            byte[] toWrite = e.getValue().getFileData();
-            long offset = e.getKey();
-            if(offset == currentlyWritten) {
-                // Proceed as usual
-                this.checksum.checksum(toWrite, offset);
-                currentlyWritten += toWrite.length;
-            } else if(offset < currentlyWritten) {
-                // There is an overlap with what you already wrote... compute the good data that you can still write
-                long bytesToDiscard = currentlyWritten - offset;
-                long newOffset = offset + bytesToDiscard;
-                long numBytesToWrite = toWrite.length - bytesToDiscard;
-                if(numBytesToWrite > 0) {
-                    this.checksum.checksum(Arrays.copyOfRange(toWrite, (int) bytesToDiscard, (int) (bytesToDiscard + numBytesToWrite)), newOffset);
-                    currentlyWritten += numBytesToWrite;
-                }
-            } else {
-                // offset > currentlyWritten - There is a gap, it should not happen at this stage, it means that something is really missing
-                if(LOG.isLoggable(Level.WARNING)) {
-                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: gap when computing checksum, written %d bytes but next offset is %d",
-                            getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), currentlyWritten, offset));
-                }
-                long fakeBytes = offset - currentlyWritten;
-                this.checksum.checksum(new byte[(int) fakeBytes], currentlyWritten);
-                currentlyWritten += fakeBytes;
-                // Proceed as usual, now offset is equal to currentlyWritten
-                this.checksum.checksum(toWrite, offset);
-                currentlyWritten += toWrite.length;
+        try {
+            long length = this.temporaryReconstructionFileMap.length();
+            this.temporaryReconstructionFileMap.seek(0);
+            byte[] tmpBuffer = new byte[1024];
+            long position = 0;
+            while (position < length) {
+                // read(...) advances the position of the file pointer, no seek needed after that
+                int read = this.temporaryReconstructionFileMap.read(tmpBuffer);
+                this.checksum.checksum(tmpBuffer, 0, read, position);
+                position += read;
             }
+            return this.checksum.getCurrentChecksum();
+        } catch (IOException e) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: problem when computing checksum for file %s: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.metadataPdu.getDestinationFileName(), e.getMessage()), e);
+            }
+            // I return this.eofPdu.getFileChecksum() + 1, to ensure a checksum failure
+            return this.eofPdu.getFileChecksum() + 1;
         }
-        return this.checksum.getCurrentChecksum();
     }
 
     /**
@@ -1274,7 +1285,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             filestore.createFile(this.metadataPdu.getDestinationFileName() + PARTIAL_FILE_EXTENSION);
             OutputStream os = filestore.writeFile(this.metadataPdu.getDestinationFileName() + PARTIAL_FILE_EXTENSION, false);
             // Iterate of the map (sorted by offset) and write either the segment, or 0 byte filling and the segment
-            long currentOffset = writeFileToStorage(os, true);
+            long currentOffset = writeFileToStorage(os);
             // Check if the file is completed
             if(getTotalFileSize() > 0 && currentOffset < getTotalFileSize()) {
                 long bytesToWrite = getTotalFileSize() - currentOffset;
@@ -1321,7 +1332,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 LOG.log(Level.FINE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: writing contents to file %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.metadataPdu.getDestinationFileName()));
             }
             OutputStream os = filestore.writeFile(this.metadataPdu.getDestinationFileName(), false);
-            writeFileToStorage(os, false);
+            writeFileToStorage(os);
             os.flush();
             os.close();
             if(LOG.isLoggable(Level.FINE)) {
@@ -1337,38 +1348,18 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         }
     }
 
-    private long writeFileToStorage(OutputStream os, boolean partial) throws IOException {
-        long currentlyWritten = 0;
-        for (Map.Entry<Long, FileDataPdu> e : this.fileReconstructionMap.entrySet()) {
-            byte[] toWrite = e.getValue().getFileData();
-            long offset = e.getKey();
-            if (offset == currentlyWritten) {
-                // Proceed as usual
-                os.write(toWrite);
-                currentlyWritten += toWrite.length;
-            } else if (offset < currentlyWritten) {
-                // There is an overlap with what you already wrote... compute the good data that you can still write
-                long bytesToDiscard = currentlyWritten - offset;
-                long numBytesToWrite = toWrite.length - bytesToDiscard;
-                if (numBytesToWrite > 0) {
-                    os.write(Arrays.copyOfRange(toWrite, (int) bytesToDiscard, (int) (bytesToDiscard + numBytesToWrite)));
-                    currentlyWritten += numBytesToWrite;
-                }
-            } else {
-                // offset > currentlyWritten - There is a gap, it should not happen at this stage, it means that something is really missing
-                if (LOG.isLoggable(Level.WARNING) && !partial) {
-                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: gap when writing file, written %d bytes but next offset is %d",
-                            getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), currentlyWritten, offset));
-                }
-                long fakeBytes = offset - currentlyWritten;
-                os.write(new byte[(int) fakeBytes]);
-                currentlyWritten += fakeBytes;
-                // Proceed as usual, now offset is equal to currentlyWritten
-                os.write(toWrite);
-                currentlyWritten += toWrite.length;
-            }
+    private long writeFileToStorage(OutputStream os) throws IOException {
+        long length = this.temporaryReconstructionFileMap.length();
+        this.temporaryReconstructionFileMap.seek(0);
+        byte[] tmpBuffer = new byte[1024];
+        long position = 0;
+        while (position < length) {
+            // read(...) advances the position of the file pointer, no seek needed after that
+            int read = this.temporaryReconstructionFileMap.read(tmpBuffer);
+            os.write(tmpBuffer, 0, read);
+            position += read;
         }
-        return currentlyWritten;
+        return position;
     }
 
     private void handleFilestoreRequests() {
@@ -1437,8 +1428,8 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     @Override
     protected void handleTransactionInactivity() {
-        if(LOG.isLoggable(Level.SEVERE)) {
-            LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: transaction inactivity detected", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
+        if(LOG.isLoggable(Level.WARNING)) {
+            LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: transaction inactivity detected", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
         }
         try {
             fault(FileDirectivePdu.CC_INACTIVITY_DETECTED, getLocalEntityId());
@@ -1453,6 +1444,17 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         this.pendingUtTransmissionPduList.clear();
         if(this.fileReconstructionMap != null) {
             this.fileReconstructionMap.clear();
+        }
+        if(this.temporaryReconstructionFileMap != null) {
+            try {
+                this.temporaryReconstructionFileMap.close();
+            } catch (IOException e) {
+                if(LOG.isLoggable(Level.WARNING)) {
+                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: error when closing the temporary file: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                }
+            }
+            this.temporaryReconstructionFile.delete(); // NOSONAR no need to check the boolean value here
+            this.temporaryReconstructionFileMap = null;
         }
         this.checksum = null;
         if(this.filestoreResponses != null) {
@@ -1481,5 +1483,25 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     @Override
     protected boolean isAcknowledged() {
         return this.initialPdu.isAcknowledged();
+    }
+
+    /**
+     * Internal class to be used to keep the summary of a received {@link FileDataPdu}.
+     */
+    private static class FileDataPduSummary {
+
+        /**
+         * The file offset as delivered by the {@link FileDataPdu}
+         */
+        public final long offset;
+        /**
+         * The file data length as delivered by the {@link FileDataPdu}
+         */
+        public final long length;
+
+        public FileDataPduSummary(long offset, long length) {
+            this.offset = offset;
+            this.length = length;
+        }
     }
 }

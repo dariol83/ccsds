@@ -50,7 +50,24 @@ public interface ICfdpChecksum {
      * @param fileOffset the file offset of the part of the file data
      * @return the current (potentially partial) checksum
      */
-    int checksum(byte[] data, long fileOffset);
+    default int checksum(byte[] data, long fileOffset) {
+        return checksum(data, 0, data.length, fileOffset);
+    }
+
+    /**
+     * Incrementally compute the checksum on the provided {@link eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDataPdu} contents,
+     * starting from the provided offset.
+     *
+     * This method is stateful: checksum objects used in this way should not be called by
+     * more than one thread.
+     *
+     * @param data the part of the file data to add to the current checksum computation
+     * @param offset the offset of the data byte array, to start from
+     * @param length the number of bytes to process from the offset of the data byte array
+     * @param fileOffset the file offset of the part of the file data
+     * @return the current (potentially partial) checksum
+     */
+    int checksum(byte[] data, int offset, int length, long fileOffset);
 
     /**
      * It can be used only in conjunction with the incremental checksum computation.
