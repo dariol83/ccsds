@@ -49,7 +49,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     private MetadataPdu metadataPdu;
 
-    private Map<Long, FileDataPdu> fileReconstructionMap;
+    private Map<Long, FileDataPdu> fileReconstructionMap; // TODO: optimisation: use a temporary random access file, use a stripped down version of the FileDataPdu, only offset, length
     private ICfdpChecksum checksum;
     private long receivedContiguousFileBytes = 0;
     private boolean gapDetected = false;
@@ -335,7 +335,11 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             }
         }
         // Check if there is already a FileData PDU like you in the map
-        if(this.fileReconstructionMap.containsKey(pdu.getOffset())) {
+        FileDataPdu existing = this.fileReconstructionMap.get(pdu.getOffset());
+        // We cannot rely on the behaviour of other implementations, therefore here we need to overwrite the entry,
+        // if the length of the data is greater than the one currently in the map, or skip it if it is a subset of what
+        // we already have
+        if(existing != null && existing.getFileData().length >= pdu.getFileData().length) {
             // 4.6.1.2.7 any repeated data shall be discarded
             return;
         }

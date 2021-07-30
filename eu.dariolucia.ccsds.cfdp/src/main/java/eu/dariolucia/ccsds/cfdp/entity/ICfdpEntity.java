@@ -53,7 +53,33 @@ public interface ICfdpEntity {
      * @return the {@link ICfdpEntity}
      */
     static ICfdpEntity create(Mib mib, IVirtualFilestore filestore,  Collection<IUtLayer> layers) {
-        return new CfdpEntity(mib, filestore, layers);
+        return new CfdpEntity(mib, filestore, null, layers);
+    }
+
+    /**
+     * Create a {@link ICfdpEntity} with the provided {@link Mib}, {@link IVirtualFilestore}, {@link ITransactionIdGenerator} and list of {@link IUtLayer}.
+     *
+     * @param mib the MIB to be used by the entity
+     * @param filestore the filestore to be used by the entity
+     * @param transactionIdGenerator the transaction ID generator
+     * @param layers the UT layers to be used by the entity
+     * @return the {@link ICfdpEntity}
+     */
+    static ICfdpEntity create(Mib mib, IVirtualFilestore filestore, ITransactionIdGenerator transactionIdGenerator, IUtLayer... layers) {
+        return create(mib, filestore, transactionIdGenerator, Arrays.asList(layers));
+    }
+
+    /**
+     * Create a {@link ICfdpEntity} with the provided {@link Mib}, {@link IVirtualFilestore}, {@link ITransactionIdGenerator} and a collection of {@link IUtLayer}.
+     *
+     * @param mib the MIB to be used by the entity
+     * @param filestore the filestore to be used by the entity
+     * @param transactionIdGenerator the transaction ID generator
+     * @param layers the UT layers to be used by the entity
+     * @return the {@link ICfdpEntity}
+     */
+    static ICfdpEntity create(Mib mib, IVirtualFilestore filestore, ITransactionIdGenerator transactionIdGenerator, Collection<IUtLayer> layers) {
+        return new CfdpEntity(mib, filestore, transactionIdGenerator, layers);
     }
 
     /**

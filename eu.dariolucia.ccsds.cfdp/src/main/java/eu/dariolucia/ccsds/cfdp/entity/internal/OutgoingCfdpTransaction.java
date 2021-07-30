@@ -110,6 +110,11 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     }
 
     private void handleKeepAlivePdu(KeepAlivePdu pdu) {
+        // Optimisation: remove all FileDataPdu having offset + length < progress, to keep memory low. Another approach is to avoid storing
+        // the FileDataPdus and accessing the file using random access, but this would mean using a direct java.io.RandomAccessFile object
+        // on the virtual filestore, not making it 'virtual' anymore. So good enough for the time being.
+        this.sentPduList.removeIf(o -> o instanceof FileDataPdu && (((FileDataPdu) o).getOffset() + ((FileDataPdu) o).getFileData().length < pdu.getProgress()));
+
         // 4.6.5.3.1 At the sending CFDP entity, if the discrepancy between the reception progress
         // reported by the Keep Alive PDU, and the transaction’s transmission progress so far at this
         // entity exceeds a preset limit, the sending CFDP entity may optionally declare a Keep Alive

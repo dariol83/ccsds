@@ -19,12 +19,14 @@ package eu.dariolucia.ccsds.cfdp.entity.internal;
 import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionState;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntity;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntitySubscriber;
+import eu.dariolucia.ccsds.cfdp.entity.ITransactionIdGenerator;
 import eu.dariolucia.ccsds.cfdp.entity.indication.EntityDisposedIndication;
 import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
 import eu.dariolucia.ccsds.cfdp.entity.request.*;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpFileSegmenter;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpSegmentationStrategy;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.impl.FixedSizeSegmentationStrategy;
+import eu.dariolucia.ccsds.cfdp.entity.util.SimpleTransactionIdGenerator;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
@@ -40,7 +42,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -65,16 +66,17 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     // Request processor map
     private final Map<Class<? extends ICfdpRequest>, Consumer<ICfdpRequest>> requestProcessors = new HashMap<>();
     // Transaction ID sequencer
-    private final AtomicLong transactionIdSequencer = new AtomicLong(0); // TODO: this will need to be revised, use an external supplier
+    private final ITransactionIdGenerator transactionIdGenerator;
     // File segmentation strategies
     private final List<ICfdpSegmentationStrategy> supportedSegmentationStrategies = new CopyOnWriteArrayList<>();
 
     // Disposed flag
     private boolean disposed;
 
-    public CfdpEntity(Mib mib, IVirtualFilestore filestore,  Collection<IUtLayer> layers) {
+    public CfdpEntity(Mib mib, IVirtualFilestore filestore, ITransactionIdGenerator transactionIdGenerator, Collection<IUtLayer> layers) {
         this.mib = mib;
         this.filestore = filestore;
+        this.transactionIdGenerator = Objects.requireNonNullElseGet(transactionIdGenerator, SimpleTransactionIdGenerator::new);
         for(IUtLayer l : layers) {
             this.utLayers.put(l.getName(), l);
         }
@@ -210,7 +212,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         }
         PutRequest r = (PutRequest) request;
         // Get a new transaction ID
-        long transactionId = generateTransactionId();
+        long transactionId = this.transactionIdGenerator.generateNextTransactionId(getLocalEntityId());
         // Create a new transaction object to send the specified file
         CfdpTransaction cfdpTransaction = new OutgoingCfdpTransaction(transactionId, this, r);
         // Register the transaction in the map
@@ -354,10 +356,6 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
             }
         }
         return null;
-    }
-
-    private long generateTransactionId() {
-        return (getLocalEntityId() << 16) | this.transactionIdSequencer.incrementAndGet(); // 65536 transactions from the same entity ID
     }
 
     @Override
