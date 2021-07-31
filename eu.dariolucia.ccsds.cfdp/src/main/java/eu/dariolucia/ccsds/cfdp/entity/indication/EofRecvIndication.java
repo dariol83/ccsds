@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
+
 /**
  * The EOF-Recv.indication primitive shall be used to indicate to the destination CFDP user
  * that the EOF PDU associated with a transaction has been received.
@@ -33,13 +35,17 @@ public class EofRecvIndication implements ICfdpIndication {
 
     private final long transactionId;
 
+    private final CfdpTransactionStatus statusReport;
+
     /**
      * EofRecvIndication full constructor.
      *
      * @param transactionId the transaction ID that uniquely identify a single instance of FDU delivery
+     * @param statusReport The status report provides additional information on some change in the transaction status
      */
-    public EofRecvIndication(long transactionId) {
+    public EofRecvIndication(long transactionId, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
+        this.statusReport = statusReport;
     }
 
     /**
@@ -56,10 +62,29 @@ public class EofRecvIndication implements ICfdpIndication {
         return transactionId;
     }
 
+    /**
+     * The Status report parameter shall indicate the status of the indicated file delivery
+     * transaction. The format and scope of the status report parameter are specific to the
+     * implementation. It could contain information such as:
+     * <ol>
+     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
+     *     <li>what extents of the FDU are known to have been successfully received by the
+     * receiving CFDP entity;</li>
+     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
+     * entity.</li>
+     * </ol>
+     *
+     * @return the status report
+     */
+    public CfdpTransactionStatus getStatusReport() {
+        return statusReport;
+    }
+
     @Override
     public String toString() {
         return "EofRecvIndication{" +
                 "transactionId=" + getTransactionId() +
+                ", statusReport=" + getStatusReport() +
                 '}';
     }
 }

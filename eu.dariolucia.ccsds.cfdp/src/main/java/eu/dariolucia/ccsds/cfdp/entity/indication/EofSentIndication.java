@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
+
 /**
  * The EOF-Sent.indication primitive shall be used to notify the source CFDP user of the
  * initial transmission of a transaction’s EOF PDU.
@@ -36,13 +38,17 @@ public class EofSentIndication implements ICfdpIndication {
 
     private final long transactionId;
 
+    private final CfdpTransactionStatus statusReport;
+
     /**
      * EofSentIndication full constructor.
      *
      * @param transactionId the transaction ID that uniquely identify a single instance of FDU delivery
+     * @param statusReport The status report provides additional information on some change in the transaction status
      */
-    public EofSentIndication(long transactionId) {
+    public EofSentIndication(long transactionId, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
+        this.statusReport = statusReport;
     }
 
     /**
@@ -59,10 +65,29 @@ public class EofSentIndication implements ICfdpIndication {
         return transactionId;
     }
 
+    /**
+     * The Status report parameter shall indicate the status of the indicated file delivery
+     * transaction. The format and scope of the status report parameter are specific to the
+     * implementation. It could contain information such as:
+     * <ol>
+     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
+     *     <li>what extents of the FDU are known to have been successfully received by the
+     * receiving CFDP entity;</li>
+     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
+     * entity.</li>
+     * </ol>
+     *
+     * @return the status report
+     */
+    public CfdpTransactionStatus getStatusReport() {
+        return statusReport;
+    }
+
     @Override
     public String toString() {
         return "EofSentIndication{" +
                 "transactionId=" + getTransactionId() +
+                ", statusReport=" + getStatusReport() +
                 '}';
     }
 }

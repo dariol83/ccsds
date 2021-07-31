@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
 
 /**
@@ -36,15 +37,19 @@ public class TransactionIndication implements ICfdpIndication {
 
     private final PutRequest originatingRequest;
 
+    private final CfdpTransactionStatus statusReport;
+
     /**
      * TransactionIndication full constructor.
      *
      * @param transactionId the transaction ID that uniquely identify a single instance of FDU delivery
      * @param originatingRequest the originating {@link PutRequest}
+     * @param statusReport The status report provides additional information on some change in the transaction status
      */
-    public TransactionIndication(long transactionId, PutRequest originatingRequest) {
+    public TransactionIndication(long transactionId, PutRequest originatingRequest, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
         this.originatingRequest = originatingRequest;
+        this.statusReport = statusReport;
     }
 
     /**
@@ -70,11 +75,30 @@ public class TransactionIndication implements ICfdpIndication {
         return originatingRequest;
     }
 
+    /**
+     * The Status report parameter shall indicate the status of the indicated file delivery
+     * transaction. The format and scope of the status report parameter are specific to the
+     * implementation. It could contain information such as:
+     * <ol>
+     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
+     *     <li>what extents of the FDU are known to have been successfully received by the
+     * receiving CFDP entity;</li>
+     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
+     * entity.</li>
+     * </ol>
+     *
+     * @return the status report
+     */
+    public CfdpTransactionStatus getStatusReport() {
+        return statusReport;
+    }
+
     @Override
     public String toString() {
         return "TransactionIndication{" +
                 "transactionId=" + getTransactionId() +
                 ", originatingRequest=" + getOriginatingRequest() +
+                ", statusReport=" + getStatusReport() +
                 '}';
     }
 }

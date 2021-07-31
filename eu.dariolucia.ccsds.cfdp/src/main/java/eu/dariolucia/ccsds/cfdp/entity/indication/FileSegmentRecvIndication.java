@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
+
 import java.util.Arrays;
 
 /**
@@ -45,6 +47,8 @@ public class FileSegmentRecvIndication implements ICfdpIndication {
 
     private final byte[] segmentMetadata;
 
+    private final CfdpTransactionStatus statusReport;
+
     /**
      * FileSegmentRecvIndication full constructor.
      *
@@ -54,14 +58,16 @@ public class FileSegmentRecvIndication implements ICfdpIndication {
      * @param recordContinuationState Optionally present. If not present, the value is set to {@link eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDataPdu#RCS_NOT_PRESENT}
      * @param segmentMetadataLength Optionally present. If not present, it must be set to -1
      * @param segmentMetadata Optionally present. Application-specific.
+     * @param statusReport The status report provides additional information on some change in the transaction status
      */
-    public FileSegmentRecvIndication(long transactionId, long offset, long length, byte recordContinuationState, int segmentMetadataLength, byte[] segmentMetadata) {
+    public FileSegmentRecvIndication(long transactionId, long offset, long length, byte recordContinuationState, int segmentMetadataLength, byte[] segmentMetadata, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
         this.offset = offset;
         this.length = length;
         this.recordContinuationState = recordContinuationState;
         this.segmentMetadataLength = segmentMetadataLength;
         this.segmentMetadata = segmentMetadata;
+        this.statusReport = statusReport;
     }
 
     /**
@@ -131,6 +137,24 @@ public class FileSegmentRecvIndication implements ICfdpIndication {
         return segmentMetadata;
     }
 
+    /**
+     * The Status report parameter shall indicate the status of the indicated file delivery
+     * transaction. The format and scope of the status report parameter are specific to the
+     * implementation. It could contain information such as:
+     * <ol>
+     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
+     *     <li>what extents of the FDU are known to have been successfully received by the
+     * receiving CFDP entity;</li>
+     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
+     * entity.</li>
+     * </ol>
+     *
+     * @return the status report
+     */
+    public CfdpTransactionStatus getStatusReport() {
+        return statusReport;
+    }
+
     @Override
     public String toString() {
         return "FileSegmentRecvIndication{" +
@@ -140,6 +164,7 @@ public class FileSegmentRecvIndication implements ICfdpIndication {
                 ", recordContinuationState=" + getRecordContinuationState() +
                 ", segmentMetadataLength=" + getSegmentMetadataLength() +
                 ", segmentMetadata=" + Arrays.toString(getSegmentMetadata()) +
+                ", statusReport=" + getStatusReport() +
                 '}';
     }
 }

@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
+
 /**
  * The Suspended.indication primitive shall be used to indicate to the CFDP user that the
  * transaction has been suspended.
@@ -33,15 +35,19 @@ public class SuspendedIndication implements ICfdpIndication {
 
     private final byte conditionCode;
 
+    private final CfdpTransactionStatus statusReport;
+
     /**
      * SuspendedIndication full constructor.
      *
      * @param transactionId The Transaction ID parameter shall uniquely identify a single instance of FDU delivery
      * @param conditionCode The Condition code parameter shall provide additional information on some change in the transaction status
+     * @param statusReport The status report provides additional information on some change in the transaction status
      */
-    public SuspendedIndication(long transactionId, byte conditionCode) {
+    public SuspendedIndication(long transactionId, byte conditionCode, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
         this.conditionCode = conditionCode;
+        this.statusReport = statusReport;
     }
 
     /**
@@ -68,11 +74,30 @@ public class SuspendedIndication implements ICfdpIndication {
         return conditionCode;
     }
 
+    /**
+     * The Status report parameter shall indicate the status of the indicated file delivery
+     * transaction. The format and scope of the status report parameter are specific to the
+     * implementation. It could contain information such as:
+     * <ol>
+     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
+     *     <li>what extents of the FDU are known to have been successfully received by the
+     * receiving CFDP entity;</li>
+     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
+     * entity.</li>
+     * </ol>
+     *
+     * @return the status report
+     */
+    public CfdpTransactionStatus getStatusReport() {
+        return statusReport;
+    }
+
     @Override
     public String toString() {
         return "SuspendedIndication{" +
                 "transactionId=" + getTransactionId() +
                 ", conditionCode=" + getConditionCode() +
+                ", statusReport=" + getStatusReport() +
                 '}';
     }
 }

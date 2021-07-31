@@ -25,6 +25,7 @@ import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -157,4 +158,10 @@ public interface ICfdpEntity {
      */
     void dispose();
 
+    /**
+     * Return the list of registered UT layers.
+     *
+     * @return the registered UT layers to this entity
+     */
+    List<IUtLayer> getUtLayers();
 }

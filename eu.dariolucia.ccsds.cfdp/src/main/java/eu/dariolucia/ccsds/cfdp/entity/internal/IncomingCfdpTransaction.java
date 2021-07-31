@@ -268,7 +268,8 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                     this.metadataPdu.getFileSize(),
                     this.metadataPdu.getSourceFileName(),
                     this.metadataPdu.getDestinationFileName(),
-                    messagesToUser));
+                    messagesToUser,
+                    createStateObject()));
         }
         // File or not?
         if(this.metadataPdu.getSourceFileName() != null && this.metadataPdu.getDestinationFileName() != null) {
@@ -378,7 +379,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         if(pdu.getDestinationEntityId() == getLocalEntityId() &&
                 getEntity().getMib().getLocalEntity().isFileSegmentRecvIndicationRequired()) {
             getEntity().notifyIndication(new FileSegmentRecvIndication(pdu.getTransactionSequenceNumber(), pdu.getOffset(), pdu.getFileData().length,
-                    pdu.getRecordContinuationState(), pdu.getSegmentMetadataLength(), pdu.getSegmentMetadata()));
+                    pdu.getRecordContinuationState(), pdu.getSegmentMetadataLength(), pdu.getSegmentMetadata(), createStateObject()));
         }
 
         // 4.6.1.2.7 if the sum of the File Data PDU’s offset and segment size exceeds the file size
@@ -517,7 +518,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         // transaction's destination, to issue an EOF-Recv.indication.
         if(pdu.getDestinationEntityId() == getLocalEntityId() &&
                 getEntity().getMib().getLocalEntity().isEofRecvIndicationRequired()) {
-            getEntity().notifyIndication(new EofRecvIndication(pdu.getTransactionSequenceNumber()));
+            getEntity().notifyIndication(new EofRecvIndication(pdu.getTransactionSequenceNumber(), createStateObject()));
         }
 
         // 4.6.1.2.9 Upon initial receipt of the EOF (No error) PDU, the file size indicated in the PDU
@@ -756,7 +757,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         handleSuspendActions();
         // f) issue a Suspended.indication if so configured in the MIB (see table 8-1)
         if(getEntity().getMib().getLocalEntity().isSuspendedIndicationRequired()) {
-            getEntity().notifyIndication(new SuspendedIndication(getTransactionId(), FileDirectivePdu.CC_SUSPEND_REQUEST_RECEIVED));
+            getEntity().notifyIndication(new SuspendedIndication(getTransactionId(), FileDirectivePdu.CC_SUSPEND_REQUEST_RECEIVED, createStateObject()));
         }
         // g) save the status of the transaction.
     }
@@ -814,7 +815,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             handleResumeActions(true);
         } else {
             // Just send the notification, because the transaction is still frozen
-            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.receivedContiguousFileBytes));
+            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.receivedContiguousFileBytes, createStateObject()));
         }
     }
 
@@ -858,7 +859,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         // c) issue a Resumed.indication. // XXX: this clause conflicts with the MIB property:
         // Resumed.indication required when acting as receiving entity (Table 8-1)
         if(sendNotification && getEntity().getMib().getLocalEntity().isResumedIndicationRequired()) {
-            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.receivedContiguousFileBytes));
+            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.receivedContiguousFileBytes, createStateObject()));
         }
         // XXX: What about the transaction inactivity timer? I think it should be started
         startTransactionInactivityTimer();

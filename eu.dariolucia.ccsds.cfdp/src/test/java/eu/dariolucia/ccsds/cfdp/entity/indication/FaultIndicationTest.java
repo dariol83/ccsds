@@ -25,10 +25,11 @@ class FaultIndicationTest {
 
     @Test
     public void testFaultIndicationConstruction() {
-        FaultIndication f = new FaultIndication(3, FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, 2321);
+        FaultIndication f = new FaultIndication(3, FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, 2321, null);
         assertEquals(3, f.getTransactionId());
         assertEquals(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, f.getConditionCode());
         assertEquals(2321, f.getProgress());
+        assertNull(f.getStatusReport());
         assertNotNull(f.toString());
     }
 }

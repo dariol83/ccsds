@@ -16,9 +16,22 @@
 
 package eu.dariolucia.ccsds.cfdp.fx.controller;
 
+import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntity;
+import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntitySubscriber;
+import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
+import eu.dariolucia.ccsds.cfdp.entity.request.SuspendRequest;
+import eu.dariolucia.ccsds.cfdp.filestore.impl.FilesystemBasedFilestore;
 import eu.dariolucia.ccsds.cfdp.fx.application.CfdpFxTestTool;
 import eu.dariolucia.ccsds.cfdp.fx.dialogs.DialogUtils;
+import eu.dariolucia.ccsds.cfdp.mib.Mib;
+import eu.dariolucia.ccsds.cfdp.mib.RemoteEntityConfigurationInformation;
+import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
+import eu.dariolucia.ccsds.cfdp.ut.impl.TcpLayer;
+import eu.dariolucia.ccsds.cfdp.ut.impl.UdpLayer;
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleLongProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -28,14 +41,16 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URL;
-import java.util.Date;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
-public class MainController implements Initializable  {
+public class MainController implements Initializable, ICfdpEntitySubscriber {
 
 	private static final Logger LOG = Logger.getLogger(MainController.class.getName());
 
@@ -47,14 +62,12 @@ public class MainController implements Initializable  {
 	public Button promptNakButton;
 	public Button keepAliveButton;
 
-	@FXML
-	private StackPane stackPane;
+	public TableView<CfdpTransactionItem> transactionTable;
+
+	// Indication log part
 
 	@FXML
-	private TableView<LogRecord> logTableView;
-
-	@FXML
-	private ToggleButton enableLogButton;
+	private TableView<ICfdpIndication> logTableView;
 
 	@FXML
 	private Button saveAsLogButton;
@@ -62,43 +75,17 @@ public class MainController implements Initializable  {
 	@FXML
 	private Button clearLogButton;
 
-	@FXML
-	private Pane emptyPane;
 
-	@FXML
-	private TitledPane logTitledPane;
-
-	@FXML
-	private Accordion logAccordion;
-
-	@FXML
-	private SplitPane mainSplitPane;
-
-	private volatile boolean collectLogs = true;
+	private ICfdpEntity cfdpEntity;
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		// Log table renderer
-		((TableColumn<LogRecord, String>) logTableView.getColumns().get(0))
-				.setCellValueFactory(o -> new ReadOnlyObjectWrapper<>(new Date(o.getValue().getMillis()).toString()));
-		((TableColumn<LogRecord, String>) logTableView.getColumns().get(1))
-				.setCellValueFactory(o -> new ReadOnlyObjectWrapper<>(o.getValue().getLevel().getName()));
-		((TableColumn<LogRecord, String>) logTableView.getColumns().get(2))
+		((TableColumn<ICfdpIndication, String>) logTableView.getColumns().get(0))
 				.setCellValueFactory(o -> new ReadOnlyObjectWrapper<>(buildTableMessage(o.getValue())));
 
-		// Fix column size and autoresize
-		logTableView.getColumns().get(0).prefWidthProperty().bind(logTableView.widthProperty().divide(8));
-		logTableView.getColumns().get(1).prefWidthProperty().bind(logTableView.widthProperty().divide(8));
-		logTableView.getColumns().get(2).prefWidthProperty()
-				.bind(logTableView.widthProperty().divide(4).multiply(3).subtract(24));
-
 		// Button graphics
-		{
-			Image image = new Image(getClass()
-					.getResourceAsStream("/eu/dariolucia/ccsds/cfdp/fx/images/play-circle.png"));
-			this.enableLogButton.setGraphic(new ImageView(image));
-		}
 		{
 			Image image = new Image(getClass()
 					.getResourceAsStream("/eu/dariolucia/ccsds/cfdp/fx/images/save.png"));
@@ -110,20 +97,22 @@ public class MainController implements Initializable  {
 			this.clearLogButton.setGraphic(new ImageView(image));
 		}
 
+		// Register this subscriber to the CFDP entity
+		CfdpFxTestTool.getCfdpEntity().register(this);
+
+		// Button enablement bindings
+		suspendButton.disableProperty().bind(Bindings.isEmpty(transactionTable.getSelectionModel().getSelectedItems()));
+		resumeButton.disableProperty().bind(Bindings.isEmpty(transactionTable.getSelectionModel().getSelectedItems()));
+		cancelButton.disableProperty().bind(Bindings.isEmpty(transactionTable.getSelectionModel().getSelectedItems()));
+		reportButton.disableProperty().bind(Bindings.isEmpty(transactionTable.getSelectionModel().getSelectedItems()));
+		promptNakButton.disableProperty().bind(Bindings.isEmpty(transactionTable.getSelectionModel().getSelectedItems()));
+		keepAliveButton.disableProperty().bind(Bindings.isEmpty(transactionTable.getSelectionModel().getSelectedItems()));
+
+		// Ready to go
 	}
 
-	protected String buildTableMessage(LogRecord value) {
-		String theMessage = value.getMessage().trim();
-		if (value.getThrown() != null) {
-			return theMessage + " - Exception message: " + value.getThrown().getMessage();
-		} else {
-			return theMessage;
-		}
-	}
-
-	@FXML
-	private void collectLogsMenuItemSelected(ActionEvent e) {
-		this.collectLogs = ((ToggleButton) e.getSource()).isSelected();
+	protected String buildTableMessage(ICfdpIndication value) {
+		return value.toString();
 	}
 
 	@FXML
@@ -155,6 +144,17 @@ public class MainController implements Initializable  {
 	}
 
 	public void suspendButtonSelected(ActionEvent actionEvent) {
+		CfdpTransactionItem item = this.transactionTable.getSelectionModel().getSelectedItem();
+		if(item == null) {
+			return;
+		}
+		Optional<ButtonType> result = DialogUtils.showConfirmation("Confirm request",
+				"Do you want to issue a Suspend Request to transaction " + item.getTransactionId() + "?" ,
+				"New request for transaction " + item.getTransactionId(),
+				null);
+		if (result.get() == ButtonType.OK) {
+			cfdpEntity.request(new SuspendRequest(item.getTransactionId()));
+		}
 	}
 
 	public void resumeButtonSelected(ActionEvent actionEvent) {
@@ -170,5 +170,48 @@ public class MainController implements Initializable  {
 	}
 
 	public void keepAliveButtonSelected(ActionEvent actionEvent) {
+	}
+
+	@Override
+	public void indication(ICfdpEntity emitter, ICfdpIndication indication) {
+		Platform.runLater(() -> {
+			logTableView.getItems().add(indication);
+			updateTransaction(indication);
+		});
+	}
+
+	private void updateTransaction(ICfdpIndication indication) {
+		// TODO
+	}
+
+	private class CfdpTransactionItem {
+
+		private final SimpleLongProperty sourceId = new SimpleLongProperty();
+		private final SimpleLongProperty destinationId = new SimpleLongProperty();
+		private final SimpleLongProperty transactionId = new SimpleLongProperty();
+
+		public long getSourceId() {
+			return sourceId.get();
+		}
+
+		public SimpleLongProperty sourceIdProperty() {
+			return sourceId;
+		}
+
+		public long getDestinationId() {
+			return destinationId.get();
+		}
+
+		public SimpleLongProperty destinationIdProperty() {
+			return destinationId;
+		}
+
+		public long getTransactionId() {
+			return transactionId.get();
+		}
+
+		public SimpleLongProperty transactionIdProperty() {
+			return transactionId;
+		}
 	}
 }

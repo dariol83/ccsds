@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.MessageToUserTLV;
 
 import java.util.Collections;
@@ -47,6 +48,8 @@ public class MetadataRecvIndication implements ICfdpIndication {
 
     private final List<MessageToUserTLV> messagesToUser = new LinkedList<>();
 
+    private final CfdpTransactionStatus statusReport;
+
     /**
      * MetadataRecvIndication full constructor.
      *
@@ -56,8 +59,9 @@ public class MetadataRecvIndication implements ICfdpIndication {
      * @param sourceFileName Can be null. The name of the source file.
      * @param destinationFileName Can be null. The name of the destination file.
      * @param messagesToUser Can be null.
+     * @param statusReport The status report provides additional information on some change in the transaction status
      */
-    public MetadataRecvIndication(long transactionId, long sourceEntityId, long fileSize, String sourceFileName, String destinationFileName, List<MessageToUserTLV> messagesToUser) {
+    public MetadataRecvIndication(long transactionId, long sourceEntityId, long fileSize, String sourceFileName, String destinationFileName, List<MessageToUserTLV> messagesToUser, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
         this.sourceEntityId = sourceEntityId;
         this.fileSize = fileSize;
@@ -66,6 +70,7 @@ public class MetadataRecvIndication implements ICfdpIndication {
         if (messagesToUser != null) {
             this.messagesToUser.addAll(messagesToUser);
         }
+        this.statusReport = statusReport;
     }
 
     /**
@@ -142,6 +147,24 @@ public class MetadataRecvIndication implements ICfdpIndication {
         return Collections.unmodifiableList(messagesToUser);
     }
 
+    /**
+     * The Status report parameter shall indicate the status of the indicated file delivery
+     * transaction. The format and scope of the status report parameter are specific to the
+     * implementation. It could contain information such as:
+     * <ol>
+     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
+     *     <li>what extents of the FDU are known to have been successfully received by the
+     * receiving CFDP entity;</li>
+     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
+     * entity.</li>
+     * </ol>
+     *
+     * @return the status report
+     */
+    public CfdpTransactionStatus getStatusReport() {
+        return statusReport;
+    }
+
     @Override
     public String toString() {
         return "MetadataRecvIndication{" +
@@ -151,6 +174,7 @@ public class MetadataRecvIndication implements ICfdpIndication {
                 ", sourceFileName='" + getSourceFileName() + '\'' +
                 ", destinationFileName='" + getDestinationFileName() + '\'' +
                 ", messagesToUser=" + messagesToUser +
+                ", statusReport=" + getStatusReport() +
                 '}';
     }
 }

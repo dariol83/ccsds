@@ -366,6 +366,11 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         }
     }
 
+    @Override
+    public List<IUtLayer> getUtLayers() {
+        return new ArrayList<>(this.utLayers.values());
+    }
+
     private boolean isDisposed() {
         return disposed;
     }

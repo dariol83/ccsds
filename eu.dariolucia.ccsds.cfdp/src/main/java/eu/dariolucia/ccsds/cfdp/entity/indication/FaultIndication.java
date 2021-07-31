@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
+
 /**
  * The Fault.indication primitive shall be used to indicate to the CFDP user the occurrence
  * of a fault condition for which the designated fault handler was ‘Ignore’.
@@ -39,17 +41,21 @@ public class FaultIndication implements ICfdpIndication {
 
     private final long progress;
 
+    private final CfdpTransactionStatus statusReport;
+
     /**
      * FaultIndication full constructor.
      *
      * @param transactionId The Transaction ID parameter shall uniquely identify a single instance of FDU delivery
      * @param conditionCode The Condition code parameter shall provide additional information on some change in the transaction status
      * @param progress The progress parameter shall report on current file transmission or reception progress
+     * @param statusReport The status report provides additional information on some change in the transaction status
      */
-    public FaultIndication(long transactionId, byte conditionCode, long progress) {
+    public FaultIndication(long transactionId, byte conditionCode, long progress, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
         this.conditionCode = conditionCode;
         this.progress = progress;
+        this.statusReport = statusReport;
     }
 
     /**
@@ -86,12 +92,31 @@ public class FaultIndication implements ICfdpIndication {
         return progress;
     }
 
+    /**
+     * The Status report parameter shall indicate the status of the indicated file delivery
+     * transaction. The format and scope of the status report parameter are specific to the
+     * implementation. It could contain information such as:
+     * <ol>
+     *     <li>whether the transaction is finished, canceled, suspended, or active;</li>
+     *     <li>what extents of the FDU are known to have been successfully received by the
+     * receiving CFDP entity;</li>
+     *     <li>what extents of the FDU are known to have been transmitted by the sending CFDP
+     * entity.</li>
+     * </ol>
+     *
+     * @return the status report
+     */
+    public CfdpTransactionStatus getStatusReport() {
+        return statusReport;
+    }
+
     @Override
     public String toString() {
         return "FaultIndication{" +
                 "transactionId=" + transactionId +
                 ", conditionCode=" + conditionCode +
                 ", progress=" + progress +
+                ", statusReport=" + getStatusReport() +
                 '}';
     }
 }

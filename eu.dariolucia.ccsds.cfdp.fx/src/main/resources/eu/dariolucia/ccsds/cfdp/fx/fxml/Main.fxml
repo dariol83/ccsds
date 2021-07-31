@@ -58,13 +58,19 @@
                     <Tooltip text="Request keep-alive via Keep Alive Request" />
                 </tooltip>
             </Button>
+            <Pane prefHeight="1.0" HBox.hgrow="ALWAYS" />
+            <Button mnemonicParsing="false" onAction="#aboutButtonSelected" prefWidth="120.0" text="About">
+                <tooltip>
+                    <Tooltip text="About this application" />
+                </tooltip>
+            </Button>
         </items>
       </ToolBar>
       <SplitPane fx:id="mainSplitPane" dividerPositions="0.9" orientation="VERTICAL" VBox.vgrow="ALWAYS">
          <items>
             <HBox prefHeight="100.0" prefWidth="300.0">
                <children>
-                  <TableView prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS">
+                  <TableView fx:id="transactionTable" prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS">
                     <columns>
                         <TableColumn fx:id="transactionIdColumn" prefWidth="75.0" text="Tr. ID" />
                         <TableColumn fx:id="sourceIdColumn" prefWidth="75.0" text="Source ID" />
@@ -81,7 +87,7 @@
                </children></HBox>
             <Accordion fx:id="logAccordion" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minWidth="1.0" style="-fx-background-color: -fx-background;" VBox.vgrow="ALWAYS">
 		        <panes>
-		          <TitledPane fx:id="logTitledPane" animated="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Application Log">
+		          <TitledPane fx:id="logTitledPane" animated="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Indication Log">
 		               <content>
 		               <ScrollPane fitToHeight="true" fitToWidth="true" minHeight="160.0" pannable="false">
 						<content>
@@ -89,16 +95,13 @@
 				               <children>
 				               	       <ToolBar minHeight="40.0" prefHeight="40.0" prefWidth="200.0">
 											<items>
-												<ToggleButton fx:id="enableLogButton" mnemonicParsing="false" onAction="#collectLogsMenuItemSelected" prefWidth="120.0" selected="true" text="Enable" />
 												<Button fx:id="saveAsLogButton" mnemonicParsing="false" onAction="#saveLogsMenuItemSelected" prefWidth="120.0" text="Save As..." />
 												<Button fx:id="clearLogButton" mnemonicParsing="false" onAction="#clearLogMenuItemSelected" prefWidth="120.0" text="Clear..." />
 											</items>
 										</ToolBar>
 				                  		<TableView fx:id="logTableView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="100" VBox.vgrow="ALWAYS">
 											<columns>
-												<TableColumn prefWidth="170.0" resizable="false" text="Time" />
-												<TableColumn prefWidth="80.0" resizable="false" text="Severity" />
-												<TableColumn prefWidth="840.0" resizable="false" text="Message" />
+												<TableColumn prefWidth="840.0" resizable="false" text="Indication" />
 											</columns>
 										</TableView>
 				               </children>

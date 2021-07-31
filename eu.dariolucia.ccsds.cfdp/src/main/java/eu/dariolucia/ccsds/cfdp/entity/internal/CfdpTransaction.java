@@ -157,7 +157,7 @@ public abstract class CfdpTransaction {
             //    may result in unpredictable protocol behavior), and a Fault.indication with
             //    condition code identifying the fault condition is issued to the CFDP user
             case NO_ACTION:
-                FaultIndication indication = new FaultIndication(getTransactionId(), conditionCode, getProgress());
+                FaultIndication indication = new FaultIndication(getTransactionId(), conditionCode, getProgress(), createStateObject());
                 getEntity().notifyIndication(indication);
                 return;
             // d) abandonment of the transaction, resulting in an Abandoned.indication with
@@ -504,7 +504,7 @@ public abstract class CfdpTransaction {
 
     protected void handleAbandon(byte condition) {
         setAbandoned();
-        getEntity().notifyIndication(new AbandonedIndication(getTransactionId(), condition, getProgress()));
+        getEntity().notifyIndication(new AbandonedIndication(getTransactionId(), condition, getProgress(), createStateObject()));
         handleDispose();
     }
 

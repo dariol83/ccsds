@@ -197,7 +197,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         // Send the EOF indication (per attempt)
         if (getEntity().getMib().getLocalEntity().isEofSentIndicationRequired() && !this.alreadySentEoFforCancelled) {
             this.alreadySentEoFforCancelled = true;
-            getEntity().notifyIndication(new EofSentIndication(getTransactionId()));
+            getEntity().notifyIndication(new EofSentIndication(getTransactionId(), createStateObject()));
         }
 
         // 4.11.2.2.2 If sending in acknowledged mode,
@@ -232,7 +232,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         handleSuspendActions();
 
         // 4.11.2.6.3 The sending entity shall issue a Suspended.indication.
-        getEntity().notifyIndication(new SuspendedIndication(getTransactionId(), FileDirectivePdu.CC_SUSPEND_REQUEST_RECEIVED));
+        getEntity().notifyIndication(new SuspendedIndication(getTransactionId(), FileDirectivePdu.CC_SUSPEND_REQUEST_RECEIVED, createStateObject()));
     }
 
     @Override
@@ -284,7 +284,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             handleResumeActions(true);
         } else {
             // Just send the notification, because the transaction is still frozen
-            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.sentContiguousFileBytes));
+            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.sentContiguousFileBytes, createStateObject()));
         }
     }
 
@@ -338,7 +338,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         }
         // b) issue a Resumed.indication.
         if(sendNotification) {
-            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.sentContiguousFileBytes));
+            getEntity().notifyIndication(new ResumedIndication(getTransactionId(), this.sentContiguousFileBytes, createStateObject()));
         }
         // XXX: What about the transaction inactivity timer? I think it should be started
         startTransactionInactivityTimer();
@@ -504,7 +504,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         }
         this.active = true;
         // Notify the creation of the new transaction to the subscriber
-        getEntity().notifyIndication(new TransactionIndication(getTransactionId(), request));
+        getEntity().notifyIndication(new TransactionIndication(getTransactionId(), request, createStateObject()));
         // Before we even start doing something, check if the file is there
         if(isFileToBeSent()) {
             String fileToSend = this.request.getSourceFileName();
@@ -682,7 +682,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             }
             // Send the EOF indication (per attempt, regardless whether you have an exception or not)
             if(getEntity().getMib().getLocalEntity().isEofSentIndicationRequired()) {
-                getEntity().notifyIndication(new EofSentIndication(getTransactionId()));
+                getEntity().notifyIndication(new EofSentIndication(getTransactionId(), createStateObject()));
             }
             // Start the ACK procedure in case of acknowledged transactions
             if(isAcknowledged()) {
