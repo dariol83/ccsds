@@ -18,14 +18,13 @@ package eu.dariolucia.ccsds.cfdp.protocol.checksum.impl;
 
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpChecksumRegistry;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.ICfdpChecksum;
-import eu.dariolucia.ccsds.cfdp.util.TestUtils;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ModularChecksumTest {
 
@@ -57,10 +56,16 @@ class ModularChecksumTest {
         assertNotNull(CfdpChecksumRegistry.getModularChecksum());
     }
 
+    // Test added for safety, following interoperability tests with LibreCube python implementation
     @Test
-    public void testFileChecksum() throws IOException {
-        InputStream in = TestUtils.class.getClassLoader().getResourceAsStream("test1.txt");
-        byte[] input1 = in.readAllBytes();
+    public void testFileChecksum() {
+        String fileContents = "Hello World!!!\r\n" +
+                "123\r\n" +
+                "\r\n" +
+                "123\r\n" +
+                "\r\n" +
+                "EOF here";
+        byte[] input1 = fileContents.getBytes(StandardCharsets.US_ASCII);
         ModularChecksum checksum = new ModularChecksum();
         ICfdpChecksum ck1 = checksum.build();
         ck1.checksum(input1, 0);
