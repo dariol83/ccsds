@@ -19,7 +19,7 @@ package eu.dariolucia.ccsds.cfdp.fx.controller;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntity;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntitySubscriber;
 import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
-import eu.dariolucia.ccsds.cfdp.entity.request.SuspendRequest;
+import eu.dariolucia.ccsds.cfdp.entity.request.*;
 import eu.dariolucia.ccsds.cfdp.filestore.impl.FilesystemBasedFilestore;
 import eu.dariolucia.ccsds.cfdp.fx.application.CfdpFxTestTool;
 import eu.dariolucia.ccsds.cfdp.fx.dialogs.DialogUtils;
@@ -158,18 +158,73 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 	}
 
 	public void resumeButtonSelected(ActionEvent actionEvent) {
+		CfdpTransactionItem item = this.transactionTable.getSelectionModel().getSelectedItem();
+		if(item == null) {
+			return;
+		}
+		Optional<ButtonType> result = DialogUtils.showConfirmation("Confirm request",
+				"Do you want to issue a Resume Request to transaction " + item.getTransactionId() + "?" ,
+				"New request for transaction " + item.getTransactionId(),
+				null);
+		if (result.get() == ButtonType.OK) {
+			cfdpEntity.request(new ResumeRequest(item.getTransactionId()));
+		}
 	}
 
 	public void cancelButtonSelected(ActionEvent actionEvent) {
+		CfdpTransactionItem item = this.transactionTable.getSelectionModel().getSelectedItem();
+		if(item == null) {
+			return;
+		}
+		Optional<ButtonType> result = DialogUtils.showConfirmation("Confirm request",
+				"Do you want to issue a Cancel Request to transaction " + item.getTransactionId() + "?" ,
+				"New request for transaction " + item.getTransactionId(),
+				null);
+		if (result.get() == ButtonType.OK) {
+			cfdpEntity.request(new CancelRequest(item.getTransactionId()));
+		}
 	}
 
 	public void reportButtonSelected(ActionEvent actionEvent) {
+		CfdpTransactionItem item = this.transactionTable.getSelectionModel().getSelectedItem();
+		if(item == null) {
+			return;
+		}
+		Optional<ButtonType> result = DialogUtils.showConfirmation("Confirm request",
+				"Do you want to issue a Report Request to transaction " + item.getTransactionId() + "?" ,
+				"New request for transaction " + item.getTransactionId(),
+				null);
+		if (result.get() == ButtonType.OK) {
+			cfdpEntity.request(new ReportRequest(item.getTransactionId()));
+		}
 	}
 
 	public void promptNakButtonSelected(ActionEvent actionEvent) {
+		CfdpTransactionItem item = this.transactionTable.getSelectionModel().getSelectedItem();
+		if(item == null) {
+			return;
+		}
+		Optional<ButtonType> result = DialogUtils.showConfirmation("Confirm request",
+				"Do you want to issue a Prompt Nak Request to transaction " + item.getTransactionId() + "?" ,
+				"New request for transaction " + item.getTransactionId(),
+				null);
+		if (result.get() == ButtonType.OK) {
+			cfdpEntity.request(new PromptNakRequest(item.getTransactionId()));
+		}
 	}
 
 	public void keepAliveButtonSelected(ActionEvent actionEvent) {
+		CfdpTransactionItem item = this.transactionTable.getSelectionModel().getSelectedItem();
+		if(item == null) {
+			return;
+		}
+		Optional<ButtonType> result = DialogUtils.showConfirmation("Confirm request",
+				"Do you want to issue a Keep Alive Request to transaction " + item.getTransactionId() + "?" ,
+				"New request for transaction " + item.getTransactionId(),
+				null);
+		if (result.get() == ButtonType.OK) {
+			cfdpEntity.request(new KeepAliveRequest(item.getTransactionId()));
+		}
 	}
 
 	@Override

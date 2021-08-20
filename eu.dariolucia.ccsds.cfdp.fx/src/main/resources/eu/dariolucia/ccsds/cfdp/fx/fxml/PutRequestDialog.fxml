@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.cfdp.fx.controller.PutRequestDialog">
+   <children>
+      <HBox prefHeight="100.0" prefWidth="200.0">
+         <children>
+            <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+               <children>
+                  <Label text="Destination Entity" VBox.vgrow="NEVER" />
+                  <ChoiceBox minWidth="237.0" prefWidth="237.0" VBox.vgrow="NEVER" />
+                  <CheckBox mnemonicParsing="false" text="Acknowledged" />
+                  <CheckBox mnemonicParsing="false" text="With Closure" />
+                  <CheckBox mnemonicParsing="false" text="Flow Label" />
+                  <TextField promptText="Use hex dump" />
+               </children>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </VBox>
+            <Separator orientation="VERTICAL" prefHeight="200.0" />
+            <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+               <children>
+                  <CheckBox mnemonicParsing="false" text="File Transfer" />
+                  <Label text="Source File" />
+                  <ComboBox minWidth="237.0" prefWidth="237.0" />
+                  <Label text="Destination File" />
+                  <TextField />
+                  <CheckBox mnemonicParsing="false" text="Segmentation Control" />
+               </children>
+               <padding>
+                  <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+               </padding>
+            </VBox>
+         </children>
+      </HBox>
+      <Separator prefWidth="200.0" />
+      <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+         <children>
+            <Label text="Filestore Requests - Action" />
+            <ChoiceBox minWidth="237.0" prefWidth="237.0" />
+            <Label text="First Filename" />
+            <TextField />
+            <Label layoutX="15.0" layoutY="65.0" text="Second Filename" />
+              <TextField layoutX="15.0" layoutY="86.0" />
+            <HBox spacing="5.0">
+               <children>
+                  <ListView maxHeight="130.0" HBox.hgrow="ALWAYS" />
+                  <VBox spacing="5.0">
+                     <children>
+                        <Button layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" text="+" />
+                        <Button minWidth="32.0" mnemonicParsing="false" text="-" />
+                        <Button layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" text="^" />
+                        <Button layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" text="v" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </VBox>
+      <Separator prefWidth="200.0" />
+      <VBox spacing="5.0">
+         <children>
+            <Label text="Messages To User" />
+            <HBox spacing="5.0">
+               <children>
+                  <TextField minWidth="200.0" promptText="Use hex dump" HBox.hgrow="ALWAYS" />
+                  <Button minWidth="32.0" mnemonicParsing="false" text="+" />
+               </children>
+            </HBox>
+            <HBox prefHeight="100.0" prefWidth="200.0" spacing="5.0">
+               <children>
+                  <ListView maxHeight="100.0" HBox.hgrow="ALWAYS" />
+                  <VBox spacing="5.0" HBox.hgrow="NEVER">
+                     <children>
+                        <Button minWidth="32.0" mnemonicParsing="false" text="-" />
+                        <Button layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" text="^" />
+                        <Button layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" text="v" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </VBox>
+      <Separator prefWidth="200.0" />
+      <VBox spacing="5.0">
+         <children>
+            <Label text="Fault Handlers Override" />
+            <HBox spacing="5.0">
+               <children>
+                  <HBox spacing="5.0" HBox.hgrow="ALWAYS">
+                     <children>
+                        <ChoiceBox minWidth="200.0" />
+                        <ChoiceBox minWidth="200.0" HBox.hgrow="ALWAYS" />
+                     </children>
+                  </HBox>
+                  <Button minWidth="32.0" mnemonicParsing="false" text="+" />
+               </children>
+            </HBox>
+            <HBox spacing="5.0">
+               <children>
+                  <ListView maxHeight="100.0" HBox.hgrow="ALWAYS" />
+                  <VBox spacing="5.0" HBox.hgrow="NEVER">
+                     <children>
+                        <Button minWidth="32.0" mnemonicParsing="false" text="-" />
+                        <Button layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" text="^" />
+                        <Button layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" text="v" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+         </children>
+         <padding>
+            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+         </padding>
+      </VBox>
+   </children>
+</VBox>
