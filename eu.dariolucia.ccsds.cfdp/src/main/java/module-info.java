@@ -3,6 +3,7 @@ open module eu.dariolucia.ccsds.cfdp {
     requires transitive java.xml.bind;
     requires eu.dariolucia.ccsds.tmtc;
 
+    exports eu.dariolucia.ccsds.cfdp.application;
     exports eu.dariolucia.ccsds.cfdp.common;
     exports eu.dariolucia.ccsds.cfdp.protocol.checksum;
     exports eu.dariolucia.ccsds.cfdp.protocol.decoder;
