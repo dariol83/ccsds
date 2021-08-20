@@ -18,8 +18,11 @@ package eu.dariolucia.ccsds.cfdp.protocol.checksum.impl;
 
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpChecksumRegistry;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.ICfdpChecksum;
+import eu.dariolucia.ccsds.cfdp.util.TestUtils;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,5 +55,17 @@ class ModularChecksumTest {
         result = ck3.getCurrentChecksum();
         assertEquals(0x00010203, result);
         assertNotNull(CfdpChecksumRegistry.getModularChecksum());
+    }
+
+    @Test
+    public void testFileChecksum() throws IOException {
+        InputStream in = TestUtils.class.getClassLoader().getResourceAsStream("test1.txt");
+        byte[] input1 = in.readAllBytes();
+        ModularChecksum checksum = new ModularChecksum();
+        ICfdpChecksum ck1 = checksum.build();
+        ck1.checksum(input1, 0);
+        int result = ck1.getCurrentChecksum();
+
+        assertEquals(0x7E152D02, result);
     }
 }
