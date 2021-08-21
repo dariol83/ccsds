@@ -140,7 +140,7 @@ public abstract class AbstractUtLayer implements IUtLayer {
 
     public synchronized void setTxAvailability(boolean available, long... entityIds) {
         if(LOG.isLoggable(Level.FINE)) {
-            LOG.log(Level.FINE, String.format("Setting TX availability to %s on UT Layer %s for entities %s", String.valueOf(available), getName(), Arrays.toString(entityIds)));
+            LOG.log(Level.FINE, String.format("Setting TX availability to %s on UT Layer %s for entities %s", available, getName(), Arrays.toString(entityIds)));
         }
         // Mark the entities as available or unavailable for TX
         for(long l : entityIds) {
@@ -170,7 +170,7 @@ public abstract class AbstractUtLayer implements IUtLayer {
 
     public synchronized void setRxAvailability(boolean available, long... entityIds) {
         if(LOG.isLoggable(Level.FINE)) {
-            LOG.log(Level.FINE, String.format("Setting RX availability to %s on UT Layer %s for entities %s", String.valueOf(available), getName(), Arrays.toString(entityIds)));
+            LOG.log(Level.FINE, String.format("Setting RX availability to %s on UT Layer %s for entities %s", available, getName(), Arrays.toString(entityIds)));
         }
         // Mark the entities as available or unavailable for TX
         for(long l : entityIds) {

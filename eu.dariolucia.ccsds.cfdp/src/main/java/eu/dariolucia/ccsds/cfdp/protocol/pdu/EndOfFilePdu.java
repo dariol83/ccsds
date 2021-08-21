@@ -29,7 +29,7 @@ public class EndOfFilePdu extends FileDirectivePdu {
     /**
      * Condition code.
      */
-    private final byte conditionCode;
+    private final ConditionCode conditionCode;
 
     /**
      * The checksum shall be computed over the file data and inserted into the EOF (No
@@ -58,11 +58,11 @@ public class EndOfFilePdu extends FileDirectivePdu {
             throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
         }
         // PDU-specific parsing
-        this.conditionCode = (byte) ((pdu[getDirectiveParameterIndex()] & 0xF0) >>> 4);
+        this.conditionCode = ConditionCode.fromCode((byte) ((pdu[getDirectiveParameterIndex()] & 0xF0) >>> 4));
         this.fileChecksum = ByteBuffer.wrap(pdu, getDirectiveParameterIndex() + 1, 4).getInt();
         this.fileSize = isLargeFile() ? ByteBuffer.wrap(pdu, getDirectiveParameterIndex() + 1 + 4, 8).getLong() : Integer.toUnsignedLong(ByteBuffer.wrap(pdu, getDirectiveParameterIndex() + 1 + 4, 4).getInt());
         // Let's check the condition code
-        if(this.conditionCode == FileDirectivePdu.CC_NOERROR) {
+        if(this.conditionCode == ConditionCode.CC_NOERROR) {
             // Fault location omitted if condition code is 'No error'.
             this.faultLocation = null;
         } else {
@@ -78,7 +78,7 @@ public class EndOfFilePdu extends FileDirectivePdu {
         }
     }
 
-    public byte getConditionCode() {
+    public ConditionCode getConditionCode() {
         return conditionCode;
     }
 

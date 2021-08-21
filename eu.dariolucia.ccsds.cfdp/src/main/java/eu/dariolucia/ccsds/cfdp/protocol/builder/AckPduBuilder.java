@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.AckPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
 
 import java.io.ByteArrayOutputStream;
@@ -31,7 +32,7 @@ public class AckPduBuilder extends CfdpPduBuilder<AckPdu, AckPduBuilder> {
 
     private byte directiveSubtypeCode;
 
-    private byte conditionCode;
+    private ConditionCode conditionCode = ConditionCode.CC_NOERROR;
 
     private AckPdu.TransactionStatus transactionStatus;
 
@@ -68,12 +69,12 @@ public class AckPduBuilder extends CfdpPduBuilder<AckPdu, AckPduBuilder> {
     }
 
     /**
-     * Condition code of the acknowledged PDU, as per {@link eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu} CC_ constants.
+     * Condition code of the acknowledged PDU.
      *
      * @param conditionCode the condition code
      * @return this
      */
-    public AckPduBuilder setConditionCode(byte conditionCode) {
+    public AckPduBuilder setConditionCode(ConditionCode conditionCode) {
         this.conditionCode = conditionCode;
         return this;
     }
@@ -97,7 +98,7 @@ public class AckPduBuilder extends CfdpPduBuilder<AckPdu, AckPduBuilder> {
         return directiveSubtypeCode;
     }
 
-    public byte getConditionCode() {
+    public ConditionCode getConditionCode() {
         return conditionCode;
     }
 
@@ -117,7 +118,7 @@ public class AckPduBuilder extends CfdpPduBuilder<AckPdu, AckPduBuilder> {
         bos.write(first);
         totalLength += 1;
         // Condition code (4 bits), spare bit and transaction status (2 bits)
-        byte second = (byte) ((this.conditionCode << 4) & 0xF0);
+        byte second = (byte) ((this.conditionCode.getCode() << 4) & 0xF0);
         second |= (byte) ((this.transactionStatus.ordinal()) & 0x03);
         bos.write(second);
         totalLength += 1;

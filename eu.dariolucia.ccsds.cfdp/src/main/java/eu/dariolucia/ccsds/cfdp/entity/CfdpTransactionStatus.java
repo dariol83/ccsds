@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.cfdp.entity;
 
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
+
 import java.time.Instant;
 
 /**
@@ -30,14 +32,14 @@ public class CfdpTransactionStatus {
     private final long sourceEntityId;
     private final long destinationEntityId;
     private final boolean isDestination;
-    private final byte lastConditionCode;
+    private final ConditionCode lastConditionCode;
     private final Long lastFaultEntity;
     private final CfdpTransactionState cfdpTransactionState;
     private final long progress;
     private final long totalFileSize;
 
     public CfdpTransactionStatus(Instant time, ICfdpEntity managingEntity, long transactionId, long sourceEntityId, long destinationEntityId,  // NOSONAR: long constructor
-                                 boolean isDestination, byte lastConditionCode, Long lastFaultEntity, CfdpTransactionState cfdpTransactionState,
+                                 boolean isDestination, ConditionCode lastConditionCode, Long lastFaultEntity, CfdpTransactionState cfdpTransactionState,
                                  long progress, long totalFileSize) {
         this.time = time;
         this.managingEntity = managingEntity;
@@ -76,7 +78,7 @@ public class CfdpTransactionStatus {
         return isDestination;
     }
 
-    public byte getLastConditionCode() {
+    public ConditionCode getLastConditionCode() {
         return lastConditionCode;
     }
 

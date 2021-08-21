@@ -39,7 +39,7 @@ public class FinishedPdu extends FileDirectivePdu {
     /**
      * Condition code.
      */
-    private final byte conditionCode;
+    private final ConditionCode conditionCode;
 
     /**
      * 'Data Complete' means that metadata, all file data, and EOF have been received, and the
@@ -73,7 +73,7 @@ public class FinishedPdu extends FileDirectivePdu {
             throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
         }
         // PDU-specific parsing
-        this.conditionCode = (byte) ((pdu[getDirectiveParameterIndex()] & 0xF0) >>> 4);
+        this.conditionCode = ConditionCode.fromCode((byte) ((pdu[getDirectiveParameterIndex()] & 0xF0) >>> 4));
         this.dataComplete = ((pdu[getDirectiveParameterIndex()] & 0x04) >>> 2) == 0;
         this.fileStatus = FileStatus.values()[pdu[getDirectiveParameterIndex()] & 0x03];
         // Filestore responses
@@ -96,7 +96,7 @@ public class FinishedPdu extends FileDirectivePdu {
             }
         }
         // Let's check condition code
-        if(this.conditionCode == FileDirectivePdu.CC_NOERROR || this.conditionCode == CC_UNSUPPORTED_CHECKSUM_TYPE) {
+        if(this.conditionCode == ConditionCode.CC_NOERROR || this.conditionCode == ConditionCode.CC_UNSUPPORTED_CHECKSUM_TYPE) {
             // Omitted if condition code is 'No error' or 'Unsupported checksum type'
             this.faultLocation = null;
         } else {
@@ -111,7 +111,7 @@ public class FinishedPdu extends FileDirectivePdu {
         }
     }
 
-    public byte getConditionCode() {
+    public ConditionCode getConditionCode() {
         return conditionCode;
     }
 

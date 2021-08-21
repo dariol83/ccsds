@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.EndOfFilePdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.EntityIdTLV;
@@ -30,7 +31,7 @@ import java.io.IOException;
  */
 public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFilePduBuilder> {
 
-    private byte conditionCode;
+    private ConditionCode conditionCode = ConditionCode.CC_NOERROR;
 
     private int fileChecksum;
 
@@ -53,9 +54,9 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
      * @param faultLocation the fault location
      * @return this
      */
-    public EndOfFilePduBuilder setConditionCode(byte conditionCode, EntityIdTLV faultLocation) {
+    public EndOfFilePduBuilder setConditionCode(ConditionCode conditionCode, EntityIdTLV faultLocation) {
         this.conditionCode = conditionCode;
-        if(conditionCode != FileDirectivePdu.CC_NOERROR) {
+        if(conditionCode != ConditionCode.CC_NOERROR) {
             this.faultLocation = faultLocation;
         } else {
             this.faultLocation = null;
@@ -88,7 +89,7 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
         return this;
     }
 
-    public byte getConditionCode() {
+    public ConditionCode getConditionCode() {
         return conditionCode;
     }
 
@@ -111,7 +112,7 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
         bos.write(FileDirectivePdu.DC_EOF_PDU);
         totalLength += 1;
         // Condition code (4 bits) and spare (4 bits)
-        bos.write((this.conditionCode << 4) & 0xFF);
+        bos.write((this.conditionCode.getCode() << 4) & 0xFF);
         totalLength += 1;
         // Checksum (4 bytes)
         bos.write(BytesUtil.encodeInteger(this.fileChecksum, Integer.BYTES));
@@ -120,7 +121,7 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
         bos.write(BytesUtil.encodeInteger(this.fileSize, isLargeFile() ? 8 : 4));
         totalLength += isLargeFile() ? 8 : 4;
         // Fault location
-        if(this.conditionCode != FileDirectivePdu.CC_NOERROR) {
+        if(this.conditionCode != ConditionCode.CC_NOERROR) {
             byte[] encoded = this.faultLocation.encode();
             bos.write(encoded);
             totalLength += encoded.length;

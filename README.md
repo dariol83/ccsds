@@ -16,7 +16,7 @@ Stable releases are published on Maven Central. The latest code version is alway
 **Disclaimer: this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested). It is not endorsed by any organization, association or company. As such, strict compliance to the different standards as well as correct behaviour cannot be guaranteed. As the Apache License makes clear, use the modules of this repository at your own risk.**
 
 ## SLE
-The SLE User Test Library (eu.dariolucia.ccsds.sle.utl) is a test library that implements the user side (fully compliant) and provider side (partially compliant) of an SLE data exchange session. 
+The SLE User Test Library (eu.dariolucia.ccsds.sle.utl) is a library that implements the user side (fully compliant) and provider side (partially compliant) of an SLE data exchange session. 
 It supports RAF, RCF, ROCF and CLTU. Support for FSP is currently missing. 
 It uses a custom format for the configuration of the service instances (currently not documented, can be derived by the classes inside 
 the "config" package).
@@ -35,12 +35,21 @@ A simple graphical interface to inspect TM/TC/AOS/Space Packet data as stream is
 service (in Java 11 terms) implementing the interface eu.dariolucia.ccsds.inspector.api.IConnectorFactory. Some connectors to read data from file or socket are already available.
 
 ## ENC/DEC
-A packet identification/encoding/decoding library, which supports basic data types (integer, real, enumeration, CCSDS absolute and 
+A packet identification/encoding/decoding library (eu.dariolucia.ccsds.encdec), which supports basic data types (integer, real, enumeration, CCSDS absolute and 
 relative time formats, strings, octet streams, bit streams), array structures, ECSS TM/TC PUS headers, as derived from the ECSS Packet Utilisation Standard (http://everyspec.com/ESA/download.php?spec=ECSS-E-70-41A.047794.pdf), with main focus on performance. 
 
 Encoding performance has not been measured yet. 
 
 The packet structure is defined using a custom XML format definition, built by means of JAXB annotations.
+
+## CFDP
+The CCSDS File Delivery Protocol Library (eu.dariolucia.ccsds.cfdp) is a library that implements a full, standard-compliant CFDP entity (without support for proxy operations and relay operations, which can be easily developed in the application).
+It supports Class 1 (with and without closure) and Class 2 operations, with built-in support for TCP and UDP UT layers.
+
+A simple but effective graphical interface to monitor transactions in a local CFDP entity is provided as separate module (eu.dariolucia.ccsds.cfdp.fx).
+
+## Data Viewer
+To ease the debug and visualisation of encoded information in telemetry and telecommand data, the module viewer (eu.dariolucia.ccsds.viewer) contains an application that can display decoded and structure information from all the data types supported by this library (CADUs, TM frames, AOS frames, TC frames, CLTU, Space Packets, all SLE operations, time encodings, CLCW).
 
 ## Examples
 A modules providing examples on how to use the three modules above in a combined way, to demonstrate the capabilities of the library to write compact code. The following examples are provided:
@@ -53,12 +62,9 @@ A modules providing examples on how to use the three modules above in a combined
 
 **The main target of the examples module is not to provide final applications ready to be used**, rather to explain the different levels and concepts of the libraries, and how to link the various objects together. 
 
-## Data Viewer
-To ease the debug and visualisation of encoded information in telemetry and telecommand data, the module viewer (eu.dariolucia.ccsds.viewer) contains an application that can display decoded and structure information from all the data types supported by this library (CADUs, TM frames, AOS frames, TC frames, CLTU, Space Packets, all SLE operations, time encodings, CLCW).
-
 # Goals
 The purpose of this repository is to produce, as far as my possibilities allow, simple, well-designed, well-documented, well-tested code with top performance. For each module (examples and tools excluded) I have the following targets:
-- full CI integration with Travis CI;
+- full CI integration with GitHub Actions;
 - at least 90% line coverage with unit tests (measured by JaCoCo and reported in Sonarcloud);
 - a set of performance tests;
 - no warnings when compiling;

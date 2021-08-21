@@ -83,10 +83,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     // The last Finished Pdu, once sent while pending acknowledgement
     private FinishedPdu finishedPdu;
-    // Inform the transaction if a NAK timer was started by the reception of a EOF PDU. In such case, a resume operation
+    // Inform the transaction if a NAK timer was started by the reception of an EOF PDU. In such case, a resume operation
     // will resume also the NAK timer.
     private boolean nakTimerOnEofActivated;
-
 
     public IncomingCfdpTransaction(CfdpPdu pdu, CfdpEntity entity) {
         super(pdu.getTransactionSequenceNumber(), entity, pdu.getSourceEntityId());
@@ -289,9 +288,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 // checksum computation algorithms, an Unsupported Checksum Type fault shall be raised, and
                 // the applicable checksum computation algorithm shall be selected as follows:
                 try {
-                    fault(FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE,getLocalEntityId());
+                    fault(ConditionCode.CC_UNSUPPORTED_CHECKSUM_TYPE,getLocalEntityId());
                 } catch (FaultDeclaredException faultDeclaredException) {
-                    // A exception at this stage means that suspend, cancel or abandon has been thrown. If cancel or abandon,
+                    // An exception at this stage means that suspend, cancel or abandon has been thrown. If cancel or abandon,
                     // stop here
                     if(faultDeclaredException.getAction() == FaultHandlerStrategy.Action.NOTICE_OF_CANCELLATION ||
                     faultDeclaredException.getAction() == FaultHandlerStrategy.Action.ABANDON) {
@@ -368,7 +367,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             if(LOG.isLoggable(Level.SEVERE)) {
                 LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: failure in adding received FileDataPdu contents to temporary storage: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
             }
-            fault(FileDirectivePdu.CC_FILESTORE_REJECTION, getLocalEntityId());
+            fault(ConditionCode.CC_FILESTORE_REJECTION, getLocalEntityId());
         }
 
         // Identify the fully completed part offset and if there are gaps (to request retransmission if enabled), compute progress
@@ -385,9 +384,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         // 4.6.1.2.7 if the sum of the File Data PDU’s offset and segment size exceeds the file size
         // indicated in the first previously received EOF (No error) PDU, if any, then a File Size
         // Error fault shall be declared.
-        if(this.eofPdu != null && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR && pdu.getOffset() + pdu.getFileData().length > this.eofPdu.getFileSize()) {
+        if(this.eofPdu != null && this.eofPdu.getConditionCode() == ConditionCode.CC_NOERROR && pdu.getOffset() + pdu.getFileData().length > this.eofPdu.getFileSize()) {
             try {
-                fault(FileDirectivePdu.CC_FILE_SIZE_ERROR, getLocalEntityId());
+                fault(ConditionCode.CC_FILE_SIZE_ERROR, getLocalEntityId());
             } catch (FaultDeclaredException e) {
                 // Processing was handled by the fault handler, nothing to be done here
                 return;
@@ -441,12 +440,12 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 for(Map.Entry<Long, FileDataPduSummary> e : this.fileReconstructionMap.entrySet()) {
                     // All segments having an offset lower than fullyCompletedPartSize can be safely skipped
                     if(e.getKey() == receivedContiguousFileBytes) {
-                        // We found a segment that can contribute to the progress of the file, so we take this into account and we go on
+                        // We found a segment that can contribute to the progress of the file, so we take this into account, and we go on
                         this.receivedContiguousFileBytes += e.getValue().length;
                         // At this stage we reset the gap indicator, but we keep iterating on the map, since further gaps can be detected
                         this.gapDetected = false;
                     } else if(e.getKey() > receivedContiguousFileBytes) {
-                        // We found a segment that is not following the detected progress in a continuous way. We need to stop here and we
+                        // We found a segment that is not following the detected progress in a continuous way. We need to stop here, and we
                         // raise the gapDetected flag.
                         this.gapDetected = true;
                         break;
@@ -474,7 +473,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         //      (EOF (Cancel)) PDU implies that an EOF (Cancel) PDU was received but not
         //      necessarily that the referenced transaction was canceled.
         //  2   The receiving CFDP entity is always required to issue the Expected Response upon
-        //      receipt of a PDU to which Positive Acknowledgment procedures are applied. The
+        //      receipt of a PDU to which Positive Acknowledgement procedures are applied. The
         //      purpose of the Expected Response is to turn off the PDU retransmission timer at the
         //      sending end. This purpose must be served regardless of the status of the transaction:
         //      undefined, active, terminated, or unrecognized.
@@ -486,9 +485,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         }
         // 4.6.6.1.1 Receipt of an EOF (cancel) PDU shall cause the receiving CFDP entity to issue a
         // Notice of Completion (Canceled).
-        if(pdu.getConditionCode() == FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED) {
+        if(pdu.getConditionCode() == ConditionCode.CC_CANCEL_REQUEST_RECEIVED) {
             this.eofPdu = pdu;
-            setLastConditionCode(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, getRemoteDestination().getRemoteEntityId());
+            setLastConditionCode(ConditionCode.CC_CANCEL_REQUEST_RECEIVED, getRemoteDestination().getRemoteEntityId());
             handleNoticeOfCompletion(false);
             handleDispose();
             return;
@@ -503,8 +502,8 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 metadataNakJustSent = true;
             }
         }
-        // Check if there is already a EOF (No error) PDU
-        if(this.eofPdu != null && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
+        // Check if there is already an EOF (No error) PDU
+        if(this.eofPdu != null && this.eofPdu.getConditionCode() == ConditionCode.CC_NOERROR) {
             // Discard
             return;
         }
@@ -524,9 +523,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         // 4.6.1.2.9 Upon initial receipt of the EOF (No error) PDU, the file size indicated in the PDU
         // shall be compared to the transaction reception progress and a File Size Error fault declared if
         // the progress exceeds the file size.
-        if(this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR && this.receivedContiguousFileBytes > this.eofPdu.getFileSize()) {
+        if(this.eofPdu.getConditionCode() == ConditionCode.CC_NOERROR && this.receivedContiguousFileBytes > this.eofPdu.getFileSize()) {
             try {
-                fault(FileDirectivePdu.CC_FILE_SIZE_ERROR, getLocalEntityId());
+                fault(ConditionCode.CC_FILE_SIZE_ERROR, getLocalEntityId());
             } catch (FaultDeclaredException e) {
                 // If we are here, all required actions have been already handled by the fault handler
                 return;
@@ -538,13 +537,13 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
         if(!isAcknowledged()) {
             // Upon receipt of an EOF (No error) PDU:
-            if(this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
+            if(this.eofPdu.getConditionCode() == ConditionCode.CC_NOERROR) {
                 if (fileReconstructedAndReady) {
                     // a) If file reception is deemed complete as explained in 4.6.1.2.8 above, the receiving
                     // CFDP entity shall issue a Notice of Completion (Completed). Moreover, if the
                     // Closure Requested flag in the transaction’s Metadata PDU is set to ‘1’ and the
                     // receiving entity is the transaction’s destination, the receiving CFDP entity shall issue
-                    // a Finished complete) PDU. Any filestore responses shall be carried as parameters of
+                    // a Finished (complete) PDU. Any filestore responses shall be carried as parameters of
                     // the Finished (complete) PDU. The condition code in the Finished (complete) PDU
                     // shall be ‘No error’ if file reception was deemed complete following determination
                     // that the calculated and received checksums were equal, but ‘Unsupported checksum
@@ -578,8 +577,8 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 handleDispose();
             }
         } else {
-            if(this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
-                if (fileReconstructedAndReady && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR) {
+            if(this.eofPdu.getConditionCode() == ConditionCode.CC_NOERROR) {
+                if (fileReconstructedAndReady && this.eofPdu.getConditionCode() == ConditionCode.CC_NOERROR) {
                     handleNoticeOfCompletion(true);
                     // Send the Finished PDU here
                     sendFinishedPdu();
@@ -666,7 +665,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         }
         long endOfScope = tmpFilePartOffset;
         // If EOF(No error) PDU was received, then add a segment from tmpFilePartOffset and the expected file size
-        if(this.eofPdu != null && this.eofPdu.getConditionCode() == FileDirectivePdu.CC_NOERROR && tmpFilePartOffset < this.eofPdu.getFileSize()) {
+        if(this.eofPdu != null && this.eofPdu.getConditionCode() == ConditionCode.CC_NOERROR && tmpFilePartOffset < this.eofPdu.getFileSize()) {
             if(LOG.isLoggable(Level.FINER)) {
                 LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: missing segment detected (last) [%d - %d]", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), tmpFilePartOffset, this.eofPdu.getFileSize()));
             }
@@ -690,7 +689,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     @Override
-    protected void handleCancel(byte conditionCode, long faultEntityId) {
+    protected void handleCancel(ConditionCode conditionCode, long faultEntityId) {
         setLastConditionCode(conditionCode, faultEntityId);
         setCancelled();
         // 4.11.2.3.1 On Notice of Cancellation of the Copy File procedure, the receiving CFDP entity
@@ -757,7 +756,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         handleSuspendActions();
         // f) issue a Suspended.indication if so configured in the MIB (see table 8-1)
         if(getEntity().getMib().getLocalEntity().isSuspendedIndicationRequired()) {
-            getEntity().notifyIndication(new SuspendedIndication(getTransactionId(), FileDirectivePdu.CC_SUSPEND_REQUEST_RECEIVED, createStateObject()));
+            getEntity().notifyIndication(new SuspendedIndication(getTransactionId(), ConditionCode.CC_SUSPEND_REQUEST_RECEIVED, createStateObject()));
         }
         // g) save the status of the transaction.
     }
@@ -919,7 +918,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                             schedule(IncomingCfdpTransaction.this.nakTimer, getRemoteDestination().getNakTimerInterval(), false);
                         } else {
                             try {
-                                fault(FileDirectivePdu.CC_NAK_LIMIT_REACHED, getLocalEntityId());
+                                fault(ConditionCode.CC_NAK_LIMIT_REACHED, getLocalEntityId());
                             } catch (FaultDeclaredException e) {
                                 // Nothing to be done here in any case
                             }
@@ -993,7 +992,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 }
                 this.transactionFinishCheckTimer = null;
                 try {
-                    fault(FileDirectivePdu.CC_CHECK_LIMIT_REACHED, getLocalEntityId());
+                    fault(ConditionCode.CC_CHECK_LIMIT_REACHED, getLocalEntityId());
                 } catch (FaultDeclaredException e) {
                     // Nothing more to be done here
                 }
@@ -1036,20 +1035,20 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         if(completed) {
             if (this.filestoreProblemDetected) {
                 this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_BY_FILESTORE;
-                setLastConditionCode(FileDirectivePdu.CC_FILESTORE_REJECTION, getLocalEntityId());
+                setLastConditionCode(ConditionCode.CC_FILESTORE_REJECTION, getLocalEntityId());
             } else if (this.checksumTypeMissingSupportDetected) {
                 this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
-                setLastConditionCode(FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE, getLocalEntityId());
+                setLastConditionCode(ConditionCode.CC_UNSUPPORTED_CHECKSUM_TYPE, getLocalEntityId());
             } else if (this.checksumMismatchDetected) {
                 if (this.fileCompleted) {
                     this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
                 } else {
                     this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_DELIBERATLY;
                 }
-                setLastConditionCode(FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE, getLocalEntityId());
+                setLastConditionCode(ConditionCode.CC_FILE_CHECKSUM_FAILURE, getLocalEntityId());
             } else {
                 this.finalFileStatus = FinishedPdu.FileStatus.RETAINED_IN_FILESTORE;
-                setLastConditionCode(FileDirectivePdu.CC_NOERROR, null);
+                setLastConditionCode(ConditionCode.CC_NOERROR, null);
             }
         }
         // If 'cancelled', i.e. completed = false, then do not modify the last condition code
@@ -1234,7 +1233,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             }
             this.checksumMismatchDetected = true;
             // d) otherwise, a File Checksum Failure fault shall be declared.
-            fault(FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE, getLocalEntityId());
+            fault(ConditionCode.CC_FILE_CHECKSUM_FAILURE, getLocalEntityId());
             // If a fault that is not NO_ACTION is raised, then an exception is propagated and this method
             // is interrupted here. Otherwise, it will process with the storage of the file.
 
@@ -1305,7 +1304,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             }
             this.filestoreProblemDetected = true;
             // No fault raised here, but an indication of the condition code is provided
-            setLastConditionCode(FileDirectivePdu.CC_FILESTORE_REJECTION, getLocalEntityId());
+            setLastConditionCode(ConditionCode.CC_FILESTORE_REJECTION, getLocalEntityId());
         }
     }
 
@@ -1345,7 +1344,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             }
             this.filestoreProblemDetected = true;
             this.finalFileStatus = FinishedPdu.FileStatus.DISCARDED_BY_FILESTORE;
-            fault(FileDirectivePdu.CC_FILESTORE_REJECTION, getLocalEntityId());
+            fault(ConditionCode.CC_FILESTORE_REJECTION, getLocalEntityId());
         }
     }
 
@@ -1433,7 +1432,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: transaction inactivity detected", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
         }
         try {
-            fault(FileDirectivePdu.CC_INACTIVITY_DETECTED, getLocalEntityId());
+            fault(ConditionCode.CC_INACTIVITY_DETECTED, getLocalEntityId());
         } catch (FaultDeclaredException e) {
             // Nothing to be done here
         }

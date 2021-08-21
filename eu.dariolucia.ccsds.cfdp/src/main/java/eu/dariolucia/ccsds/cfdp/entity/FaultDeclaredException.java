@@ -18,6 +18,7 @@ package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.common.CfdpException;
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 
 /**
  * This exception is raised in case of a Fault, as defined by the CCSDS CFDP standard.
@@ -25,12 +26,12 @@ import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
 public class FaultDeclaredException extends CfdpException {
 
     private final FaultHandlerStrategy.Action action;
-    private final byte conditionCode;
+    private final ConditionCode conditionCode;
     private final long generatingEntityId;
     private final long transactionId;
 
-    public FaultDeclaredException(long transactionId, FaultHandlerStrategy.Action action, byte conditionCode, long generatingEntityId) {
-        super(String.format("Transaction %d: fault with code 0x%02X detected from entity %d, action %s", transactionId, conditionCode, generatingEntityId, action.toString()));
+    public FaultDeclaredException(long transactionId, FaultHandlerStrategy.Action action, ConditionCode conditionCode, long generatingEntityId) {
+        super(String.format("Transaction %d: fault with code 0x%02X detected from entity %d, action %s", transactionId, conditionCode.getCode(), generatingEntityId, action.toString()));
         this.action = action;
         this.conditionCode = conditionCode;
         this.generatingEntityId = generatingEntityId;
@@ -45,7 +46,7 @@ public class FaultDeclaredException extends CfdpException {
         return action;
     }
 
-    public byte getConditionCode() {
+    public ConditionCode getConditionCode() {
         return conditionCode;
     }
 

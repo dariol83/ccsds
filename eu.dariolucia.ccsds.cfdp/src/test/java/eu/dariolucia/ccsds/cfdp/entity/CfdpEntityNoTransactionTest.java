@@ -184,7 +184,7 @@ public class CfdpEntityNoTransactionTest {
         // EOF specific
         b.setFileChecksum(12345679);
         b.setFileSize(4321);
-        b.setConditionCode(FileDirectivePdu.CC_NOERROR, null);
+        b.setConditionCode(ConditionCode.CC_NOERROR, null);
 
         return b.build();
     }
@@ -203,7 +203,7 @@ public class CfdpEntityNoTransactionTest {
         b.setTransactionSequenceNumber(1234, 3);
         b.setLargeFile(false);
         // EOF specific
-        b.setConditionCode(FileDirectivePdu.CC_NOERROR, null);
+        b.setConditionCode(ConditionCode.CC_NOERROR, null);
         b.setDataComplete(true);
         b.setFileStatus(FinishedPdu.FileStatus.STATUS_UNREPORTED);
         return b.build();

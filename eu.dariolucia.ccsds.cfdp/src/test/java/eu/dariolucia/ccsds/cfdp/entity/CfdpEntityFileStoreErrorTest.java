@@ -16,15 +16,12 @@
 
 package eu.dariolucia.ccsds.cfdp.entity;
 
-import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionState;
-import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntity;
-import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntitySubscriber;
-import eu.dariolucia.ccsds.cfdp.entity.indication.*;
+import eu.dariolucia.ccsds.cfdp.entity.indication.AbandonedIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.EntityDisposedIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.TransactionDisposedIndication;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
-import eu.dariolucia.ccsds.cfdp.entity.segmenters.impl.FixedSizeSegmenter;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
-import eu.dariolucia.ccsds.cfdp.filestore.impl.FilesystemBasedFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 import eu.dariolucia.ccsds.cfdp.ut.impl.AbstractUtLayer;
@@ -35,18 +32,14 @@ import eu.dariolucia.ccsds.cfdp.util.UtLayerTxPduDecorator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.util.List;
-import java.util.function.Function;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CfdpEntityFileStoreErrorTest {
 
@@ -154,7 +147,7 @@ public class CfdpEntityFileStoreErrorTest {
         TcpLayer tcpLayer = new TcpLayer(conf1File, 23002);
         tcpLayer.activate();
         // Add UT Layer decorator
-        UtLayerTxPduDecorator decorator = new UtLayerTxPduDecorator(tcpLayer, new Function[0]);
+        UtLayerTxPduDecorator decorator = new UtLayerTxPduDecorator(tcpLayer);
         ICfdpEntity e2 = ICfdpEntity.create(conf1File, fs1, decorator);
         try {
             // Subscription to the entities
@@ -312,7 +305,7 @@ public class CfdpEntityFileStoreErrorTest {
         TcpLayer tcpLayer = new TcpLayer(conf1File, 23001);
         tcpLayer.activate();
         // Add UT Layer decorator
-        UtLayerTxPduDecorator decorator = new UtLayerTxPduDecorator(tcpLayer, new Function[0]);
+        UtLayerTxPduDecorator decorator = new UtLayerTxPduDecorator(tcpLayer);
         ICfdpEntity e1 = ICfdpEntity.create(conf1File, fs1, decorator);
         try {
             // Subscription to the entities
@@ -348,7 +341,7 @@ public class CfdpEntityFileStoreErrorTest {
             s1.print();
             assertEquals(4, s1.getIndicationListSize());
             AbandonedIndication ai = s1.assertPresentAt(1, AbandonedIndication.class);
-            assertEquals(FileDirectivePdu.CC_FILESTORE_REJECTION, ai.getConditionCode());
+            assertEquals(ConditionCode.CC_FILESTORE_REJECTION, ai.getConditionCode());
         } catch (Throwable e) {
             // Deactivate the UT layers
             ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();

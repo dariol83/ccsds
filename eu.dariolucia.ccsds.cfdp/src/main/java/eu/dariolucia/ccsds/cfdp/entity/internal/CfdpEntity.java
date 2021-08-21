@@ -269,7 +269,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         long transactionId = r.getTransactionId();
         // Get the transaction
         CfdpTransaction t = this.id2transaction.get(transactionId);
-        t.cancel(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED);
+        t.cancel(ConditionCode.CC_CANCEL_REQUEST_RECEIVED);
     }
 
     private void processSuspendRequest(ICfdpRequest request) {
@@ -389,7 +389,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         for(CfdpTransaction t : this.id2transaction.values()) {
             // Cancel running transactions and dispose them
             if(t.getCurrentState() == CfdpTransactionState.RUNNING || t.getCurrentState() == CfdpTransactionState.SUSPENDED) {
-                t.cancel(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED);
+                t.cancel(ConditionCode.CC_CANCEL_REQUEST_RECEIVED);
                 t.dispose();
             }
         }

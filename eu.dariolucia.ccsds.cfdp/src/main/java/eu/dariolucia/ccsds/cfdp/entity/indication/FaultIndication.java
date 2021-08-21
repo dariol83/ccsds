@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
 import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 
 /**
  * The Fault.indication primitive shall be used to indicate to the CFDP user the occurrence
@@ -37,7 +38,7 @@ public class FaultIndication implements ICfdpIndication {
 
     private final long transactionId;
 
-    private final byte conditionCode;
+    private final ConditionCode conditionCode;
 
     private final long progress;
 
@@ -51,7 +52,7 @@ public class FaultIndication implements ICfdpIndication {
      * @param progress The progress parameter shall report on current file transmission or reception progress
      * @param statusReport The status report provides additional information on some change in the transaction status
      */
-    public FaultIndication(long transactionId, byte conditionCode, long progress, CfdpTransactionStatus statusReport) {
+    public FaultIndication(long transactionId, ConditionCode conditionCode, long progress, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
         this.conditionCode = conditionCode;
         this.progress = progress;
@@ -78,7 +79,7 @@ public class FaultIndication implements ICfdpIndication {
      *
      * @return the condition code
      */
-    public byte getConditionCode() {
+    public ConditionCode getConditionCode() {
         return conditionCode;
     }
 

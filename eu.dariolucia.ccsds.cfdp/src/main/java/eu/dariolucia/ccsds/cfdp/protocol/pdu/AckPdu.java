@@ -67,7 +67,7 @@ public class AckPdu extends FileDirectivePdu {
     /**
      * Condition code of the acknowledged PDU.
      */
-    private final byte conditionCode;
+    private final ConditionCode conditionCode;
 
     /**
      * Status of the transaction in the context of the entity that is issuing the acknowledgment.
@@ -83,7 +83,7 @@ public class AckPdu extends FileDirectivePdu {
         // PDU-specific parsing
         this.directiveCode = (byte) ((pdu[getDirectiveParameterIndex()] & 0xF0) >>> 4);
         this.directiveSubtypeCode = (byte) (pdu[getDirectiveParameterIndex()] & 0x0F);
-        this.conditionCode = (byte) ((pdu[getDirectiveParameterIndex() + 1] & 0xF0) >>> 4);
+        this.conditionCode = ConditionCode.fromCode((byte) ((pdu[getDirectiveParameterIndex() + 1] & 0xF0) >>> 4));
         this.transactionStatus = TransactionStatus.values()[(pdu[getDirectiveParameterIndex() + 1] & 0x03)];
     }
 
@@ -95,7 +95,7 @@ public class AckPdu extends FileDirectivePdu {
         return directiveSubtypeCode;
     }
 
-    public byte getConditionCode() {
+    public ConditionCode getConditionCode() {
         return conditionCode;
     }
 

@@ -47,7 +47,7 @@ class EndOfFilePduTest {
         assertEquals(0x0000000000F11204L, pdu.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(0x0000000000009155L, pdu.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_NOERROR, pdu.getConditionCode());
+        assertEquals(ConditionCode.CC_NOERROR, pdu.getConditionCode());
         assertEquals(0xC5A134D2, pdu.getFileChecksum());
         assertEquals(0x0032112D, pdu.getFileSize());
         assertNull(pdu.getFaultLocation());
@@ -67,7 +67,7 @@ class EndOfFilePduTest {
         assertEquals(0x0000000000F11204L, pdu.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(0x0000000000009155L, pdu.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE, pdu.getConditionCode());
+        assertEquals(ConditionCode.CC_UNSUPPORTED_CHECKSUM_TYPE, pdu.getConditionCode());
         assertEquals(0xC5A134D2, pdu.getFileChecksum());
         assertEquals(0x0032112D, pdu.getFileSize());
         assertNotNull(pdu.getFaultLocation());
@@ -94,7 +94,7 @@ class EndOfFilePduTest {
         assertEquals(0x0000000000F11204L, decoded.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, decoded.getDestinationEntityId());
         assertEquals(0x0000000000009155L, decoded.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu)decoded).getConditionCode());
+        assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu)decoded).getConditionCode());
         assertEquals(0xC5A134D2, ((EndOfFilePdu)decoded).getFileChecksum());
         assertEquals(0x0032112D, ((EndOfFilePdu)decoded).getFileSize());
         assertNull(((EndOfFilePdu)decoded).getFaultLocation());
@@ -118,7 +118,7 @@ class EndOfFilePduTest {
         assertEquals(0x0000000000F11204L, decoded.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, decoded.getDestinationEntityId());
         assertEquals(0x0000000000009155L, decoded.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu)decoded).getConditionCode());
+        assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu)decoded).getConditionCode());
         assertEquals(0xC5A134D2, ((EndOfFilePdu)decoded).getFileChecksum());
         assertEquals(0x0032112D, ((EndOfFilePdu)decoded).getFileSize());
         assertNull(((EndOfFilePdu)decoded).getFaultLocation());

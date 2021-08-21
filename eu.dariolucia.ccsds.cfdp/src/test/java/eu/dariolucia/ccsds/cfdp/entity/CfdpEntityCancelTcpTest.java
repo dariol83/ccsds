@@ -19,8 +19,6 @@ package eu.dariolucia.ccsds.cfdp.entity;
 import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.entity.request.CancelRequest;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
-import eu.dariolucia.ccsds.cfdp.entity.request.ResumeRequest;
-import eu.dariolucia.ccsds.cfdp.entity.request.SuspendRequest;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 import eu.dariolucia.ccsds.cfdp.ut.impl.AbstractUtLayer;
 import eu.dariolucia.ccsds.cfdp.util.EntityIndicationSubscriber;
@@ -130,7 +128,7 @@ public class CfdpEntityCancelTcpTest {
             s1.print();
             s1.assertPresentAt(0, TransactionIndication.class);
             TransactionFinishedIndication traFin1 = s1.assertPresentAt(1, TransactionFinishedIndication.class);
-            assertEquals(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, traFin1.getConditionCode());
+            assertEquals(ConditionCode.CC_CANCEL_REQUEST_RECEIVED, traFin1.getConditionCode());
             assertEquals(CfdpTransactionState.CANCELLED, traFin1.getStatusReport().getCfdpTransactionState());
             s1.assertPresentAt(2, EofSentIndication.class);
             TransactionDisposedIndication dispInd = s1.assertPresentAt(3, TransactionDisposedIndication.class);
@@ -148,7 +146,7 @@ public class CfdpEntityCancelTcpTest {
             s2.assertPresentAt(3, FileSegmentRecvIndication.class);
             int pos = s2.assertPresentAfter(3, TransactionFinishedIndication.class);
             TransactionFinishedIndication traFin2 = s2.assertPresentAt(pos, TransactionFinishedIndication.class);
-            assertEquals(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, traFin2.getConditionCode());
+            assertEquals(ConditionCode.CC_CANCEL_REQUEST_RECEIVED, traFin2.getConditionCode());
             assertEquals(1L, traFin2.getStatusReport().getLastFaultEntity());
             assertEquals(CfdpTransactionState.CANCELLED, traFin1.getStatusReport().getCfdpTransactionState());
 
@@ -164,7 +162,7 @@ public class CfdpEntityCancelTcpTest {
                 assertEquals(FileDataPdu.class, txPdu1.get(3).getClass());
                 assertEquals(FileDataPdu.class, txPdu1.get(4).getClass());
                 assertEquals(EndOfFilePdu.class, txPdu1.get(5).getClass());
-                assertEquals(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, ((EndOfFilePdu) txPdu1.get(5)).getConditionCode());
+                assertEquals(ConditionCode.CC_CANCEL_REQUEST_RECEIVED, ((EndOfFilePdu) txPdu1.get(5)).getConditionCode());
             } else { // 5
                 assertEquals(5, txPdu1.size());
                 // First: metadata + 3 file data + EOF
@@ -173,7 +171,7 @@ public class CfdpEntityCancelTcpTest {
                 assertEquals(FileDataPdu.class, txPdu1.get(2).getClass());
                 assertEquals(FileDataPdu.class, txPdu1.get(3).getClass());
                 assertEquals(EndOfFilePdu.class, txPdu1.get(4).getClass());
-                assertEquals(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, ((EndOfFilePdu) txPdu1.get(4)).getConditionCode());
+                assertEquals(ConditionCode.CC_CANCEL_REQUEST_RECEIVED, ((EndOfFilePdu) txPdu1.get(4)).getConditionCode());
             }
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");

@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.entity.request;
 
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreRequestTLV;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.MessageToUserTLV;
 
@@ -56,7 +57,7 @@ public class PutRequest implements ICfdpRequest {
 
     private final boolean segmentationControl;
 
-    private final Map<Integer, FaultHandlerStrategy.Action> faultHandlerOverrideMap = new HashMap<>();
+    private final Map<ConditionCode, FaultHandlerStrategy.Action> faultHandlerOverrideMap = new HashMap<>();
 
     private final byte[] flowLabel;
 
@@ -82,7 +83,7 @@ public class PutRequest implements ICfdpRequest {
      * @param faultHandlerOverrideMap A map to override the fault handlers per fault condition specified in the MIB, can be null
      * @param fileStoreRequestList A list of file store requests, acted upon by the destination entity when all data transfer activities of the transaction are completed, can be null
      */
-    public PutRequest(long destinationCfdpEntityId, String sourceFileName, String destinationFileName, boolean segmentationControl, byte[] flowLabel, Boolean acknowledgedTransmissionMode, Boolean closureRequested, List<MessageToUserTLV> messageToUserList, Map<Integer, FaultHandlerStrategy.Action> faultHandlerOverrideMap, List<FilestoreRequestTLV> fileStoreRequestList) { // NOSONAR due to protocol, builder pattern not design for this type of objects
+    public PutRequest(long destinationCfdpEntityId, String sourceFileName, String destinationFileName, boolean segmentationControl, byte[] flowLabel, Boolean acknowledgedTransmissionMode, Boolean closureRequested, List<MessageToUserTLV> messageToUserList, Map<ConditionCode, FaultHandlerStrategy.Action> faultHandlerOverrideMap, List<FilestoreRequestTLV> fileStoreRequestList) { // NOSONAR due to protocol, builder pattern not design for this type of objects
         this.destinationCfdpEntityId = destinationCfdpEntityId;
         this.sourceFileName = sourceFileName;
         this.destinationFileName = destinationFileName;
@@ -157,7 +158,7 @@ public class PutRequest implements ICfdpRequest {
      *
      * @return the override map (can be empty, never null)
      */
-    public Map<Integer, FaultHandlerStrategy.Action> getFaultHandlerOverrideMap() {
+    public Map<ConditionCode, FaultHandlerStrategy.Action> getFaultHandlerOverrideMap() {
         return Collections.unmodifiableMap(faultHandlerOverrideMap);
     }
 

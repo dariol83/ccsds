@@ -195,7 +195,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(12).getClass());
             assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
 
@@ -319,7 +319,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(FileDataPdu.class, txPdu1.get(12).getClass());
             assertEquals(AckPdu.class, txPdu1.get(13).getClass());
             assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
@@ -631,9 +631,9 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(EndOfFilePdu.class, txPdu1.get(12).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(12)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(12)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(13).getClass());
             assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
 
@@ -800,7 +800,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(12).getClass());
             assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
 
@@ -932,7 +932,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(FileDataPdu.class, txPdu1.get(12).getClass());
             assertEquals(AckPdu.class, txPdu1.get(13).getClass());
             assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
@@ -987,8 +987,8 @@ public class CfdpEntityErrorTcpTest {
             PutRequest fduTxReq = PutRequest.build(2, path, destPath, false, null);
             e1.request(fduTxReq);
             // Wait for the transaction to be disposed on the two entities
-            TransactionFinishedIndication ai = (TransactionFinishedIndication) s2.waitForIndication(TransactionFinishedIndication.class, 20000);
-            assertEquals(FileDirectivePdu.CC_INACTIVITY_DETECTED, ai.getConditionCode());
+            TransactionFinishedIndication ai = s2.waitForIndication(TransactionFinishedIndication.class, 20000);
+            assertEquals(ConditionCode.CC_INACTIVITY_DETECTED, ai.getConditionCode());
             // Wait for the disposition of s1
             s1.waitForIndication(TransactionDisposedIndication.class, 30000);
 
@@ -1008,7 +1008,7 @@ public class CfdpEntityErrorTcpTest {
             s1.assertPresentAt(0, TransactionIndication.class); // OK
             s1.assertPresentAt(1, EofSentIndication.class); // OK
             TransactionFinishedIndication tfi = s1.assertPresentAt(2, TransactionFinishedIndication.class); // Failure in receiving the ACK, because the other side does not receive anything
-            assertEquals(FileDirectivePdu.CC_POS_ACK_LIMIT_REACHED, tfi.getConditionCode());
+            assertEquals(ConditionCode.CC_POS_ACK_LIMIT_REACHED, tfi.getConditionCode());
             s1.assertPresentAt(3, EofSentIndication.class); // EOF(Cancel) sent: perfectly acceptable by the standard, see 4.11.1, point 2
             s1.assertPresentAt(4, AbandonedIndication.class); // Fail on ACK -> Abandon, as we are already cancelling
             TransactionDisposedIndication dispInd = s1.assertPresentAt(5, TransactionDisposedIndication.class);
@@ -1018,9 +1018,9 @@ public class CfdpEntityErrorTcpTest {
             s2.print();
             s2.assertPresentAt(0, MetadataRecvIndication.class);
             TransactionFinishedIndication trFi2 = s2.assertPresentAt(1, TransactionFinishedIndication.class);
-            assertEquals(FileDirectivePdu.CC_INACTIVITY_DETECTED, trFi2.getConditionCode()); // No other PDUs received besides metadata, inactivity triggers before Pos. ACK for Finished
+            assertEquals(ConditionCode.CC_INACTIVITY_DETECTED, trFi2.getConditionCode()); // No other PDUs received besides metadata, inactivity triggers before Pos. ACK for Finished
             AbandonedIndication abbI = s2.assertPresentAt(2, AbandonedIndication.class); // Timeout during cancelling, i.e. sending another Finished PDU
-            assertEquals(FileDirectivePdu.CC_POS_ACK_LIMIT_REACHED, abbI.getConditionCode());
+            assertEquals(ConditionCode.CC_POS_ACK_LIMIT_REACHED, abbI.getConditionCode());
             s2.assertPresentAt(3, TransactionDisposedIndication.class);
             s2.assertPresentAt(4, EntityDisposedIndication.class);
 
@@ -1402,7 +1402,7 @@ public class CfdpEntityErrorTcpTest {
             s2.assertPresentAt(9, FileSegmentRecvIndication.class);
             s2.assertPresentAt(10, EofRecvIndication.class);
             TransactionFinishedIndication finInd = s2.assertPresentAt(11, TransactionFinishedIndication.class);
-            assertEquals(FileDirectivePdu.CC_CHECK_LIMIT_REACHED, finInd.getConditionCode());
+            assertEquals(ConditionCode.CC_CHECK_LIMIT_REACHED, finInd.getConditionCode());
             s2.assertPresentAt(12, TransactionDisposedIndication.class);
             s2.assertPresentAt(13, EntityDisposedIndication.class);
 
@@ -1423,7 +1423,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
@@ -1497,7 +1497,7 @@ public class CfdpEntityErrorTcpTest {
             s1.assertPresentAt(0, TransactionIndication.class);
             s1.assertPresentAt(1, EofSentIndication.class);
             TransactionFinishedIndication fraFinInd = s1.assertPresentAt(2, TransactionFinishedIndication.class);
-            assertEquals(FileDirectivePdu.CC_CHECK_LIMIT_REACHED, fraFinInd.getConditionCode());
+            assertEquals(ConditionCode.CC_CHECK_LIMIT_REACHED, fraFinInd.getConditionCode());
             assertEquals(2L, fraFinInd.getStatusReport().getLastFaultEntity());
             assertEquals(CfdpTransactionState.RUNNING, fraFinInd.getStatusReport().getCfdpTransactionState());
             TransactionDisposedIndication dispInd = s1.assertPresentAt(3, TransactionDisposedIndication.class);
@@ -1521,7 +1521,7 @@ public class CfdpEntityErrorTcpTest {
             s2.assertPresentAt(9, FileSegmentRecvIndication.class);
             s2.assertPresentAt(10, EofRecvIndication.class);
             TransactionFinishedIndication finInd = s2.assertPresentAt(11, TransactionFinishedIndication.class);
-            assertEquals(FileDirectivePdu.CC_CHECK_LIMIT_REACHED, finInd.getConditionCode());
+            assertEquals(ConditionCode.CC_CHECK_LIMIT_REACHED, finInd.getConditionCode());
             s2.assertPresentAt(12, TransactionDisposedIndication.class);
             s2.assertPresentAt(13, EntityDisposedIndication.class);
 
@@ -1542,14 +1542,14 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
             List<CfdpPdu> txPdu2 = l2.getTxPdus();
             assertEquals(1, txPdu2.size());
             assertEquals(FinishedPdu.class, txPdu2.get(0).getClass());
-            assertEquals(FileDirectivePdu.CC_CHECK_LIMIT_REACHED, ((FinishedPdu) txPdu2.get(0)).getConditionCode());
+            assertEquals(ConditionCode.CC_CHECK_LIMIT_REACHED, ((FinishedPdu) txPdu2.get(0)).getConditionCode());
 
         } catch (Throwable e) {
             // Deactivate the UT layers
@@ -1589,7 +1589,7 @@ public class CfdpEntityErrorTcpTest {
             // Create request and start transaction
             PutRequest fduTxReq = new PutRequest(2, path, destPath, false, null,
                     true, false,
-                    null, Map.of((int) FileDirectivePdu.CC_INACTIVITY_DETECTED, FaultHandlerStrategy.Action.NOTICE_OF_SUSPENSION), null);
+                    null, Map.of(ConditionCode.CC_INACTIVITY_DETECTED, FaultHandlerStrategy.Action.NOTICE_OF_SUSPENSION), null);
             e1.request(fduTxReq);
             // Wait for the transaction to be suspended on the two entities
             s2.waitForIndication(SuspendedIndication.class, 10000);
@@ -1628,7 +1628,7 @@ public class CfdpEntityErrorTcpTest {
             s2.assertPresentAt(9, FileSegmentRecvIndication.class);
             s2.assertPresentAt(10, EofRecvIndication.class);
             SuspendedIndication finInd = s2.assertPresentAt(11, SuspendedIndication.class);
-            assertEquals(FileDirectivePdu.CC_SUSPEND_REQUEST_RECEIVED, finInd.getConditionCode());
+            assertEquals(ConditionCode.CC_SUSPEND_REQUEST_RECEIVED, finInd.getConditionCode());
             s2.assertPresentAt(12, EntityDisposedIndication.class);
         } catch (Throwable e) {
             // Deactivate the UT layers
@@ -1690,7 +1690,7 @@ public class CfdpEntityErrorTcpTest {
             s1.assertPresentAt(0, TransactionIndication.class);
             s1.assertPresentAt(1, EofSentIndication.class);
             TransactionFinishedIndication transactionFinishedIndication = s1.assertPresentAt(2, TransactionFinishedIndication.class);
-            assertEquals(FileDirectivePdu.CC_INACTIVITY_DETECTED, transactionFinishedIndication.getConditionCode());
+            assertEquals(ConditionCode.CC_INACTIVITY_DETECTED, transactionFinishedIndication.getConditionCode());
         } catch (Throwable e) {
             // Deactivate the UT layers
             ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
@@ -1753,7 +1753,7 @@ public class CfdpEntityErrorTcpTest {
             s1.assertPresentAt(0, TransactionIndication.class);
             s1.assertPresentAt(1, EofSentIndication.class);
             TransactionFinishedIndication fraFinInd = s1.assertPresentAt(2, TransactionFinishedIndication.class);
-            assertEquals(FileDirectivePdu.CC_CHECK_LIMIT_REACHED, fraFinInd.getConditionCode());
+            assertEquals(ConditionCode.CC_CHECK_LIMIT_REACHED, fraFinInd.getConditionCode());
             assertEquals(1L, fraFinInd.getStatusReport().getLastFaultEntity());
             assertEquals(CfdpTransactionState.CANCELLED, fraFinInd.getStatusReport().getCfdpTransactionState());
             s1.assertPresentAt(3, EofSentIndication.class); // Again, to inform the cancellation, correct according to 4.11.2.2.1
@@ -1776,7 +1776,7 @@ public class CfdpEntityErrorTcpTest {
         // Create the two entities
         ICfdpEntity e1 = TestUtils.createTcpEntityEnhanced("configuration_entity_1.xml", 23001, new UtLayerTxPduSwapperDecorator.TriConsumer() {
 
-            private Set<Class<? extends CfdpPdu>> rejectedTypes = new HashSet<>();
+            private final Set<Class<? extends CfdpPdu>> rejectedTypes = new HashSet<>();
 
             @Override
             public void accept(CfdpPdu pdu, IUtLayer delegate, long destinationEntityId) throws UtLayerException {
@@ -1791,7 +1791,7 @@ public class CfdpEntityErrorTcpTest {
         });
         ICfdpEntity e2 = TestUtils.createTcpEntityEnhanced("configuration_entity_2.xml", 23002, new UtLayerTxPduSwapperDecorator.TriConsumer() {
 
-            private Set<Class<? extends CfdpPdu>> rejectedTypes = new HashSet<>();
+            private final Set<Class<? extends CfdpPdu>> rejectedTypes = new HashSet<>();
 
             @Override
             public void accept(CfdpPdu pdu, IUtLayer delegate, long destinationEntityId) throws UtLayerException {

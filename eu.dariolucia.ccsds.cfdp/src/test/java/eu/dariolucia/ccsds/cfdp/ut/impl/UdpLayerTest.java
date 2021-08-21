@@ -20,8 +20,8 @@ import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
 import eu.dariolucia.ccsds.cfdp.protocol.builder.EndOfFilePduBuilder;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.EndOfFilePdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
 import eu.dariolucia.ccsds.cfdp.ut.IUtLayerSubscriber;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
@@ -33,7 +33,6 @@ import java.io.InputStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.logging.Level;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -188,7 +187,7 @@ class UdpLayerTest {
         // EOF specific
         b.setFileChecksum(12345679);
         b.setFileSize(4321);
-        b.setConditionCode(FileDirectivePdu.CC_NOERROR, null);
+        b.setConditionCode(ConditionCode.CC_NOERROR, null);
 
         return b.build();
     }

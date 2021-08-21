@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.cfdp.mib;
 
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
@@ -31,7 +33,7 @@ public class FaultHandlerStrategy {
     }
 
     @XmlAttribute(name = "condition")
-    private int condition;
+    private ConditionCode condition;
 
     @XmlAttribute(name = "strategy")
     private Action strategy;
@@ -39,16 +41,16 @@ public class FaultHandlerStrategy {
     public FaultHandlerStrategy() {
     }
 
-    public FaultHandlerStrategy(int condition, Action strategy) {
+    public FaultHandlerStrategy(ConditionCode condition, Action strategy) {
         this.condition = condition;
         this.strategy = strategy;
     }
 
-    public int getCondition() {
+    public ConditionCode getCondition() {
         return condition;
     }
 
-    public FaultHandlerStrategy setCondition(int condition) {
+    public FaultHandlerStrategy setCondition(ConditionCode condition) {
         this.condition = condition;
         return this;
     }

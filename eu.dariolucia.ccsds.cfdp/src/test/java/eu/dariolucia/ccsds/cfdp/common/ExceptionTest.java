@@ -19,7 +19,7 @@ package eu.dariolucia.ccsds.cfdp.common;
 import eu.dariolucia.ccsds.cfdp.entity.FaultDeclaredException;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 import org.junit.jupiter.api.Test;
 
@@ -61,12 +61,12 @@ public class ExceptionTest {
         });
 
         try {
-            FaultDeclaredException exception = new FaultDeclaredException(123, FaultHandlerStrategy.Action.NO_ACTION, FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, 3);
+            FaultDeclaredException exception = new FaultDeclaredException(123, FaultHandlerStrategy.Action.NO_ACTION, ConditionCode.CC_CANCEL_REQUEST_RECEIVED, 3);
             throw exception;
         } catch (FaultDeclaredException e) {
             assertEquals(123, e.getTransactionId());
             assertEquals(FaultHandlerStrategy.Action.NO_ACTION, e.getAction());
-            assertEquals(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, e.getConditionCode());
+            assertEquals(ConditionCode.CC_CANCEL_REQUEST_RECEIVED, e.getConditionCode());
             assertEquals(3, e.getGeneratingEntityId());
         }
 

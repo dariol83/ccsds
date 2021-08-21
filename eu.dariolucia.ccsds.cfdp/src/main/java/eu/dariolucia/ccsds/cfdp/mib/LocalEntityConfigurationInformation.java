@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.cfdp.mib;
 
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
+
 import javax.xml.bind.annotation.*;
 import java.util.LinkedList;
 import java.util.List;
@@ -122,7 +124,7 @@ public class LocalEntityConfigurationInformation {
         return this;
     }
 
-    public Map<Integer, FaultHandlerStrategy.Action> getFaultHandlerMap() {
+    public Map<ConditionCode, FaultHandlerStrategy.Action> getFaultHandlerMap() {
         return this.faultHandlerStrategyList.stream().collect(Collectors.toMap(FaultHandlerStrategy::getCondition, FaultHandlerStrategy::getStrategy));
     }
 

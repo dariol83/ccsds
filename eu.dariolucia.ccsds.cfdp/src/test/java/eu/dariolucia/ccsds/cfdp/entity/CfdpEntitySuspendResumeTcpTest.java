@@ -21,13 +21,10 @@ import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
 import eu.dariolucia.ccsds.cfdp.entity.request.ResumeRequest;
 import eu.dariolucia.ccsds.cfdp.entity.request.SuspendRequest;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
-import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
-import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 import eu.dariolucia.ccsds.cfdp.ut.impl.AbstractUtLayer;
 import eu.dariolucia.ccsds.cfdp.util.EntityIndicationSubscriber;
 import eu.dariolucia.ccsds.cfdp.util.TestUtils;
 import eu.dariolucia.ccsds.cfdp.util.UtLayerTxPduDecorator;
-import eu.dariolucia.ccsds.cfdp.util.UtLayerTxPduSwapperDecorator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,7 +36,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class CfdpEntitySuspendResumeTcpTest {
 
@@ -215,7 +211,7 @@ public class CfdpEntitySuspendResumeTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(12).getClass());
             assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
 
@@ -379,7 +375,7 @@ public class CfdpEntitySuspendResumeTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(11).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(12).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(12)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(12)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(13).getClass());
             assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
 

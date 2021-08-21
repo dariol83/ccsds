@@ -143,7 +143,7 @@ public class CfdpEntityNominalTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(12).getClass());
             assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
 
@@ -257,7 +257,7 @@ public class CfdpEntityNominalTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
@@ -326,7 +326,7 @@ public class CfdpEntityNominalTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
@@ -497,7 +497,7 @@ public class CfdpEntityNominalTcpTest {
             public ICfdpFileSegmenter newSegmenter(Mib mib, IVirtualFilestore filestore, String fullPath, long destinationEntityId) throws FilestoreException {
                 return new ICfdpFileSegmenter() {
 
-                    private FixedSizeSegmenter inner = new FixedSizeSegmenter(filestore, fullPath,  200);
+                    private final FixedSizeSegmenter inner = new FixedSizeSegmenter(filestore, fullPath,  200);
 
                     @Override
                     public FileSegment nextSegment() throws FilestoreException {
@@ -718,7 +718,7 @@ public class CfdpEntityNominalTcpTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(12).getClass());
             assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
 

@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs;
 
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 
 import java.nio.ByteBuffer;
 
@@ -52,13 +53,13 @@ public class FaultHandlerOverrideTLV implements TLV {
         }
     }
 
-    private final byte conditionCode;
+    private final ConditionCode conditionCode;
 
     private final HandlerCode handlerCode;
 
     private final int encodedLength;
 
-    public FaultHandlerOverrideTLV(byte conditionCode, HandlerCode handlerCode) {
+    public FaultHandlerOverrideTLV(ConditionCode conditionCode, HandlerCode handlerCode) {
         this.conditionCode = conditionCode;
         this.handlerCode = handlerCode;
         this.encodedLength = 1;
@@ -66,13 +67,13 @@ public class FaultHandlerOverrideTLV implements TLV {
 
     public FaultHandlerOverrideTLV(byte[] data, int offset) {
         // Starting from offset, assume that there is an encoded Fault Handler Override TLV Contents: Table 5-19
-        this.conditionCode = (byte) ((data[offset] & 0xF0) >>> 4);
+        this.conditionCode = ConditionCode.fromCode((byte) ((data[offset] & 0xF0) >>> 4));
         this.handlerCode = HandlerCode.values()[data[offset] & 0x0F];
         // Encoded length
         this.encodedLength = 1;
     }
 
-    public byte getConditionCode() {
+    public ConditionCode getConditionCode() {
         return conditionCode;
     }
 
@@ -96,7 +97,7 @@ public class FaultHandlerOverrideTLV implements TLV {
         bb = ByteBuffer.allocate(2 + this.encodedLength);
         bb.put((byte) TLV_TYPE);
         bb.put((byte) (this.encodedLength & 0xFF));
-        byte tmp = getConditionCode();
+        byte tmp = getConditionCode().getCode();
         tmp <<= 4;
         tmp |= (byte) getHandlerCode().ordinal();
         bb.put(tmp);

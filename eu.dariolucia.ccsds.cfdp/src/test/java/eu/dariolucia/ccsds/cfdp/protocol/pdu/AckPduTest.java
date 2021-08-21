@@ -46,7 +46,7 @@ class AckPduTest {
         assertEquals(0x0000000000F11204L, pdu.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(0x0000000000009155L, pdu.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_POS_ACK_LIMIT_REACHED, pdu.getConditionCode());
+        assertEquals(ConditionCode.CC_POS_ACK_LIMIT_REACHED, pdu.getConditionCode());
         assertEquals(2, pdu.getDirectiveCode());
         assertEquals(3, pdu.getDirectiveSubtypeCode());
         assertEquals(AckPdu.TransactionStatus.TERMINATED, pdu.getTransactionStatus());
@@ -72,7 +72,7 @@ class AckPduTest {
         assertEquals(0x0000000000F11204L, pdu.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(0x0000000000009155L, pdu.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_POS_ACK_LIMIT_REACHED, ((AckPdu) pdu).getConditionCode());
+        assertEquals(ConditionCode.CC_POS_ACK_LIMIT_REACHED, ((AckPdu) pdu).getConditionCode());
         assertEquals(2, ((AckPdu) pdu).getDirectiveCode());
         assertEquals(3, ((AckPdu) pdu).getDirectiveSubtypeCode());
         assertEquals(AckPdu.TransactionStatus.TERMINATED, ((AckPdu) pdu).getTransactionStatus());
@@ -96,7 +96,7 @@ class AckPduTest {
         assertEquals(0x0000000000F11204L, pdu.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(0x0000000000009155L, pdu.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_POS_ACK_LIMIT_REACHED, ((AckPdu) pdu).getConditionCode());
+        assertEquals(ConditionCode.CC_POS_ACK_LIMIT_REACHED, ((AckPdu) pdu).getConditionCode());
         assertEquals(2, ((AckPdu) pdu).getDirectiveCode());
         assertEquals(3, ((AckPdu) pdu).getDirectiveSubtypeCode());
         assertEquals(AckPdu.TransactionStatus.TERMINATED, ((AckPdu) pdu).getTransactionStatus());

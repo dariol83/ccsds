@@ -17,7 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.FinishedPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.EntityIdTLV;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class FinishedPduBuilderTest {
                 .setDestinationEntityId(0x00A2A1A3)
                 .setSourceEntityId(0x00F11204)
                 .setTransactionSequenceNumber(123456, 3)
-                .setConditionCode(FileDirectivePdu.CC_FILESTORE_REJECTION, new EntityIdTLV(2L, 4))
+                .setConditionCode(ConditionCode.CC_FILESTORE_REJECTION, new EntityIdTLV(2L, 4))
                 .setDataComplete(true)
                 .setFileStatus(FinishedPdu.FileStatus.DISCARDED_BY_FILESTORE);
 
@@ -58,7 +58,7 @@ class FinishedPduBuilderTest {
         assertEquals(0x0000000000F11204L, pdu.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(123456L, pdu.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_FILESTORE_REJECTION, pdu.getConditionCode());
+        assertEquals(ConditionCode.CC_FILESTORE_REJECTION, pdu.getConditionCode());
         assertEquals(FinishedPdu.FileStatus.DISCARDED_BY_FILESTORE, pdu.getFileStatus());
 
         // Builder check
@@ -73,7 +73,7 @@ class FinishedPduBuilderTest {
         assertEquals(0x0000000000F11204L, builder.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, builder.getDestinationEntityId());
         assertEquals(123456L, builder.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_FILESTORE_REJECTION, builder.getConditionCode());
+        assertEquals(ConditionCode.CC_FILESTORE_REJECTION, builder.getConditionCode());
         assertEquals(2L, builder.getFaultLocation().getEntityId());
         assertTrue(builder.isDataComplete());
         assertNotNull(builder.getFilestoreResponses());

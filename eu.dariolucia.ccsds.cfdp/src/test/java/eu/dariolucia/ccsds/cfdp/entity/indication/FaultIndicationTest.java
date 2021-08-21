@@ -16,7 +16,7 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,9 +25,9 @@ class FaultIndicationTest {
 
     @Test
     public void testFaultIndicationConstruction() {
-        FaultIndication f = new FaultIndication(3, FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, 2321, null);
+        FaultIndication f = new FaultIndication(3, ConditionCode.CC_CANCEL_REQUEST_RECEIVED, 2321, null);
         assertEquals(3, f.getTransactionId());
-        assertEquals(FileDirectivePdu.CC_CANCEL_REQUEST_RECEIVED, f.getConditionCode());
+        assertEquals(ConditionCode.CC_CANCEL_REQUEST_RECEIVED, f.getConditionCode());
         assertEquals(2321, f.getProgress());
         assertNull(f.getStatusReport());
         assertNotNull(f.toString());

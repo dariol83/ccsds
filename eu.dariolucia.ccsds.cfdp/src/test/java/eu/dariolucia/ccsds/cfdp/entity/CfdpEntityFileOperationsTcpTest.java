@@ -19,7 +19,7 @@ package eu.dariolucia.ccsds.cfdp.entity;
 import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
 import eu.dariolucia.ccsds.cfdp.mib.FaultHandlerStrategy;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.ActionCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreRequestTLV;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreResponseTLV;
@@ -75,7 +75,7 @@ public class CfdpEntityFileOperationsTcpTest {
             PutRequest fduTxReq = new PutRequest(2, path, destPath, false, new byte[]{1,2,3},
                     true, false,
                     Arrays.asList(new MessageToUserTLV("CFDP test".getBytes(StandardCharsets.US_ASCII))),
-                    Map.of((int) FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE, FaultHandlerStrategy.Action.NO_ACTION),
+                    Map.of(ConditionCode.CC_FILE_CHECKSUM_FAILURE, FaultHandlerStrategy.Action.NO_ACTION),
                     Arrays.asList(
                             new FilestoreRequestTLV(ActionCode.CREATE_DIRECTORY, "moved", null),
                             new FilestoreRequestTLV(ActionCode.CREATE_DIRECTORY, "moved2", null),
@@ -170,7 +170,7 @@ public class CfdpEntityFileOperationsTcpTest {
             PutRequest fduTxReq = new PutRequest(2, path, destPath, false, new byte[]{1,2,3},
                     true, false,
                     Arrays.asList(new MessageToUserTLV("CFDP test".getBytes(StandardCharsets.US_ASCII))),
-                    Map.of((int) FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE, FaultHandlerStrategy.Action.NO_ACTION),
+                    Map.of(ConditionCode.CC_FILE_CHECKSUM_FAILURE, FaultHandlerStrategy.Action.NO_ACTION),
                     Arrays.asList(
                         new FilestoreRequestTLV(ActionCode.CREATE_DIRECTORY, "moved", null),
                         new FilestoreRequestTLV(ActionCode.CREATE_DIRECTORY, "moved2", null),
@@ -256,7 +256,7 @@ public class CfdpEntityFileOperationsTcpTest {
             PutRequest fduTxReq = new PutRequest(2, null, null, false, new byte[]{1,2,3},
                     true, false,
                     Arrays.asList(new MessageToUserTLV("CFDP test".getBytes(StandardCharsets.US_ASCII))),
-                    Map.of((int) FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE, FaultHandlerStrategy.Action.NO_ACTION),
+                    Map.of(ConditionCode.CC_FILE_CHECKSUM_FAILURE, FaultHandlerStrategy.Action.NO_ACTION),
                     Arrays.asList(
                             new FilestoreRequestTLV(ActionCode.REMOVE_DIRECTORY, "test", null)
                     ));
@@ -328,7 +328,7 @@ public class CfdpEntityFileOperationsTcpTest {
             PutRequest fduTxReq = new PutRequest(2, null, null, false, new byte[]{1,2,3},
                     false, true,
                     Arrays.asList(new MessageToUserTLV("CFDP test".getBytes(StandardCharsets.US_ASCII))),
-                    Map.of((int) FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE, FaultHandlerStrategy.Action.NO_ACTION),
+                    Map.of(ConditionCode.CC_FILE_CHECKSUM_FAILURE, FaultHandlerStrategy.Action.NO_ACTION),
                     Arrays.asList(
                             new FilestoreRequestTLV(ActionCode.REMOVE_DIRECTORY, "test", null)
                     ));
@@ -401,7 +401,7 @@ public class CfdpEntityFileOperationsTcpTest {
             PutRequest fduTxReq = new PutRequest(2, null, null, false, new byte[]{1,2,3},
                     false, false,
                     Arrays.asList(new MessageToUserTLV("CFDP test".getBytes(StandardCharsets.US_ASCII))),
-                    Map.of((int) FileDirectivePdu.CC_FILE_CHECKSUM_FAILURE, FaultHandlerStrategy.Action.NO_ACTION),
+                    Map.of(ConditionCode.CC_FILE_CHECKSUM_FAILURE, FaultHandlerStrategy.Action.NO_ACTION),
                     Arrays.asList(
                             new FilestoreRequestTLV(ActionCode.REMOVE_DIRECTORY, "test", null)
                     ));

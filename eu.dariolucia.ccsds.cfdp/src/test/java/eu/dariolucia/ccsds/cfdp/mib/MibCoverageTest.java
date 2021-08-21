@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.cfdp.mib;
 
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -46,9 +47,9 @@ class MibCoverageTest {
         m.getLocalEntity().setSuspendedIndicationRequired(true);
         m.getLocalEntity().setTransactionFinishedIndicationRequired(true);
         m.getLocalEntity().setFaultHandlerStrategyList(new LinkedList<>());
-        m.getLocalEntity().getFaultHandlerStrategyList().add(new FaultHandlerStrategy(3, FaultHandlerStrategy.Action.NO_ACTION));
+        m.getLocalEntity().getFaultHandlerStrategyList().add(new FaultHandlerStrategy(ConditionCode.fromCode((byte)3), FaultHandlerStrategy.Action.NO_ACTION));
         FaultHandlerStrategy fhs2 = new FaultHandlerStrategy();
-        fhs2.setCondition(3);
+        fhs2.setCondition(ConditionCode.fromCode((byte)3));
         fhs2.setStrategy(FaultHandlerStrategy.Action.NO_ACTION);
         m.getLocalEntity().getFaultHandlerStrategyList().add(fhs2);
         m.getLocalEntity().setEofRecvIndicationRequired(true);

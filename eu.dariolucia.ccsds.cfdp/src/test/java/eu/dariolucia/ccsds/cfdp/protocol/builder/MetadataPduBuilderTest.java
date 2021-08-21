@@ -17,7 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.MetadataPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.*;
 import org.junit.jupiter.api.Test;
@@ -49,7 +49,7 @@ class MetadataPduBuilderTest {
                 .addOption(new FlowLabelTLV(new byte[] { 1, 2, 3, 4}))
                 .addOption(new FilestoreRequestTLV(ActionCode.RENAME, "d1.txt", "d2.txt"))
                 .addOption(new MessageToUserTLV("testMessage".getBytes(StandardCharsets.ISO_8859_1)))
-                .addOption(new FaultHandlerOverrideTLV(FileDirectivePdu.CC_INACTIVITY_DETECTED, FaultHandlerOverrideTLV.HandlerCode.IGNORE_ERROR));
+                .addOption(new FaultHandlerOverrideTLV(ConditionCode.CC_INACTIVITY_DETECTED, FaultHandlerOverrideTLV.HandlerCode.IGNORE_ERROR));
 
         MetadataPdu pdu = builder.build();
 
@@ -85,7 +85,7 @@ class MetadataPduBuilderTest {
         assertEquals(MessageToUserTLV.class, pdu.getOptions().get(2).getClass());
         assertEquals("testMessage", new String(((MessageToUserTLV) pdu.getOptions().get(2)).getData(), StandardCharsets.ISO_8859_1));
         assertEquals(FaultHandlerOverrideTLV.class, pdu.getOptions().get(3).getClass());
-        assertEquals(FileDirectivePdu.CC_INACTIVITY_DETECTED, ((FaultHandlerOverrideTLV) pdu.getOptions().get(3)).getConditionCode());
+        assertEquals(ConditionCode.CC_INACTIVITY_DETECTED, ((FaultHandlerOverrideTLV) pdu.getOptions().get(3)).getConditionCode());
         assertEquals(FaultHandlerOverrideTLV.HandlerCode.IGNORE_ERROR, ((FaultHandlerOverrideTLV) pdu.getOptions().get(3)).getHandlerCode());
 
         // Builder check
@@ -119,7 +119,7 @@ class MetadataPduBuilderTest {
         assertEquals(MessageToUserTLV.class, builder.getOptions().get(2).getClass());
         assertEquals("testMessage", new String(((MessageToUserTLV) builder.getOptions().get(2)).getData(), StandardCharsets.ISO_8859_1));
         assertEquals(FaultHandlerOverrideTLV.class, builder.getOptions().get(3).getClass());
-        assertEquals(FileDirectivePdu.CC_INACTIVITY_DETECTED, ((FaultHandlerOverrideTLV) builder.getOptions().get(3)).getConditionCode());
+        assertEquals(ConditionCode.CC_INACTIVITY_DETECTED, ((FaultHandlerOverrideTLV) builder.getOptions().get(3)).getConditionCode());
         assertEquals(FaultHandlerOverrideTLV.HandlerCode.IGNORE_ERROR, ((FaultHandlerOverrideTLV) builder.getOptions().get(3)).getHandlerCode());
 
         assertThrows(IllegalArgumentException.class, () -> builder.addOption(new EntityIdTLV(32L,3)));

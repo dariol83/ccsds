@@ -18,10 +18,8 @@ package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.AckPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -40,7 +38,7 @@ class AckPduBuilderTest {
                 .setDestinationEntityId(0x00A2A1A3)
                 .setSourceEntityId(0x00F11204)
                 .setTransactionSequenceNumber(123456, 3)
-                .setConditionCode(FileDirectivePdu.CC_NOERROR)
+                .setConditionCode(ConditionCode.CC_NOERROR)
                 .setDirectiveCode((byte) 0x01)
                 .setDirectiveSubtypeCode((byte) 0x02)
                 .setTransactionStatus(AckPdu.TransactionStatus.ACTIVE);
@@ -60,7 +58,7 @@ class AckPduBuilderTest {
         assertEquals(0x0000000000F11204L, pdu.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(123456L, pdu.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_NOERROR, pdu.getConditionCode());
+        assertEquals(ConditionCode.CC_NOERROR, pdu.getConditionCode());
         assertEquals(1, pdu.getDirectiveCode());
         assertEquals(2, pdu.getDirectiveSubtypeCode());
         assertEquals(AckPdu.TransactionStatus.ACTIVE, pdu.getTransactionStatus());
@@ -77,7 +75,7 @@ class AckPduBuilderTest {
         assertEquals(0x0000000000F11204L, builder.getSourceEntityId());
         assertEquals(0x0000000000A2A1A3L, builder.getDestinationEntityId());
         assertEquals(123456L, builder.getTransactionSequenceNumber());
-        assertEquals(FileDirectivePdu.CC_NOERROR, builder.getConditionCode());
+        assertEquals(ConditionCode.CC_NOERROR, builder.getConditionCode());
         assertEquals(1, builder.getDirectiveCode());
         assertEquals(2, builder.getDirectiveSubtypeCode());
         assertEquals(AckPdu.TransactionStatus.ACTIVE, builder.getTransactionStatus());

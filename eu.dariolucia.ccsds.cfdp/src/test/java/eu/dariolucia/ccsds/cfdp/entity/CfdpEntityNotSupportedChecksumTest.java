@@ -21,7 +21,7 @@ import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
 import eu.dariolucia.ccsds.cfdp.protocol.builder.MetadataPduBuilder;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.MetadataPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FaultHandlerOverrideTLV;
 import eu.dariolucia.ccsds.cfdp.ut.impl.AbstractUtLayer;
@@ -107,7 +107,7 @@ public class CfdpEntityNotSupportedChecksumTest {
 
             s2.waitForIndication(MetadataRecvIndication.class, 10000);
             FaultIndication fi = s2.waitForIndication(FaultIndication.class, 10000);
-            assertEquals(FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE, fi.getConditionCode());
+            assertEquals(ConditionCode.CC_UNSUPPORTED_CHECKSUM_TYPE, fi.getConditionCode());
             assertEquals(0, fi.getProgress());
             assertEquals(124, fi.getTransactionId());
 
@@ -175,7 +175,7 @@ public class CfdpEntityNotSupportedChecksumTest {
         b.setSegmentMetadataPresent(false); // Always 0 for file directive PDUs
 
         // Add the declared options
-        b.addOption(new FaultHandlerOverrideTLV(FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE, abandon ? FaultHandlerOverrideTLV.HandlerCode.ABANDON_TRANSACTION : FaultHandlerOverrideTLV.HandlerCode.IGNORE_ERROR));
+        b.addOption(new FaultHandlerOverrideTLV(ConditionCode.CC_UNSUPPORTED_CHECKSUM_TYPE, abandon ? FaultHandlerOverrideTLV.HandlerCode.ABANDON_TRANSACTION : FaultHandlerOverrideTLV.HandlerCode.IGNORE_ERROR));
         return b.build();
     }
 }

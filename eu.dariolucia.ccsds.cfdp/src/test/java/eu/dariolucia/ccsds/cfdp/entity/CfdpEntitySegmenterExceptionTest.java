@@ -18,10 +18,8 @@ package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
-import eu.dariolucia.ccsds.cfdp.entity.request.ReportRequest;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpFileSegmenter;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpSegmentationStrategy;
-import eu.dariolucia.ccsds.cfdp.entity.segmenters.impl.FixedSizeSegmenter;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
 import eu.dariolucia.ccsds.cfdp.filestore.IVirtualFilestore;
 import eu.dariolucia.ccsds.cfdp.mib.Mib;
@@ -154,7 +152,7 @@ public class CfdpEntitySegmenterExceptionTest {
             assertEquals(FileDataPdu.class, txPdu1.get(9).getClass());
             assertEquals(FileDataPdu.class, txPdu1.get(10).getClass());
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
-            assertEquals(FileDirectivePdu.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
+            assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(12).getClass());
             assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
 

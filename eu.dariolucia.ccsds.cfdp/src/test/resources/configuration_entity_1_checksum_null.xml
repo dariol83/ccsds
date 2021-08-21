@@ -23,17 +23,17 @@
                   suspended-indication="true"
                   resumed-indication="true">
         <fault-handlers>
-            <fault-handler condition="1" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_POS_ACK_LIMIT_REACHED -->
-            <fault-handler condition="2" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_KEEPALIVE_LIMIT_REACHED -->
-            <fault-handler condition="3" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INVALID_TX_MODE -->
-            <fault-handler condition="4" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILESTORE_REJECTION -->
-            <fault-handler condition="5" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILE_CHECKSUM_FAILURE -->
-            <fault-handler condition="6" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILE_SIZE_ERROR -->
-            <fault-handler condition="7" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_NAK_LIMIT_REACHED -->
-            <fault-handler condition="8" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INACTIVITY_DETECTED -->
-            <fault-handler condition="9" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INVALID_FILE_STRUCTURE -->
-            <fault-handler condition="10" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_CHECK_LIMIT_REACHED -->
-            <fault-handler condition="11" strategy="NO_ACTION" /> <!-- CC_UNSUPPORTED_CHECKSUM_TYPE -->
+            <fault-handler condition="CC_POS_ACK_LIMIT_REACHED" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_POS_ACK_LIMIT_REACHED -->
+            <fault-handler condition="CC_KEEPALIVE_LIMIT_REACHED" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_KEEPALIVE_LIMIT_REACHED -->
+            <fault-handler condition="CC_INVALID_TX_MODE" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INVALID_TX_MODE -->
+            <fault-handler condition="CC_FILESTORE_REJECTION" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILESTORE_REJECTION -->
+            <fault-handler condition="CC_FILE_CHECKSUM_FAILURE" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILE_CHECKSUM_FAILURE -->
+            <fault-handler condition="CC_FILE_SIZE_ERROR" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_FILE_SIZE_ERROR -->
+            <fault-handler condition="CC_NAK_LIMIT_REACHED" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_NAK_LIMIT_REACHED -->
+            <fault-handler condition="CC_INACTIVITY_DETECTED" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INACTIVITY_DETECTED -->
+            <fault-handler condition="CC_INVALID_FILE_STRUCTURE" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_INVALID_FILE_STRUCTURE -->
+            <fault-handler condition="CC_CHECK_LIMIT_REACHED" strategy="NOTICE_OF_CANCELLATION" /> <!-- CC_CHECK_LIMIT_REACHED -->
+            <fault-handler condition="CC_UNSUPPORTED_CHECKSUM_TYPE" strategy="NO_ACTION" /> <!-- CC_UNSUPPORTED_CHECKSUM_TYPE -->
         </fault-handlers>
     </local-entity>
     <remote-entities>

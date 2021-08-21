@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.entity.indication;
 
 import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 
 /**
  * The Suspended.indication primitive shall be used to indicate to the CFDP user that the
@@ -33,7 +34,7 @@ public class SuspendedIndication implements ICfdpIndication {
 
     private final long transactionId;
 
-    private final byte conditionCode;
+    private final ConditionCode conditionCode;
 
     private final CfdpTransactionStatus statusReport;
 
@@ -44,7 +45,7 @@ public class SuspendedIndication implements ICfdpIndication {
      * @param conditionCode The Condition code parameter shall provide additional information on some change in the transaction status
      * @param statusReport The status report provides additional information on some change in the transaction status
      */
-    public SuspendedIndication(long transactionId, byte conditionCode, CfdpTransactionStatus statusReport) {
+    public SuspendedIndication(long transactionId, ConditionCode conditionCode, CfdpTransactionStatus statusReport) {
         this.transactionId = transactionId;
         this.conditionCode = conditionCode;
         this.statusReport = statusReport;
@@ -70,7 +71,7 @@ public class SuspendedIndication implements ICfdpIndication {
      *
      * @return the condition code
      */
-    public byte getConditionCode() {
+    public ConditionCode getConditionCode() {
         return conditionCode;
     }
 

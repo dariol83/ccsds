@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.FinishedPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.EntityIdTLV;
@@ -33,7 +34,7 @@ import java.util.List;
  */
 public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduBuilder> {
 
-    private byte conditionCode;
+    private ConditionCode conditionCode = ConditionCode.CC_NOERROR;
 
     private boolean dataComplete;
 
@@ -60,9 +61,9 @@ public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduB
      * @param faultLocation the fault location
      * @return this
      */
-    public FinishedPduBuilder setConditionCode(byte conditionCode, EntityIdTLV faultLocation) {
+    public FinishedPduBuilder setConditionCode(ConditionCode conditionCode, EntityIdTLV faultLocation) {
         this.conditionCode = conditionCode;
-        if(conditionCode != FileDirectivePdu.CC_NOERROR && conditionCode != FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE) {
+        if(conditionCode != ConditionCode.CC_NOERROR && conditionCode != ConditionCode.CC_UNSUPPORTED_CHECKSUM_TYPE) {
             this.faultLocation = faultLocation;
         } else {
             this.faultLocation = null;
@@ -113,7 +114,7 @@ public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduB
         bos.write(FileDirectivePdu.DC_FINISHED_PDU);
         totalLength += 1;
         // Condition code (4 bits), spare bit, delivery code (1 bit) and file status (2 bits)
-        byte first = (byte) ((this.conditionCode << 4) & 0xF0);
+        byte first = (byte) ((this.conditionCode.getCode() << 4) & 0xF0);
         first |= (byte) (this.dataComplete ? 0x00 : 0x04);
         first |= (byte) (this.fileStatus.ordinal() & 0x03);
         bos.write(first);
@@ -125,7 +126,7 @@ public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduB
             totalLength += encoded.length;
         }
         // Fault location
-        if(this.conditionCode != FileDirectivePdu.CC_NOERROR && this.conditionCode != FileDirectivePdu.CC_UNSUPPORTED_CHECKSUM_TYPE) {
+        if(this.conditionCode != ConditionCode.CC_NOERROR && this.conditionCode != ConditionCode.CC_UNSUPPORTED_CHECKSUM_TYPE) {
             byte[] encoded = this.faultLocation.encode();
             bos.write(encoded);
             totalLength += encoded.length;
@@ -138,7 +139,7 @@ public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduB
         return new FinishedPdu(pdu);
     }
 
-    public byte getConditionCode() {
+    public ConditionCode getConditionCode() {
         return conditionCode;
     }
 
