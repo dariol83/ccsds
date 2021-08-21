@@ -11,11 +11,11 @@
             <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                <children>
                   <Label text="Destination Entity" VBox.vgrow="NEVER" />
-                  <ChoiceBox minWidth="237.0" prefWidth="237.0" VBox.vgrow="NEVER" />
-                  <CheckBox mnemonicParsing="false" text="Acknowledged" />
-                  <CheckBox mnemonicParsing="false" text="With Closure" />
-                  <CheckBox mnemonicParsing="false" text="Flow Label" />
-                  <TextField promptText="Use hex dump" />
+                  <ChoiceBox fx:id="destinationEntityCombo" minWidth="237.0" prefWidth="237.0" VBox.vgrow="NEVER" />
+                  <CheckBox fx:id="acknowledgedCheckbox" mnemonicParsing="false" text="Acknowledged" />
+                  <CheckBox fx:id="closureCheckbox" mnemonicParsing="false" text="With Closure" />
+                  <CheckBox fx:id="flowLabelCheckbox" mnemonicParsing="false" text="Flow Label" />
+                  <TextField fx:id="flowLabelTextField" promptText="Use hex dump" />
                </children>
                <padding>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -24,12 +24,12 @@
             <Separator orientation="VERTICAL" prefHeight="200.0" />
             <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                <children>
-                  <CheckBox mnemonicParsing="false" text="File Transfer" />
+                  <CheckBox fx:id="fileTransferCheckbox" mnemonicParsing="false" text="File Transfer" />
                   <Label text="Source File" />
-                  <ComboBox minWidth="237.0" prefWidth="237.0" />
+                  <ComboBox fx:id="sourceFileCombo" minWidth="237.0" prefWidth="237.0" />
                   <Label text="Destination File" />
-                  <TextField />
-                  <CheckBox mnemonicParsing="false" text="Segmentation Control" />
+                  <TextField fx:id="destinationFileTextField" />
+                  <CheckBox fx:id="segmentationControlCheckbox" mnemonicParsing="false" text="Segmentation Control" />
                </children>
                <padding>
                   <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -41,20 +41,20 @@
       <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
          <children>
             <Label text="Filestore Requests - Action" />
-            <ChoiceBox minWidth="237.0" prefWidth="237.0" />
+            <ChoiceBox fx:id="filestoreRequestActionCombo" minWidth="237.0" prefWidth="237.0" />
             <Label text="First Filename" />
-            <TextField />
+            <TextField fx:id="firstFilenameTextField" />
             <Label layoutX="15.0" layoutY="65.0" text="Second Filename" />
-              <TextField layoutX="15.0" layoutY="86.0" />
+              <TextField fx:id="secondFilenameTextField" layoutX="15.0" layoutY="86.0" />
             <HBox spacing="5.0">
                <children>
-                  <ListView maxHeight="130.0" HBox.hgrow="ALWAYS" />
+                  <ListView fx:id="filestoreRequestListView" maxHeight="130.0" HBox.hgrow="ALWAYS" />
                   <VBox spacing="5.0">
                      <children>
-                        <Button layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" text="+" />
-                        <Button minWidth="32.0" mnemonicParsing="false" text="-" />
-                        <Button layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" text="^" />
-                        <Button layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" text="v" />
+                        <Button fx:id="filestoreRequestAddButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestAddButtonClicked" text="+" />
+                        <Button fx:id="filestoreRequestRemoveButton" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestRemoveButtonClicked" text="-" />
+                        <Button fx:id="filestoreRequestMoveUpButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestMoveUpButtonClicked" text="^" />
+                        <Button fx:id="filestoreRequestMoveDownButton" layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestMoveDownButtonClicked" text="v" />
                      </children>
                   </VBox>
                </children>
@@ -70,18 +70,18 @@
             <Label text="Messages To User" />
             <HBox spacing="5.0">
                <children>
-                  <TextField minWidth="200.0" promptText="Use hex dump" HBox.hgrow="ALWAYS" />
-                  <Button minWidth="32.0" mnemonicParsing="false" text="+" />
+                  <TextField fx:id="messageToUserTextField" minWidth="200.0" promptText="Use hex dump" HBox.hgrow="ALWAYS" />
+                  <Button fx:id="messageToUserAddButton" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserAddButtonClicked" text="+" />
                </children>
             </HBox>
             <HBox prefHeight="100.0" prefWidth="200.0" spacing="5.0">
                <children>
-                  <ListView maxHeight="100.0" HBox.hgrow="ALWAYS" />
+                  <ListView fx:id="messageToUserListView" maxHeight="100.0" HBox.hgrow="ALWAYS" />
                   <VBox spacing="5.0" HBox.hgrow="NEVER">
                      <children>
-                        <Button minWidth="32.0" mnemonicParsing="false" text="-" />
-                        <Button layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" text="^" />
-                        <Button layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" text="v" />
+                        <Button fx:id="messageToUserRemoveButton" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserRemoveButtonClicked" text="-" />
+                        <Button fx:id="messageToUserMoveUpButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserMoveUpButtonClicked" text="^" />
+                        <Button fx:id="messageToUserMoveDownButton" layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserMoveDownButtonClicked" text="v" />
                      </children>
                   </VBox>
                </children>
@@ -99,21 +99,21 @@
                <children>
                   <HBox spacing="5.0" HBox.hgrow="ALWAYS">
                      <children>
-                        <ChoiceBox minWidth="200.0" />
-                        <ChoiceBox minWidth="200.0" HBox.hgrow="ALWAYS" />
+                        <ChoiceBox fx:id="faultHandlerCodeCombo" minWidth="200.0" />
+                        <ChoiceBox fx:id="faultHandlerActionCombo" minWidth="200.0" HBox.hgrow="ALWAYS" />
                      </children>
                   </HBox>
-                  <Button minWidth="32.0" mnemonicParsing="false" text="+" />
+                  <Button fx:id="faultHandlerAddButton" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerAddButtonClicked" text="+" />
                </children>
             </HBox>
             <HBox spacing="5.0">
                <children>
-                  <ListView maxHeight="100.0" HBox.hgrow="ALWAYS" />
+                  <ListView fx:id="faultHandlerListView" maxHeight="100.0" HBox.hgrow="ALWAYS" />
                   <VBox spacing="5.0" HBox.hgrow="NEVER">
                      <children>
-                        <Button minWidth="32.0" mnemonicParsing="false" text="-" />
-                        <Button layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" text="^" />
-                        <Button layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" text="v" />
+                        <Button fx:id="faultHandlerRemoveButton" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerRemoveButtonClicked" text="-" />
+                        <Button fx:id="faultHandlerMoveUpButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerMoveUpButtonClicked" text="^" />
+                        <Button fx:id="faultHandlerMoveDownButton" layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerMoveDownButtonClicked" text="v" />
                      </children>
                   </VBox>
                </children>
