@@ -16,10 +16,7 @@
 
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FinishedPdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.EntityIdTLV;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreResponseTLV;
 
@@ -111,7 +108,7 @@ public class FinishedPduBuilder extends CfdpPduBuilder<FinishedPdu, FinishedPduB
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;
         // Directive code
-        bos.write(FileDirectivePdu.DC_FINISHED_PDU);
+        bos.write(DirectiveCode.DC_FINISHED_PDU.getCode());
         totalLength += 1;
         // Condition code (4 bits), spare bit, delivery code (1 bit) and file status (2 bits)
         byte first = (byte) ((this.conditionCode.getCode() << 4) & 0xF0);

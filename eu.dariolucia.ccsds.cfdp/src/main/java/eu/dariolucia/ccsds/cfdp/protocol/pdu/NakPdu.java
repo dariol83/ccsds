@@ -78,7 +78,7 @@ public class NakPdu extends FileDirectivePdu {
     public NakPdu(byte[] pdu) {
         super(pdu);
         // Directive code check
-        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_NACK_PDU) {
+        if(pdu[getHeaderLength()] != DirectiveCode.DC_NACK_PDU.getCode()) {
             throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
         }
         // PDU-specific parsing

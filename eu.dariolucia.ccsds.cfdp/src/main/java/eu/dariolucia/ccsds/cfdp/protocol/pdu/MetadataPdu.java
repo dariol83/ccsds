@@ -44,7 +44,7 @@ public class MetadataPdu extends FileDirectivePdu {
     public MetadataPdu(byte[] pdu) {
         super(pdu);
         // Directive code check
-        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_METADATA_PDU) {
+        if(pdu[getHeaderLength()] != DirectiveCode.DC_METADATA_PDU.getCode()) {
             throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
         }
         // PDU-specific parsing

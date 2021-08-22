@@ -54,7 +54,7 @@ public class EndOfFilePdu extends FileDirectivePdu {
     public EndOfFilePdu(byte[] pdu) {
         super(pdu);
         // Directive code check
-        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_EOF_PDU) {
+        if(pdu[getHeaderLength()] != DirectiveCode.DC_EOF_PDU.getCode()) {
             throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
         }
         // PDU-specific parsing

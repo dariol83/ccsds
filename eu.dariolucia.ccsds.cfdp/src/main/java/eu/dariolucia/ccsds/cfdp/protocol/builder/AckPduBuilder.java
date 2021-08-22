@@ -16,10 +16,7 @@
 
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.AckPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 
 import java.io.ByteArrayOutputStream;
 
@@ -28,7 +25,7 @@ import java.io.ByteArrayOutputStream;
  */
 public class AckPduBuilder extends CfdpPduBuilder<AckPdu, AckPduBuilder> {
 
-    private byte directiveCode;
+    private DirectiveCode directiveCode;
 
     private byte directiveSubtypeCode;
 
@@ -44,13 +41,13 @@ public class AckPduBuilder extends CfdpPduBuilder<AckPdu, AckPduBuilder> {
     }
 
     /**
-     * Directive code of the PDU that this ACK PDU acknowledges, as per {@link eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu} DC_ constants.
+     * Directive code of the PDU that this ACK PDU acknowledges.
      * Only EOF and Finished PDUs are acknowledged.
      *
      * @param directiveCode the directive code
      * @return this
      */
-    public AckPduBuilder setDirectiveCode(byte directiveCode) {
+    public AckPduBuilder setDirectiveCode(DirectiveCode directiveCode) {
         this.directiveCode = directiveCode;
         return this;
     }
@@ -90,7 +87,7 @@ public class AckPduBuilder extends CfdpPduBuilder<AckPdu, AckPduBuilder> {
         return this;
     }
 
-    public byte getDirectiveCode() {
+    public DirectiveCode getDirectiveCode() {
         return directiveCode;
     }
 
@@ -110,10 +107,10 @@ public class AckPduBuilder extends CfdpPduBuilder<AckPdu, AckPduBuilder> {
     protected int encodeDataField(ByteArrayOutputStream bos) {
         int totalLength = 0;
         // Directive code
-        bos.write(FileDirectivePdu.DC_ACK_PDU);
+        bos.write(DirectiveCode.DC_ACK_PDU.getCode());
         totalLength += 1;
         // Directive code and subtype
-        byte first = (byte) ((this.directiveCode << 4) & 0xF0);
+        byte first = (byte) ((this.directiveCode.getCode() << 4) & 0xF0);
         first |= (byte) (this.directiveSubtypeCode & 0x0F);
         bos.write(first);
         totalLength += 1;

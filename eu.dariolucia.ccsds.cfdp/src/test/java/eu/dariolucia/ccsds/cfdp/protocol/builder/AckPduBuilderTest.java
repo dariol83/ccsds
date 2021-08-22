@@ -19,6 +19,7 @@ package eu.dariolucia.ccsds.cfdp.protocol.builder;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.AckPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.DirectiveCode;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,7 +40,7 @@ class AckPduBuilderTest {
                 .setSourceEntityId(0x00F11204)
                 .setTransactionSequenceNumber(123456, 3)
                 .setConditionCode(ConditionCode.CC_NOERROR)
-                .setDirectiveCode((byte) 0x01)
+                .setDirectiveCode(DirectiveCode.DC_EOF_PDU)
                 .setDirectiveSubtypeCode((byte) 0x02)
                 .setTransactionStatus(AckPdu.TransactionStatus.ACTIVE);
 
@@ -59,7 +60,7 @@ class AckPduBuilderTest {
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(123456L, pdu.getTransactionSequenceNumber());
         assertEquals(ConditionCode.CC_NOERROR, pdu.getConditionCode());
-        assertEquals(1, pdu.getDirectiveCode());
+        assertEquals(DirectiveCode.DC_EOF_PDU, pdu.getDirectiveCode());
         assertEquals(2, pdu.getDirectiveSubtypeCode());
         assertEquals(AckPdu.TransactionStatus.ACTIVE, pdu.getTransactionStatus());
 
@@ -76,7 +77,7 @@ class AckPduBuilderTest {
         assertEquals(0x0000000000A2A1A3L, builder.getDestinationEntityId());
         assertEquals(123456L, builder.getTransactionSequenceNumber());
         assertEquals(ConditionCode.CC_NOERROR, builder.getConditionCode());
-        assertEquals(1, builder.getDirectiveCode());
+        assertEquals(DirectiveCode.DC_EOF_PDU, builder.getDirectiveCode());
         assertEquals(2, builder.getDirectiveSubtypeCode());
         assertEquals(AckPdu.TransactionStatus.ACTIVE, builder.getTransactionStatus());
     }

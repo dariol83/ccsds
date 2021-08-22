@@ -18,7 +18,7 @@ package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.DirectiveCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.NakPdu;
 
 import java.io.ByteArrayOutputStream;
@@ -84,7 +84,7 @@ public class NakPduBuilder extends CfdpPduBuilder<NakPdu, NakPduBuilder> {
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;
         // Directive code
-        bos.write(FileDirectivePdu.DC_NACK_PDU);
+        bos.write(DirectiveCode.DC_NACK_PDU.getCode());
         totalLength += 1;
         // Start of scope (4 or 8 bytes, check isLargeFile())
         bos.write(BytesUtil.encodeInteger(this.startOfScope, isLargeFile() ? 8 : 4));

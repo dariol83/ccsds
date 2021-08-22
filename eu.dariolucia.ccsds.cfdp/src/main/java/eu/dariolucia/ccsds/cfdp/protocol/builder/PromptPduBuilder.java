@@ -17,7 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.DirectiveCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.PromptPdu;
 
 import java.io.ByteArrayOutputStream;
@@ -60,7 +60,7 @@ public class PromptPduBuilder extends CfdpPduBuilder<PromptPdu, PromptPduBuilder
     protected int encodeDataField(ByteArrayOutputStream bos) {
         int totalLength = 0;
         // Directive code
-        bos.write(FileDirectivePdu.DC_PROMPT_PDU);
+        bos.write(DirectiveCode.DC_PROMPT_PDU.getCode());
         totalLength += 1;
         //
         bos.write(this.nakResponseRequired ? 0x00 : 0x80);

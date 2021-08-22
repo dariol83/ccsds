@@ -29,7 +29,7 @@ public class PromptPdu extends FileDirectivePdu {
     public PromptPdu(byte[] pdu) {
         super(pdu);
         // Directive code check
-        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_PROMPT_PDU) {
+        if(pdu[getHeaderLength()] != DirectiveCode.DC_PROMPT_PDU.getCode()) {
             throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
         }
         // PDU-specific parsing

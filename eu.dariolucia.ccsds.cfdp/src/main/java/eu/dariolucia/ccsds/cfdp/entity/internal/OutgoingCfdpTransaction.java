@@ -65,7 +65,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     private boolean txRunning;
     // Flag to indicated that activate() was called
     private boolean active;
-    // Flag to indicate that a EOF PDU due to cancelation was already sent
+    // Flag to indicate that an EOF PDU due to cancellation was already sent
     private boolean alreadySentEoFforCancelled;
 
     public OutgoingCfdpTransaction(long transactionId, CfdpEntity entity, PutRequest r) {
@@ -354,7 +354,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
 
     private void handleAckPdu(AckPdu pdu) {
         // ACK of EOF PDU (only in case of acknowledged mode)
-        if(pdu.getDirectiveCode() == FileDirectivePdu.DC_EOF_PDU) {
+        if(pdu.getDirectiveCode() == DirectiveCode.DC_EOF_PDU) {
             if(LOG.isLoggable(Level.INFO)) {
                 LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: ACK PDU(EOF) received", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
             }
@@ -370,7 +370,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             }
         } else {
             if(LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: ACK PDU(for directive code 0x%02X) received", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu.getDirectiveCode()));
+                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: ACK PDU(for directive code %s) received", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu.getDirectiveCode()));
             }
         }
     }
@@ -847,7 +847,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         setCommonPduValues(b);
         b.setTransactionStatus(deriveCurrentAckTransactionStatus());
         b.setConditionCode(pdu.getConditionCode());
-        b.setDirectiveCode(FileDirectivePdu.DC_FINISHED_PDU);
+        b.setDirectiveCode(DirectiveCode.DC_FINISHED_PDU);
         b.setDirectiveSubtypeCode((byte) 0x01);
 
         return b.build();

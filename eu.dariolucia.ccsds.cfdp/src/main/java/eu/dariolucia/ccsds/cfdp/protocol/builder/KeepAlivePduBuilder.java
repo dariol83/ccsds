@@ -18,7 +18,7 @@ package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.DirectiveCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.KeepAlivePdu;
 
 import java.io.ByteArrayOutputStream;
@@ -53,7 +53,7 @@ public class KeepAlivePduBuilder extends CfdpPduBuilder<KeepAlivePdu, KeepAliveP
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;
         // Directive code
-        bos.write(FileDirectivePdu.DC_KEEPALIVE_PDU);
+        bos.write(DirectiveCode.DC_KEEPALIVE_PDU.getCode());
         totalLength += 1;
         // Progress (4 or 8 bytes, check isLargeFile())
         bos.write(BytesUtil.encodeInteger(this.progress, isLargeFile() ? 8 : 4));

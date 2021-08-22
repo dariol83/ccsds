@@ -18,7 +18,7 @@ package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.DirectiveCode;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.MetadataPdu;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.*;
 
@@ -140,7 +140,7 @@ public class MetadataPduBuilder extends CfdpPduBuilder<MetadataPdu, MetadataPduB
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;
         // Directive code
-        bos.write(FileDirectivePdu.DC_METADATA_PDU);
+        bos.write(DirectiveCode.DC_METADATA_PDU.getCode());
         totalLength += 1;
         // First byte: 1 bit spare - 1 bit closure - 2 bits spare - 4 bits checksum type
         byte firstByte = this.closureRequested && !isAcknowledged() ? (byte) 0x40 : (byte) 0x00;

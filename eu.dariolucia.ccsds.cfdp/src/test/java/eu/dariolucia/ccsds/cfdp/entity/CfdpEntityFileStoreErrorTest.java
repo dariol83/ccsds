@@ -196,7 +196,7 @@ public class CfdpEntityFileStoreErrorTest {
             assertEquals(2, txPdu2.size());
             // First: EOF ACK + Finished
             assertEquals(AckPdu.class, txPdu2.get(0).getClass());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
             assertEquals(FinishedPdu.class, txPdu2.get(1).getClass());
             assertEquals(FinishedPdu.FileStatus.DISCARDED_BY_FILESTORE, ((FinishedPdu) txPdu2.get(1)).getFileStatus());
         } catch (Throwable e) {

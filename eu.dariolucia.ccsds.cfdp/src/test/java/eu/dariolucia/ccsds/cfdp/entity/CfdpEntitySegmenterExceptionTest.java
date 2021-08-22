@@ -154,7 +154,7 @@ public class CfdpEntitySegmenterExceptionTest {
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
             assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(12).getClass());
-            assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
@@ -162,7 +162,7 @@ public class CfdpEntitySegmenterExceptionTest {
             assertEquals(2, txPdu2.size());
             // First: EOF ACK + Finished
             assertEquals(AckPdu.class, txPdu2.get(0).getClass());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
             assertEquals(FinishedPdu.class, txPdu2.get(1).getClass());
             assertEquals(FinishedPdu.FileStatus.RETAINED_IN_FILESTORE, ((FinishedPdu) txPdu2.get(1)).getFileStatus());
         } catch (Throwable e) {

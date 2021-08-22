@@ -179,7 +179,7 @@ public class CfdpEntityCancelTcpTest {
             assertEquals(1, txPdu2.size());
             // First: EOF ACK + Finished
             assertEquals(AckPdu.class, txPdu2.get(0).getClass());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
         } catch (Throwable e) {
             // Deactivate the UT layers
             ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();

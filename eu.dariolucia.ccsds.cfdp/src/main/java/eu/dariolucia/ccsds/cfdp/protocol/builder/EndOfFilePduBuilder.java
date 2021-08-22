@@ -17,10 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.protocol.builder;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.EndOfFilePdu;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDirectivePdu;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.EntityIdTLV;
 
 import java.io.ByteArrayOutputStream;
@@ -109,7 +106,7 @@ public class EndOfFilePduBuilder extends CfdpPduBuilder<EndOfFilePdu, EndOfFileP
     protected int encodeDataField(ByteArrayOutputStream bos) throws IOException {
         int totalLength = 0;
         // Directive code
-        bos.write(FileDirectivePdu.DC_EOF_PDU);
+        bos.write(DirectiveCode.DC_EOF_PDU.getCode());
         totalLength += 1;
         // Condition code (4 bits) and spare (4 bits)
         bos.write((this.conditionCode.getCode() << 4) & 0xFF);

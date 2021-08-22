@@ -414,7 +414,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         setCommonPduValues(b);
         b.setTransactionStatus(deriveCurrentAckTransactionStatus());
         b.setConditionCode(pdu.getConditionCode());
-        b.setDirectiveCode(FileDirectivePdu.DC_EOF_PDU);
+        b.setDirectiveCode(DirectiveCode.DC_EOF_PDU);
         b.setDirectiveSubtypeCode((byte) 0x00);
 
         return b.build();
@@ -1408,7 +1408,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     private void handleAckPdu(AckPdu pdu) {
         // ACK of Finished PDU (only in case of acknowledged mode)
-        if(pdu.getDirectiveCode() == FileDirectivePdu.DC_FINISHED_PDU) {
+        if(pdu.getDirectiveCode() == DirectiveCode.DC_FINISHED_PDU) {
             if(LOG.isLoggable(Level.INFO)) {
                 LOG.log(Level.INFO, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: ACK PDU(Finished) received", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId()));
             }
@@ -1421,7 +1421,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             }
         } else {
             if(LOG.isLoggable(Level.WARNING)) {
-                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: ACK PDU(for directive code 0x%02X) received", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu.getDirectiveCode()));
+                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: ACK PDU(for directive code %s) received", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), pdu.getDirectiveCode()));
             }
         }
     }

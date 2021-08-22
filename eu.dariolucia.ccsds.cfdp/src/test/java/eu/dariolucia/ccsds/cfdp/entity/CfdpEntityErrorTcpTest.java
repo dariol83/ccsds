@@ -197,7 +197,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
             assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(12).getClass());
-            assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
@@ -205,7 +205,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(2, txPdu2.size());
             // First: EOF ACK + Finished
             assertEquals(AckPdu.class, txPdu2.get(0).getClass());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
             assertEquals(FinishedPdu.class, txPdu2.get(1).getClass());
             assertEquals(FinishedPdu.FileStatus.RETAINED_IN_FILESTORE, ((FinishedPdu) txPdu2.get(1)).getFileStatus());
         } catch (Throwable e) {
@@ -322,7 +322,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(FileDataPdu.class, txPdu1.get(12).getClass());
             assertEquals(AckPdu.class, txPdu1.get(13).getClass());
-            assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
@@ -330,7 +330,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(3, txPdu2.size());
             // First: EOF ACK + Finished
             assertEquals(AckPdu.class, txPdu2.get(0).getClass());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
             assertEquals(NakPdu.class, txPdu2.get(1).getClass());
             assertEquals(FinishedPdu.class, txPdu2.get(2).getClass());
             assertEquals(FinishedPdu.FileStatus.RETAINED_IN_FILESTORE, ((FinishedPdu) txPdu2.get(2)).getFileStatus());
@@ -426,7 +426,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(0L, ((NakPdu) txPdu2.get(0)).getSegmentRequests().get(0).getStartOffset()); // Metadata request after the first file segment
             assertEquals(0L, ((NakPdu) txPdu2.get(0)).getSegmentRequests().get(0).getEndOffset()); // Metadata request after the first file segment
             assertEquals(AckPdu.class, txPdu2.get(1).getClass());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(1)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(1)).getDirectiveCode());
             if(txPdu2.size() == 5) {
                 // Metadata PDU not arrived before EOF
                 assertEquals(NakPdu.class, txPdu2.get(2).getClass()); // Metadata not arrived yet
@@ -635,7 +635,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(EndOfFilePdu.class, txPdu1.get(12).getClass());
             assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(12)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(13).getClass());
-            assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
@@ -802,7 +802,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(EndOfFilePdu.class, txPdu1.get(11).getClass());
             assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(AckPdu.class, txPdu1.get(12).getClass());
-            assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(12)).getDirectiveCode());
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
@@ -935,7 +935,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(ConditionCode.CC_NOERROR, ((EndOfFilePdu) txPdu1.get(11)).getConditionCode());
             assertEquals(FileDataPdu.class, txPdu1.get(12).getClass());
             assertEquals(AckPdu.class, txPdu1.get(13).getClass());
-            assertEquals(FileDirectivePdu.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_FINISHED_PDU, ((AckPdu) txPdu1.get(13)).getDirectiveCode());
 
             // Assert TX PDUs: receiver
             UtLayerTxPduDecorator l2 = (UtLayerTxPduDecorator) e2.getUtLayerByName("TCP");
@@ -943,7 +943,7 @@ public class CfdpEntityErrorTcpTest {
             assertEquals(4, txPdu2.size());
             // First: EOF ACK + Finished
             assertEquals(AckPdu.class, txPdu2.get(0).getClass());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
             assertEquals(NakPdu.class, txPdu2.get(1).getClass());
             assertEquals(NakPdu.class, txPdu2.get(2).getClass());
             assertEquals(FinishedPdu.class, txPdu2.get(3).getClass());
@@ -1107,7 +1107,7 @@ public class CfdpEntityErrorTcpTest {
             UtLayerTxPduDecorator l2 = ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP"));
             List<CfdpPdu> txPdu2 = l2.getTxPdus();
             assertEquals(2, txPdu2.size());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
             assertEquals(FinishedPdu.class, txPdu2.get(1).getClass());
             assertEquals(FinishedPdu.FileStatus.RETAINED_IN_FILESTORE, ((FinishedPdu) txPdu2.get(1)).getFileStatus());
         } catch (Throwable e) {
@@ -1851,10 +1851,10 @@ public class CfdpEntityErrorTcpTest {
             UtLayerTxPduDecorator l2 = ((UtLayerTxPduDecorator)((UtLayerTxPduSwapperDecorator) e2.getUtLayerByName("TCP")).getDelegate());
             List<CfdpPdu> txPdu2 = l2.getTxPdus();
             assertEquals(4, txPdu2.size());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
             assertEquals(FinishedPdu.class, txPdu2.get(1).getClass());
             assertEquals(FinishedPdu.FileStatus.RETAINED_IN_FILESTORE, ((FinishedPdu) txPdu2.get(1)).getFileStatus());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(2)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(2)).getDirectiveCode());
             assertEquals(FinishedPdu.class, txPdu2.get(3).getClass());
             assertEquals(FinishedPdu.FileStatus.RETAINED_IN_FILESTORE, ((FinishedPdu) txPdu2.get(3)).getFileStatus());
         } catch (Throwable e) {

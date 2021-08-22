@@ -55,7 +55,7 @@ public class AckPdu extends FileDirectivePdu {
      * Directive code of the PDU that this ACK PDU acknowledges.
      * Only EOF and Finished PDUs are acknowledged.
      */
-    private final byte directiveCode;
+    private final DirectiveCode directiveCode;
 
     /**
      * Values depend on the directive code of the PDU that this ACK PDU acknowledges.
@@ -77,17 +77,17 @@ public class AckPdu extends FileDirectivePdu {
     public AckPdu(byte[] pdu) {
         super(pdu);
         // Directive code check
-        if(pdu[getHeaderLength()] != FileDirectivePdu.DC_ACK_PDU) {
+        if(pdu[getHeaderLength()] != DirectiveCode.DC_ACK_PDU.getCode()) {
             throw new IllegalArgumentException("Directive code mismatch: " + String.format("0x%02X",pdu[getHeaderLength()]));
         }
         // PDU-specific parsing
-        this.directiveCode = (byte) ((pdu[getDirectiveParameterIndex()] & 0xF0) >>> 4);
+        this.directiveCode = DirectiveCode.fromCode((byte) ((pdu[getDirectiveParameterIndex()] & 0xF0) >>> 4));
         this.directiveSubtypeCode = (byte) (pdu[getDirectiveParameterIndex()] & 0x0F);
         this.conditionCode = ConditionCode.fromCode((byte) ((pdu[getDirectiveParameterIndex() + 1] & 0xF0) >>> 4));
         this.transactionStatus = TransactionStatus.values()[(pdu[getDirectiveParameterIndex() + 1] & 0x03)];
     }
 
-    public byte getDirectiveCode() {
+    public DirectiveCode getDirectiveCode() {
         return directiveCode;
     }
 

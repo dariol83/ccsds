@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AckPduTest {
 
-    private final byte[] P1_NOERROR     = StringUtil.toByteArray("22 0003 21 F11204 9155 A2A1A3 06 23 12".replace(" ", ""));
+    private final byte[] P1_NOERROR     = StringUtil.toByteArray("22 0003 21 F11204 9155 A2A1A3 06 43 12".replace(" ", ""));
 
     @Test
     public void testAckPduParsing() {
@@ -47,7 +47,7 @@ class AckPduTest {
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(0x0000000000009155L, pdu.getTransactionSequenceNumber());
         assertEquals(ConditionCode.CC_POS_ACK_LIMIT_REACHED, pdu.getConditionCode());
-        assertEquals(2, pdu.getDirectiveCode());
+        assertEquals(DirectiveCode.DC_EOF_PDU, pdu.getDirectiveCode());
         assertEquals(3, pdu.getDirectiveSubtypeCode());
         assertEquals(AckPdu.TransactionStatus.TERMINATED, pdu.getTransactionStatus());
 
@@ -73,7 +73,7 @@ class AckPduTest {
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(0x0000000000009155L, pdu.getTransactionSequenceNumber());
         assertEquals(ConditionCode.CC_POS_ACK_LIMIT_REACHED, ((AckPdu) pdu).getConditionCode());
-        assertEquals(2, ((AckPdu) pdu).getDirectiveCode());
+        assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) pdu).getDirectiveCode());
         assertEquals(3, ((AckPdu) pdu).getDirectiveSubtypeCode());
         assertEquals(AckPdu.TransactionStatus.TERMINATED, ((AckPdu) pdu).getTransactionStatus());
     }
@@ -97,7 +97,7 @@ class AckPduTest {
         assertEquals(0x0000000000A2A1A3L, pdu.getDestinationEntityId());
         assertEquals(0x0000000000009155L, pdu.getTransactionSequenceNumber());
         assertEquals(ConditionCode.CC_POS_ACK_LIMIT_REACHED, ((AckPdu) pdu).getConditionCode());
-        assertEquals(2, ((AckPdu) pdu).getDirectiveCode());
+        assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) pdu).getDirectiveCode());
         assertEquals(3, ((AckPdu) pdu).getDirectiveSubtypeCode());
         assertEquals(AckPdu.TransactionStatus.TERMINATED, ((AckPdu) pdu).getTransactionStatus());
     }

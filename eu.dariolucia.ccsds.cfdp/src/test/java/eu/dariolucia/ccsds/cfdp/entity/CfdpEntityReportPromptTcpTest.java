@@ -168,7 +168,7 @@ public class CfdpEntityReportPromptTcpTest {
             // First: KeepAlive PDU + EOF ACK + Finished (no NAKs)
             assertEquals(KeepAlivePdu.class, txPdu2.get(0).getClass());
             assertEquals(AckPdu.class, txPdu2.get(1).getClass());
-            assertEquals(FileDirectivePdu.DC_EOF_PDU, ((AckPdu) txPdu2.get(1)).getDirectiveCode());
+            assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(1)).getDirectiveCode());
             assertEquals(FinishedPdu.class, txPdu2.get(2).getClass());
             assertEquals(FinishedPdu.FileStatus.RETAINED_IN_FILESTORE, ((FinishedPdu) txPdu2.get(2)).getFileStatus());
         } catch (Throwable e) {
