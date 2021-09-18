@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.cfdp.fx.controller.PutRequestDialog">
+<VBox xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.cfdp.fx.controller.PutRequestDialogController">
    <children>
       <HBox prefHeight="100.0" prefWidth="200.0">
          <children>

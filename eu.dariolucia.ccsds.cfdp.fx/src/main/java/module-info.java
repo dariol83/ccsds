@@ -6,6 +6,7 @@ open module eu.dariolucia.ccsds.cfdp.fx {
     requires java.xml.bind;
     requires com.sun.xml.bind;
     requires eu.dariolucia.ccsds.cfdp;
+    requires eu.dariolucia.ccsds.tmtc;
 
     exports eu.dariolucia.ccsds.cfdp.fx.application to javafx.graphics;
     exports eu.dariolucia.ccsds.cfdp.fx.controller to javafx.fxml;

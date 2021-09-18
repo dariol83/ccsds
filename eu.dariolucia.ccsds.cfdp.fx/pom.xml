@@ -81,6 +81,11 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
+            <groupId>eu.dariolucia.ccsds</groupId>
+            <artifactId>eu.dariolucia.ccsds.tmtc</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-runtime</artifactId>
             <version>${jaxb.version}</version>

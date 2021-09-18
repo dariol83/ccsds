@@ -20,14 +20,8 @@ import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntity;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntitySubscriber;
 import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
 import eu.dariolucia.ccsds.cfdp.entity.request.*;
-import eu.dariolucia.ccsds.cfdp.filestore.impl.FilesystemBasedFilestore;
 import eu.dariolucia.ccsds.cfdp.fx.application.CfdpFxTestTool;
 import eu.dariolucia.ccsds.cfdp.fx.dialogs.DialogUtils;
-import eu.dariolucia.ccsds.cfdp.mib.Mib;
-import eu.dariolucia.ccsds.cfdp.mib.RemoteEntityConfigurationInformation;
-import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
-import eu.dariolucia.ccsds.cfdp.ut.impl.TcpLayer;
-import eu.dariolucia.ccsds.cfdp.ut.impl.UdpLayer;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -35,19 +29,18 @@ import javafx.beans.property.SimpleLongProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
+import javafx.stage.Modality;
+import javafx.util.Pair;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MainController implements Initializable, ICfdpEntitySubscriber {
@@ -81,6 +74,8 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
+		this.cfdpEntity = CfdpFxTestTool.getCfdpEntity();
+
 		// Log table renderer
 		((TableColumn<ICfdpIndication, String>) logTableView.getColumns().get(0))
 				.setCellValueFactory(o -> new ReadOnlyObjectWrapper<>(buildTableMessage(o.getValue())));
@@ -98,7 +93,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 		}
 
 		// Register this subscriber to the CFDP entity
-		CfdpFxTestTool.getCfdpEntity().register(this);
+		this.cfdpEntity.register(this);
 
 		// Button enablement bindings
 		suspendButton.disableProperty().bind(Bindings.isEmpty(transactionTable.getSelectionModel().getSelectedItems()));
@@ -141,6 +136,27 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 	}
 
 	public void putRequestButtonSelected(ActionEvent actionEvent) {
+		try {
+			Pair<Node, PutRequestDialogController> putRequestDialogPair = PutRequestDialogController.createDialog(cfdpEntity);
+			// Create the popup
+			Dialog<ButtonType> d = new Dialog<>();
+			d.setTitle("Put Request");
+			d.initModality(Modality.APPLICATION_MODAL);
+			d.initOwner(putRequestButton.getScene().getWindow());
+			d.getDialogPane().getButtonTypes().addAll(ButtonType.CANCEL, ButtonType.OK);
+			d.getDialogPane().setContent(putRequestDialogPair.getKey());
+			Button ok = (Button) d.getDialogPane().lookupButton(ButtonType.OK);
+			putRequestDialogPair.getValue().bindOkButton(ok);
+			Optional<ButtonType> result = d.showAndWait();
+			if (result.isPresent() && result.get().equals(ButtonType.OK)) {
+				cfdpEntity.request(putRequestDialogPair.getValue().createPutRequest());
+			}
+		} catch (IOException e) {
+			if(LOG.isLoggable(Level.SEVERE)) {
+				LOG.log(Level.SEVERE, String.format("Error while loading resource: %s", e.getMessage()), e);
+			}
+			DialogUtils.showError("Error while loading resource", "Cannot load resource: " + e.getMessage());
+		}
 	}
 
 	public void suspendButtonSelected(ActionEvent actionEvent) {
