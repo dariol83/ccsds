@@ -34,7 +34,7 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
  *
  * Ref. CCSDS 727.0-B-5, 3.4.14
  */
-public class FaultIndication implements ICfdpIndication {
+public class FaultIndication implements ICfdpTransactionIndication {
 
     private final long transactionId;
 
@@ -69,6 +69,7 @@ public class FaultIndication implements ICfdpIndication {
      *
      * @return the transaction ID
      */
+    @Override
     public long getTransactionId() {
         return transactionId;
     }
@@ -107,6 +108,7 @@ public class FaultIndication implements ICfdpIndication {
      *
      * @return the status report
      */
+    @Override
     public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }

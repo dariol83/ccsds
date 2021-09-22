@@ -44,7 +44,7 @@ import java.util.List;
  *
  * Ref. CCSDS 727.0-B-5, 3.4.8
  */
-public class TransactionFinishedIndication implements ICfdpIndication {
+public class TransactionFinishedIndication implements ICfdpTransactionIndication {
 
     private final long transactionId;
 
@@ -89,6 +89,7 @@ public class TransactionFinishedIndication implements ICfdpIndication {
      *
      * @return the transaction ID
      */
+    @Override
     public long getTransactionId() {
         return transactionId;
     }
@@ -147,6 +148,7 @@ public class TransactionFinishedIndication implements ICfdpIndication {
      *
      * @return the status report
      */
+    @Override
     public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }

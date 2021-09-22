@@ -31,7 +31,7 @@ import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
  *
  * Ref. CCSDS 727.0-B-5, 3.4.6
  */
-public class TransactionIndication implements ICfdpIndication {
+public class TransactionIndication implements ICfdpTransactionIndication {
 
     private final long transactionId;
 
@@ -62,6 +62,7 @@ public class TransactionIndication implements ICfdpIndication {
      *
      * @return the transaction ID
      */
+    @Override
     public long getTransactionId() {
         return transactionId;
     }
@@ -89,6 +90,7 @@ public class TransactionIndication implements ICfdpIndication {
      *
      * @return the status report
      */
+    @Override
     public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }

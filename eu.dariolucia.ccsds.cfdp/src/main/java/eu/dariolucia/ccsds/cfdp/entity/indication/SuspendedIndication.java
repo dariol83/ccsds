@@ -30,7 +30,7 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
  *
  * Ref. CCSDS 727.0-B-5, 3.4.11
  */
-public class SuspendedIndication implements ICfdpIndication {
+public class SuspendedIndication implements ICfdpTransactionIndication {
 
     private final long transactionId;
 
@@ -61,6 +61,7 @@ public class SuspendedIndication implements ICfdpIndication {
      *
      * @return the transaction ID
      */
+    @Override
     public long getTransactionId() {
         return transactionId;
     }
@@ -89,6 +90,7 @@ public class SuspendedIndication implements ICfdpIndication {
      *
      * @return the status report
      */
+    @Override
     public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }

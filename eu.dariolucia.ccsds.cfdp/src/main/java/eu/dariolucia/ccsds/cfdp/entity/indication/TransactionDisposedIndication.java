@@ -23,7 +23,7 @@ import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
  * to notify subscribers that a given CFDP transaction was disposed. As a consequence of the disposal, transaction will not
  * be able to process any PDU and receive any additional requests.
  */
-public class TransactionDisposedIndication implements ICfdpIndication {
+public class TransactionDisposedIndication implements ICfdpTransactionIndication {
 
     private final long transactionId;
 
@@ -51,6 +51,7 @@ public class TransactionDisposedIndication implements ICfdpIndication {
      *
      * @return the transaction ID
      */
+    @Override
     public long getTransactionId() {
         return transactionId;
     }
@@ -69,6 +70,7 @@ public class TransactionDisposedIndication implements ICfdpIndication {
      *
      * @return the status report
      */
+    @Override
     public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }

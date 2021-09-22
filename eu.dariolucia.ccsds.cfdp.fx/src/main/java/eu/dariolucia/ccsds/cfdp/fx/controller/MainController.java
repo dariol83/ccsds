@@ -16,9 +16,10 @@
 
 package eu.dariolucia.ccsds.cfdp.fx.controller;
 
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntity;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntitySubscriber;
-import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.entity.request.*;
 import eu.dariolucia.ccsds.cfdp.fx.application.CfdpFxTestTool;
 import eu.dariolucia.ccsds.cfdp.fx.dialogs.DialogUtils;
@@ -26,6 +27,7 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleLongProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -38,6 +40,8 @@ import javafx.util.Pair;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -47,16 +51,46 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 
 	private static final Logger LOG = Logger.getLogger(MainController.class.getName());
 
-	public Button putRequestButton;
-	public Button suspendButton;
-	public Button resumeButton;
-	public Button cancelButton;
-	public Button reportButton;
-	public Button promptNakButton;
-	public Button keepAliveButton;
+	@FXML
+	private Button putRequestButton;
+	@FXML
+	private Button suspendButton;
+	@FXML
+	private Button resumeButton;
+	@FXML
+	private Button cancelButton;
+	@FXML
+	private Button reportButton;
+	@FXML
+	private Button promptNakButton;
+	@FXML
+	private Button keepAliveButton;
 
-	public TableView<CfdpTransactionItem> transactionTable;
+	@FXML
+	private TableView<CfdpTransactionItem> transactionTable;
 
+	private final Map<Long, CfdpTransactionItem> transactionItemMap = new HashMap<>();
+
+	@FXML
+	private TableColumn<CfdpTransactionItem, Number> transactionIdColumn;
+	@FXML
+	private TableColumn<CfdpTransactionItem, Number> sourceIdColumn;
+	@FXML
+	private TableColumn<CfdpTransactionItem, Number> destinationIdColumn;
+	@FXML
+	private TableColumn<CfdpTransactionItem, String> directionColumn;
+	@FXML
+	private TableColumn<CfdpTransactionItem, String> sourceFileNameColumn;
+	@FXML
+	private TableColumn<CfdpTransactionItem, String> destinationFileNameColumn;
+	@FXML
+	private TableColumn<CfdpTransactionItem, Number> fileSizeColumn;
+	@FXML
+	private TableColumn<CfdpTransactionItem, String> ackTypeColumn;
+	@FXML
+	private TableColumn<CfdpTransactionItem, String> statusColumn;
+	@FXML
+	private TableColumn<CfdpTransactionItem, Number> progressColumn;
 	// Indication log part
 
 	@FXML
@@ -103,6 +137,16 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 		promptNakButton.disableProperty().bind(Bindings.isEmpty(transactionTable.getSelectionModel().getSelectedItems()));
 		keepAliveButton.disableProperty().bind(Bindings.isEmpty(transactionTable.getSelectionModel().getSelectedItems()));
 
+		// Register column factories
+		transactionIdColumn.setCellValueFactory(o -> o.getValue().transactionIdProperty());
+		sourceIdColumn.setCellValueFactory(o -> o.getValue().sourceIdProperty());
+		destinationIdColumn.setCellValueFactory(o -> o.getValue().destinationIdProperty());
+		directionColumn.setCellValueFactory(o -> o.getValue().directionProperty());
+		sourceFileNameColumn.setCellValueFactory(o -> o.getValue().sourceFileNameProperty());
+		destinationFileNameColumn.setCellValueFactory(o -> o.getValue().destinationFileNameProperty());
+		fileSizeColumn.setCellValueFactory(o -> o.getValue().fileSizeProperty());
+		statusColumn.setCellValueFactory(o -> o.getValue().stateProperty());
+		progressColumn.setCellValueFactory(o -> o.getValue().progressProperty());
 		// Ready to go
 	}
 
@@ -115,7 +159,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 		Optional<ButtonType> result = DialogUtils.showConfirmation("Clear",
 				"Are you sure to clear all collected application logs?", "Clear application logs",
 				new ImageView(((ImageView) clearLogButton.getGraphic()).getImage()));
-		if (result.get() == ButtonType.OK) {
+		if (result.isPresent() && result.get() == ButtonType.OK) {
 			clearLogArea();
 		}
 	}
@@ -168,7 +212,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 				"Do you want to issue a Suspend Request to transaction " + item.getTransactionId() + "?" ,
 				"New request for transaction " + item.getTransactionId(),
 				null);
-		if (result.get() == ButtonType.OK) {
+		if (result.isPresent() && result.get() == ButtonType.OK) {
 			cfdpEntity.request(new SuspendRequest(item.getTransactionId()));
 		}
 	}
@@ -182,7 +226,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 				"Do you want to issue a Resume Request to transaction " + item.getTransactionId() + "?" ,
 				"New request for transaction " + item.getTransactionId(),
 				null);
-		if (result.get() == ButtonType.OK) {
+		if (result.isPresent() && result.get() == ButtonType.OK) {
 			cfdpEntity.request(new ResumeRequest(item.getTransactionId()));
 		}
 	}
@@ -196,7 +240,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 				"Do you want to issue a Cancel Request to transaction " + item.getTransactionId() + "?" ,
 				"New request for transaction " + item.getTransactionId(),
 				null);
-		if (result.get() == ButtonType.OK) {
+		if (result.isPresent() && result.get() == ButtonType.OK) {
 			cfdpEntity.request(new CancelRequest(item.getTransactionId()));
 		}
 	}
@@ -210,7 +254,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 				"Do you want to issue a Report Request to transaction " + item.getTransactionId() + "?" ,
 				"New request for transaction " + item.getTransactionId(),
 				null);
-		if (result.get() == ButtonType.OK) {
+		if (result.isPresent() && result.get() == ButtonType.OK) {
 			cfdpEntity.request(new ReportRequest(item.getTransactionId()));
 		}
 	}
@@ -224,7 +268,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 				"Do you want to issue a Prompt Nak Request to transaction " + item.getTransactionId() + "?" ,
 				"New request for transaction " + item.getTransactionId(),
 				null);
-		if (result.get() == ButtonType.OK) {
+		if (result.isPresent() && result.get() == ButtonType.OK) {
 			cfdpEntity.request(new PromptNakRequest(item.getTransactionId()));
 		}
 	}
@@ -238,7 +282,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 				"Do you want to issue a Keep Alive Request to transaction " + item.getTransactionId() + "?" ,
 				"New request for transaction " + item.getTransactionId(),
 				null);
-		if (result.get() == ButtonType.OK) {
+		if (result.isPresent() && result.get() == ButtonType.OK) {
 			cfdpEntity.request(new KeepAliveRequest(item.getTransactionId()));
 		}
 	}
@@ -252,25 +296,63 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 	}
 
 	private void updateTransaction(ICfdpIndication indication) {
-		// TODO
+		if(indication instanceof ICfdpTransactionIndication) {
+			ICfdpTransactionIndication ind = (ICfdpTransactionIndication) indication;
+			CfdpTransactionItem item = this.transactionItemMap.get(ind.getTransactionId());
+			if(item == null) {
+				// Create and add to map
+				CfdpTransactionItem newItem = new CfdpTransactionItem(ind);
+				this.transactionItemMap.put(ind.getTransactionId(), newItem);
+				this.transactionTable.getItems().add(newItem);
+			} else {
+				// Update
+				item.update(ind);
+			}
+		}
 	}
 
-	private class CfdpTransactionItem {
+	private static class CfdpTransactionItem {
 
 		private final SimpleLongProperty sourceId = new SimpleLongProperty();
 		private final SimpleLongProperty destinationId = new SimpleLongProperty();
 		private final SimpleLongProperty transactionId = new SimpleLongProperty();
+		private final SimpleStringProperty direction = new SimpleStringProperty("-");
+		private final SimpleStringProperty sourceFileName = new SimpleStringProperty("");
+		private final SimpleStringProperty destinationFileName = new SimpleStringProperty("");
+		private final SimpleLongProperty fileSize = new SimpleLongProperty(0);
+		private final SimpleStringProperty state = new SimpleStringProperty("N/A");
+		private final SimpleLongProperty progress = new SimpleLongProperty(0);
 
-		public long getSourceId() {
-			return sourceId.get();
+		public CfdpTransactionItem(ICfdpTransactionIndication ind) {
+			update(ind);
+		}
+
+		public SimpleStringProperty directionProperty() {
+			return direction;
+		}
+
+		public SimpleStringProperty sourceFileNameProperty() {
+			return sourceFileName;
+		}
+
+		public SimpleStringProperty destinationFileNameProperty() {
+			return destinationFileName;
+		}
+
+		public SimpleLongProperty fileSizeProperty() {
+			return fileSize;
+		}
+
+		public SimpleStringProperty stateProperty() {
+			return state;
+		}
+
+		public SimpleLongProperty progressProperty() {
+			return progress;
 		}
 
 		public SimpleLongProperty sourceIdProperty() {
 			return sourceId;
-		}
-
-		public long getDestinationId() {
-			return destinationId.get();
 		}
 
 		public SimpleLongProperty destinationIdProperty() {
@@ -283,6 +365,39 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 
 		public SimpleLongProperty transactionIdProperty() {
 			return transactionId;
+		}
+
+		public void update(ICfdpTransactionIndication ind) {
+			if(ind instanceof TransactionIndication) {
+				String srcFileName = ((TransactionIndication) ind).getOriginatingRequest().getSourceFileName();
+				String destFileName = ((TransactionIndication) ind).getOriginatingRequest().getDestinationFileName();
+				if(srcFileName != null) {
+					sourceFileName.setValue(srcFileName);
+				}
+				if(destFileName != null) {
+					destinationFileName.setValue(destFileName);
+				}
+			} else if(ind instanceof MetadataRecvIndication) {
+				String srcFileName = ((MetadataRecvIndication) ind).getSourceFileName();
+				String destFileName = ((MetadataRecvIndication) ind).getDestinationFileName();
+				if(srcFileName != null) {
+					sourceFileName.setValue(srcFileName);
+				}
+				if(destFileName != null) {
+					destinationFileName.setValue(destFileName);
+				}
+			}
+			update(ind.getStatusReport());
+		}
+
+		private void update(CfdpTransactionStatus statusReport) {
+			sourceId.setValue(statusReport.getSourceEntityId());
+			destinationId.setValue(statusReport.getDestinationEntityId());
+			transactionId.setValue(statusReport.getTransactionId());
+			direction.setValue(statusReport.isDestination() ? "IN" : "OUT");
+			fileSize.setValue(statusReport.getTotalFileSize());
+			state.setValue(statusReport.getCfdpTransactionState().name());
+			progress.setValue((double) statusReport.getProgress() / (double) statusReport.getTotalFileSize());
 		}
 	}
 }

@@ -34,7 +34,7 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
  *
  * Ref. CCSDS 727.0-B-5, 3.4.15
  */
-public class AbandonedIndication implements ICfdpIndication {
+public class AbandonedIndication implements ICfdpTransactionIndication {
 
 
     private final long transactionId;
@@ -70,6 +70,7 @@ public class AbandonedIndication implements ICfdpIndication {
      *
      * @return the transaction ID
      */
+    @Override
     public long getTransactionId() {
         return transactionId;
     }
@@ -108,6 +109,7 @@ public class AbandonedIndication implements ICfdpIndication {
      *
      * @return the status report
      */
+    @Override
     public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }

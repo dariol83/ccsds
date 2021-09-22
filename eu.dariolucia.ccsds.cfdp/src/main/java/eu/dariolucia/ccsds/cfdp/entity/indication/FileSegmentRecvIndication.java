@@ -33,7 +33,7 @@ import java.util.Arrays;
  *
  * Ref. CCSDS 727.0-B-5, 3.4.10
  */
-public class FileSegmentRecvIndication implements ICfdpIndication {
+public class FileSegmentRecvIndication implements ICfdpTransactionIndication {
 
     private final long transactionId;
 
@@ -80,6 +80,7 @@ public class FileSegmentRecvIndication implements ICfdpIndication {
      *
      * @return the transaction ID
      */
+    @Override
     public long getTransactionId() {
         return transactionId;
     }
@@ -151,6 +152,7 @@ public class FileSegmentRecvIndication implements ICfdpIndication {
      *
      * @return the status report
      */
+    @Override
     public CfdpTransactionStatus getStatusReport() {
         return statusReport;
     }
