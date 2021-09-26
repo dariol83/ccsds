@@ -5,6 +5,7 @@ import javafx.fxml.Initializable;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+// TODO: add CFDP PDU decoding
 public class MainController implements Initializable {
 
     public static final String I_DO_NOT_KNOW = "I do not know...";
@@ -13,6 +14,6 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
+        // Not needed
     }
 }

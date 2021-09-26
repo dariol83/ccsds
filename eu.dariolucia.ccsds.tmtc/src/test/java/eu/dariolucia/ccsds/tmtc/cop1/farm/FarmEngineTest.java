@@ -31,8 +31,7 @@ import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class FarmEngineTest {
 
@@ -1040,6 +1039,16 @@ class FarmEngineTest {
         farm.dispose();
     }
 
+    @Test
+    public void testFarmStatus() {
+        FarmStatus status = new FarmStatus(2, new Clcw(new byte[] {0, 0, 0, 0}), FarmState.S1, FarmState.S2, FarmEvent.EventNumber.E4);
+        assertEquals(2, status.getBufferedTcFrames());
+        assertEquals(new Clcw(new byte[] {0, 0, 0, 0}), status.getLastClcw());
+        assertEquals(FarmState.S1, status.getPreviousState());
+        assertEquals(FarmState.S2, status.getCurrentState());
+        assertEquals(FarmEvent.EventNumber.E4, status.getEvent());
+        assertNotNull(status.toString());
+    }
 
     private static class FarmListenerStub implements IFarmObserver {
 

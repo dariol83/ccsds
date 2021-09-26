@@ -32,8 +32,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class FopEngineTest {
 
@@ -2026,6 +2025,22 @@ class FopEngineTest {
 
         fop.deregister(stub);
         fop.dispose();
+    }
+
+    @Test
+    public void testFopStatus() {
+        FopStatus status = new FopStatus(3,4,false, false, true, false,
+                FopState.S1, FopState.S4, FopEvent.EventNumber.E2);
+        assertEquals(3, status.getExpectedAckFrameSequenceNumber());
+        assertEquals(4, status.getSentQueueItems());
+        assertFalse(status.isWaitQueueFull());
+        assertFalse(status.isAdOutReadyFlag());
+        assertTrue(status.isBcOutReadyFlag());
+        assertFalse(status.isBdOutReadyFlag());
+        assertEquals(FopState.S1, status.getPreviousState());
+        assertEquals(FopState.S4, status.getCurrentState());
+        assertEquals(FopEvent.EventNumber.E2, status.getEvent());
+        assertNotNull(status.toString());
     }
 
     private static class FopListenerStub implements IFopObserver {
