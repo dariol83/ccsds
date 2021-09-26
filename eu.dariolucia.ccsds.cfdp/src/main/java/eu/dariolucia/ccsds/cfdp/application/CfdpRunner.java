@@ -55,20 +55,27 @@ public class CfdpRunner implements ICfdpEntitySubscriber {
         int tcpPort = DEFAULT_TCP_PORT;
         String mibPath = DEFAULT_MIB;
         String filestorePath = DEFAULT_FILESTORE;
-        for(int i = 0; i < args.length; ++i) {
-            if(args[i].equals(MIB_FLAG)) {
-                mibPath = args[++i];
-            } else if(args[i].equals(UDP_PORT_FLAG)) {
-                udpPort = Integer.parseInt(args[++i]);
-            } else if(args[i].equals(TCP_PORT_FLAG)) {
-                tcpPort = Integer.parseInt(args[++i]);
-            } else if(args[i].equals(FILESTORE_FLAG)) {
-                filestorePath = args[++i];
-            } else {
-                System.err.println("Cannot recognise argument: " + args[i]); // NOSONAR
-                printHelp();
-                System.exit(1);
+        int i = 0;
+        while(i < args.length) {
+            switch (args[i]) {
+                case MIB_FLAG:
+                    mibPath = args[++i];
+                    break;
+                case UDP_PORT_FLAG:
+                    udpPort = Integer.parseInt(args[++i]);
+                    break;
+                case TCP_PORT_FLAG:
+                    tcpPort = Integer.parseInt(args[++i]);
+                    break;
+                case FILESTORE_FLAG:
+                    filestorePath = args[++i];
+                    break;
+                default:
+                    System.err.println("Cannot recognise argument: " + args[i]); // NOSONAR
+                    printHelp();
+                    System.exit(1);
             }
+            ++i;
         }
 
         CfdpRunner runner = new CfdpRunner(udpPort, tcpPort, mibPath, filestorePath);

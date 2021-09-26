@@ -57,7 +57,7 @@ public class PutRequest implements ICfdpRequest {
 
     private final boolean segmentationControl;
 
-    private final Map<ConditionCode, FaultHandlerStrategy.Action> faultHandlerOverrideMap = new HashMap<>();
+    private final Map<ConditionCode, FaultHandlerStrategy.Action> faultHandlerOverrideMap = new EnumMap<>(ConditionCode.class);
 
     private final byte[] flowLabel;
 
