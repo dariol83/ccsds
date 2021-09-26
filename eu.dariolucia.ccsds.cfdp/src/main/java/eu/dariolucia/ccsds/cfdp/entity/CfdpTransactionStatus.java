@@ -37,10 +37,11 @@ public class CfdpTransactionStatus {
     private final CfdpTransactionState cfdpTransactionState;
     private final long progress;
     private final long totalFileSize;
+    private final CfdpTransmissionMode transmissionMode;
 
     public CfdpTransactionStatus(Instant time, ICfdpEntity managingEntity, long transactionId, long sourceEntityId, long destinationEntityId,  // NOSONAR: long constructor
                                  boolean isDestination, ConditionCode lastConditionCode, Long lastFaultEntity, CfdpTransactionState cfdpTransactionState,
-                                 long progress, long totalFileSize) {
+                                 long progress, long totalFileSize, CfdpTransmissionMode transmissionMode) {
         this.time = time;
         this.managingEntity = managingEntity;
         this.transactionId = transactionId;
@@ -52,6 +53,7 @@ public class CfdpTransactionStatus {
         this.progress = progress;
         this.totalFileSize = totalFileSize;
         this.lastFaultEntity = lastFaultEntity;
+        this.transmissionMode = transmissionMode;
     }
 
     public Instant getTime() {
@@ -98,6 +100,10 @@ public class CfdpTransactionStatus {
         return lastFaultEntity;
     }
 
+    public CfdpTransmissionMode getTransmissionMode() {
+        return transmissionMode;
+    }
+
     @Override
     public String toString() {
         return "CfdpTransactionStatus{" +
@@ -112,6 +118,7 @@ public class CfdpTransactionStatus {
                 ", cfdpTransactionState=" + getCfdpTransactionState() +
                 ", progress=" + getProgress() +
                 ", totalFileSize=" + getTotalFileSize() +
+                ", transmissionMode=" + getTransmissionMode() +
                 '}';
     }
 }

@@ -50,6 +50,7 @@ import java.util.logging.Logger;
 public class MainController implements Initializable, ICfdpEntitySubscriber {
 
 	private static final Logger LOG = Logger.getLogger(MainController.class.getName());
+	private static final int MAX_INDICATION_SIZE = 5000;
 
 	@FXML
 	private Button putRequestButton;
@@ -90,7 +91,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 	@FXML
 	private TableColumn<CfdpTransactionItem, String> statusColumn;
 	@FXML
-	private TableColumn<CfdpTransactionItem, Number> progressColumn;
+	private TableColumn<CfdpTransactionItem, String> progressColumn;
 	// Indication log part
 
 	@FXML
@@ -147,6 +148,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 		fileSizeColumn.setCellValueFactory(o -> o.getValue().fileSizeProperty());
 		statusColumn.setCellValueFactory(o -> o.getValue().stateProperty());
 		progressColumn.setCellValueFactory(o -> o.getValue().progressProperty());
+		ackTypeColumn.setCellValueFactory(o -> o.getValue().ackTypeProperty());
 		// Ready to go
 	}
 
@@ -170,7 +172,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 
 	@FXML
 	private void saveLogsMenuItemSelected(ActionEvent e) {
-
+		// TODO
 	}
 
 	@FXML
@@ -291,6 +293,9 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 	public void indication(ICfdpEntity emitter, ICfdpIndication indication) {
 		Platform.runLater(() -> {
 			logTableView.getItems().add(indication);
+			if(logTableView.getItems().size() > MAX_INDICATION_SIZE) {
+				logTableView.getItems().remove(0, 100); // Remove always 100 entries to avoid too many 1-remove every time
+			}
 			updateTransaction(indication);
 		});
 	}
@@ -321,7 +326,9 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 		private final SimpleStringProperty destinationFileName = new SimpleStringProperty("");
 		private final SimpleLongProperty fileSize = new SimpleLongProperty(0);
 		private final SimpleStringProperty state = new SimpleStringProperty("N/A");
-		private final SimpleLongProperty progress = new SimpleLongProperty(0);
+		private final SimpleStringProperty progress = new SimpleStringProperty("N/A");
+		private final SimpleStringProperty ackType = new SimpleStringProperty("N/A");
+
 
 		public CfdpTransactionItem(ICfdpTransactionIndication ind) {
 			update(ind);
@@ -347,7 +354,7 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 			return state;
 		}
 
-		public SimpleLongProperty progressProperty() {
+		public SimpleStringProperty progressProperty() {
 			return progress;
 		}
 
@@ -365,6 +372,10 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 
 		public SimpleLongProperty transactionIdProperty() {
 			return transactionId;
+		}
+
+		public SimpleStringProperty ackTypeProperty() {
+			return ackType;
 		}
 
 		public void update(ICfdpTransactionIndication ind) {
@@ -397,7 +408,9 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 			direction.setValue(statusReport.isDestination() ? "IN" : "OUT");
 			fileSize.setValue(statusReport.getTotalFileSize());
 			state.setValue(statusReport.getCfdpTransactionState().name());
-			progress.setValue((double) statusReport.getProgress() / (double) statusReport.getTotalFileSize());
+			double progressPercentage = (double) statusReport.getProgress() / (double) statusReport.getTotalFileSize();
+			progress.setValue((long) (progressPercentage * 100) + "%");
+			ackType.setValue(statusReport.getTransmissionMode().toString());
 		}
 	}
 }

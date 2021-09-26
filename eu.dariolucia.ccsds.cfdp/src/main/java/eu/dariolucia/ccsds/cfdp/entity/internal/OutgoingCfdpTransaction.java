@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.entity.internal;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransmissionMode;
 import eu.dariolucia.ccsds.cfdp.entity.FaultDeclaredException;
 import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
@@ -107,6 +108,17 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     @Override
     protected long getTotalFileSize() {
         return this.totalFileSize;
+    }
+
+    @Override
+    protected CfdpTransmissionMode getTransmissionMode() {
+        if(isAcknowledged()) {
+            return CfdpTransmissionMode.CLASS_2;
+        } else if(isClosureRequested()) {
+            return CfdpTransmissionMode.CLASS_1_CLOSURE;
+        } else {
+            return CfdpTransmissionMode.CLASS_1;
+        }
     }
 
     private void handleKeepAlivePdu(KeepAlivePdu pdu) {
@@ -503,6 +515,22 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             return;
         }
         this.active = true;
+        // If the file must be sent, then get here the file size, so that it can go in the notification.
+        // Failing in retrieve the file size triggers just a warning, as the real error will occur later.
+        try {
+            if (isFileToBeSent()) {
+                if (getEntity().getFilestore().isUnboundedFile(request.getSourceFileName())) {
+                    this.totalFileSize = 0;
+                } else {
+                    this.totalFileSize = getEntity().getFilestore().fileSize(request.getSourceFileName());
+                }
+            }
+        } catch (FilestoreException e) {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: cannot determine the size/bounds of the file %s: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), request.getSourceFileName(), e.getMessage()), e);
+            }
+            this.totalFileSize = 0;
+        }
         // Notify the creation of the new transaction to the subscriber
         getEntity().notifyIndication(new TransactionIndication(getTransactionId(), request, createStateObject()));
         // Before we even start doing something, check if the file is there
@@ -771,18 +799,6 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             // File data
             b.setSourceFileName(request.getSourceFileName());
             b.setDestinationFileName(request.getDestinationFileName());
-            try {
-                if (getEntity().getFilestore().isUnboundedFile(request.getSourceFileName())) {
-                    this.totalFileSize = 0;
-                } else {
-                    this.totalFileSize = getEntity().getFilestore().fileSize(request.getSourceFileName());
-                }
-            } catch (FilestoreException e) {
-                if(LOG.isLoggable(Level.WARNING)) {
-                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: cannot determine the size/bounds of the file %s: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), request.getSourceFileName(), e.getMessage()), e);
-                }
-                this.totalFileSize = 0;
-            }
             b.setFileSize(this.totalFileSize);
         }
         // Segment metadata not present

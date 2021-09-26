@@ -101,7 +101,7 @@
 										</ToolBar>
 				                  		<TableView fx:id="logTableView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="100" VBox.vgrow="ALWAYS">
 											<columns>
-												<TableColumn prefWidth="840.0" resizable="false" text="Indication" />
+												<TableColumn prefWidth="840.0" resizable="true" text="Indication" />
 											</columns>
 										</TableView>
 				               </children>

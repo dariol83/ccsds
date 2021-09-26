@@ -18,6 +18,8 @@ package eu.dariolucia.ccsds.cfdp.entity.internal;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionState;
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransmissionMode;
 import eu.dariolucia.ccsds.cfdp.entity.FaultDeclaredException;
 import eu.dariolucia.ccsds.cfdp.entity.indication.*;
 import eu.dariolucia.ccsds.cfdp.filestore.FilestoreException;
@@ -87,6 +89,8 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     // will resume also the NAK timer.
     private boolean nakTimerOnEofActivated;
 
+    private CfdpTransmissionMode transmissionMode;
+
     public IncomingCfdpTransaction(CfdpPdu pdu, CfdpEntity entity) {
         super(pdu.getTransactionSequenceNumber(), entity, pdu.getSourceEntityId());
         this.initialPdu = pdu;
@@ -98,6 +102,12 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: fail on local temp file creation: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
             }
             throw new CfdpRuntimeException(e);
+        }
+        // Derive transmission mode
+        if(pdu.isAcknowledged()) {
+            transmissionMode = CfdpTransmissionMode.CLASS_2;
+        } else {
+            transmissionMode = CfdpTransmissionMode.CLASS_1;
         }
         overrideHandlers(entity.getMib().getLocalEntity().getFaultHandlerMap());
     }
@@ -226,6 +236,11 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         return 0;
     }
 
+    @Override
+    protected CfdpTransmissionMode getTransmissionMode() {
+        return this.transmissionMode;
+    }
+
     private void handlePromptPdu(PromptPdu pdu) {
         if(isAcknowledged()) {
             if(pdu.isNakResponseRequired()) {
@@ -247,6 +262,10 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
             return;
         }
         this.metadataPdu = pdu;
+        // Derive the transmission mode
+        if(this.metadataPdu.isClosureRequested() && this.transmissionMode == CfdpTransmissionMode.CLASS_1) {
+            this.transmissionMode = CfdpTransmissionMode.CLASS_1_CLOSURE;
+        }
         // 4.6.1.2.3 The receiving CFDP entity shall store fault handler overrides, file size, flow label,
         // and file name information contained in the Metadata PDU and use it for subsequent
         // processing of the transaction.
@@ -1051,8 +1070,11 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 setLastConditionCode(ConditionCode.CC_NOERROR, null);
             }
         }
-        // If 'cancelled', i.e. completed = false, then do not modify the last condition code
-
+        // If 'cancelled', i.e. completed = false, then do not modify the last condition code,
+        // but set the state to CANCELLED, if it was RUNNING
+        if(!completed && getCurrentState() == CfdpTransactionState.RUNNING && getLastConditionCode() == ConditionCode.CC_CANCEL_REQUEST_RECEIVED) {
+            setCancelled();
+        }
         // 4.11.1.2.2 In any case,
         // a) if the receiving entity is the transaction’s destination, and the procedure disposition
         //    cited in the Notice of Completion is ‘Completed’, the receiving CFDP entity shall

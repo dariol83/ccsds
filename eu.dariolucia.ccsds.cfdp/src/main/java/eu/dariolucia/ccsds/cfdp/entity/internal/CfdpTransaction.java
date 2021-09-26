@@ -19,6 +19,7 @@ package eu.dariolucia.ccsds.cfdp.entity.internal;
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
 import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionState;
 import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
+import eu.dariolucia.ccsds.cfdp.entity.CfdpTransmissionMode;
 import eu.dariolucia.ccsds.cfdp.entity.FaultDeclaredException;
 import eu.dariolucia.ccsds.cfdp.entity.indication.AbandonedIndication;
 import eu.dariolucia.ccsds.cfdp.entity.indication.FaultIndication;
@@ -34,10 +35,7 @@ import eu.dariolucia.ccsds.cfdp.ut.IUtLayer;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -57,7 +55,7 @@ public abstract class CfdpTransaction {
 
     private final ExecutorService confiner;
 
-    private final Map<ConditionCode, FaultHandlerStrategy.Action> faultHandlers = new HashMap<>();
+    private final Map<ConditionCode, FaultHandlerStrategy.Action> faultHandlers = new EnumMap<>(ConditionCode.class);
 
     private final Timer timer;
     // Timer for the transaction inactivity limit
@@ -539,7 +537,7 @@ public abstract class CfdpTransaction {
 
     protected CfdpTransactionStatus createStateObject() {
         return new CfdpTransactionStatus(Instant.now(), getEntity(), getTransactionId(), getSourceEntityId(), getDestinationEntityId(), getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId(),
-                getLastConditionCode(), getLastFaultEntityAsLong(), getCurrentState(), getProgress(), getTotalFileSize());
+                getLastConditionCode(), getLastFaultEntityAsLong(), getCurrentState(), getProgress(), getTotalFileSize(), getTransmissionMode());
     }
 
     protected abstract long getSourceEntityId();
@@ -569,6 +567,8 @@ public abstract class CfdpTransaction {
     protected abstract long getProgress();
 
     protected abstract long getTotalFileSize();
+
+    protected abstract CfdpTransmissionMode getTransmissionMode();
 
     protected abstract void forwardPdu(CfdpPdu pdu) throws UtLayerException;
 }
