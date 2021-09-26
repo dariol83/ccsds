@@ -19,13 +19,15 @@ package eu.dariolucia.ccsds.cfdp.fx.controller;
 import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionStatus;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntity;
 import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntitySubscriber;
-import eu.dariolucia.ccsds.cfdp.entity.indication.*;
+import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpTransactionIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.MetadataRecvIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.TransactionIndication;
 import eu.dariolucia.ccsds.cfdp.entity.request.*;
 import eu.dariolucia.ccsds.cfdp.fx.application.CfdpFxTestTool;
 import eu.dariolucia.ccsds.cfdp.fx.dialogs.DialogUtils;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.event.ActionEvent;
@@ -40,17 +42,24 @@ import javafx.util.Pair;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 public class MainController implements Initializable, ICfdpEntitySubscriber {
 
 	private static final Logger LOG = Logger.getLogger(MainController.class.getName());
-	private static final int MAX_INDICATION_SIZE = 5000;
+
+	private static final String LOG_FORMAT = "[%1$tF %1$tT] [%2$-7s] %3$s %n";
+	private static final String LOG_PACKAGE = "eu.dariolucia.ccsds.cfdp";
+	private static final int MAX_LOG_RECORDS = 2000;
+
+	@FXML
+	private SplitPane mainSplitPane;
+
+	// Toolbar
 
 	@FXML
 	private Button putRequestButton;
@@ -66,6 +75,8 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 	private Button promptNakButton;
 	@FXML
 	private Button keepAliveButton;
+
+	// Main transaction table
 
 	@FXML
 	private TableView<CfdpTransactionItem> transactionTable;
@@ -92,28 +103,33 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 	private TableColumn<CfdpTransactionItem, String> statusColumn;
 	@FXML
 	private TableColumn<CfdpTransactionItem, String> progressColumn;
-	// Indication log part
 
-	@FXML
-	private TableView<ICfdpIndication> logTableView;
+	// Log part
 
 	@FXML
 	private Button saveAsLogButton;
-
 	@FXML
 	private Button clearLogButton;
+	@FXML
+	private TextArea logTextArea;
+	@FXML
+	public TitledPane logTitledPane;
+	@FXML
+	private ChoiceBox<Level> logLevelChoiceBox;
 
+	private int logLines = 0;
+
+	private Handler logHandler;
+
+	// The CFDP entity
 
 	private ICfdpEntity cfdpEntity;
+
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		this.cfdpEntity = CfdpFxTestTool.getCfdpEntity();
-
-		// Log table renderer
-		((TableColumn<ICfdpIndication, String>) logTableView.getColumns().get(0))
-				.setCellValueFactory(o -> new ReadOnlyObjectWrapper<>(buildTableMessage(o.getValue())));
 
 		// Button graphics
 		{
@@ -149,11 +165,34 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 		statusColumn.setCellValueFactory(o -> o.getValue().stateProperty());
 		progressColumn.setCellValueFactory(o -> o.getValue().progressProperty());
 		ackTypeColumn.setCellValueFactory(o -> o.getValue().ackTypeProperty());
-		// Ready to go
-	}
 
-	protected String buildTableMessage(ICfdpIndication value) {
-		return value.toString();
+		// Set the log handler
+		this.logHandler = new Handler() {
+			@Override
+			public void publish(LogRecord record) {
+				appendLogLine(record);
+			}
+
+			@Override
+			public void flush() { }
+
+			@Override
+			public void close() throws SecurityException { }
+		};
+		Logger.getLogger(LOG_PACKAGE).addHandler(this.logHandler);
+
+		this.logTitledPane.expandedProperty().addListener((observableValue, aBoolean, t1) -> {
+			if(!logTitledPane.isExpanded()) {
+				mainSplitPane.setDividerPosition(0, 1.0);
+			}
+		});
+		this.logHandler.setLevel(Level.INFO);
+		this.logLevelChoiceBox.getItems().addAll(Level.SEVERE, Level.WARNING, Level.INFO, Level.FINE); // Rest not added, too many logs
+		this.logLevelChoiceBox.getSelectionModel().select(Level.INFO);
+		this.logLevelChoiceBox.getSelectionModel().selectedItemProperty().addListener((observableValue, level, t1) -> {
+			logHandler.setLevel(t1);
+		});
+		// Ready to go
 	}
 
 	@FXML
@@ -167,12 +206,29 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 	}
 
 	private void clearLogArea() {
-		this.logTableView.getItems().removeAll(this.logTableView.getItems());
+		this.logTextArea.clear();
 	}
 
 	@FXML
 	private void saveLogsMenuItemSelected(ActionEvent e) {
 		// TODO
+	}
+
+	private void appendLogLine(LogRecord record) {
+		String toAppend = String.format(LOG_FORMAT,
+				new Date(record.getMillis()),
+				record.getLevel().getLocalizedName(),
+				record.getMessage());
+		if(record.getLevel().intValue() >= logHandler.getLevel().intValue()) {
+			Platform.runLater(() -> {
+				++logLines;
+				logTextArea.appendText(toAppend);
+				while (logLines > MAX_LOG_RECORDS) {
+					logTextArea.deleteText(0, logTextArea.getText().indexOf('\n') + 1);
+					--logLines;
+				}
+			});
+		}
 	}
 
 	@FXML
@@ -291,11 +347,8 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 
 	@Override
 	public void indication(ICfdpEntity emitter, ICfdpIndication indication) {
+
 		Platform.runLater(() -> {
-			logTableView.getItems().add(indication);
-			if(logTableView.getItems().size() > MAX_INDICATION_SIZE) {
-				logTableView.getItems().remove(0, 100); // Remove always 100 entries to avoid too many 1-remove every time
-			}
 			updateTransaction(indication);
 		});
 	}

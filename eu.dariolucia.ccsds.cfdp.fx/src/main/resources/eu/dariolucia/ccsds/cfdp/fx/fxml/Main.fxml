@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
 <!--
   ~  Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
@@ -89,25 +90,22 @@
 		        <panes>
 		          <TitledPane fx:id="logTitledPane" animated="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Indication Log">
 		               <content>
-		               <ScrollPane fitToHeight="true" fitToWidth="true" minHeight="160.0" pannable="false">
-						<content>
 				            <VBox minHeight="140">
 				               <children>
 				               	       <ToolBar minHeight="40.0" prefHeight="40.0" prefWidth="200.0">
 											<items>
 												<Button fx:id="saveAsLogButton" mnemonicParsing="false" onAction="#saveLogsMenuItemSelected" prefWidth="120.0" text="Save As..." />
 												<Button fx:id="clearLogButton" mnemonicParsing="false" onAction="#clearLogMenuItemSelected" prefWidth="120.0" text="Clear..." />
+                                    <ChoiceBox fx:id="logLevelChoiceBox" prefWidth="150.0" />
 											</items>
 										</ToolBar>
-				                  		<TableView fx:id="logTableView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="100" VBox.vgrow="ALWAYS">
-											<columns>
-												<TableColumn prefWidth="840.0" resizable="true" text="Indication" />
-											</columns>
-										</TableView>
+                                  <TextArea fx:id="logTextArea" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+                                     <font>
+                                        <Font name="Monospaced Regular" size="11.0" />
+                                     </font>
+                                  </TextArea>
 				               </children>
 				            </VBox>
-			             </content>
-			            </ScrollPane>
 		        	   </content>
 		       	  </TitledPane>
 		     	</panes>

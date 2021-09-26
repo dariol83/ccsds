@@ -76,7 +76,7 @@ public class CfdpFxTestTool extends Application {
 			Scene scene = new Scene(root,1600,960);
 			primaryStage.getIcons().add(new Image(CfdpFxTestTool.class.getResourceAsStream("/eu/dariolucia/ccsds/cfdp/fx/images/monitor.png")));
 			primaryStage.setScene(scene);
-			primaryStage.setTitle(NAME + " " + VERSION);
+			primaryStage.setTitle(NAME + " " + VERSION + " - CFDP Entity: " + cfdpEntity.getMib().getLocalEntity().getLocalEntityId() + " - Filestore: " + filestorePath);
 			primaryStage.setOnCloseRequest(CfdpFxTestTool::performExit);
 			primaryStage.show();
 
