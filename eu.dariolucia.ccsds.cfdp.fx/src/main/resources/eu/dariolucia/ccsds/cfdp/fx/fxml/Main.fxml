@@ -77,12 +77,12 @@
                         <TableColumn fx:id="sourceIdColumn" prefWidth="75.0" text="Source ID" />
                         <TableColumn fx:id="destinationIdColumn" prefWidth="75.0" text="Dest. ID" />
                         <TableColumn fx:id="directionColumn" prefWidth="75.0" text="Direction" />
-                        <TableColumn fx:id="sourceFileNameColumn" prefWidth="175.0" text="Source File" />
-                        <TableColumn fx:id="destinationFileNameColumn" prefWidth="175.0" text="Dest. File" />
+                        <TableColumn fx:id="sourceFileNameColumn" prefWidth="200.0" text="Source File" />
+                        <TableColumn fx:id="destinationFileNameColumn" prefWidth="200.0" text="Dest. File" />
                         <TableColumn fx:id="fileSizeColumn" prefWidth="75.0" text="Size" />
-                        <TableColumn fx:id="ackTypeColumn" prefWidth="75.0" text="Class" />
-                        <TableColumn fx:id="statusColumn" prefWidth="75.0" text="Status" />
-                        <TableColumn fx:id="progressColumn" prefWidth="200.0" text="Progress" />
+                        <TableColumn fx:id="ackTypeColumn" prefWidth="100.0" text="Class" />
+                        <TableColumn fx:id="statusColumn" prefWidth="100.0" text="Status" />
+                        <TableColumn fx:id="progressColumn" prefWidth="100.0" text="Progress" />
                     </columns>
                   </TableView>
                </children></HBox>

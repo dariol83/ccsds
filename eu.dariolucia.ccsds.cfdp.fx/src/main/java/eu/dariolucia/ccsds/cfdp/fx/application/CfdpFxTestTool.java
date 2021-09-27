@@ -73,7 +73,7 @@ public class CfdpFxTestTool extends Application {
 	public void start(Stage primaryStage) {
 		try {
 			VBox root = FXMLLoader.load(CfdpFxTestTool.class.getResource("/eu/dariolucia/ccsds/cfdp/fx/fxml/Main.fxml"));
-			Scene scene = new Scene(root,1600,960);
+			Scene scene = new Scene(root,1150,768);
 			primaryStage.getIcons().add(new Image(CfdpFxTestTool.class.getResourceAsStream("/eu/dariolucia/ccsds/cfdp/fx/images/monitor.png")));
 			primaryStage.setScene(scene);
 			primaryStage.setTitle(NAME + " " + VERSION + " - CFDP Entity: " + cfdpEntity.getMib().getLocalEntity().getLocalEntityId() + " - Filestore: " + filestorePath);

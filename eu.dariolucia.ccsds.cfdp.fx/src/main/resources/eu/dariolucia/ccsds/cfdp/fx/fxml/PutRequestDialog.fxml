@@ -51,10 +51,10 @@
                   <ListView fx:id="filestoreRequestListView" maxHeight="130.0" HBox.hgrow="ALWAYS" />
                   <VBox spacing="5.0">
                      <children>
-                        <Button fx:id="filestoreRequestAddButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestAddButtonClicked" text="+" />
-                        <Button fx:id="filestoreRequestRemoveButton" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestRemoveButtonClicked" text="-" />
-                        <Button fx:id="filestoreRequestMoveUpButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestMoveUpButtonClicked" text="^" />
-                        <Button fx:id="filestoreRequestMoveDownButton" layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestMoveDownButtonClicked" text="v" />
+                        <Button fx:id="filestoreRequestAddButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestAddButtonClicked" />
+                        <Button fx:id="filestoreRequestRemoveButton" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestRemoveButtonClicked" />
+                        <Button fx:id="filestoreRequestMoveUpButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestMoveUpButtonClicked" />
+                        <Button fx:id="filestoreRequestMoveDownButton" layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" onAction="#filestoreRequestMoveDownButtonClicked" />
                      </children>
                   </VBox>
                </children>
@@ -71,7 +71,7 @@
             <HBox spacing="5.0">
                <children>
                   <TextField fx:id="messageToUserTextField" minWidth="200.0" promptText="Use hex dump" HBox.hgrow="ALWAYS" />
-                  <Button fx:id="messageToUserAddButton" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserAddButtonClicked" text="+" />
+                  <Button fx:id="messageToUserAddButton" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserAddButtonClicked" />
                </children>
             </HBox>
             <HBox prefHeight="100.0" prefWidth="200.0" spacing="5.0">
@@ -79,9 +79,9 @@
                   <ListView fx:id="messageToUserListView" maxHeight="100.0" HBox.hgrow="ALWAYS" />
                   <VBox spacing="5.0" HBox.hgrow="NEVER">
                      <children>
-                        <Button fx:id="messageToUserRemoveButton" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserRemoveButtonClicked" text="-" />
-                        <Button fx:id="messageToUserMoveUpButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserMoveUpButtonClicked" text="^" />
-                        <Button fx:id="messageToUserMoveDownButton" layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserMoveDownButtonClicked" text="v" />
+                        <Button fx:id="messageToUserRemoveButton" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserRemoveButtonClicked" />
+                        <Button fx:id="messageToUserMoveUpButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserMoveUpButtonClicked" />
+                        <Button fx:id="messageToUserMoveDownButton" layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" onAction="#messageToUserMoveDownButtonClicked" />
                      </children>
                   </VBox>
                </children>
@@ -103,7 +103,7 @@
                         <ChoiceBox fx:id="faultHandlerActionCombo" minWidth="200.0" HBox.hgrow="ALWAYS" />
                      </children>
                   </HBox>
-                  <Button fx:id="faultHandlerAddButton" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerAddButtonClicked" text="+" />
+                  <Button fx:id="faultHandlerAddButton" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerAddButtonClicked" />
                </children>
             </HBox>
             <HBox spacing="5.0">
@@ -111,9 +111,9 @@
                   <ListView fx:id="faultHandlerListView" maxHeight="100.0" HBox.hgrow="ALWAYS" />
                   <VBox spacing="5.0" HBox.hgrow="NEVER">
                      <children>
-                        <Button fx:id="faultHandlerRemoveButton" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerRemoveButtonClicked" text="-" />
-                        <Button fx:id="faultHandlerMoveUpButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerMoveUpButtonClicked" text="^" />
-                        <Button fx:id="faultHandlerMoveDownButton" layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerMoveDownButtonClicked" text="v" />
+                        <Button fx:id="faultHandlerRemoveButton" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerRemoveButtonClicked" />
+                        <Button fx:id="faultHandlerMoveUpButton" layoutX="10.0" layoutY="10.0" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerMoveUpButtonClicked" />
+                        <Button fx:id="faultHandlerMoveDownButton" layoutX="10.0" layoutY="34.0" minWidth="32.0" mnemonicParsing="false" onAction="#faultHandlerMoveDownButtonClicked" />
                      </children>
                   </VBox>
                </children>

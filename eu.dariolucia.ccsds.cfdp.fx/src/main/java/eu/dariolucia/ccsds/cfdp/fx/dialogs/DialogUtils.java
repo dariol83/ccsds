@@ -17,11 +17,10 @@
 package eu.dariolucia.ccsds.cfdp.fx.dialogs;
 
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 
@@ -33,41 +32,9 @@ import java.util.logging.LogRecord;
 
 public class DialogUtils {
 
-	public static void showLogRecordDetails(String title, LogRecord record) {
-		Alert dialog = new Alert(AlertType.INFORMATION);
-		dialog.setTitle(title + " - " + new Date(record.getMillis()));
-		dialog.setHeaderText(null);
-		dialog.setContentText(record.getLevel() + "\n\n" + record.getMessage());
-
-		if(record.getThrown() != null) {
-			Throwable ex = record.getThrown();
-	
-			// Create expandable Exception.
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			ex.printStackTrace(pw);
-			String exceptionText = sw.toString();
-	
-			Label label = new Label("Exception stacktrace:");
-	
-			TextArea textArea = new TextArea(exceptionText);
-			textArea.setEditable(false);
-			textArea.setWrapText(true);
-	
-			textArea.setMaxWidth(Double.MAX_VALUE);
-			textArea.setMaxHeight(Double.MAX_VALUE);
-			GridPane.setVgrow(textArea, Priority.ALWAYS);
-			GridPane.setHgrow(textArea, Priority.ALWAYS);
-	
-			GridPane expContent = new GridPane();
-			expContent.setMaxWidth(Double.MAX_VALUE);
-			expContent.add(label, 0, 0);
-			expContent.add(textArea, 0, 1);
-	
-			dialog.getDialogPane().setExpandableContent(expContent);
-		}
-		
-		dialog.showAndWait();
+	public static void attachImage(Class<?> clazz, Button b, String path) {
+		Image image = new Image(clazz.getResourceAsStream(path));
+		b.setGraphic(new ImageView(image));
 	}
 	
 	public static void showInfo(String title, String text) {

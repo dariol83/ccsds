@@ -35,7 +35,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Modality;
 import javafx.util.Pair;
@@ -125,23 +124,15 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 
 	private ICfdpEntity cfdpEntity;
 
-
-	@SuppressWarnings("unchecked")
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		this.cfdpEntity = CfdpFxTestTool.getCfdpEntity();
 
+		this.transactionTable.setPlaceholder(new Label("No transactions"));
+
 		// Button graphics
-		{
-			Image image = new Image(getClass()
-					.getResourceAsStream("/eu/dariolucia/ccsds/cfdp/fx/images/save.png"));
-			this.saveAsLogButton.setGraphic(new ImageView(image));
-		}
-		{
-			Image image = new Image(getClass()
-					.getResourceAsStream("/eu/dariolucia/ccsds/cfdp/fx/images/trash-2.png"));
-			this.clearLogButton.setGraphic(new ImageView(image));
-		}
+		DialogUtils.attachImage(getClass(), this.saveAsLogButton, "/eu/dariolucia/ccsds/cfdp/fx/images/save.png");
+		DialogUtils.attachImage(getClass(), this.clearLogButton, "/eu/dariolucia/ccsds/cfdp/fx/images/trash-2.png");
 
 		// Register this subscriber to the CFDP entity
 		this.cfdpEntity.register(this);

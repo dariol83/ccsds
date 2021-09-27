@@ -31,6 +31,10 @@ import java.util.logging.Logger;
 public class PutRequestDialogController implements Initializable {
 
     private static final Logger LOG = Logger.getLogger(PutRequestDialogController.class.getName());
+    public static final String ADD_IMAGE = "/eu/dariolucia/ccsds/cfdp/fx/images/plus.png";
+    public static final String REMOVE_IMAGE = "/eu/dariolucia/ccsds/cfdp/fx/images/minus.png";
+    public static final String MOVE_UP_IMAGE = "/eu/dariolucia/ccsds/cfdp/fx/images/arrowhead-up.png";
+    public static final String MOVE_DOWN_IMAGE = "/eu/dariolucia/ccsds/cfdp/fx/images/arrowhead-down.png";
 
     @FXML
     private ChoiceBox<Long> destinationEntityCombo;
@@ -137,9 +141,9 @@ public class PutRequestDialogController implements Initializable {
         faultHandlerMoveUpButton.disableProperty().bind(faultHandlerListView.getSelectionModel().selectedItemProperty().isNull());
         faultHandlerMoveDownButton.disableProperty().bind(faultHandlerListView.getSelectionModel().selectedItemProperty().isNull());
 
-        messageToUserRemoveButton.disableProperty().bind(faultHandlerListView.getSelectionModel().selectedItemProperty().isNull());
-        messageToUserMoveUpButton.disableProperty().bind(faultHandlerListView.getSelectionModel().selectedItemProperty().isNull());
-        messageToUserMoveDownButton.disableProperty().bind(faultHandlerListView.getSelectionModel().selectedItemProperty().isNull());
+        messageToUserRemoveButton.disableProperty().bind(messageToUserListView.getSelectionModel().selectedItemProperty().isNull());
+        messageToUserMoveUpButton.disableProperty().bind(messageToUserListView.getSelectionModel().selectedItemProperty().isNull());
+        messageToUserMoveDownButton.disableProperty().bind(messageToUserListView.getSelectionModel().selectedItemProperty().isNull());
 
         closureCheckbox.disableProperty().bind(acknowledgedCheckbox.selectedProperty());
 
@@ -148,6 +152,22 @@ public class PutRequestDialogController implements Initializable {
         segmentationControlCheckbox.disableProperty().bind(fileTransferCheckbox.selectedProperty().not());
 
         flowLabelTextField.disableProperty().bind(flowLabelCheckbox.selectedProperty().not());
+
+        // Graphics
+        DialogUtils.attachImage(getClass(), messageToUserAddButton, ADD_IMAGE);
+        DialogUtils.attachImage(getClass(), messageToUserRemoveButton, REMOVE_IMAGE);
+        DialogUtils.attachImage(getClass(), messageToUserMoveUpButton, MOVE_UP_IMAGE);
+        DialogUtils.attachImage(getClass(), messageToUserMoveDownButton, MOVE_DOWN_IMAGE);
+
+        DialogUtils.attachImage(getClass(), faultHandlerAddButton, ADD_IMAGE);
+        DialogUtils.attachImage(getClass(), faultHandlerRemoveButton, REMOVE_IMAGE);
+        DialogUtils.attachImage(getClass(), faultHandlerMoveUpButton, MOVE_UP_IMAGE);
+        DialogUtils.attachImage(getClass(), faultHandlerMoveDownButton, MOVE_DOWN_IMAGE);
+
+        DialogUtils.attachImage(getClass(), filestoreRequestAddButton, ADD_IMAGE);
+        DialogUtils.attachImage(getClass(), filestoreRequestRemoveButton, REMOVE_IMAGE);
+        DialogUtils.attachImage(getClass(), filestoreRequestMoveUpButton, MOVE_UP_IMAGE);
+        DialogUtils.attachImage(getClass(), filestoreRequestMoveDownButton, MOVE_DOWN_IMAGE);
     }
 
     public void filestoreRequestAddButtonClicked(ActionEvent actionEvent) {
@@ -202,6 +222,11 @@ public class PutRequestDialogController implements Initializable {
     public void messageToUserAddButtonClicked(ActionEvent actionEvent) {
         String hex = messageToUserTextField.getText().trim();
         if(!hex.isBlank()) {
+            // Match with
+            if(!"[0-9|a-f|A-F]*".matches(hex)) {
+                DialogUtils.showError("Error parsing string", "The provided string is not a valid hex dump");
+                return;
+            }
             try {
                 byte[] message = StringUtil.toByteArray(hex);
                 messageToUserListView.getItems().add(new MessageToUserTLV(message));
@@ -245,7 +270,7 @@ public class PutRequestDialogController implements Initializable {
 
     public void bindOkButton(Button okButton) {
         this.okButton = okButton;
-        // TODO: maybe it should be a bit better than this, but this is a test tool after all...
+        // Maybe it should be a bit better than this, but this is a test tool after all...
         this.okButton.disableProperty().bind(destinationEntityCombo.getSelectionModel().selectedItemProperty().isNull());
     }
 
