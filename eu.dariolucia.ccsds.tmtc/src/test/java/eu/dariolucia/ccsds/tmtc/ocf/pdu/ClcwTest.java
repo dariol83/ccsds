@@ -46,5 +46,12 @@ class ClcwTest {
         assertEquals(new Clcw(FIRST_CLCW), new Clcw(FIRST_CLCW));
         assertEquals(clcw, clcw);
         assertEquals(clcw.hashCode(), new Clcw(SECOND_CLCW).hashCode());
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Clcw(null);
+        });
+        assertThrows(IllegalArgumentException.class, () -> {
+            new Clcw(new byte[0]);
+        });
     }
 }
