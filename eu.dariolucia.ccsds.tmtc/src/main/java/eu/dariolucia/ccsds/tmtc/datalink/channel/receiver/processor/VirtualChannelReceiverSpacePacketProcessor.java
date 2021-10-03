@@ -26,15 +26,14 @@ import java.util.function.Function;
 
 public class VirtualChannelReceiverSpacePacketProcessor<T extends AbstractTransferFrame> extends TransformationListProcessor<T, SpacePacket> {
 
+    /**
+     * Construct a processor to extract {@link SpacePacket}.
+     *
+     * @param mapper the function mapper, from {@link AbstractTransferFrame} to the collection of space packets, it cannot be null
+     * @param executor the {@link ExecutorService} used to perform the function: if null, the same thread used to inject the frame will be used to extract the packets
+     * @param timely if true, data is allowed to be discarded in case of backpressure. If no data should be discarded, set it to false
+     */
     public VirtualChannelReceiverSpacePacketProcessor(Function<T, ? extends Collection<SpacePacket>> mapper, ExecutorService executor, boolean timely) {
         super(mapper, executor, timely);
-    }
-
-    public VirtualChannelReceiverSpacePacketProcessor(Function<T, ? extends Collection<SpacePacket>> mapper, boolean timely) {
-        this(mapper, null, timely);
-    }
-
-    public VirtualChannelReceiverSpacePacketProcessor(Function<T, ? extends Collection<SpacePacket>> mapper) {
-        this(mapper, false);
     }
 }

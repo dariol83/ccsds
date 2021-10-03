@@ -54,6 +54,13 @@ public abstract class AbstractTransformationProcessor<T,K> implements Flow.Proce
 
     private boolean running;
 
+    /**
+     * Construct a processor to transform data.
+     *
+     * @param mapper the function, converting from an element T to an element K, it cannot be null
+     * @param executor the {@link ExecutorService} used to perform the function: if null, the same thread used to inject the input will be used to compute the output
+     * @param timely if true, data is allowed to be discarded in case of backpressure. If no data should be discarded, set it to false
+     */
     public AbstractTransformationProcessor(Function mapper, ExecutorService executor, boolean timely) {
         if(mapper == null) {
             throw new NullPointerException("Data mapper cannot be null");

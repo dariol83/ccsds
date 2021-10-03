@@ -25,15 +25,15 @@ import java.util.function.Function;
 
 public class VirtualChannelReceiverBitstreamDataProcessor extends TransformationProcessor<AbstractTransferFrame, BitstreamData> {
 
+    /**
+     * Construct a processor to extract {@link BitstreamData}.
+     *
+     * @param mapper the function mapper, from {@link AbstractTransferFrame} to the bitstream data, it cannot be null
+     * @param executor the {@link ExecutorService} used to perform the function: if null, the same thread used to inject the frame will be used to extract the data
+     * @param timely if true, data is allowed to be discarded in case of backpressure. If no data should be discarded, set it to false
+     */
     public VirtualChannelReceiverBitstreamDataProcessor(Function<AbstractTransferFrame, BitstreamData> mapper, ExecutorService executor, boolean timely) {
         super(mapper, executor, timely);
     }
 
-    public VirtualChannelReceiverBitstreamDataProcessor(Function<AbstractTransferFrame, BitstreamData> mapper, boolean timely) {
-        this(mapper, null, timely);
-    }
-
-    public VirtualChannelReceiverBitstreamDataProcessor(Function<AbstractTransferFrame, BitstreamData> mapper) {
-        this(mapper, false);
-    }
 }

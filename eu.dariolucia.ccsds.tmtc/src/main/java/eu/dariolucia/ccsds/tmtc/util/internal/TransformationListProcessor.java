@@ -33,14 +33,6 @@ public class TransformationListProcessor<T,K> extends AbstractTransformationProc
         super(mapper, executor, timely);
     }
 
-    public TransformationListProcessor(Function<T, ? extends Collection<K>> mapper, boolean timely) {
-        this(mapper, null, timely);
-    }
-
-    public TransformationListProcessor(Function<T, ? extends Collection<K>> mapper) {
-        this(mapper, false);
-    }
-
     @Override
     public void onNext(T item) {
         if(isRunning()) {

@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.cfdp.protocol.pdu;
 
+import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
 import eu.dariolucia.ccsds.cfdp.protocol.decoder.CfdpPduDecoder;
 import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
@@ -27,8 +28,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class EndOfFilePduTest {
 
-    private final byte[] P1_NOERROR     = StringUtil.toByteArray("22 000A 21 F11204 9155 A2A1A3 04 00 C5A134D2 0032112D".replace(" ", ""));
-    private final byte[] P1_ERROR       = StringUtil.toByteArray("22 000F 21 F11204 9155 A2A1A3 04 B0 C5A134D2 0032112D 0603F4F5F6".replace(" ", ""));
+    private final byte[] P1_NOERROR            = StringUtil.toByteArray("22 000A 21 F11204 9155 A2A1A3 04 00 C5A134D2 0032112D".replace(" ", ""));
+    private final byte[] P1_ERROR              = StringUtil.toByteArray("22 000F 21 F11204 9155 A2A1A3 04 B0 C5A134D2 0032112D 0603F4F5F6".replace(" ", ""));
+    private final byte[] P2_WRONG_DIR_CODE     = StringUtil.toByteArray("22 000A 21 F11204 9155 A2A1A3 07 00 C5A134D2 0032112D".replace(" ", ""));
+    private final byte[] P2_WRONG_TLV_CODE     = StringUtil.toByteArray("22 000F 21 F11204 9155 A2A1A3 04 B0 C5A134D2 0032112D 0903F4F5F6".replace(" ", ""));
 
     @Test
     public void testEndOfFilePduParsing() {
@@ -74,6 +77,16 @@ class EndOfFilePduTest {
         assertEquals(0x0000000000F4F5F6L, pdu.getFaultLocation().getEntityId());
 
         assertNotNull(pdu.toString());
+
+        // Wrong code
+        assertThrows(IllegalArgumentException.class, () -> {
+            new EndOfFilePdu(P2_WRONG_DIR_CODE);
+        });
+
+        // Wrong TLV code
+        assertThrows(CfdpRuntimeException.class, () -> {
+            new EndOfFilePdu(P2_WRONG_TLV_CODE);
+        });
     }
 
     @Test

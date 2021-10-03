@@ -34,14 +34,6 @@ public class TransformationStreamProcessor<T, K> extends AbstractTransformationP
         super(mapper, executor, timely);
     }
 
-    public TransformationStreamProcessor(Function<T, Stream<K>> mapper, boolean timely) {
-        this(mapper, null, timely);
-    }
-
-    public TransformationStreamProcessor(Function<T, Stream<K>> mapper) {
-        this(mapper, false);
-    }
-
     @Override
     public void onNext(T item) {
         if(isRunning()) {
