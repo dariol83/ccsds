@@ -107,7 +107,7 @@ public abstract class AbstractFopState {
 
     protected AbstractFopState e45(FopEvent fopEvent) { // NOSONAR part of CCSDS standard
         engine.setBdOutReadyFlag(true);
-        // engine.accept(fopEvent.getFrame()); // TODO: the CCSDS standard reports an accept here, but this would duplicate the accept at E22. Write to the CCSDS WG.
+        // engine.accept(fopEvent.getFrame()); // XXX: the CCSDS standard reports an accept here, but this would duplicate the accept at E22
         return this;
     }
 

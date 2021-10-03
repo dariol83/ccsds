@@ -36,10 +36,13 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.util.Pair;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URL;
 import java.util.*;
 import java.util.logging.Handler;
@@ -202,7 +205,30 @@ public class MainController implements Initializable, ICfdpEntitySubscriber {
 
 	@FXML
 	private void saveLogsMenuItemSelected(ActionEvent e) {
-		// TODO
+		FileChooser fc = new FileChooser();
+		fc.setTitle("Save logs to...");
+		File f = fc.showSaveDialog(this.logTextArea.getScene().getWindow());
+		if (f != null) {
+			PrintStream ps = null;
+			try {
+				if (!f.exists()) {
+					f.createNewFile();
+				}
+				ps = new PrintStream(f);
+				ps.println(this.logTextArea.getText());
+				ps.flush();
+				LOG.log(Level.INFO, String.format("Logs exported to %s successfully", f.getAbsolutePath()));
+				DialogUtils.showInfo("File saved", "Logs successfully saved to " + f.getAbsolutePath());
+			} catch (IOException e1) {
+				LOG.log(Level.SEVERE, String.format("Error while saving logs to %s", f.getAbsolutePath()), e1);
+				DialogUtils.showError("Cannot save file to " + f.getAbsolutePath(), "Error while saving logs to "
+						+ f.getAbsolutePath() + ", check the related log entry for the detailed error");
+			} finally {
+				if(ps != null) {
+					ps.close();
+				}
+			}
+		}
 	}
 
 	private void appendLogLine(LogRecord record) {

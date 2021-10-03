@@ -24,6 +24,7 @@ import eu.dariolucia.ccsds.encdec.identifier.impl.FieldGroupBasedPacketIdentifie
 import eu.dariolucia.ccsds.encdec.structure.DecodingException;
 import eu.dariolucia.ccsds.encdec.structure.DecodingResult;
 import eu.dariolucia.ccsds.encdec.structure.IPacketDecoder;
+import eu.dariolucia.ccsds.encdec.structure.ParameterValue;
 import eu.dariolucia.ccsds.encdec.structure.impl.DefaultPacketDecoder;
 import eu.dariolucia.ccsds.tmtc.coding.ChannelDecoder;
 import eu.dariolucia.ccsds.tmtc.coding.decoder.CltuDecoder;
@@ -236,17 +237,17 @@ public class TcProcessor {
                     // Decode the packet user data
                     DecodingResult result = packetDecoder.decode(packetName, sp.getPacket(), SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getPacketDataLength());
                     // Print the encoded parameter values (flatten encoded composite items such as arrays or structures)
-                    Map<String, Object> parameterMap = result.getDecodedItemsAsMap();
-                    for(Map.Entry<String, Object> param : parameterMap.entrySet()) {
-                        System.out.printf("%s, %d, %d, %s, %d, %d, %s, %s, %s\n",
+                    List<ParameterValue> parameterMap = result.getDecodedParameters();
+                    for(ParameterValue param : parameterMap) {
+                        System.out.printf("%s, %d, %d, %s, %d, %d, %s, %s, %s",
                                 "Parameter",
                                 firstFrame.getSpacecraftId(),
                                 vc.getVirtualChannelId(),
-                                param.getKey(),
+                                param.getId(),
                                 0,
                                 0,
                                 Objects.toString(param.getValue(), "<null>"),
-                                param.getValue().getClass().getSimpleName(), // TODO: link to the definition somehow?
+                                param.getExternalId(),
                                 "N/A");
                     }
                 } catch (PacketNotIdentifiedException e) {

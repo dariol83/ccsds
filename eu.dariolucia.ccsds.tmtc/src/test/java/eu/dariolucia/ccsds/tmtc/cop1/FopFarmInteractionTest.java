@@ -124,7 +124,7 @@ class FopFarmInteractionTest {
         fop.directive(4, FopDirective.SET_TRANSMISSION_LIMIT, 3);
         fop.directive(null, FopDirective.INIT_AD_WITH_UNLOCK, 0);
 
-        // Wait for UNLOCK: TODO: perhaps add a confirmation mechanism or wrapper classes
+        // Wait for UNLOCK: XXX: perhaps add a confirmation mechanism or wrapper classes
         Thread.sleep(10000);
 
         // Send 20 frames in AD
