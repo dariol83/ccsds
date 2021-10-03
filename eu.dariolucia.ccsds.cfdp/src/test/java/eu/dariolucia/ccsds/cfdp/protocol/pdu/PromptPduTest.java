@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PromptPduTest {
 
     private final byte[] P1_NOERROR     = StringUtil.toByteArray("22 0002 21 F11204 9155 A2A1A3 09 80".replace(" ", ""));
+    private final byte[] P2_WRONG_DIR_CODE     = StringUtil.toByteArray("22 0002 21 F11204 9155 A2A1A3 0A 80".replace(" ", ""));
 
     @Test
     public void testPromptPduParsing() {
@@ -50,6 +51,11 @@ class PromptPduTest {
         assertTrue(pdu.isKeepAliveResponseRequired());
 
         assertNotNull(pdu.toString());
+
+        // Wrong code
+        assertThrows(IllegalArgumentException.class, () -> {
+            new PromptPdu(P2_WRONG_DIR_CODE);
+        });
     }
 
     @Test

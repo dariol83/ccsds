@@ -295,5 +295,48 @@ class DefinitionTest {
         assertNull(ep1.getPaddedWidth());
         assertNotNull(ep1.getTime());
 
+        FixedAbsoluteLocation fal = new FixedAbsoluteLocation();
+        fal.setAbsoluteLocation(3);
+        assertEquals(3, fal.getAbsoluteLocation());
+
+        FixedArraySize fas = new FixedArraySize();
+        fas.setLength(3);
+        assertEquals(3, fas.getLength());
+
+        FixedLength fl = new FixedLength();
+        fl.setLength(3);
+        assertEquals(3, fl.getLength());
+
+        FixedLinkedParameter flp = new FixedLinkedParameter();
+        flp.setParameter(new ParameterDefinition());
+        assertNotNull(flp.getParameter());
+
+        ExtensionType et = new ExtensionType();
+        et.setExternal("test");
+        assertEquals("test", et.getExternal());
+
+        ParameterLength pl = new ParameterLength();
+        pl.setReference("reff");
+        assertEquals("reff", pl.getReference());
+
+        ParameterType pt = new ParameterType();
+        pt.setReference("reff");
+        assertEquals("reff", pt.getReference());
+
+        ReferenceArraySize ras = new ReferenceArraySize();
+        ras.setReference("reff");
+        assertEquals("reff", ras.getReference());
+
+        ReferenceLength refl = new ReferenceLength();
+        refl.setReference("reff");
+        assertEquals("reff", refl.getReference());
+
+        ReferenceLinkedParameter rlp = new ReferenceLinkedParameter();
+        rlp.setReference("reff");
+        assertEquals("reff", rlp.getReference());
+
+        ReferenceType rt = new ReferenceType();
+        rt.setReference("reff");
+        assertEquals("reff", rt.getReference());
     }
 }
