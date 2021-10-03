@@ -16,8 +16,8 @@ Stable releases are published on Maven Central. The latest code version is alway
 **Disclaimer: this code is implemented as personal hobby, without any use of external systems or software to test or validate its behaviour (it is neither operationally nor effectively tested). It is not endorsed by any organization, association or company. As such, strict compliance to the different standards as well as correct behaviour cannot be guaranteed. As the Apache License makes clear, use the modules of this repository at your own risk.**
 
 ## SLE
-The SLE User Test Library (eu.dariolucia.ccsds.sle.utl) is a library that implements the user side (fully compliant) and provider side (partially compliant) of an SLE data exchange session. 
-It supports RAF, RCF, ROCF and CLTU. Support for FSP is currently missing. 
+The SLE User Test Library (eu.dariolucia.ccsds.sle.utl) is a library that implements the user side and provider side of an SLE data exchange session. 
+It supports RAF, RCF, ROCF and CLTU. Support for FSP is currently missing and it will be implemented the request/need for it will be reported. 
 It uses a custom format for the configuration of the service instances (currently not documented, can be derived by the classes inside 
 the "config" package).
 Highlights are:
@@ -46,10 +46,10 @@ The packet structure is defined using a custom XML format definition, built by m
 The CCSDS File Delivery Protocol Library (eu.dariolucia.ccsds.cfdp) is a library that implements a full, standard-compliant CFDP entity (without support for proxy operations and relay operations, which can be easily developed in the application).
 It supports Class 1 (with and without closure) and Class 2 operations, with built-in support for TCP and UDP UT layers.
 
-A simple but effective graphical interface to monitor transactions in a local CFDP entity is provided as separate module (eu.dariolucia.ccsds.cfdp.fx).
+A simple but effective graphical interface to monitor transactions in a local CFDP entity using TCP and UDP as transport layers is provided as separate module (eu.dariolucia.ccsds.cfdp.fx).
 
 ## Data Viewer
-To ease the debug and visualisation of encoded information in telemetry and telecommand data, the module viewer (eu.dariolucia.ccsds.viewer) contains an application that can display decoded and structure information from all the data types supported by this library (CADUs, TM frames, AOS frames, TC frames, CLTU, Space Packets, all SLE operations, time encodings, CLCW).
+To ease the debug and visualisation of encoded information in telemetry and telecommand data, the module viewer (eu.dariolucia.ccsds.viewer) contains an application that can display decoded and structure information from all the data types supported by this library (CADUs, TM frames, AOS frames, TC frames, CLTU, Space Packets, all SLE operations, time encodings, CLCW, CFDP PDUs).
 
 ## Examples
 A modules providing examples on how to use the three modules above in a combined way, to demonstrate the capabilities of the library to write compact code. The following examples are provided:
@@ -58,7 +58,8 @@ A modules providing examples on how to use the three modules above in a combined
 - TM processor with output to console, from SLE RAF to encoded parameter extraction;
 - TC generator from list of parameters (as defined in the packet definition) to CLTU with output to file and/or TCP socket;
 - TC generator from list of parameters to SLE CLTU;
-- TC processor with output to console, from CLTU to encoded parameter extraction.
+- TC processor with output to console, from CLTU to encoded parameter extraction;
+- CFDP Entity with input from/output to console, working on TCP and UDP UT layer implementations.
 
 **The main target of the examples module is not to provide final applications ready to be used**, rather to explain the different levels and concepts of the libraries, and how to link the various objects together. 
 

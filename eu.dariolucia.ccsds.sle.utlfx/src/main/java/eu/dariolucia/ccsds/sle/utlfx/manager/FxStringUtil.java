@@ -41,7 +41,6 @@ import java.util.function.Function;
 /**
  * This class is meant to collect printer functions for all the SLE PDUs.
  */
-// TODO add support for all operations
 public class FxStringUtil {
 
 	private static final FxStringUtil INSTANCE = new FxStringUtil();

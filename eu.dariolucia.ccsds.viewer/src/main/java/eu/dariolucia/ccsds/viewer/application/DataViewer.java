@@ -1,17 +1,17 @@
 /*
- *  Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
+ *   Copyright (c) 2021 Dario Lucia (https://www.dariolucia.eu)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *        http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
  */
 
 package eu.dariolucia.ccsds.viewer.application;
@@ -37,9 +37,9 @@ public class DataViewer extends Application {
 	private static final Logger LOG = Logger.getLogger(DataViewer.class.getName());
 	
 	public static final String NAME = "CCSDS Data Viewer";
-	public static final String VERSION = "0.1.0";
+	public static final String VERSION = "0.2.0";
 	public static final String AUTHOR = "Dario Lucia (dario.lucia@gmail.com) - https://www.dariolucia.eu";
-	public static final String YEARS = "(c) 2018, 2019, 2020";
+	public static final String YEARS = "(c) 2018, 2019, 2020, 2021";
 	
 	@Override
 	public void start(Stage primaryStage) {

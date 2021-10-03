@@ -50,6 +50,11 @@
             <artifactId>eu.dariolucia.ccsds.sle.utl</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
+        <dependency>
+            <groupId>eu.dariolucia.ccsds</groupId>
+            <artifactId>eu.dariolucia.ccsds.cfdp</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
     </dependencies>
 
 </project>

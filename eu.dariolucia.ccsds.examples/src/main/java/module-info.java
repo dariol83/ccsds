@@ -4,4 +4,5 @@ open module eu.dariolucia.ccsds.examples {
     requires eu.dariolucia.ccsds.encdec;
     requires eu.dariolucia.ccsds.sle.utl;
     requires eu.dariolucia.ccsds.tmtc;
+    requires eu.dariolucia.ccsds.cfdp;
 }

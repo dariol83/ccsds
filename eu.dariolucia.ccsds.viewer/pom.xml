@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
+  ~   Copyright (c) 2021 Dario Lucia (https://www.dariolucia.eu)
   ~
   ~   Licensed under the Apache License, Version 2.0 (the "License");
   ~   you may not use this file except in compliance with the License.
@@ -88,6 +88,11 @@
         <dependency>
             <groupId>eu.dariolucia.ccsds</groupId>
             <artifactId>eu.dariolucia.ccsds.sle.utl</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>eu.dariolucia.ccsds</groupId>
+            <artifactId>eu.dariolucia.ccsds.cfdp</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
