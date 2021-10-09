@@ -32,6 +32,26 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MibCoverageTest {
 
+//    @Test
+//    public void testXsdSchema() throws IOException, JAXBException {
+//        JAXBContext jaxbContext = JAXBContext.newInstance(Mib.class);
+//        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+//        final PrintStream ps = new PrintStream(bos);
+//        SchemaOutputResolver sor = new SchemaOutputResolver() {
+//            @Override
+//            public Result createOutput(String s, String s1) {
+//                StreamResult sr = new StreamResult(ps);
+//                sr.setSystemId(s);
+//                return sr;
+//            }
+//        };
+//        jaxbContext.generateSchema(sor);
+//        ps.close();
+//        String theSchema = new String(bos.toByteArray());
+//        System.out.println(theSchema);
+//        assertTrue(theSchema.length() > 500);
+//    }
+
     @Test
     public void testMibCoverage() throws IOException {
         Mib m = new Mib();

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  ~   Copyright (c) 2021 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~   Licensed under the Apache License, Version 2.0 (the "License");
+  ~   you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  -->
+
+<xs:schema version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+    <xs:complexType name="mib">
+        <xs:sequence>
+            <xs:element name="local-entity" type="localEntityConfigurationInformation"/>
+            <xs:element name="remote-entities">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="remote-entity" type="remoteEntityConfigurationInformation" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="localEntityConfigurationInformation">
+        <xs:sequence>
+            <xs:element name="fault-handlers" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="fault-handler" type="faultHandlerStrategy" minOccurs="0" maxOccurs="unbounded"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:long" use="required"/>
+        <xs:attribute name="EOF-sent-indication" type="xs:boolean" use="required"/>
+        <xs:attribute name="EOF-recv-indication" type="xs:boolean" use="required"/>
+        <xs:attribute name="file-segment-recv-indication" type="xs:boolean" use="required"/>
+        <xs:attribute name="transaction-finished-indication" type="xs:boolean" use="required"/>
+        <xs:attribute name="suspended-indication" type="xs:boolean" use="required"/>
+        <xs:attribute name="resumed-indication" type="xs:boolean" use="required"/>
+        <xs:attribute name="completed-transactions-cleanup-period" type="xs:int" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="faultHandlerStrategy">
+        <xs:sequence/>
+        <xs:attribute name="condition" type="conditionCode"/>
+        <xs:attribute name="strategy" type="action"/>
+    </xs:complexType>
+
+    <xs:complexType name="remoteEntityConfigurationInformation">
+        <xs:sequence>
+            <xs:element name="ut-layer" type="xs:string" minOccurs="0"/>
+            <xs:element name="address" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:long" use="required"/>
+        <xs:attribute name="version" type="xs:long" use="required"/>
+        <xs:attribute name="positive-ack-timer-interval" type="xs:long" use="required"/>
+        <xs:attribute name="nak-timer-interval" type="xs:long" use="required"/>
+        <xs:attribute name="keep-alive-interval" type="xs:long" use="required"/>
+        <xs:attribute name="immediate-nak-mode" type="xs:boolean" use="required"/>
+        <xs:attribute name="default-tx-mode-acknowledged" type="xs:boolean" use="required"/>
+        <xs:attribute name="transaction-closure-requested" type="xs:boolean" use="required"/>
+        <xs:attribute name="check-interval" type="xs:long" use="required"/>
+        <xs:attribute name="check-interval-expiration-limit" type="xs:int" use="required"/>
+        <xs:attribute name="default-checksum" type="xs:int" use="required"/>
+        <xs:attribute name="retain-incomplete-files-on-cancel" type="xs:boolean" use="required"/>
+        <xs:attribute name="crc-required" type="xs:boolean" use="required"/>
+        <xs:attribute name="max-file-segment-length" type="xs:int" use="required"/>
+        <xs:attribute name="keep-alive-limit" type="xs:int" use="required"/>
+        <xs:attribute name="positive-ack-expiration-limit" type="xs:int" use="required"/>
+        <xs:attribute name="nak-expiration-limit" type="xs:int" use="required"/>
+        <xs:attribute name="transaction-inactivity-limit" type="xs:int" use="required"/>
+        <xs:attribute name="nak-recomputation-interval" type="xs:long" use="required"/>
+    </xs:complexType>
+
+    <xs:simpleType name="conditionCode">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="CC_NOERROR"/>
+            <xs:enumeration value="CC_POS_ACK_LIMIT_REACHED"/>
+            <xs:enumeration value="CC_KEEPALIVE_LIMIT_REACHED"/>
+            <xs:enumeration value="CC_INVALID_TX_MODE"/>
+            <xs:enumeration value="CC_FILESTORE_REJECTION"/>
+            <xs:enumeration value="CC_FILE_CHECKSUM_FAILURE"/>
+            <xs:enumeration value="CC_FILE_SIZE_ERROR"/>
+            <xs:enumeration value="CC_NAK_LIMIT_REACHED"/>
+            <xs:enumeration value="CC_INACTIVITY_DETECTED"/>
+            <xs:enumeration value="CC_INVALID_FILE_STRUCTURE"/>
+            <xs:enumeration value="CC_CHECK_LIMIT_REACHED"/>
+            <xs:enumeration value="CC_UNSUPPORTED_CHECKSUM_TYPE"/>
+            <xs:enumeration value="CC_SUSPEND_REQUEST_RECEIVED"/>
+            <xs:enumeration value="CC_CANCEL_REQUEST_RECEIVED"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="action">
+        <xs:restriction base="xs:string">
+            <xs:enumeration value="NOTICE_OF_CANCELLATION"/>
+            <xs:enumeration value="NOTICE_OF_SUSPENSION"/>
+            <xs:enumeration value="NO_ACTION"/>
+            <xs:enumeration value="ABANDON"/>
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>
