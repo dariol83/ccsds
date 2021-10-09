@@ -26,6 +26,14 @@ import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Checksum registry. This static object keeps track of the registered checksums declared via the Java module system for
+ * extension {@link ICfdpChecksumFactory}.
+ *
+ * The registry adds the standard-defined checksums {@link NullChecksum} and {@link ModularChecksum}, and then loads all the
+ * extensions provided by the Java module system (which can of course override the types 0 - modular checksum - and 15 -
+ * null checksum - implementations).
+ */
 public final class CfdpChecksumRegistry {
 
     public static final int MODULAR_CHECKSUM_TYPE = 0;
@@ -37,6 +45,13 @@ public final class CfdpChecksumRegistry {
 
     private static final Map<Integer, ICfdpChecksumFactory> type2factory = new HashMap<>();
 
+    /**
+     * Return the {@link ICfdpChecksumFactory} based on the provided type.
+     *
+     * @param type the type of checksum, as defined by the standard/SANA registry
+     * @return a factory object that can create {@link ICfdpChecksum} objects of the specified type
+     * @throws CfdpUnsupportedChecksumType if the type is not registered
+     */
     public static synchronized ICfdpChecksumFactory getChecksum(int type) throws CfdpUnsupportedChecksumType {
         ServiceLoader<ICfdpChecksumFactory> loader = ServiceLoader.load(ICfdpChecksumFactory.class);
         if(type2factory.isEmpty()) {

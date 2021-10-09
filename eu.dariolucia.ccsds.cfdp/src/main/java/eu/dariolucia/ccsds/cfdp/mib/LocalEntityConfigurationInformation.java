@@ -48,6 +48,9 @@ public class LocalEntityConfigurationInformation {
     @XmlAttribute(name = "resumed-indication")
     private boolean resumedIndicationRequired; // When acting as receiving entity
 
+    @XmlAttribute(name = "completed-transactions-cleanup-period")
+    private int completedTransactionsCleanupPeriod = -1; // >0: disabled; 0: cleanup as soon as the transaction is disposed; >0: regular cleanup job everything X seconds
+
     @XmlElementWrapper(name = "fault-handlers")
     @XmlElement(name = "fault-handler")
     private List<FaultHandlerStrategy> faultHandlerStrategyList = new LinkedList<>(); // For each type of fault condition, a default handler
@@ -128,6 +131,14 @@ public class LocalEntityConfigurationInformation {
         return this.faultHandlerStrategyList.stream().collect(Collectors.toMap(FaultHandlerStrategy::getCondition, FaultHandlerStrategy::getStrategy));
     }
 
+    public int getCompletedTransactionsCleanupPeriod() {
+        return completedTransactionsCleanupPeriod;
+    }
+
+    public void setCompletedTransactionsCleanupPeriod(int completedTransactionsCleanupPeriod) {
+        this.completedTransactionsCleanupPeriod = completedTransactionsCleanupPeriod;
+    }
+
     @Override
     public String toString() {
         return "LocalEntityConfigurationInformation{" +
@@ -138,6 +149,7 @@ public class LocalEntityConfigurationInformation {
                 ", transactionFinishedIndicationRequired=" + transactionFinishedIndicationRequired +
                 ", suspendedIndicationRequired=" + suspendedIndicationRequired +
                 ", resumedIndicationRequired=" + resumedIndicationRequired +
+                ", completedTransactionsCleanupPeriod=" + completedTransactionsCleanupPeriod +
                 ", faultHandlerStrategyList=" + faultHandlerStrategyList +
                 '}';
     }

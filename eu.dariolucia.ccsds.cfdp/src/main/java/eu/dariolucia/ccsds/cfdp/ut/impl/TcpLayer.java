@@ -34,6 +34,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * UT layer implementation using TCP/IP as UT protocol.
+ */
 public class TcpLayer extends AbstractUtLayer {
 
     private static final Logger LOG = Logger.getLogger(TcpLayer.class.getName());

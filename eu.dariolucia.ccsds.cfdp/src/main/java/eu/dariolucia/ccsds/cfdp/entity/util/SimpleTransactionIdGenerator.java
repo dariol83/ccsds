@@ -23,6 +23,12 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * This class is internally used to generate transaction IDs in case no external instance of type {@link ITransactionIdGenerator}
  * is provided to the entity.
+ *
+ * The transaction ID generation strategy is the following: the 48 most significant bits of the transaction ID long are
+ * the 48 least significant bits of the generating entity ID in its long (64 bits) representation. The 16 least significant bits
+ * are calculated using an internal counter.
+ *
+ * With this implementation, it is possible to have 65536 transactions generated from the same entity ID before occurring in a wrap-around.
  */
 public class SimpleTransactionIdGenerator implements ITransactionIdGenerator {
 

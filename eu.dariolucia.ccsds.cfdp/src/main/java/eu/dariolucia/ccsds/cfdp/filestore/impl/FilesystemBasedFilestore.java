@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 
 /**
  * A basic filestore, composed of a flat list of directories, each containing a file.
+ *
  * A full path is composed by the format &lt;directory name&gt;/&lt;file name&gt;. &lt;directory name&gt; can be omitted
  * if the file resides in the root folder of the virtual file store.
  */

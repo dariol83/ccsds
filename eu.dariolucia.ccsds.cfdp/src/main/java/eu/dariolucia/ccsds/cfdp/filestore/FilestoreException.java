@@ -18,6 +18,9 @@ package eu.dariolucia.ccsds.cfdp.filestore;
 
 import eu.dariolucia.ccsds.cfdp.common.CfdpException;
 
+/**
+ * Exception used by {@link IVirtualFilestore} implementations to report issues when operating on the underlying filestore.
+ */
 public class FilestoreException extends CfdpException {
 
     public FilestoreException(String message) {

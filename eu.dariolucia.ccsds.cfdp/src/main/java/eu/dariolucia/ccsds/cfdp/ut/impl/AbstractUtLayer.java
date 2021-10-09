@@ -32,14 +32,21 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Abstract class that can be used to create {@link IUtLayer} implementations. The class handles registration and deregistration of subscribers,
+ * and manages the TX/RX availability information for the remote entities.
+ *
+ * Implementations using this class as base class must be aware that the method activate() must be called before running any operation on the allocated object. The activate()
+ * method (throwing {@link UtLayerException}) might be called as last method in the derived class constructor.
+ */
 public abstract class AbstractUtLayer implements IUtLayer {
 
     private static final Logger LOG = Logger.getLogger(AbstractUtLayer.class.getName());
 
     private final Mib mib;
 
-    protected final Map<Long, Boolean> id2txAvailable = new ConcurrentHashMap<>();
-    protected final Map<Long, Boolean> id2rxAvailable = new ConcurrentHashMap<>();
+    private final Map<Long, Boolean> id2txAvailable = new ConcurrentHashMap<>();
+    private final Map<Long, Boolean> id2rxAvailable = new ConcurrentHashMap<>();
 
     private final List<IUtLayerSubscriber> subscribers = new CopyOnWriteArrayList<>();
 

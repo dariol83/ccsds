@@ -18,6 +18,9 @@ package eu.dariolucia.ccsds.cfdp.ut;
 
 import eu.dariolucia.ccsds.cfdp.common.CfdpException;
 
+/**
+ * Exception reported by {@link IUtLayer} implementations in case of issues.
+ */
 public class UtLayerException extends CfdpException {
 
     public UtLayerException(String message) {

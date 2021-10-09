@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.entity;
 
 import eu.dariolucia.ccsds.cfdp.entity.indication.*;
+import eu.dariolucia.ccsds.cfdp.entity.internal.CfdpEntity;
 import eu.dariolucia.ccsds.cfdp.entity.request.PutRequest;
 import eu.dariolucia.ccsds.cfdp.entity.request.ReportRequest;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.FileSegment;
@@ -156,6 +157,209 @@ public class CfdpEntityNominalTcpTest {
             assertEquals(DirectiveCode.DC_EOF_PDU, ((AckPdu) txPdu2.get(0)).getDirectiveCode());
             assertEquals(FinishedPdu.class, txPdu2.get(1).getClass());
             assertEquals(FinishedPdu.FileStatus.RETAINED_IN_FILESTORE, ((FinishedPdu) txPdu2.get(1)).getFileStatus());
+
+            // Purge transactions: nothing done - operation rejected
+            assertEquals(0, e1.getTransactionIds().size());
+            e1.purgeCompletedTransactions();
+            Thread.sleep(1000);
+            assertEquals(0, e1.getTransactionIds().size());
+
+            // Ask for request: nothing done - operation rejected
+            e1.request(fduTxReq);
+            Thread.sleep(1000);
+            assertEquals(0, e1.getTransactionIds().size());
+
+            // Check number of UT layers
+            assertEquals(1, e1.getUtLayers().size());
+
+            // Fake injection of a CFDP PDU
+            ((CfdpEntity) e1).indication(null, null);
+
+            // End
+        } catch (Throwable e) {
+            // Deactivate the UT layers
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
+            // Dispose the entities
+            e1.dispose();
+            e2.dispose();
+            throw e;
+        }
+    }
+
+    @Test
+    public void testTransactionPurge() throws Exception {
+        // Create the two entities
+        ICfdpEntity e1 = TestUtils.createTcpEntity("configuration_entity_1.xml", 23001);
+        ICfdpEntity e2 = TestUtils.createTcpEntity("configuration_entity_2.xml", 23002);
+        try {
+            // Subscription to the entities
+            EntityIndicationSubscriber s1 = new EntityIndicationSubscriber();
+            e1.register(s1);
+            EntityIndicationSubscriber s2 = new EntityIndicationSubscriber();
+            e2.register(s2);
+            // Enable reachability of the two entities
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 1);
+            // Create file in filestore
+            String path = TestUtils.createRandomFileIn(e1.getFilestore(), "testfile_ack.bin", 10); // 10 KB
+            String destPath = "recv_testfile_ack.bin";
+            // Create request and start transaction
+            PutRequest fduTxReq = PutRequest.build(2, path, destPath, false, null);
+            e1.request(fduTxReq);
+            // Wait for the transaction to be disposed on the two entities
+            s1.waitForIndication(TransactionDisposedIndication.class, 10000);
+            s2.waitForIndication(TransactionDisposedIndication.class, 10000);
+            // Check that the file was transferred and it has exactly the same contents of the source file
+            assertTrue(e2.getFilestore().fileExists(destPath));
+            assertTrue(TestUtils.compareFiles(e1.getFilestore(), path, e2.getFilestore(), destPath));
+
+            assertEquals(1, e1.getTransactionIds().size());
+            assertEquals(1, e2.getTransactionIds().size());
+
+            // Deactivate the UT layers
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
+
+            // Check transactions
+            assertEquals(1, e1.getTransactionIds().size());
+            assertTrue(e1.getTransactionIds().contains(65537L));
+            e1.purgeCompletedTransactions();
+            TransactionPurgedIndication purgedIndication = s1.waitForIndication(TransactionPurgedIndication.class, 1000);
+            assertTrue(purgedIndication.getPurgedTransactionIds().contains(65537L));
+
+            // Dispose the entities
+            e1.dispose();
+            e2.dispose();
+
+            // Wait for the entity disposition
+            s1.waitForIndication(EntityDisposedIndication.class, 1000);
+            s2.waitForIndication(EntityDisposedIndication.class, 1000);
+
+        } catch (Throwable e) {
+            // Deactivate the UT layers
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
+            // Dispose the entities
+            e1.dispose();
+            e2.dispose();
+            throw e;
+        }
+    }
+
+    @Test
+    public void testTransactionPurgeTimer() throws Exception {
+        // Create the two entities
+        ICfdpEntity e1 = TestUtils.createTcpEntity("configuration_entity_1_purge.xml", 23001);
+        ICfdpEntity e2 = TestUtils.createTcpEntity("configuration_entity_2.xml", 23002);
+        try {
+            // Subscription to the entities
+            EntityIndicationSubscriber s1 = new EntityIndicationSubscriber();
+            e1.register(s1);
+            EntityIndicationSubscriber s2 = new EntityIndicationSubscriber();
+            e2.register(s2);
+            // Enable reachability of the two entities
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 1);
+            // Create file in filestore
+            String path = TestUtils.createRandomFileIn(e1.getFilestore(), "testfile_ack.bin", 10); // 10 KB
+            String destPath = "recv_testfile_ack.bin";
+            // Create request and start transaction
+            PutRequest fduTxReq = PutRequest.build(2, path, destPath, false, null);
+            e1.request(fduTxReq);
+            // Wait for the transaction to be disposed on the two entities
+            s1.waitForIndication(TransactionDisposedIndication.class, 10000);
+            s2.waitForIndication(TransactionDisposedIndication.class, 10000);
+            // Check that the file was transferred and it has exactly the same contents of the source file
+            assertTrue(e2.getFilestore().fileExists(destPath));
+            assertTrue(TestUtils.compareFiles(e1.getFilestore(), path, e2.getFilestore(), destPath));
+
+            assertEquals(1, e1.getTransactionIds().size());
+            assertEquals(1, e2.getTransactionIds().size());
+
+            // Deactivate the UT layers
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
+
+            // Check transactions
+            assertEquals(1, e1.getTransactionIds().size());
+            assertTrue(e1.getTransactionIds().contains(65537L));
+
+            TransactionPurgedIndication purgedIndication = s1.waitForIndication(TransactionPurgedIndication.class, 10000);
+            assertTrue(purgedIndication.getPurgedTransactionIds().contains(65537L));
+
+            // Dispose the entities
+            e1.dispose();
+            e2.dispose();
+
+            // Wait for the entity disposition
+            s1.waitForIndication(EntityDisposedIndication.class, 1000);
+            s2.waitForIndication(EntityDisposedIndication.class, 1000);
+
+        } catch (Throwable e) {
+            // Deactivate the UT layers
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
+            // Dispose the entities
+            e1.dispose();
+            e2.dispose();
+            throw e;
+        }
+    }
+
+
+    @Test
+    public void testTransactionAutopurge() throws Exception {
+        // Create the two entities
+        ICfdpEntity e1 = TestUtils.createTcpEntity("configuration_entity_1_autopurge.xml", 23001);
+        ICfdpEntity e2 = TestUtils.createTcpEntity("configuration_entity_2.xml", 23002);
+        try {
+            // Subscription to the entities
+            EntityIndicationSubscriber s1 = new EntityIndicationSubscriber();
+            e1.register(s1);
+            EntityIndicationSubscriber s2 = new EntityIndicationSubscriber();
+            e2.register(s2);
+            // Enable reachability of the two entities
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setRxAvailability(true, 1);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 2);
+            ((AbstractUtLayer)((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate()).setTxAvailability(true, 1);
+            // Create file in filestore
+            String path = TestUtils.createRandomFileIn(e1.getFilestore(), "testfile_ack.bin", 10); // 10 KB
+            String destPath = "recv_testfile_ack.bin";
+            // Create request and start transaction
+            PutRequest fduTxReq = PutRequest.build(2, path, destPath, false, null);
+            e1.request(fduTxReq);
+            // Wait for the transaction to be disposed on the two entities
+            s1.waitForIndication(TransactionDisposedIndication.class, 10000);
+            s2.waitForIndication(TransactionDisposedIndication.class, 10000);
+
+            TransactionPurgedIndication purgedIndication = s1.waitForIndication(TransactionPurgedIndication.class, 10000);
+            assertTrue(purgedIndication.getPurgedTransactionIds().contains(65537L));
+
+            // Check that the file was transferred and it has exactly the same contents of the source file
+            assertTrue(e2.getFilestore().fileExists(destPath));
+            assertTrue(TestUtils.compareFiles(e1.getFilestore(), path, e2.getFilestore(), destPath));
+
+            assertEquals(0, e1.getTransactionIds().size());
+            assertEquals(1, e2.getTransactionIds().size());
+
+            // Deactivate the UT layers
+            ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
+            ((UtLayerTxPduDecorator) e2.getUtLayerByName("TCP")).getDelegate().dispose();
+
+            // Dispose the entities
+            e1.dispose();
+            e2.dispose();
+
+            // Wait for the entity disposition
+            s1.waitForIndication(EntityDisposedIndication.class, 1000);
+            s2.waitForIndication(EntityDisposedIndication.class, 1000);
+
         } catch (Throwable e) {
             // Deactivate the UT layers
             ((UtLayerTxPduDecorator) e1.getUtLayerByName("TCP")).getDelegate().dispose();
@@ -364,7 +568,7 @@ public class CfdpEntityNominalTcpTest {
             }
 
             @Override
-            public ICfdpFileSegmenter newSegmenter(Mib mib, IVirtualFilestore filestore, String fullPath, long destinationEntityId) throws FilestoreException {
+            public ICfdpFileSegmenter newSegmenter(Mib mib, IVirtualFilestore filestore, String fullPath, long destinationEntityId) {
                 return new FixedSizeSegmenter(filestore, fullPath,  200);
             }
         };
@@ -376,7 +580,7 @@ public class CfdpEntityNominalTcpTest {
             }
 
             @Override
-            public ICfdpFileSegmenter newSegmenter(Mib mib, IVirtualFilestore filestore, String fullPath, long destinationEntityId) throws FilestoreException {
+            public ICfdpFileSegmenter newSegmenter(Mib mib, IVirtualFilestore filestore, String fullPath, long destinationEntityId) {
                 throw new RuntimeException("Fault");
             }
         };
@@ -494,7 +698,7 @@ public class CfdpEntityNominalTcpTest {
             }
 
             @Override
-            public ICfdpFileSegmenter newSegmenter(Mib mib, IVirtualFilestore filestore, String fullPath, long destinationEntityId) throws FilestoreException {
+            public ICfdpFileSegmenter newSegmenter(Mib mib, IVirtualFilestore filestore, String fullPath, long destinationEntityId) {
                 return new ICfdpFileSegmenter() {
 
                     private final FixedSizeSegmenter inner = new FixedSizeSegmenter(filestore, fullPath,  200);
@@ -524,7 +728,7 @@ public class CfdpEntityNominalTcpTest {
             }
 
             @Override
-            public ICfdpFileSegmenter newSegmenter(Mib mib, IVirtualFilestore filestore, String fullPath, long destinationEntityId) throws FilestoreException {
+            public ICfdpFileSegmenter newSegmenter(Mib mib, IVirtualFilestore filestore, String fullPath, long destinationEntityId) {
                 throw new RuntimeException("Fault");
             }
         };

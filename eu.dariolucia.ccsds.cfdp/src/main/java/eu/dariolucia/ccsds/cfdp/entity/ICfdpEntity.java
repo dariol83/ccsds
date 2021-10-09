@@ -153,6 +153,11 @@ public interface ICfdpEntity {
     void request(ICfdpRequest request);
 
     /**
+     * Request the CFDP entity to purge completed/disposed transactions.
+     */
+    void purgeCompletedTransactions();
+
+    /**
      * Dispose this entity: all active transactions are cancelled and purged, the UT layers are deregistered and the
      * subscribers are removed. No further operations can be performed on this entity anymore.
      */

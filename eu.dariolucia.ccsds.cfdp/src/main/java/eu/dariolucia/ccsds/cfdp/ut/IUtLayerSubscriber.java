@@ -18,15 +18,48 @@ package eu.dariolucia.ccsds.cfdp.ut;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.CfdpPdu;
 
+/**
+ * UT Layer subscription interface.
+ */
 public interface IUtLayerSubscriber {
 
+    /**
+     * Inform about the reception of the provided {@link CfdpPdu} by the provided {@link IUtLayer}.
+     *
+     * @param layer the UT layer implementation that received the pdu
+     * @param pdu the received CFDP PDU
+     */
     void indication(IUtLayer layer, CfdpPdu pdu);
 
+    /**
+     * Inform the subscriber that the TX is available for the specified entity.
+     *
+     * @param layer the UT layer implementation reporting the availability information
+     * @param entityId the remote entity ID
+     */
     void startTxPeriod(IUtLayer layer, long entityId);
 
+    /**
+     * Inform the subscriber that the TX is not available for the specified entity.
+     *
+     * @param layer the UT layer implementation reporting the availability information
+     * @param entityId the remote entity ID
+     */
     void endTxPeriod(IUtLayer layer, long entityId);
 
+    /**
+     * Inform the subscriber that the RX is available for the specified entity.
+     *
+     * @param layer the UT layer implementation reporting the availability information
+     * @param entityId the remote entity ID
+     */
     void startRxPeriod(IUtLayer layer, long entityId);
 
+    /**
+     * Inform the subscriber that the RX is not available for the specified entity.
+     *
+     * @param layer the UT layer implementation reporting the availability information
+     * @param entityId the remote entity ID
+     */
     void endRxPeriod(IUtLayer layer, long entityId);
 }

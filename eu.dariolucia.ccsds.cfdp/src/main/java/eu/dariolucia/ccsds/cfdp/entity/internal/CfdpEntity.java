@@ -22,6 +22,8 @@ import eu.dariolucia.ccsds.cfdp.entity.ICfdpEntitySubscriber;
 import eu.dariolucia.ccsds.cfdp.entity.ITransactionIdGenerator;
 import eu.dariolucia.ccsds.cfdp.entity.indication.EntityDisposedIndication;
 import eu.dariolucia.ccsds.cfdp.entity.indication.ICfdpIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.TransactionDisposedIndication;
+import eu.dariolucia.ccsds.cfdp.entity.indication.TransactionPurgedIndication;
 import eu.dariolucia.ccsds.cfdp.entity.request.*;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpFileSegmenter;
 import eu.dariolucia.ccsds.cfdp.entity.segmenters.ICfdpSegmentationStrategy;
@@ -46,6 +48,9 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Implementation of a CFDP entity.
+ */
 public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
 
     private static final Logger LOG = Logger.getLogger(CfdpEntity.class.getName());
@@ -69,9 +74,11 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     private final ITransactionIdGenerator transactionIdGenerator;
     // File segmentation strategies
     private final List<ICfdpSegmentationStrategy> supportedSegmentationStrategies = new CopyOnWriteArrayList<>();
+    // Timer for transaction disposal
+    private final Timer completedTransactionsRemovalTimer;
 
     // Disposed flag
-    private boolean disposed;
+    private volatile boolean disposed;
 
     public CfdpEntity(Mib mib, IVirtualFilestore filestore, ITransactionIdGenerator transactionIdGenerator, Collection<IUtLayer> layers) {
         this.mib = mib;
@@ -85,13 +92,13 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         }
         // 1 separate thread to notify all listeners
         this.subscriberNotifier = Executors.newFixedThreadPool(1, r -> {
-            Thread t = new Thread(r, "CFDP Entity " + mib.getLocalEntity().getLocalEntityId() + " - Subscribers Notifier");
+            Thread t = new Thread(r, String.format("CFDP Entity %d - Subscribers Notifier", mib.getLocalEntity().getLocalEntityId()));
             t.setDaemon(true);
             return t;
         });
         // 1 separate thread to manage the entity
         this.entityConfiner = Executors.newFixedThreadPool(1, r -> {
-            Thread t = new Thread(r, "CFDP Entity " + mib.getLocalEntity().getLocalEntityId() + " - Manager");
+            Thread t = new Thread(r, String.format("CFDP Entity %d - Manager", mib.getLocalEntity().getLocalEntityId()));
             t.setDaemon(true);
             return t;
         });
@@ -105,16 +112,23 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         this.requestProcessors.put(ReportRequest.class, this::processReportRequest);
         // Add default segmentation strategy
         this.supportedSegmentationStrategies.add(new FixedSizeSegmentationStrategy());
+        // Transaction removal timer?
+        if(this.mib.getLocalEntity().getCompletedTransactionsCleanupPeriod() > 0) {
+            this.completedTransactionsRemovalTimer = new Timer(String.format("CFDP Entity %d - Completed Transactions Removal Task", this.mib.getLocalEntity().getLocalEntityId()));
+            this.completedTransactionsRemovalTimer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    purgeCompletedTransactions();
+                }
+            }, this.mib.getLocalEntity().getCompletedTransactionsCleanupPeriod() * 1000L, this.mib.getLocalEntity().getCompletedTransactionsCleanupPeriod() * 1000L);
+        } else {
+            this.completedTransactionsRemovalTimer = null;
+        }
         // Ready to go
         startProcessing();
         if(LOG.isLoggable(Level.INFO)) {
             LOG.info(String.format("CFDP Entity [%d]: creation completed", getLocalEntityId()));
         }
-    }
-
-    @Override
-    public void addSegmentationStrategy(ICfdpSegmentationStrategy strategy) {
-        this.supportedSegmentationStrategies.add(0, strategy);
     }
 
     private void startProcessing() {
@@ -123,6 +137,11 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         for(IUtLayer l : this.utLayers.values()) {
             l.register(this);
         }
+    }
+
+    @Override
+    public void addSegmentationStrategy(ICfdpSegmentationStrategy strategy) {
+        this.supportedSegmentationStrategies.add(0, strategy);
     }
 
     @Override
@@ -163,7 +182,46 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
 
     @Override
     public void request(ICfdpRequest request) {
+        if(isDisposed()) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.severe(String.format("CFDP Entity [%d]: disposed, request rejected", getLocalEntityId()));
+            }
+            return;
+        }
         this.entityConfiner.submit(() -> processRequest(request));
+    }
+
+    @Override
+    public void purgeCompletedTransactions() {
+        if(isDisposed()) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.severe(String.format("CFDP Entity [%d]: disposed, purge transactions rejected", getLocalEntityId()));
+            }
+            return;
+        }
+        this.entityConfiner.submit(this::processPurgeCompletedTransactions);
+    }
+
+    private void processPurgeCompletedTransactions() {
+        if(isDisposed()) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.severe(String.format("CFDP Entity [%d]: disposed, purge transactions rejected", getLocalEntityId()));
+            }
+            return;
+        }
+        // Collect all the transaction IDs that you need to drop
+        List<Long> transactionsToDrop = new LinkedList<>();
+        for(Map.Entry<Long, CfdpTransaction> e : this.id2transaction.entrySet()) {
+            if(e.getValue().isDisposed()) {
+                transactionsToDrop.add(e.getKey());
+            }
+        }
+        // Drop from map
+        for(Long id : transactionsToDrop) {
+            this.id2transaction.remove(id);
+        }
+        // Call indication
+        notifyIndication(new TransactionPurgedIndication(transactionsToDrop));
     }
 
     private void processRequest(ICfdpRequest request) {
@@ -309,7 +367,7 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
     }
 
     /**
-     * This method is supposed to be invoked by {@link CfdpTransaction} objects.
+     * This method is supposed to be invoked by {@link CfdpTransaction} objects and local methods.
      *
      * @param indication the indication to notify
      */
@@ -329,6 +387,14 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
                     }
                 }
             });
+        }
+
+        // Check if the indication reports a transaction disposed and if we have to remove it from the map right away
+        if(indication instanceof TransactionDisposedIndication && getMib().getLocalEntity().getCompletedTransactionsCleanupPeriod() == 0) {
+            // Remove and notify
+            this.id2transaction.remove(((TransactionDisposedIndication) indication).getTransactionId());
+            // Call indication
+            notifyIndication(new TransactionPurgedIndication(Collections.singletonList(((TransactionDisposedIndication) indication).getTransactionId())));
         }
     }
 
@@ -400,6 +466,9 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
         // Add job for subscription cleanup
         this.subscriberNotifier.submit(this.subscribers::clear);
         // Shutdown the thread pools (keep them running for the final notifications)
+        if(this.completedTransactionsRemovalTimer != null) {
+            this.completedTransactionsRemovalTimer.cancel();
+        }
         this.subscriberNotifier.shutdown();
         this.entityConfiner.shutdown();
         // All done
@@ -411,6 +480,12 @@ public class CfdpEntity implements IUtLayerSubscriber, ICfdpEntity {
 
     @Override
     public void indication(IUtLayer layer, CfdpPdu pdu) {
+        if(isDisposed()) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.severe(String.format("CFDP Entity [%d]: disposed, indication rejected", getLocalEntityId()));
+            }
+            return;
+        }
         this.entityConfiner.submit(() -> processIndication(layer, pdu));
     }
 

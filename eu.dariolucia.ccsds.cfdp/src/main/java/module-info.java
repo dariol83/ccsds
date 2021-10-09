@@ -1,4 +1,3 @@
-// TODO complete README.md
 open module eu.dariolucia.ccsds.cfdp {
     requires java.logging;
     requires transitive java.xml.bind;
