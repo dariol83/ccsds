@@ -9,7 +9,7 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fdariol83%2Fccsds.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fdariol83%2Fccsds?ref=badge_shield)
 
 # An open source implementation of CCSDS protocols and formats in Java 11
-This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS, Space Packet, COP-1) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
+This repository contains an attempt to code an open source, not validated (but hopefully working and performant) implementation of some of the public available CCSDS standards (Time Code Format, SLE, TM/TC/AOS data link protocols, Space Packet protocol, COP-1, CFDP) and support utilities. The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9.
 
 Stable releases are published on Maven Central. The latest code version is always available on the master branch here on GitHub.
 
