@@ -30,8 +30,6 @@ service (in Java 11 terms) implementing the interface eu.dariolucia.ccsds.inspec
 A packet identification/encoding/decoding library (eu.dariolucia.ccsds.encdec), which supports basic data types (integer, real, enumeration, CCSDS absolute and 
 relative time formats, strings, octet streams, bit streams), array structures, ECSS TM/TC PUS headers, as derived from the ECSS Packet Utilisation Standard (http://everyspec.com/ESA/download.php?spec=ECSS-E-70-41A.047794.pdf), with main focus on performance. 
 
-Encoding performance has not been measured yet. 
-
 The packet structure is defined using a custom XML format definition, built by means of JAXB annotations.
 
 ## CFDP
