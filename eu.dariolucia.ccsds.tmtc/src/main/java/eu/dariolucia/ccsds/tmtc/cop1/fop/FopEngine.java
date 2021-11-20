@@ -508,11 +508,11 @@ public class FopEngine {
         boolean acked = true;
         // The frame is acked if its frame counter is strictly lower than the CLCW reported value (mod 256)
         // taking into account the FOP sliding window.
-        int NR = (int) clcw.getReportValue();
+        int nrReportValue = clcw.getReportValue();
         // Compute the set of values that actually acknowledge frames
         Set<Integer> expander = new HashSet<>();
         for(int i = 0; i < fopSlidingWindow; ++i) {
-            expander.add((NR - 1 - i + 256) % 256);
+            expander.add((nrReportValue - 1 - i + 256) % 256);
         }
         while(acked && !this.sentQueue.isEmpty()) {
             TransferFrameStatus next = this.sentQueue.element(); // Inspect the first frame
