@@ -506,22 +506,24 @@ public class FopEngine {
     void removeAckFramesFromSentQueue(Clcw clcw) {
         checkThreadAccess();
         boolean acked = true;
+        // The frame is acked if its frame counter is strictly lower than the CLCW reported value (mod 256)
+        // taking into account the FOP sliding window.
+        int NR = (int) clcw.getReportValue();
+        // Compute the set of values that actually acknowledge frames
+        Set<Integer> expander = new HashSet<>();
+        for(int i = 0; i < fopSlidingWindow; ++i) {
+            expander.add((NR - 1 - i + 256) % 256);
+        }
         while(acked && !this.sentQueue.isEmpty()) {
             TransferFrameStatus next = this.sentQueue.element(); // Inspect the first frame
             // No BC frames should be present here
             if(next.getFrame().getFrameType() == TcTransferFrame.FrameType.BC) {
                 throw new IllegalStateException("No BC frames should be present in the sent queue when calling removeAckFramesFromSentQueue()");
             }
-            // The frame is acked if its frame counter is lower than the CLCW reported value (mod 256)
-            // taking into account the FOP sliding window.
-            // Compute the set of values that actually acknowledge the frame
+            
+            // If the set contains the frame count, all fine
             int currentNNR = next.getFrame().getVirtualChannelFrameCount();
-            Set<Integer> expander = new HashSet<>();
-            for(int i = 0; i < fopSlidingWindow; ++i) {
-                expander.add((currentNNR + 1 + i) % 256);
-            }
-            // If the set contains the clcw report, all fine
-            if(expander.contains((int) clcw.getReportValue())) {
+            if(expander.contains(currentNNR)) {
                 // Acked - Confirm
                 confirm(next.getFrame()); // a)
                 this.sentQueue.remove();
