@@ -80,6 +80,7 @@ public class ClcwTab implements Initializable {
             addLine(sb, "No RF Available Flag", clcw.isNoRfAvailableFlag());
             addLine(sb, "Retransmit Flag", clcw.isRetransmitFlag());
             addLine(sb, "Wait Flag", clcw.isWaitFlag());
+            addLine(sb, "FARM-B Counter", clcw.getFarmBCounter());
             addLine(sb, "Report Value", clcw.getReportValue());
             clcwResultTextArea.setText(sb.toString());
             return;
