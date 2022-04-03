@@ -128,7 +128,7 @@ public class TransactionFinishedIndication implements ICfdpTransactionIndication
     /**
      * The filestore responses. Optionally present.
      *
-     * return the filestore responses (can be empty, never null)
+     * @return the filestore responses (can be empty, never null)
      */
     public List<FilestoreResponseTLV> getFilestoreResponses() {
         return Collections.unmodifiableList(filestoreResponses);
