@@ -32,6 +32,22 @@
     <name>CCSDS File Delivery Protocol</name>
     <description>Library implementing a CCSDS File Delivery Protocol engine, according to CCSDS 727.0-B-5</description>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>${maven.bundle.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Export-Package>eu.dariolucia.ccsds.*</Export-Package>
+                        <Export-Package>!eu.dariolucia.ccsds.tmtc.*</Export-Package>
+                    </instructions>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
     <dependencies>
         <dependency>
             <groupId>eu.dariolucia.ccsds</groupId>
