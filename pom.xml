@@ -22,7 +22,7 @@
 
     <groupId>eu.dariolucia.ccsds</groupId>
     <artifactId>eu.dariolucia.ccsds</artifactId>
-    <version>0.4.0</version>
+    <version>0.4.1</version>
     <packaging>pom</packaging>
 
     <name>CCSDS</name>
@@ -67,6 +67,7 @@
         <maven.jacoco.version>0.8.4</maven.jacoco.version>
         <maven.javadoc.version>3.1.0</maven.javadoc.version>
         <maven.source.version>3.1.0</maven.source.version>
+        <maven.jar.version>2.4</maven.jar.version>
         <maven.surefire.version>2.22.2</maven.surefire.version>
         <maven.compiler.version>3.8.1</maven.compiler.version>
         <maven.gpg.version>1.6</maven.gpg.version>
@@ -75,7 +76,7 @@
         <maven.eclipse>1.0.0</maven.eclipse>
         <!-- SonarCloud scan -->
         <sonar.projectKey>eu.dariolucia.ccsds:eu.dariolucia.ccsds</sonar.projectKey>
-        <sonar.moduleKey>${artifactId}</sonar.moduleKey>
+        <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.organization>dariol83</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
