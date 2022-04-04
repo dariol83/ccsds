@@ -75,7 +75,7 @@
         <maven.eclipse>1.0.0</maven.eclipse>
         <!-- SonarCloud scan -->
         <sonar.projectKey>eu.dariolucia.ccsds:eu.dariolucia.ccsds</sonar.projectKey>
-        <sonar.moduleKey>${artifactId}</sonar.moduleKey>
+        <sonar.moduleKey>${project.artifactId}</sonar.moduleKey>
         <sonar.organization>dariol83</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
