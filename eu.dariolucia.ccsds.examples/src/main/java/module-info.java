@@ -5,4 +5,6 @@ open module eu.dariolucia.ccsds.examples {
     requires eu.dariolucia.ccsds.sle.utl;
     requires eu.dariolucia.ccsds.tmtc;
     requires eu.dariolucia.ccsds.cfdp;
+
+    requires com.sun.xml.bind;
 }

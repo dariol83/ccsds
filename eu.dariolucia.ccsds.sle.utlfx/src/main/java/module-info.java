@@ -5,6 +5,7 @@ module eu.dariolucia.ccsds.sle.utlfx {
     requires java.logging;
     requires jasn1;
     requires java.xml.bind;
+    requires com.sun.xml.bind;
     requires eu.dariolucia.ccsds.sle.utl;
 
     exports eu.dariolucia.ccsds.sle.utlfx.application to javafx.graphics;
