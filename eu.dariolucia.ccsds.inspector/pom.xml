@@ -59,14 +59,23 @@
                     <outputDirectory>${project.build.directory}</outputDirectory>
                 </configuration>
             </plugin>
-            <!--
-            This module is trickier, as it relies on the Java module system to add connectors.
-            Therefore you need to do the following steps after compilation:
-            1. Copy the generated jar file inside the target/deps folder
-            2. Create a bat/sh file (depending on your OS) inside the deps folder, with a single line:
-                java -p . -m eu.dariolucia.ccsds.inspector/eu.dariolucia.ccsds.inspector.application.Launcher
-            3. Run it :)
-            -->
+            <!-- Allow generation of executable JARs with dependencies in deps -->
+            <!-- Even if the Jar can be executed, this module requires the Java module system to work -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>deps/</classpathPrefix>
+                            <mainClass>eu.dariolucia.ccsds.inspector.application.Launcher</mainClass>
+                        </manifest>
+                    </archive>
+                    <outputDirectory>${project.build.directory}</outputDirectory>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
