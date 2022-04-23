@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 Dario Lucia (https://www.dariolucia.eu)
+ * Copyright 2018-2022 Dario Lucia (https://www.dariolucia.eu)
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 /**
  * This package contains the definition of the data structures and builder classes, supporting the Space
- * Packet Protocol (CCSDS 133.0-B-1) and Bitstream Data access (as per AOS CCSDS 732.0-B-3).
+ * Packet Protocol (CCSDS 133.0-B-1), Bitstream Data access (as per AOS CCSDS 732.0-B-3) and
+ * Encapsulation Packet Protocol (CCSDS 133.1-B-3).
  */
 package eu.dariolucia.ccsds.tmtc.transport;
