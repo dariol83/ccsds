@@ -202,7 +202,7 @@ public class EncapsulationPacketBuilder {
      * Add the provided data to the packet data field. The data is copied to an intermediate buffer and further updates
      * to the original byte array are not reflected in the generated packet data field.
      *
-     * If the array is null or the length is <= 0, the payload unit is cleared.
+     * If the array is null or the length is less or equal to 0, the payload unit is cleared.
      *
      * @param b the byte array containing the data to put in the packet data field, can be null to reset the payload
      * @param offset the byte array start offset
