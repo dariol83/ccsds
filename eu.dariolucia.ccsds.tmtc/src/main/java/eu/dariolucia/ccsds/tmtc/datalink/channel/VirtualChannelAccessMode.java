@@ -31,5 +31,9 @@ public enum VirtualChannelAccessMode {
 	/**
 	 * The virtual channel delivers raw data (direct access, or VCA)
 	 */
-	DATA
+	DATA,
+	/**
+	 * The virtual channel delivers encapsulation packets
+	 */
+	ENCAPSULATION,
 }

@@ -21,7 +21,7 @@ import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.ocf.pdu.AbstractOcf;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
-import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.IPacket;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -162,14 +162,14 @@ public class TmSenderVirtualChannel extends AbstractSenderVirtualChannel<TmTrans
     }
 
     @Override
-    public int dispatch(Collection<SpacePacket> pkts) {
-        if (getMode() != VirtualChannelAccessMode.PACKET) {
-            throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested Packet access");
+    public int dispatch(Collection<IPacket> pkts) {
+        if (getMode() != VirtualChannelAccessMode.PACKET && getMode() != VirtualChannelAccessMode.ENCAPSULATION) {
+            throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested PACKET/ENCAPSULATION access");
         }
-        List<SpacePacket> packets = new ArrayList<>(pkts);
+        List<IPacket> packets = new ArrayList<>(pkts);
         // Strategy: fill in a transfer frame as much as you can, till the end. Do segmentation if needed.
         for (int i = 0; i < packets.size(); ++i) {
-            SpacePacket isp = packets.get(i);
+            IPacket isp = packets.get(i);
             int notWrittenData = isp.getLength();
             while(notWrittenData > 0) {
                 // If there is no pending frame, create the frame builder

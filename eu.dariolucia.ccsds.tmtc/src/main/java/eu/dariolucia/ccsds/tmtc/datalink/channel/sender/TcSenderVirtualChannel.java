@@ -20,7 +20,7 @@ import eu.dariolucia.ccsds.tmtc.datalink.builder.TcTransferFrameBuilder;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
-import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.IPacket;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -192,7 +192,7 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
     }
 
     @Override
-    public int dispatch(Collection<SpacePacket> pkts) {
+    public int dispatch(Collection<IPacket> pkts) {
         return dispatch(isAdMode(), getMapId(), pkts);
     }
 
@@ -214,16 +214,16 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
      * @param pkts the collection of packets to be sent
      * @return the number of remaining free bytes in the not-yet-sent TC frame (0 in this implementation).
      */
-    public int dispatch(boolean adMode, int mapId, Collection<SpacePacket> pkts) {
-        if (getMode() != VirtualChannelAccessMode.PACKET) {
-            throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested Packet access");
+    public int dispatch(boolean adMode, int mapId, Collection<IPacket> pkts) {
+        if (getMode() != VirtualChannelAccessMode.PACKET && getMode() != VirtualChannelAccessMode.ENCAPSULATION) {
+            throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested PACKET/ENCAPSULATION access");
         }
-        List<SpacePacket> packets = new ArrayList<>(pkts);
+        List<IPacket> packets = new ArrayList<>(pkts);
         int maxDataPerFrame = getMaxUserDataLength();
         // Strategy: fill in a transfer frame as much as you can, always using an UNSEGMENTED approach.
         // If the next space is going to spill out, then close the frame and send the closed frame immediately.
         for (int i = 0; i < packets.size(); ++i) {
-            SpacePacket isp = packets.get(i);
+            IPacket isp = packets.get(i);
             if (this.currentFrame == null) {
                 // If the packet fits it, then create the frame and add it to the frame
                 if (maxDataPerFrame >= isp.getLength()) {
@@ -313,20 +313,20 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
     }
 
     @Override
-    public int dispatch(SpacePacket isp) {
+    public int dispatch(IPacket isp) {
         return dispatch(isAdMode(), getMapId(), isp);
     }
 
-    public int dispatch(boolean adMode, int mapId, SpacePacket isp) {
+    public int dispatch(boolean adMode, int mapId, IPacket isp) {
         return dispatch(adMode, mapId, Collections.singletonList(isp));
     }
 
     @Override
-    public int dispatch(SpacePacket... isp) {
+    public int dispatch(IPacket... isp) {
         return dispatch(isAdMode(), getMapId(), isp);
     }
 
-    public int dispatch(boolean adMode, int mapId, SpacePacket... isp) {
+    public int dispatch(boolean adMode, int mapId, IPacket... isp) {
         return dispatch(adMode, mapId, Arrays.asList(isp));
     }
 

@@ -24,6 +24,7 @@ import eu.dariolucia.ccsds.tmtc.ocf.builder.ClcwBuilder;
 import eu.dariolucia.ccsds.tmtc.ocf.pdu.AbstractOcf;
 import eu.dariolucia.ccsds.tmtc.transport.builder.SpacePacketBuilder;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.IPacket;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import org.junit.jupiter.api.Test;
 
@@ -47,7 +48,7 @@ class AosSenderVirtualChannelTest {
             int vc0counter = 0;
             int vc1counter = 0;
             @Override
-            public List<SpacePacket> generateSpacePackets(int virtualChannelId, int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
+            public List<IPacket> generateSpacePackets(int virtualChannelId, int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
                 if(virtualChannelId == 0) {
                     ++vc0counter;
                 }
@@ -116,25 +117,25 @@ class AosSenderVirtualChannelTest {
         assertEquals(63, list.get(4).getVirtualChannelId());
     }
 
-    private List<SpacePacket> generateSpacePacketList(int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
+    private List<IPacket> generateSpacePacketList(int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
         // Considering a fixed packet data size of 400, use the following approach:
         // - if availableSpaceInCurrentFrame is > 800, generate 3 packets
         // - if availableSpaceInCurrentFrame is < 800, generate 1 packet
-        List<SpacePacket> packets = new LinkedList<>(generateSpacePackets(1));
+        List<IPacket> packets = new LinkedList<>(generateSpacePackets(1));
         if(availableSpaceInCurrentFrame > 800) {
             packets.addAll(generateSpacePackets(2));
         }
         return packets;
     }
 
-    private List<SpacePacket> generateSpacePackets(int n) {
+    private List<IPacket> generateSpacePackets(int n) {
         SpacePacketBuilder spp = SpacePacketBuilder.create()
                 .setApid(200)
                 .setQualityIndicator(true)
                 .setSecondaryHeaderFlag(false)
                 .setTelemetryPacket();
         spp.addData(new byte[400]);
-        List<SpacePacket> toReturn = new LinkedList<>();
+        List<IPacket> toReturn = new LinkedList<>();
         for (int i = 0; i < n; ++i) {
             spp.setPacketSequenceCount(i % 16384);
             toReturn.add(spp.build());
@@ -167,7 +168,7 @@ class AosSenderVirtualChannelTest {
             int vc0counter = 0;
             int vc1counter = 0;
             @Override
-            public List<SpacePacket> generateSpacePackets(int virtualChannelId, int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
+            public List<IPacket> generateSpacePackets(int virtualChannelId, int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
                 return null;
             }
 
@@ -275,7 +276,7 @@ class AosSenderVirtualChannelTest {
             int vc0counter = 0;
             int vc1counter = 0;
             @Override
-            public List<SpacePacket> generateSpacePackets(int virtualChannelId, int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
+            public List<IPacket> generateSpacePackets(int virtualChannelId, int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
                 return null;
             }
 

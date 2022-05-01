@@ -34,14 +34,26 @@ public interface IVirtualChannelReceiverOutput {
     }
 
     /**
-     * This method signals the extraction of the provided packet, including the last frame, from the provided virtual channel.
+     * This method signals the extraction of the provided space packet, including the first frame, from the provided virtual channel.
      *
      * @param vc the virtual channel that extracted the packet
-     * @param firstFrame the frame containing the last part of the packet
+     * @param firstFrame the frame containing the first part of the packet
      * @param packet the extracted space packet
      * @param qualityIndicator true if the packet has been fully extracted, false if there were problems (frame gap, packet overlap)
      */
     default void spacePacketExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+        // None
+    }
+
+    /**
+     * This method signals the extraction of the provided encapsulation packet, including the first frame, from the provided virtual channel.
+     *
+     * @param vc the virtual channel that extracted the packet
+     * @param firstFrame the frame containing the first part of the packet
+     * @param packet the extracted space packet
+     * @param qualityIndicator true if the packet has been fully extracted, false if there were problems (frame gap, packet overlap)
+     */
+    default void encapsulationPacketExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
         // None
     }
 

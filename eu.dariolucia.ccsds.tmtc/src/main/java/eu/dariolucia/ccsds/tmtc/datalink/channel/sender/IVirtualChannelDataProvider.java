@@ -17,7 +17,7 @@
 package eu.dariolucia.ccsds.tmtc.datalink.channel.sender;
 
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
-import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.IPacket;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ import java.util.List;
  */
 public interface IVirtualChannelDataProvider {
     /**
-     * This method returns a list of space packets, to be inserted into a transfer frame. It is mandatory that the
+     * This method returns a list of packets, to be inserted into a transfer frame. It is mandatory that the
      * overall size of the returned data does not exceed maxNumBytesBeforeOverflow, otherwise a {@link IllegalStateException} will
      * be thrown by the requesting virtual channel.
      *
@@ -36,7 +36,7 @@ public interface IVirtualChannelDataProvider {
      * @param maxNumBytesBeforeOverflow the maximum amount of bytes that the virtual channel can handle without overflow
      * @return the list of space packets to encode in the transfer frame (can be null, can be empty)
      */
-    List<SpacePacket> generateSpacePackets(int virtualChannelId, int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow);
+    List<IPacket> generateSpacePackets(int virtualChannelId, int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow);
 
     /**
      * This method returns the bitstream data to be inserted into a transfer frame. It is mandatory that the

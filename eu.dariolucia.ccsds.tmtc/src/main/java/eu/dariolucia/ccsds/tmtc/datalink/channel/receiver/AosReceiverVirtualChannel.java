@@ -81,4 +81,12 @@ public class AosReceiverVirtualChannel extends AbstractReceiverVirtualChannel<Ao
         byte[] extracted = Arrays.copyOfRange(frame.getFrame(), startIdx, startIdx + bytesToRead);
         notifyBitstreamExtracted(frame, extracted, frame.getBitstreamDataPointer());
     }
+
+    @Override
+    protected void extractEncapsulationPacket(AosTransferFrame frame, boolean gapDetected) {
+        if(frame.getUserDataType() != AosTransferFrame.UserDataType.M_PDU) {
+            throw new IllegalArgumentException("The provided frame is not marked as M-PDU, encapsulation packets cannot be extracted");
+        }
+        super.extractEncapsulationPacket(frame, gapDetected);
+    }
 }

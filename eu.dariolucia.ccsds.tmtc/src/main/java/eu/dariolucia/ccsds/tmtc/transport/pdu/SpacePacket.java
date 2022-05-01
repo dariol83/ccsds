@@ -26,7 +26,9 @@ import java.util.function.Function;
 /**
  * This class is used to decode and manipulate a space packet, compliant to CCSDS 133.0-B-1.
  */
-public class SpacePacket extends AnnotatedObject {
+public class SpacePacket extends AnnotatedObject implements IPacket {
+
+    public static final int VERSION = 0;
 
     /**
      * The length of the primary header
@@ -132,6 +134,7 @@ public class SpacePacket extends AnnotatedObject {
      *
      * @return the space packet array
      */
+    @Override
     public byte[] getPacket() {
         return packet;
     }
@@ -255,5 +258,10 @@ public class SpacePacket extends AnnotatedObject {
     @Override
     public int hashCode() {
         return Arrays.hashCode(getPacket());
+    }
+
+    @Override
+    public int getVersion() {
+        return 0;
     }
 }

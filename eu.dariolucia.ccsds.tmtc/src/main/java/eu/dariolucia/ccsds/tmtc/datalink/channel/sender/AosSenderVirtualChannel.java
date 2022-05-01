@@ -21,7 +21,7 @@ import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
 import eu.dariolucia.ccsds.tmtc.ocf.pdu.AbstractOcf;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
-import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.IPacket;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -165,11 +165,11 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 	}
 
 	@Override
-	public int dispatch(SpacePacket isp) {
+	public int dispatch(IPacket isp) {
 		return dispatch(isReplayFlag(), isp);
 	}
 
-	public int dispatch(boolean replay, SpacePacket isp) {
+	public int dispatch(boolean replay, IPacket isp) {
 		return dispatch(replay, Collections.singletonList(isp));
 	}
 
@@ -202,26 +202,26 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 	}
 
 	@Override
-	public int dispatch(SpacePacket... pkts) {
+	public int dispatch(IPacket... pkts) {
 		return dispatch(isReplayFlag(), pkts);
 	}
 
-	public int dispatch(boolean replay, SpacePacket... pkts) {
+	public int dispatch(boolean replay, IPacket... pkts) {
 		return dispatch(replay, Arrays.asList(pkts));
 	}
 
-	public int dispatch(Collection<SpacePacket> pkts) {
+	public int dispatch(Collection<IPacket> pkts) {
 		return dispatch(isReplayFlag(), pkts);
 	}
 
-	public int dispatch(boolean replay, Collection<SpacePacket> pkts) {
-		if (getMode() != VirtualChannelAccessMode.PACKET) {
-			throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested Packet access");
+	public int dispatch(boolean replay, Collection<IPacket> pkts) {
+		if (getMode() != VirtualChannelAccessMode.PACKET && getMode() != VirtualChannelAccessMode.ENCAPSULATION) {
+			throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " access mode set to mode " + getMode() + ", but requested PACKET/ENCAPSULATION access");
 		}
-		List<SpacePacket> packets = new ArrayList<>(pkts);
+		List<IPacket> packets = new ArrayList<>(pkts);
 		// Strategy: fill in a transfer frame as much as you can, till the end. Do segmentation if needed.
 		for (int i = 0; i < packets.size(); ++i) {
-			SpacePacket isp = packets.get(i);
+			IPacket isp = packets.get(i);
 			int notWrittenData = isp.getLength();
 			while (notWrittenData > 0) {
 				// If there is no pending frame, create the frame builder
@@ -290,6 +290,7 @@ public class AosSenderVirtualChannel extends AbstractSenderVirtualChannel<AosTra
 			return AosTransferFrame.UserDataType.IDLE;
 		} else {
 			switch (getMode()) {
+				case ENCAPSULATION:
 				case PACKET:
 					return AosTransferFrame.UserDataType.M_PDU;
 				case DATA:

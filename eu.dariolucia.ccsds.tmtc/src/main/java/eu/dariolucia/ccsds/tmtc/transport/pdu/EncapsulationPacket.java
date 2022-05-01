@@ -26,7 +26,9 @@ import java.util.function.Function;
 /**
  * This class is used to decode and manipulate an encapsulation packet, compliant to CCSDS 133.1-B-3.
  */
-public class EncapsulationPacket extends AnnotatedObject {
+public class EncapsulationPacket extends AnnotatedObject implements IPacket {
+
+    public static final int VERSION = 7;
 
     /**
      * The possible values for the Encapsulation Protocol ID field. The ordinal is equal to the value of the field as
@@ -106,17 +108,37 @@ public class EncapsulationPacket extends AnnotatedObject {
      */
     public static int getPrimaryHeaderLength(byte firstOctet) {
         // Length of length (2 bits)
-        switch(firstOctet & 0x03) {
+        switch(firstOctet & 0x03) { // Possible values are from 0 to 3
             case 0:
                 return 1;
             case 1:
                 return 2;
             case 2:
                 return 4;
-            case 3:
-                return 8;
             default:
-                throw new IllegalArgumentException("Encapsulation packet 'length of length' field value not supported: " + (firstOctet & 0x03));
+                return 8;
+        }
+    }
+
+    /**
+     * Return the length of the complete packet, based on the information contained in the primary header.
+     *
+     * @param primaryHeader the array containing the encapsulation packet primary header
+     * @param offset the offset to start with
+     * @return the length of the encapsulation packet (including the length of the primary header)
+     */
+    public static long getEncapsulationPacketLength(byte[] primaryHeader, int offset) {
+        int primaryHeaderLength = getPrimaryHeaderLength(primaryHeader[offset]);
+        // Let's parse the packet based on the detected length
+        if(primaryHeaderLength == 1) {
+            // Encapsulation idle packet
+            return 1;
+        } else if(primaryHeaderLength == 2) {
+            return primaryHeader[offset + 1] & 0xFF;
+        } else if(primaryHeaderLength == 4) {
+            return (ByteBuffer.wrap(primaryHeader, offset + 2, 2)).getShort() & 0xFFFF;
+        } else { // primaryHeaderLength == 8)
+            return (ByteBuffer.wrap(primaryHeader, offset + 4, 4)).getInt() & 0x00000000FFFFFFFFL;
         }
     }
 
@@ -127,20 +149,7 @@ public class EncapsulationPacket extends AnnotatedObject {
      * @return the length of the encapsulation packet (including the length of the primary header)
      */
     public static long getEncapsulationPacketLength(byte[] primaryHeader) {
-        int primaryHeaderLength = getPrimaryHeaderLength(primaryHeader[0]);
-        // Let's parse the packet based on the detected length
-        if(primaryHeaderLength == 1) {
-            // Encapsulation idle packet
-            return 1;
-        } else if(primaryHeaderLength == 2) {
-            return primaryHeader[1] & 0xFF;
-        } else if(primaryHeaderLength == 4) {
-            return (ByteBuffer.wrap(primaryHeader, 2, 2)).getShort() & 0xFFFF;
-        } else if(primaryHeaderLength == 8) {
-            return (ByteBuffer.wrap(primaryHeader, 4, 4)).getInt() & 0x00000000FFFFFFFFL;
-        } else {
-            throw new IllegalArgumentException("Encapsulation packet derived 'primary header length' not supported: " + primaryHeaderLength);
-        }
+        return getEncapsulationPacketLength(primaryHeader, 0);
     }
 
     private final byte[] packet;
@@ -202,7 +211,7 @@ public class EncapsulationPacket extends AnnotatedObject {
             this.encapsulatedPacketLength = 1;
         } else if(this.primaryHeaderLength == 2) {
             this.encapsulationProtocolIdExtensionPresent = false;
-            this.encapsulationProtocolIdExtension = 0x00;
+            this.encapsulationProtocolIdExtension = -1;
             this.ccsdsDefinedFieldPresent = false;
             this.ccsdsDefinedField = null;
             this.userDefinedFieldPresent = false;
@@ -220,7 +229,7 @@ public class EncapsulationPacket extends AnnotatedObject {
             this.encapsulationProtocolIdExtension = (byte) (secondOctet & 0x0F);
             // 2 octets contain the packet length (whole packet length, incl. header)
             this.encapsulatedPacketLength = in.getShort() & 0xFFFF;
-        } else if(this.primaryHeaderLength == 8) {
+        } else { // this.primaryHeaderLength == 8
             // 1 octet contains the other header info (user defined field, protocol extension)
             byte secondOctet = in.get();
             this.userDefinedFieldPresent = true;
@@ -233,8 +242,6 @@ public class EncapsulationPacket extends AnnotatedObject {
             in.get(this.ccsdsDefinedField);
             // 4 octets contain the packet length (whole packet length, incl. header)
             this.encapsulatedPacketLength = in.getInt() & 0x00000000FFFFFFFFL;
-        } else {
-            throw new IllegalArgumentException("Encapsulation packet derived 'primary header length' not supported: " + this.primaryHeaderLength);
         }
 
         this.encapsulatedDataFieldLength = this.encapsulatedPacketLength - this.primaryHeaderLength;
@@ -249,6 +256,7 @@ public class EncapsulationPacket extends AnnotatedObject {
      *
      * @return the encapsulation packet array
      */
+    @Override
     public byte[] getPacket() {
         return packet;
     }
@@ -409,5 +417,10 @@ public class EncapsulationPacket extends AnnotatedObject {
     @Override
     public int hashCode() {
         return Arrays.hashCode(getPacket());
+    }
+
+    @Override
+    public int getVersion() {
+        return VERSION;
     }
 }

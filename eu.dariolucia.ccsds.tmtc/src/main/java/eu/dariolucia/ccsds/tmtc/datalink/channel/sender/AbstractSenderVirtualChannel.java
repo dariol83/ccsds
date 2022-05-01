@@ -20,7 +20,7 @@ import eu.dariolucia.ccsds.tmtc.datalink.builder.ITransferFrameBuilder;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
-import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.IPacket;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -120,10 +120,10 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
         // Calculate how much free space we have to fill up the frame, and the maximum amount of data that this
         // channel can handle to avoid violating the constraint on the generation of at most one frame
         int availableSpaceInCurrentFrame = getRemainingFreeSpace();
-        if(mode == VirtualChannelAccessMode.PACKET) {
-            List<SpacePacket> packets = this.dataProvider.generateSpacePackets(getVirtualChannelId(), availableSpaceInCurrentFrame, availableSpaceInCurrentFrame + getMaxUserDataLength() - 1);
+        if(mode == VirtualChannelAccessMode.PACKET || mode == VirtualChannelAccessMode.ENCAPSULATION) {
+            List<IPacket> packets = this.dataProvider.generateSpacePackets(getVirtualChannelId(), availableSpaceInCurrentFrame, availableSpaceInCurrentFrame + getMaxUserDataLength() - 1);
             // Compute if a frame will be emitted or not
-            int newDataSize = packets == null ? 0 : packets.stream().map(SpacePacket::getLength).reduce(0, Integer::sum);
+            int newDataSize = packets == null ? 0 : packets.stream().map(IPacket::getLength).reduce(0, Integer::sum);
             if(newDataSize >= availableSpaceInCurrentFrame + getMaxUserDataLength()) {
                 // Two frames or more would be generated: error by the data provider
                 throw new IllegalStateException("Virtual channel " + getVirtualChannelId() + " requested max " + (availableSpaceInCurrentFrame + getMaxUserDataLength() - 1) + " bytes to data provider " +
@@ -202,7 +202,7 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
     }
 
     /**
-     * This method returns the mode (packet mode, bitstream mode, channel access mode) configured for this virtual channel.
+     * This method returns the mode (packet mode, bitstream mode, channel access mode, encapsulation) configured for this virtual channel.
      *
      * @return the virtual channel access mode
      */
@@ -274,7 +274,7 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
         this.listeners.forEach(o -> o.transferFrameGenerated(this, frame, currentBufferedData));
     }
 
-    protected int calculateRemainingData(List<SpacePacket> packets, int i) {
+    protected int calculateRemainingData(List<IPacket> packets, int i) {
         int bytes = 0;
         for (; i < packets.size(); ++i) {
             bytes += packets.get(i).getLength();
@@ -288,36 +288,36 @@ public abstract class AbstractSenderVirtualChannel<T extends AbstractTransferFra
      * frame.
      *
      * For TM-based VCs, the VC will wait to receive a sufficient amount of packets to emit its last frame, i.e. frames
-     * are emitted once they are full. Depending on the amount and size of space packets, this method can result in zero, one or
+     * are emitted once they are full. Depending on the amount and size of packets, this method can result in zero, one or
      * multiple frames being emitted.
      *
      * For TC-based VCs, the VC will always emit at least one frame. The VC will try to pack TC packets inside a single
-     * frame and will avoid segmentation if possible. For space packets larger than the maximum frame size, the VC ensures
+     * frame and will avoid segmentation if possible. For packets larger than the maximum frame size, the VC ensures
      * that the large space packets is segmented across frames. Subsequent packets will use different frames.
      *
      * @param packets the packets to be encapsulated inside transfer frames
      * @return the amount of free bytes that are still available in the last generated but not emitted frame, or a value equal to getMaxUserDataLength if there is no pending frame
      */
-    public abstract int dispatch(Collection<SpacePacket> packets);
+    public abstract int dispatch(Collection<IPacket> packets);
 
     /**
      * This method calls dispatch(Collections.singletonList(isp)).
      *
-     * @param isp the space packet to dispatch
+     * @param isp the packet to dispatch
      *
      * @return the amount of free bytes that are still available in the last generated but not emitted frame, or a value equal to getMaxUserDataLength if there is no pending frame
      */
-    public int dispatch(SpacePacket isp) {
+    public int dispatch(IPacket isp) {
         return dispatch(Collections.singletonList(isp));
     }
 
     /**
      * This method calls dispatch(Arrays.asList(isp)).
      *
-     * @param isp the space packets to dispatch
+     * @param isp the packets to dispatch
      * @return the amount of free bytes that are still available in the last generated but not emitted frame, or a value equal to getMaxUserDataLength if there is no pending frame
      */
-    public int dispatch(SpacePacket... isp) {
+    public int dispatch(IPacket... isp) {
         return dispatch(Arrays.asList(isp));
     }
 

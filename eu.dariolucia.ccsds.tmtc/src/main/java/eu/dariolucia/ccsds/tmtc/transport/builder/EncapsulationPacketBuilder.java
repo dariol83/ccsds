@@ -191,7 +191,7 @@ public class EncapsulationPacketBuilder {
      * @return this {@link EncapsulationPacketBuilder} object
      */
     public EncapsulationPacketBuilder setLengthOfLength(int length) {
-        if(length != -1 && length < 0 || length > 3) {
+        if(length != -1 && (length < 0 || length > 3)) {
             throw new IllegalArgumentException("Length of Length between 0 and 3, or -1, got: " + length);
         }
         this.lengthOfLength = length;
@@ -249,10 +249,6 @@ public class EncapsulationPacketBuilder {
         if(this.lengthOfLength == -1) {
             // Compute length based on provided information
             headerLength = computeDynamicHeaderLength();
-            if(headerLength == 1 && this.encapsulationProtocolId != EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_IDLE) {
-                throw new IllegalStateException("Computed header length is 0, but Encapsulation Protocol ID field is "
-                        + this.encapsulationProtocolId + ", expected " + EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_IDLE + ". This is a bug.");
-            }
         } else {
             switch (this.lengthOfLength) {
                 case 0:
@@ -268,11 +264,9 @@ public class EncapsulationPacketBuilder {
                 case 2:
                     headerLength = 4;
                     break;
-                case 3:
+                default:
                     headerLength = 8;
                     break;
-                 default:
-                    throw new IllegalStateException("Length of Length field not supported: " + this.lengthOfLength);
             }
         }
 

@@ -26,7 +26,7 @@ class SpacePacketBuilderTest {
     @Test
     public void testTmPacketEncoding() {
         int userDataLength = 112;
-        SpacePacketBuilder builder = SpacePacketBuilder.create(true)
+        SpacePacketBuilder builder = SpacePacketBuilder.create()
                 .setTelemetryPacket()
                 .setSequenceFlag(SpacePacket.SequenceFlagType.UNSEGMENTED)
                 .setApid(123)
