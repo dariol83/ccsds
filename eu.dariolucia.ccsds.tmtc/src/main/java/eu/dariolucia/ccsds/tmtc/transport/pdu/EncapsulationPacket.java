@@ -74,7 +74,7 @@ public class EncapsulationPacket extends AnnotatedObject implements IPacket {
     /**
      * The maximum length of an encapsulation packet header
      */
-    private static final int EP_PRIMARY_HEADER_MAX_LENGTH = 8;
+    public static final int EP_PRIMARY_HEADER_MAX_LENGTH = 8;
 
     /**
      * The maximum encapsulation packet length

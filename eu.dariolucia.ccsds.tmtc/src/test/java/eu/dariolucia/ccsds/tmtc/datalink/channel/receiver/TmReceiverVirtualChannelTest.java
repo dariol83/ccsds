@@ -23,6 +23,7 @@ import eu.dariolucia.ccsds.tmtc.coding.reader.LineHexDumpChannelReader;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.EncapsulationPacket;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import eu.dariolucia.ccsds.tmtc.util.StreamUtil;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,8 @@ class TmReceiverVirtualChannelTest {
     private static String FILE_TM1_DATA = "dumpFile_tm_user_data.hex";
     private static String FILE_TM3 = "dumpFile_tm_segmentation_mixed.hex";
     private static String FILE_TM4 = "dumpFile_tm_large_packets.hex";
+    private static String FILE_TM_ENC = "dumpFile_tm_encapsulation.hex";
+    private static String FILE_TM_ENC_GAP = "dumpFile_tm_encapsulation_gap.hex";
 
     @Test
     public void testTmVc0SpacePacket() {
@@ -489,5 +492,189 @@ class TmReceiverVirtualChannelTest {
         assertEquals(0, gapDetected.get());
         assertEquals(5, goodPackets.size());
         assertEquals(0, badPackets.size());
+    }
+
+    @Test
+    public void testTmVc0EncapsulationPacket() {
+        // Create a virtual channel for VC0
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.ENCAPSULATION, true);
+        assertEquals(VirtualChannelAccessMode.ENCAPSULATION, vc0.getReceiverMode());
+        assertEquals(-1, vc0.getCurrentVcSequenceCounter());
+        // Subscribe a packet collector
+        List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
+        List<byte[]> badPackets = new CopyOnWriteArrayList<>();
+        IVirtualChannelReceiverOutput output = new IVirtualChannelReceiverOutput() {
+
+            @Override
+            public void encapsulationPacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+                if(qualityIndicator) {
+                    goodPackets.add(packet);
+                } else {
+                    badPackets.add(packet);
+                }
+            }
+
+            @Override
+            public void transferFrameReceived(AbstractReceiverVirtualChannel vc, AbstractTransferFrame receivedFrame) {
+                //
+            }
+
+            @Override
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+                throw new RuntimeException("Should not be called");
+            }
+
+            @Override
+            public void dataExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data) {
+                //
+            }
+
+            @Override
+            public void bitstreamExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data, int numBits) {
+                //
+            }
+
+            @Override
+            public void gapDetected(AbstractReceiverVirtualChannel vc, int expectedVc, int receivedVc, int missingFrames) {
+                //
+            }
+        };
+        vc0.register(output);
+
+        // Build the reader
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM_ENC));
+        // Use stream approach: no need for decoder
+        StreamUtil.from(reader) // Reads the frames, correctly segmented
+                .map(TmTransferFrame.decodingFunction(false)) // Convert to TM frame
+                .filter(o -> o.getVirtualChannelId() == 0) // Filter out VCs not equal to 0
+                .forEach(vc0);
+        // Check the list of packets
+        assertEquals(13, goodPackets.size());
+        assertEquals(0, badPackets.size());
+
+        // Check the encapsulation packets
+        for(int i = 0; i < 13; ++i) {
+            EncapsulationPacket ep = new EncapsulationPacket(goodPackets.get(i), true);
+            switch (i) {
+                case 0:
+                    assertEquals(4, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC, ep.getEncapsulationProtocolId());
+                    break;
+                case 1:
+                    assertEquals(4, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC, ep.getEncapsulationProtocolId());
+                    break;
+                case 2:
+                    assertEquals(4, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC, ep.getEncapsulationProtocolId());
+                    break;
+                case 3:
+                    assertEquals(4, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC, ep.getEncapsulationProtocolId());
+                    break;
+                case 4:
+                    assertEquals(2, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC, ep.getEncapsulationProtocolId());
+                    break;
+                case 5:
+                    assertEquals(4, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC, ep.getEncapsulationProtocolId());
+                    assertEquals(1115 - 4 - 6 - 1, ep.getLength());
+                    break;
+                case 6:
+                    assertEquals(4, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC, ep.getEncapsulationProtocolId());
+                    break;
+                case 7:
+                    assertEquals(4, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC, ep.getEncapsulationProtocolId());
+                    break;
+                case 8:
+                    assertEquals(4, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC, ep.getEncapsulationProtocolId());
+                    break;
+                case 9:
+                    assertEquals(4, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC, ep.getEncapsulationProtocolId());
+                    break;
+                case 10:
+                    assertEquals(1, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_IDLE, ep.getEncapsulationProtocolId());
+                    break;
+                case 11:
+                    assertEquals(4, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_IDLE, ep.getEncapsulationProtocolId());
+                    break;
+                case 12:
+                    assertEquals(8, ep.getPrimaryHeaderLength());
+                    assertEquals(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_IDLE, ep.getEncapsulationProtocolId());
+                    break;
+            }
+        }
+
+        assertEquals(10, vc0.getCurrentVcSequenceCounter());
+        vc0.deregister(output);
+    }
+
+    @Test
+    public void testTmVc0EncapsulationPacketGap() {
+        // Create a virtual channel for VC0
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.ENCAPSULATION, true);
+        assertEquals(VirtualChannelAccessMode.ENCAPSULATION, vc0.getReceiverMode());
+        assertEquals(-1, vc0.getCurrentVcSequenceCounter());
+        // Subscribe a packet collector
+        List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
+        List<byte[]> badPackets = new CopyOnWriteArrayList<>();
+        IVirtualChannelReceiverOutput output = new IVirtualChannelReceiverOutput() {
+
+            @Override
+            public void encapsulationPacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+                if(qualityIndicator) {
+                    goodPackets.add(packet);
+                } else {
+                    badPackets.add(packet);
+                }
+            }
+
+            @Override
+            public void transferFrameReceived(AbstractReceiverVirtualChannel vc, AbstractTransferFrame receivedFrame) {
+                //
+            }
+
+            @Override
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+                throw new RuntimeException("Should not be called");
+            }
+
+            @Override
+            public void dataExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data) {
+                //
+            }
+
+            @Override
+            public void bitstreamExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data, int numBits) {
+                //
+            }
+
+            @Override
+            public void gapDetected(AbstractReceiverVirtualChannel vc, int expectedVc, int receivedVc, int missingFrames) {
+                //
+            }
+        };
+        vc0.register(output);
+
+        // Build the reader
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM_ENC_GAP));
+        // Use stream approach: no need for decoder
+        StreamUtil.from(reader) // Reads the frames, correctly segmented
+                .map(TmTransferFrame.decodingFunction(false)) // Convert to TM frame
+                .filter(o -> o.getVirtualChannelId() == 0) // Filter out VCs not equal to 0
+                .forEach(vc0);
+        // Check the list of packets
+        assertEquals(12, goodPackets.size());
+        assertEquals(1, badPackets.size());
+
+        assertEquals(10, vc0.getCurrentVcSequenceCounter());
+        vc0.deregister(output);
     }
 }
