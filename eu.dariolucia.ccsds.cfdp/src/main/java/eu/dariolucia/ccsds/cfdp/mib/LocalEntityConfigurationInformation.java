@@ -51,6 +51,9 @@ public class LocalEntityConfigurationInformation {
     @XmlAttribute(name = "completed-transactions-cleanup-period")
     private int completedTransactionsCleanupPeriod = -1; // >0: disabled; 0: cleanup as soon as the transaction is disposed; >0: regular cleanup job everything X seconds
 
+    @XmlAttribute(name = "file-temp-folder")
+    private String tempFolder = null;
+
     @XmlElementWrapper(name = "fault-handlers")
     @XmlElement(name = "fault-handler")
     private List<FaultHandlerStrategy> faultHandlerStrategyList = new LinkedList<>(); // For each type of fault condition, a default handler
@@ -137,6 +140,14 @@ public class LocalEntityConfigurationInformation {
 
     public void setCompletedTransactionsCleanupPeriod(int completedTransactionsCleanupPeriod) {
         this.completedTransactionsCleanupPeriod = completedTransactionsCleanupPeriod;
+    }
+
+    public String getTempFolder() {
+        return tempFolder;
+    }
+
+    public void setTempFolder(String tempFolder) {
+        this.tempFolder = tempFolder;
     }
 
     @Override

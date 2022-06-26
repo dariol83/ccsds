@@ -95,7 +95,12 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         super(pdu.getTransactionSequenceNumber(), entity, pdu.getSourceEntityId());
         this.initialPdu = pdu;
         try {
-            this.temporaryReconstructionFile = Files.createTempFile("cfdp_in_file_" + pdu.getDestinationEntityId() + "_" + pdu.getTransactionSequenceNumber() + "_", ".tmp").toFile();
+            String tempFolder = entity.getMib().getLocalEntity().getTempFolder();
+            if(tempFolder == null) {
+                this.temporaryReconstructionFile = Files.createTempFile("cfdp_in_file_" + pdu.getDestinationEntityId() + "_" + pdu.getTransactionSequenceNumber() + "_", ".tmp").toFile();
+            } else {
+                this.temporaryReconstructionFile = Files.createTempFile(new File(tempFolder).toPath(), "cfdp_in_file_" + pdu.getDestinationEntityId() + "_" + pdu.getTransactionSequenceNumber() + "_", ".tmp").toFile();
+            }
             this.temporaryReconstructionFileMap = new RandomAccessFile(this.temporaryReconstructionFile, "rw");
         } catch (IOException e) {
             if(LOG.isLoggable(Level.SEVERE)) {
