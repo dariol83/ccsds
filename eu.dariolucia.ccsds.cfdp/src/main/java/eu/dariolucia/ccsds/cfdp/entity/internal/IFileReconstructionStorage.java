@@ -27,7 +27,7 @@ import java.io.OutputStream;
  * This interface is used to provide different implementation strategies with respect to the temporary storage of file
  * chunks delivered by the CFDP protocol. This library provides two implementations:
  * <ul>
- *     <li>A temporary file-based implementation (@link {@link TemporaryFileBasedReconstructionStorage}), which retains the received data into a {@link java.io.RandomAccessFile} stored into a
+ *     <li>A temporary file-based implementation (@link {@link TemporaryFileBasedReconstructionStorage}), default, which retains the received data into a {@link java.io.RandomAccessFile} stored into a
  *     temporary location: the default one of the OS/user or a selected one {@link LocalEntityConfigurationInformation#getTempFolder()}</li>
  *     <li>A memory-based implementation (@link {@link MemoryBasedReconstructionStorage}, which retains the received data in a in-memory structure</li>
  * </ul>
@@ -35,8 +35,11 @@ import java.io.OutputStream;
  * limited parallel transactions with small files, or in case the CFDP system has plenty of memory available, then the memory-based implementation provides
  * higher performance.
  *
- * Note: it is possible to achieve higher performance also with the temporary file-based implementation, if the path to the temporary folder
- * is a memory-mapped drive (e.g. ramfs partition in Linux).
+ * By default, the {@link TemporaryFileBasedReconstructionStorage} is configured. To change it to the {@link MemoryBasedReconstructionStorage}, the
+ * MIB property {@link LocalEntityConfigurationInformation#isFileBasedTempStorage()} shall be set to false.
+ *
+ * Note: it is possible to achieve higher performance also with the temporary file-based implementation, if the path to the temporary folder as specified with
+ * {@link LocalEntityConfigurationInformation#getTempFolder()} is a memory-mapped drive (e.g. ramfs partition in Linux).
  */
 public interface IFileReconstructionStorage {
 

@@ -16,7 +16,6 @@
 
 package eu.dariolucia.ccsds.cfdp.entity.internal;
 
-import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.ICfdpChecksum;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.FileDataPdu;
 
@@ -25,31 +24,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.file.Files;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class TemporaryFileBasedReconstructionStorage implements IFileReconstructionStorage {
-
-    private static final Logger LOG = Logger.getLogger(TemporaryFileBasedReconstructionStorage.class.getName());
 
     private RandomAccessFile temporaryReconstructionFileMap;
     private final File temporaryReconstructionFile;
 
-    public TemporaryFileBasedReconstructionStorage(long sourceEntityId, long destinationEntityId, long transactionSequenceNumber, CfdpEntity entity) {
-        try {
-            String tempFolder = entity.getMib().getLocalEntity().getTempFolder();
-            if(tempFolder == null) {
-                this.temporaryReconstructionFile = Files.createTempFile("cfdp_in_file_" + destinationEntityId + "_" + transactionSequenceNumber + "_", ".tmp").toFile();
-            } else {
-                this.temporaryReconstructionFile = Files.createTempFile(new File(tempFolder).toPath(), "cfdp_in_file_" + destinationEntityId + "_" + transactionSequenceNumber + "_", ".tmp").toFile();
-            }
-            this.temporaryReconstructionFileMap = new RandomAccessFile(this.temporaryReconstructionFile, "rw");
-        } catch (IOException e) {
-            if(LOG.isLoggable(Level.SEVERE)) {
-                LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: fail on local temp file creation: %s ", entity.getLocalEntityId(), transactionSequenceNumber, sourceEntityId, e.getMessage()), e);
-            }
-            throw new CfdpRuntimeException(e);
+    public TemporaryFileBasedReconstructionStorage(long sourceEntityId, long transactionSequenceNumber, CfdpEntity entity) throws IOException {
+        String tempFolder = entity.getMib().getLocalEntity().getTempFolder();
+        if(tempFolder == null) {
+            this.temporaryReconstructionFile = Files.createTempFile("cfdp_in_file_" + sourceEntityId + "_" + transactionSequenceNumber + "_", ".tmp").toFile();
+        } else {
+            this.temporaryReconstructionFile = Files.createTempFile(new File(tempFolder).toPath(), "cfdp_in_file_" + sourceEntityId + "_" + transactionSequenceNumber + "_", ".tmp").toFile();
         }
+        this.temporaryReconstructionFileMap = new RandomAccessFile(this.temporaryReconstructionFile, "rw");
     }
 
     @Override

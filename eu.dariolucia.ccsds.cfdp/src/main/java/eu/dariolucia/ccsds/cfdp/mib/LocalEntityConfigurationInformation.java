@@ -1,5 +1,5 @@
 /*
- *   Copyright (c) 2021 Dario Lucia (https://www.dariolucia.eu)
+ *   Copyright (c) 2022 Dario Lucia (https://www.dariolucia.eu)
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -53,6 +53,9 @@ public class LocalEntityConfigurationInformation {
 
     @XmlAttribute(name = "file-temp-folder")
     private String tempFolder = null;
+
+    @XmlAttribute(name = "file-based-temp-storage")
+    private boolean fileBasedTempStorage = true;
 
     @XmlElementWrapper(name = "fault-handlers")
     @XmlElement(name = "fault-handler")
@@ -150,6 +153,14 @@ public class LocalEntityConfigurationInformation {
         this.tempFolder = tempFolder;
     }
 
+    public boolean isFileBasedTempStorage() {
+        return fileBasedTempStorage;
+    }
+
+    public void setFileBasedTempStorage(boolean fileBasedTempStorage) {
+        this.fileBasedTempStorage = fileBasedTempStorage;
+    }
+
     @Override
     public String toString() {
         return "LocalEntityConfigurationInformation{" +
@@ -161,6 +172,8 @@ public class LocalEntityConfigurationInformation {
                 ", suspendedIndicationRequired=" + suspendedIndicationRequired +
                 ", resumedIndicationRequired=" + resumedIndicationRequired +
                 ", completedTransactionsCleanupPeriod=" + completedTransactionsCleanupPeriod +
+                ", fileBasedTempStorage=" + fileBasedTempStorage +
+                ", tempFolder=" + tempFolder +
                 ", faultHandlerStrategyList=" + faultHandlerStrategyList +
                 '}';
     }

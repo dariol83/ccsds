@@ -17,6 +17,7 @@
 package eu.dariolucia.ccsds.cfdp.entity.internal;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
+import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
 import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionState;
 import eu.dariolucia.ccsds.cfdp.entity.CfdpTransmissionMode;
 import eu.dariolucia.ccsds.cfdp.entity.FaultDeclaredException;
@@ -89,8 +90,18 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     public IncomingCfdpTransaction(CfdpPdu pdu, CfdpEntity entity) {
         super(pdu.getTransactionSequenceNumber(), entity, pdu.getSourceEntityId());
         this.initialPdu = pdu;
-        // TODO: introduce memory-based temporary storage
-        this.fileReconstructionStrategy = new TemporaryFileBasedReconstructionStorage(pdu.getSourceEntityId(), pdu.getDestinationEntityId(), pdu.getTransactionSequenceNumber(), entity);
+        try {
+            if(entity.getMib().getLocalEntity().isFileBasedTempStorage()) {
+                this.fileReconstructionStrategy = new TemporaryFileBasedReconstructionStorage(pdu.getSourceEntityId(), pdu.getTransactionSequenceNumber(), entity);
+            } else {
+                this.fileReconstructionStrategy = new MemoryBasedReconstructionStorage();
+            }
+        } catch (IOException e) {
+            if(LOG.isLoggable(Level.SEVERE)) {
+                LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: fail on creation of temporary storage: %s ", entity.getLocalEntityId(), pdu.getTransactionSequenceNumber(), pdu.getSourceEntityId(), e.getMessage()), e);
+            }
+            throw new CfdpRuntimeException(e);
+        }
         // Derive transmission mode
         if(pdu.isAcknowledged()) {
             transmissionMode = CfdpTransmissionMode.CLASS_2;
