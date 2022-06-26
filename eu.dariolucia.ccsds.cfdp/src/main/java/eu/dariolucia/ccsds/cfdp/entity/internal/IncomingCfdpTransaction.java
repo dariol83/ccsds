@@ -17,7 +17,6 @@
 package eu.dariolucia.ccsds.cfdp.entity.internal;
 
 import eu.dariolucia.ccsds.cfdp.common.BytesUtil;
-import eu.dariolucia.ccsds.cfdp.common.CfdpRuntimeException;
 import eu.dariolucia.ccsds.cfdp.entity.CfdpTransactionState;
 import eu.dariolucia.ccsds.cfdp.entity.CfdpTransmissionMode;
 import eu.dariolucia.ccsds.cfdp.entity.FaultDeclaredException;
@@ -33,11 +32,8 @@ import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.*;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.nio.file.Files;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -56,8 +52,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     private MetadataPdu metadataPdu;
 
     private Map<Long, FileDataPduSummary> fileReconstructionMap; // optimisation: use a temporary random access file, use a stripped down version of the FileDataPdu, only offset, length
-    private RandomAccessFile temporaryReconstructionFileMap;
-    private final File temporaryReconstructionFile;
+    private final IFileReconstructionStorage fileReconstructionStrategy;
 
     private ICfdpChecksum checksum;
     private long receivedContiguousFileBytes = 0;
@@ -94,20 +89,8 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     public IncomingCfdpTransaction(CfdpPdu pdu, CfdpEntity entity) {
         super(pdu.getTransactionSequenceNumber(), entity, pdu.getSourceEntityId());
         this.initialPdu = pdu;
-        try {
-            String tempFolder = entity.getMib().getLocalEntity().getTempFolder();
-            if(tempFolder == null) {
-                this.temporaryReconstructionFile = Files.createTempFile("cfdp_in_file_" + pdu.getDestinationEntityId() + "_" + pdu.getTransactionSequenceNumber() + "_", ".tmp").toFile();
-            } else {
-                this.temporaryReconstructionFile = Files.createTempFile(new File(tempFolder).toPath(), "cfdp_in_file_" + pdu.getDestinationEntityId() + "_" + pdu.getTransactionSequenceNumber() + "_", ".tmp").toFile();
-            }
-            this.temporaryReconstructionFileMap = new RandomAccessFile(this.temporaryReconstructionFile, "rw");
-        } catch (IOException e) {
-            if(LOG.isLoggable(Level.SEVERE)) {
-                LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: fail on local temp file creation: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
-            }
-            throw new CfdpRuntimeException(e);
-        }
+        // TODO: introduce memory-based temporary storage
+        this.fileReconstructionStrategy = new TemporaryFileBasedReconstructionStorage(pdu.getSourceEntityId(), pdu.getDestinationEntityId(), pdu.getTransactionSequenceNumber(), entity);
         // Derive transmission mode
         if(pdu.isAcknowledged()) {
             transmissionMode = CfdpTransmissionMode.CLASS_2;
@@ -383,13 +366,12 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         }
         // Add the PDU in the map
         this.fileReconstructionMap.put(pdu.getOffset(), new FileDataPduSummary(pdu.getOffset(), pdu.getFileData().length));
-        // Write it to the temp file
+        // Write it to the file reconstruction strategy
         try {
-            this.temporaryReconstructionFileMap.seek(pdu.getOffset());
-            this.temporaryReconstructionFileMap.write(pdu.getFileData());
+            this.fileReconstructionStrategy.writeData(pdu);
         } catch (IOException e) {
             if(LOG.isLoggable(Level.SEVERE)) {
-                LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: failure in adding received FileDataPdu contents to temporary storage: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
+                LOG.log(Level.SEVERE, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: failure in adding received FileDataPdu contents to file reconstruction function: %s ", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
             }
             fault(ConditionCode.CC_FILESTORE_REJECTION, getLocalEntityId());
         }
@@ -1276,22 +1258,13 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     /**
-     * This method computes the checksum from the temporary random access file.
+     * This method computes the checksum from the file reconstruction function.
      *
      * @return the computed checksum
      */
     private int computeFinalChecksum() {
         try {
-            long length = this.temporaryReconstructionFileMap.length();
-            this.temporaryReconstructionFileMap.seek(0);
-            byte[] tmpBuffer = new byte[1024];
-            long position = 0;
-            while (position < length) {
-                // read(...) advances the position of the file pointer, no seek needed after that
-                int read = this.temporaryReconstructionFileMap.read(tmpBuffer);
-                this.checksum.checksum(tmpBuffer, 0, read, position);
-                position += read;
-            }
+            this.fileReconstructionStrategy.computeChecksum(this.checksum);
             return this.checksum.getCurrentChecksum();
         } catch (IOException e) {
             if(LOG.isLoggable(Level.SEVERE)) {
@@ -1303,7 +1276,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     /**
-     * This method stores the contents currently present in the file reconstruction map in a temporary file.
+     * This method stores the contents currently present in the file reconstruction map in a partial file.
      * In case of filestore failure, no fault(..) are raised, but the condition code is retained accordingly.
      */
     private void storePartialFile() {
@@ -1376,17 +1349,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     }
 
     private long writeFileToStorage(OutputStream os) throws IOException {
-        long length = this.temporaryReconstructionFileMap.length();
-        this.temporaryReconstructionFileMap.seek(0);
-        byte[] tmpBuffer = new byte[1024];
-        long position = 0;
-        while (position < length) {
-            // read(...) advances the position of the file pointer, no seek needed after that
-            int read = this.temporaryReconstructionFileMap.read(tmpBuffer);
-            os.write(tmpBuffer, 0, read);
-            position += read;
-        }
-        return position;
+        return this.fileReconstructionStrategy.writeFileToStorage(os);
     }
 
     private void handleFilestoreRequests() {
@@ -1472,16 +1435,12 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         if(this.fileReconstructionMap != null) {
             this.fileReconstructionMap.clear();
         }
-        if(this.temporaryReconstructionFileMap != null) {
-            try {
-                this.temporaryReconstructionFileMap.close();
-            } catch (IOException e) {
-                if(LOG.isLoggable(Level.WARNING)) {
-                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: error when closing the temporary file: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
-                }
+        try {
+            this.fileReconstructionStrategy.handlePreDispose();
+        } catch (IOException e) {
+            if(LOG.isLoggable(Level.WARNING)) {
+                LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: error when closing the file reconstruction function: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), e.getMessage()), e);
             }
-            this.temporaryReconstructionFile.delete(); // NOSONAR no need to check the boolean value here
-            this.temporaryReconstructionFileMap = null;
         }
         this.checksum = null;
         if(this.filestoreResponses != null) {
