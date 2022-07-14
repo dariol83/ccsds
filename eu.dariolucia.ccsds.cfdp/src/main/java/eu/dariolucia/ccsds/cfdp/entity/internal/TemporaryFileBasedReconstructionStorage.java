@@ -50,7 +50,7 @@ public class TemporaryFileBasedReconstructionStorage implements IFileReconstruct
     public void computeChecksum(ICfdpChecksum checksum) throws IOException {
         long length = this.temporaryReconstructionFileMap.length();
         this.temporaryReconstructionFileMap.seek(0);
-        byte[] tmpBuffer = new byte[1024];
+        byte[] tmpBuffer = new byte[1024 * 64]; // 64KB
         long position = 0;
         while (position < length) {
             // read(...) advances the position of the file pointer, no seek needed after that
@@ -64,7 +64,7 @@ public class TemporaryFileBasedReconstructionStorage implements IFileReconstruct
     public long writeFileToStorage(OutputStream os) throws IOException {
         long length = this.temporaryReconstructionFileMap.length();
         this.temporaryReconstructionFileMap.seek(0);
-        byte[] tmpBuffer = new byte[1024];
+        byte[] tmpBuffer = new byte[1024 * 64]; // 64KB
         long position = 0;
         while (position < length) {
             // read(...) advances the position of the file pointer, no seek needed after that

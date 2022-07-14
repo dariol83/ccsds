@@ -41,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class AosReceiverVirtualChannelTest {
 
     private static final String FILE_TM1 = "dumpFile_aos_1.hex";
+    private static final String FILE_TM1_ENCAPSULATION = "dumpFile_aos_1_encapsulation.hex";
     private static final String FILE_TM1_GAP = "dumpFile_aos_1_gap.hex";
     private static final String FILE_TM1_BITSTREAM = "dumpFile_aos_bitstream.hex";
 
@@ -289,4 +290,64 @@ class AosReceiverVirtualChannelTest {
         // Check the number of frames
         assertEquals(30, frameCounter.get());
     }
+
+
+    @Test
+    public void testAosVc0EncapsulationPacket() {
+        // Create a virtual channel for VC0
+        AosReceiverVirtualChannel vc0 = new AosReceiverVirtualChannel(0, VirtualChannelAccessMode.ENCAPSULATION, true);
+        // Subscribe a packet collector
+        List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
+        List<byte[]> badPackets = new CopyOnWriteArrayList<>();
+        final AtomicInteger frameCounter = new AtomicInteger(0);
+        vc0.register(new IVirtualChannelReceiverOutput() {
+            @Override
+            public void transferFrameReceived(AbstractReceiverVirtualChannel vc, AbstractTransferFrame receivedFrame) {
+                frameCounter.incrementAndGet();
+            }
+
+            @Override
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+
+            }
+
+            @Override
+            public void dataExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data) {
+
+            }
+
+            @Override
+            public void bitstreamExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data, int numBits) {
+
+            }
+
+            @Override
+            public void gapDetected(AbstractReceiverVirtualChannel vc, int expectedVc, int receivedVc, int missingFrames) {
+
+            }
+
+            @Override
+            public void encapsulationPacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+                if(qualityIndicator) {
+                    goodPackets.add(packet);
+                } else {
+                    badPackets.add(packet);
+                }
+            }
+        });
+        // Build the reader
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM1_ENCAPSULATION));
+        // Use stream approach: no need for decoder
+        StreamUtil.from(reader) // Reads the frames, correctly segmented
+                .map(AosTransferFrame.decodingFunction(false, 0, AosTransferFrame.UserDataType.M_PDU, true, false)) // Convert to AOS frame
+                .filter(o -> o.getVirtualChannelId() == 0) // Filter out VCs not equal to 0
+                .forEach(vc0);
+        // Check the number of VC0 frames
+        assertEquals(11, frameCounter.get());
+        // Check the list of packets
+        assertEquals(13, goodPackets.size());
+        assertEquals(0, badPackets.size());
+    }
+
+
 }

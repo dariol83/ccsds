@@ -18,14 +18,18 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.sender;
 
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux.SimpleMuxer;
+import eu.dariolucia.ccsds.tmtc.datalink.channel.sender.mux.TmMasterChannelMuxer;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AosTransferFrame;
 import eu.dariolucia.ccsds.tmtc.ocf.builder.ClcwBuilder;
 import eu.dariolucia.ccsds.tmtc.ocf.pdu.AbstractOcf;
+import eu.dariolucia.ccsds.tmtc.transport.builder.EncapsulationPacketBuilder;
 import eu.dariolucia.ccsds.tmtc.transport.builder.SpacePacketBuilder;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.BitstreamData;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.EncapsulationPacket;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.IPacket;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
+import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
 import java.util.LinkedList;
@@ -435,4 +439,238 @@ class AosSenderVirtualChannelTest {
         vc0.setVirtualChannelFrameCountCycle(2);
         assertEquals(2, vc0.getVirtualChannelFrameCountCycle());
     }
+
+
+    @Test
+    public void testPushModeEncapsulationPacketMany() {
+        // Create a sink consumer
+        List<AosTransferFrame> list = new LinkedList<>();
+        Consumer<AosTransferFrame> sink = list::add;
+
+        // Setup the VCs (0, 1 and 7 for idle frames)
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.ENCAPSULATION, false, 1115, this::ocfSupplier, true, false, 0, null);
+
+        //
+        vc0.register(new IVirtualChannelSenderOutput() {
+            @Override
+            public void transferFrameGenerated(AbstractSenderVirtualChannel vc, AbstractTransferFrame generatedFrame, int bufferedBytes) {
+                sink.accept((AosTransferFrame) generatedFrame);
+            }
+        });
+
+        assertNotNull(vc0.getOcfSupplier());
+        assertNull(vc0.getInsertZoneSupplier());
+        vc0.setReplayFlag(false);
+        assertFalse(vc0.isReplayFlag());
+
+        // Set the VC count to 16773000
+        vc0.setVirtualChannelFrameCounter(16773000);
+
+        // Generate encapsulation packets and stop when the number of emitted frames is more than 5000
+        // Expect increase of frame cycle from 0 to 1
+        while (list.size() < 5000) {
+            vc0.dispatch(generateEncapsulationPackets(10));
+        }
+        //
+        assertEquals(0, list.get(0).getVirtualChannelFrameCountCycle());
+        assertEquals(0, list.get(1).getVirtualChannelFrameCountCycle());
+        assertEquals(1, list.get(list.size() - 1).getVirtualChannelFrameCountCycle());
+        assertTrue(list.get(0).isVirtualChannelFrameCountUsageFlag());
+
+        // Push idle -> exception
+        // Dispatch packet -> exception
+        try {
+            vc0.dispatchIdle(new byte[] { 0x55 });
+            fail("IllegalStateException expected");
+        } catch(IllegalStateException e) {
+            // Good
+        }
+    }
+
+    @Test
+    public void testPullModeEncapsulationPacket() {
+        // Create a sink consumer
+        List<AosTransferFrame> list = new LinkedList<>();
+        Consumer<AosTransferFrame> sink = list::add;
+        // Setup the muxer
+        SimpleMuxer<AosTransferFrame> mux = new SimpleMuxer<>(sink);
+        // Data supplier
+        IVirtualChannelDataProvider dataProvider = new IVirtualChannelDataProvider() {
+            int vc0counter = 0;
+            int vc1counter = 0;
+            @Override
+            public List<IPacket> generateSpacePackets(int virtualChannelId, int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
+                if(virtualChannelId == 0) {
+                    ++vc0counter;
+                }
+                if(virtualChannelId == 1) {
+                    ++vc1counter;
+                }
+                if(virtualChannelId == 0 && vc0counter % 5 != 0) {
+                    ++vc0counter;
+                    return generateEncapsulationPacketList(availableSpaceInCurrentFrame, maxNumBytesBeforeOverflow);
+                } else if(virtualChannelId == 1 && vc1counter % 3 != 0) {
+                    ++vc1counter;
+                    return generateEncapsulationPacketList(availableSpaceInCurrentFrame, maxNumBytesBeforeOverflow);
+                } else {
+                    return null;
+                }
+            }
+
+            @Override
+            public BitstreamData generateBitstreamData(int virtualChannelId, int availableSpaceInCurrentFrame) {
+                return null;
+            }
+
+            @Override
+            public byte[] generateData(int virtualChannelId, int availableSpaceInCurrentFrame) {
+                return null;
+            }
+        };
+        // Setup the VCs (0, 1 and 63 for idle frames)
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.ENCAPSULATION, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc1 = new AosSenderVirtualChannel(123, 1, VirtualChannelAccessMode.ENCAPSULATION, false, 892, this::ocfSupplier, dataProvider);
+        AosSenderVirtualChannel vc63 = new AosSenderVirtualChannel(123, 63, VirtualChannelAccessMode.ENCAPSULATION, false, 892, this::ocfSupplier, null);
+        //
+        vc0.register(mux);
+        vc1.register(mux);
+        vc63.register(mux);
+        // Generation logic: generate data from VC0 if it has data. In any case, after 10 VC0 frames, generate a VC1
+        // frame if it has data. If VC1 has no data, generate an idle frame on VC63. If VC0 has no data, check VC1 and
+        // if no data, send idle frame on VC63.
+        int vc0frames = 0;
+        // Generate 30 frames overall
+        for(int i = 0; i < 30; ++i) {
+            if(vc0frames < 10) {
+                boolean vc0generated = vc0.pullNextFrame();
+                if(!vc0generated) {
+                    boolean vc1generated = vc1.pullNextFrame();
+                    if(!vc1generated) {
+                        vc63.dispatchIdle(new byte[] { 0x55 });
+                    }
+                } else {
+                    ++vc0frames;
+                }
+            } else {
+                boolean vc1generated = vc1.pullNextFrame();
+                if(!vc1generated) {
+                    vc63.dispatchIdle(new byte[] { 0x55 });
+                }
+                vc0frames = 0;
+            }
+        }
+        //
+        assertEquals(30, list.size());
+        assertEquals(0, list.get(0).getVirtualChannelId());
+        assertEquals(1, list.get(1).getVirtualChannelId());
+        assertEquals(63, list.get(2).getVirtualChannelId());
+        assertEquals(0, list.get(3).getVirtualChannelId());
+        assertEquals(63, list.get(4).getVirtualChannelId());
+    }
+
+    private List<IPacket> generateEncapsulationPacketList(int availableSpaceInCurrentFrame, int maxNumBytesBeforeOverflow) {
+        // Considering a fixed packet data size of 400, use the following approach:
+        // - if availableSpaceInCurrentFrame is > 800, generate 3 packets
+        // - if availableSpaceInCurrentFrame is < 800, generate 1 packet
+        List<IPacket> packets = new LinkedList<>(generateEncapsulationPackets(1));
+        if (availableSpaceInCurrentFrame > 800) {
+            packets.addAll(generateEncapsulationPackets(2));
+        }
+        return packets;
+    }
+
+    private List<IPacket> generateEncapsulationPackets(int n) {
+        return generateEncapsulationPackets(n, 400);
+    }
+
+    private List<IPacket> generateEncapsulationPackets(int n, int bodySize) {
+        EncapsulationPacketBuilder spp = EncapsulationPacketBuilder.create()
+                .setQualityIndicator(true)
+                .setEncapsulationProtocolId(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC);
+        spp.setData(new byte[bodySize]);
+        List<IPacket> toReturn = new LinkedList<>();
+        for (int i = 0; i < n; ++i) {
+            toReturn.add(spp.build());
+        }
+        return toReturn;
+    }
+
+    @Test
+    public void testPushModeEncapsulationPackets() {
+        // Create a sink consumer
+        List<AosTransferFrame> list = new LinkedList<>();
+        Consumer<AosTransferFrame> sink = list::add;
+        SimpleMuxer<AosTransferFrame> mux = new SimpleMuxer<>(sink);
+        // Setup the VCs (0)
+        AosSenderVirtualChannel vc0 = new AosSenderVirtualChannel(123, 0, VirtualChannelAccessMode.ENCAPSULATION, false, 892, this::ocfSupplier);
+        //
+        vc0.register(mux);
+
+        int maxUserDataLength = vc0.getMaxUserDataLength();
+        // This is in frame 0
+        vc0.dispatch(generateEncapsulationPackets(1, maxUserDataLength - 4 - 20));
+        // This is segmented on frame 0 and frame 1
+        vc0.dispatch(generateEncapsulationPackets(1, maxUserDataLength - 4 - 500));
+        // This is in frame 1
+        vc0.dispatch(generateEncapsulationPackets(1, 400));
+        // This is in frame 1, frame 2, frame 3 e part of frame 4
+        int remaining = vc0.dispatch(generateEncapsulationPackets(1, 3 * maxUserDataLength));
+        // This is in frame 4
+        vc0.dispatch(generateEncapsulationPackets(1, remaining - 2)); // remaining is < 255
+        // This is in frame 5, one single byte remains free in frame 5
+        vc0.dispatch(generateEncapsulationPackets(1, maxUserDataLength - 4 - 1));
+        // This is in frame 5 and frame 6
+        remaining = vc0.dispatch(generateEncapsulationPackets(1, maxUserDataLength - 4 - 400));
+        // This is in frame 6, 2 bytes free in frame 6
+        vc0.dispatch(generateEncapsulationPackets(1, remaining - 4 - 2));
+        // This is in frame 6, 7 and 8
+        remaining = vc0.dispatch(generateEncapsulationPackets(1, maxUserDataLength + 200 - 4));
+        // This is in frame 8
+        vc0.dispatch(generateEncapsulationPackets(1, remaining - 4));
+        // This is in frame 9 from start, idle encapsulation packet, 1 byte
+        vc0.dispatch(generateIdleEncapsulationPackets(1, 0));
+        // This is in frame 9, idle encapsulation packet, not complete frame 9 (3 bytes missing)
+        vc0.dispatch(generateIdleEncapsulationPackets(1, maxUserDataLength - 4 - 1 - 3));
+        // This is in frame 10, idle encapsulation packet with special info, complete frame 10
+        vc0.dispatch(generateIdleEncapsulationPacketsWithInfo(1, maxUserDataLength + 3 - 8));
+
+        // list.stream().map(AosTransferFrame::getFrame).map(StringUtil::toHexDump).forEach(System.out::println);
+
+        assertEquals(11, list.size());
+    }
+
+
+    private List<IPacket> generateIdleEncapsulationPacketsWithInfo(int n, int bodySize) {
+        EncapsulationPacketBuilder spp = EncapsulationPacketBuilder.create()
+                .setQualityIndicator(true)
+                .setIdle()
+                .setCcsdsDefinedField(new byte[] { 0x12, 0x34 });
+        if(bodySize == 0) {
+            spp.clearData();
+        } else {
+            spp.setData(new byte[bodySize]);
+        }
+        List<IPacket> toReturn = new LinkedList<>();
+        for (int i = 0; i < n; ++i) {
+            toReturn.add(spp.build());
+        }
+        return toReturn;
+    }
+
+    private List<IPacket> generateIdleEncapsulationPackets(int n, int bodySize) {
+        EncapsulationPacketBuilder spp = EncapsulationPacketBuilder.create()
+                .setQualityIndicator(true)
+                .setIdle();
+        if(bodySize == 0) {
+            spp.clearData();
+        } else {
+            spp.setData(new byte[bodySize]);
+        }
+        List<IPacket> toReturn = new LinkedList<>();
+        for (int i = 0; i < n; ++i) {
+            toReturn.add(spp.build());
+        }
+        return toReturn;
+    }
+
 }

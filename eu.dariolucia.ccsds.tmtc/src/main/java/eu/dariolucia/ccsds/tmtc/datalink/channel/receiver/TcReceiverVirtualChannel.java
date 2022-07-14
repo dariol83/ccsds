@@ -35,7 +35,7 @@ public class TcReceiverVirtualChannel extends AbstractReceiverVirtualChannel<TcT
 
     @Override
     protected boolean frameContainsNoStartOfPacket(TcTransferFrame frame) {
-        return false;
+        return frame.isSegmented() && (frame.getSequenceFlag() == TcTransferFrame.SequenceFlagType.CONTINUE || frame.getSequenceFlag() == TcTransferFrame.SequenceFlagType.LAST);
     }
 
     @Override

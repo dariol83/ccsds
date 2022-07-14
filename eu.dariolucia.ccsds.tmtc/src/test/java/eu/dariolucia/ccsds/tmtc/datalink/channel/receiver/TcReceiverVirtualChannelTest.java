@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TcReceiverVirtualChannelTest {
 
     private static final String FILE_TC1 = "dumpFile_tc_plain_1.hex";
+    private static final String FILE_TC1_ENC = "dumpFile_tc_1_encapsulation.hex";
 
     @Test
     public void testTcVc0SpacePacket() {
@@ -83,6 +84,66 @@ class TcReceiverVirtualChannelTest {
         assertEquals(10, frameCounter.get());
         // Check the list of packets
         assertEquals(30, goodPackets.size());
+        // No bad packets
+        assertEquals(0, badPackets.size());
+
+    }
+
+
+    @Test
+    public void testTcVc0EncapsulationPacket() {
+        // Create a virtual channel for VC0
+        TcReceiverVirtualChannel vc0 = new TcReceiverVirtualChannel(0, VirtualChannelAccessMode.ENCAPSULATION, true);
+        assertEquals(256, vc0.getVcFrameCounterModulo());
+        // Subscribe a packet collector
+        List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
+        List<byte[]> badPackets = new CopyOnWriteArrayList<>();
+        final AtomicInteger frameCounter = new AtomicInteger(0);
+        vc0.register(new IVirtualChannelReceiverOutput() {
+            @Override
+            public void transferFrameReceived(AbstractReceiverVirtualChannel vc, AbstractTransferFrame receivedFrame) {
+                frameCounter.incrementAndGet();
+            }
+
+            @Override
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+
+            }
+
+            @Override
+            public void dataExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data) {
+
+            }
+
+            @Override
+            public void bitstreamExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data, int numBits) {
+
+            }
+
+            @Override
+            public void gapDetected(AbstractReceiverVirtualChannel vc, int expectedVc, int receivedVc, int missingFrames) {
+
+            }
+
+            @Override
+            public void encapsulationPacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
+                if(qualityIndicator) {
+                    goodPackets.add(packet);
+                } else {
+                    badPackets.add(packet);
+                }
+            }
+        });
+        // Build the reader
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TC1_ENC));
+        // Use stream approach: no need for decoder
+        StreamUtil.from(reader) // Reads the TC frames
+                .map(TcTransferFrame.decodingFunction((vc) -> true, false)) // Convert to TC frame, segmented, no FECF
+                .forEach(vc0);
+        // Check the number of TC frames
+        assertEquals(6, frameCounter.get());
+        // Check the list of packets
+        assertEquals(1, goodPackets.size());
         // No bad packets
         assertEquals(0, badPackets.size());
 

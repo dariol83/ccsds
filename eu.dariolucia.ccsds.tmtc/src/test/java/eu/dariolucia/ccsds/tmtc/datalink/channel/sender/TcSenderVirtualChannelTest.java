@@ -18,8 +18,12 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.sender;
 
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame;
+import eu.dariolucia.ccsds.tmtc.transport.builder.EncapsulationPacketBuilder;
 import eu.dariolucia.ccsds.tmtc.transport.builder.SpacePacketBuilder;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.EncapsulationPacket;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.IPacket;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
+import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -644,5 +648,77 @@ class TcSenderVirtualChannelTest {
                 assertEquals(vc0.getMaxUserDataLength() + 1, segment.length); // same as above
             }
         }
+    }
+
+    @Test
+    public void testSingleEncapsulationPacketUnsegmented() {
+        // Create a sink consumer
+        List<TcTransferFrame> list = new LinkedList<>();
+        IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
+        // Setup the VC
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.ENCAPSULATION, false, false);
+        // Register the sink
+        vc0.register(sink);
+        // Set channel properties (BD mode)
+        vc0.setAdMode(false);
+        // Generate 10 TC packets
+        for (int i = 0; i < 10; ++i) {
+            vc0.dispatch(generateEncapsulationPacket(1, 20));
+        }
+        //
+        // Checks
+        assertEquals(10, list.size());
+        for (int i = 0; i < 10; ++i) {
+            EncapsulationPacket sp = new EncapsulationPacket(list.get(i).getDataFieldCopy(), true);
+            assertEquals(22, sp.getLength());
+            assertFalse(list.get(i).isSecurityUsed());
+            assertEquals(0, list.get(i).getSecurityHeaderLength());
+            assertEquals(0, list.get(i).getSecurityTrailerLength());
+        }
+
+        assertFalse(vc0.isSecured());
+        assertFalse(vc0.isSegmented());
+    }
+
+    @Test
+    public void testSingleEncapsulationPacketSegmented() {
+        // Create a sink consumer
+        List<TcTransferFrame> list = new LinkedList<>();
+        IVirtualChannelSenderOutput<TcTransferFrame> sink = (vc, generatedFrame, bufferedBytes) -> list.add(generatedFrame);
+        // Setup the VC
+        TcSenderVirtualChannel vc0 = new TcSenderVirtualChannel(123, 0, VirtualChannelAccessMode.ENCAPSULATION, false, true);
+        // Register the sink
+        vc0.register(sink);
+        // Set channel properties (BD mode)
+        vc0.setAdMode(false);
+        // Generate 1 TC packet
+        vc0.dispatch(generateEncapsulationPacket(1, vc0.getMaxUserDataLength() * 5));
+
+        //
+        // Checks
+        assertEquals(6, list.size());
+
+        // list.stream().map(TcTransferFrame::getFrame).map(StringUtil::toHexDump).forEach(System.out::println);
+
+        for (int i = 0; i < 6; ++i) {
+            assertFalse(list.get(i).isSecurityUsed());
+            assertEquals(0, list.get(i).getSecurityHeaderLength());
+            assertEquals(0, list.get(i).getSecurityTrailerLength());
+        }
+
+        assertFalse(vc0.isSecured());
+        assertTrue(vc0.isSegmented());
+    }
+
+    private List<IPacket> generateEncapsulationPacket(int n, int size) {
+        EncapsulationPacketBuilder spp = EncapsulationPacketBuilder.create()
+                .setQualityIndicator(true)
+                .setEncapsulationProtocolId(EncapsulationPacket.ProtocolIdType.PROTOCOL_ID_MISSION_SPECIFIC);
+        spp.setData(new byte[size]);
+        List<IPacket> toReturn = new LinkedList<>();
+        for (int i = 0; i < n; ++i) {
+            toReturn.add(spp.build());
+        }
+        return toReturn;
     }
 }
