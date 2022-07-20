@@ -57,6 +57,11 @@
                     <fx:include source="CfdpTab.fxml" />
                 </content>
             </Tab>
+            <Tab text="Encapsulation Packet">
+                <content>
+                    <fx:include source="EncapsulationPacketTab.fxml" />
+                </content>
+            </Tab>
         </tabs>
       </TabPane>
    </children>

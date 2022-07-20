@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<!--
+  ~   Copyright (c) 2021 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~   Licensed under the Apache License, Version 2.0 (the "License");
+  ~   you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  -->
+
+<VBox fx:id="spViewbox" prefHeight="200.0" prefWidth="100.0" spacing="5.0" xmlns="http://javafx.com/javafx/10.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.viewer.fxml.EncapsulationPacketTab">
+ <children>
+    <Label text="Encapsulation Packet Dump" />
+    <TextArea fx:id="spTextArea" prefHeight="300.0" promptText="Hex dump of the Encapsulation Packet " wrapText="true" />
+    <HBox alignment="CENTER_LEFT" spacing="5.0">
+       <children>
+          <Region HBox.hgrow="ALWAYS" />
+          <Button mnemonicParsing="false" onAction="#onSpDecodeButtonClicked" prefWidth="100.0" text="Decode" />
+          <Button mnemonicParsing="false" onAction="#onSpClearButtonClicked" prefWidth="100.0" text="Clear" />
+       </children>
+    </HBox>
+    <TextArea fx:id="spResultTextArea" VBox.vgrow="ALWAYS" promptText="No information" editable="false" />
+ </children>
+ <padding>
+    <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+ </padding>
+</VBox>
+
