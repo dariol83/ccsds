@@ -61,7 +61,7 @@ available.
 A packet identification/encoding/decoding library (eu.dariolucia.ccsds.encdec), which supports basic data types 
 (integer, real, enumeration, CCSDS absolute and relative time formats, strings, octet streams, bit streams), array 
 structures, ECSS TM/TC PUS headers, as derived from the ECSS Packet Utilisation Standard 
-([http://everyspec.com/ESA/download.php?spec=ECSS-E-70-41A.047794.pdf](http://everyspec.com/ESA/ECSS-E-70-41A_47794/)) with main focus on performance. 
+([http://everyspec.com/ESA/ECSS-E-70-41A_47794/](http://everyspec.com/ESA/ECSS-E-70-41A_47794/)) with main focus on performance. 
 
 The packet structure is defined using a custom XML format definition, built by means of JAXB annotations.
 
