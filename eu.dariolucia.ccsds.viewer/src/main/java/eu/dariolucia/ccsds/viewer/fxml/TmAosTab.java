@@ -16,6 +16,8 @@
 
 package eu.dariolucia.ccsds.viewer.fxml;
 
+import eu.dariolucia.ccsds.tmtc.algorithm.ReedSolomonAlgorithm;
+import eu.dariolucia.ccsds.tmtc.coding.decoder.ReedSolomonDecoder;
 import eu.dariolucia.ccsds.tmtc.coding.decoder.TmRandomizerDecoder;
 import eu.dariolucia.ccsds.tmtc.coding.encoder.TmAsmEncoder;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
@@ -90,14 +92,14 @@ public class TmAosTab implements Initializable {
                 processCadu(bdata);
             } else {
                 // Assume frame
-                processFrame(bdata);
+                processFrame(bdata, false, false);
             }
         } catch (Exception e) {
             error(e.getMessage());
         }
     }
 
-    private void processFrame(byte[] bdata) {
+    private void processFrame(byte[] bdata, boolean reedSolomonVerified, boolean reedSolomonValid) {
         // Check if it is randomised
         if(tmAosRandomizedChoicebox.getSelectionModel().getSelectedItem().equals(YES)) {
             bdata = new TmRandomizerDecoder().apply(bdata);
@@ -112,7 +114,7 @@ public class TmAosTab implements Initializable {
                         tmAosFecfChoicebox.getSelectionModel().getSelectedItem().equals(YES),
                         Integer.parseInt(tmAosSecurityHeaderTextField.getText()),
                         Integer.parseInt(tmAosSecurityTrailerTextField.getText()));
-                processTmFrame(ttf);
+                processTmFrame(ttf, reedSolomonVerified, reedSolomonValid);
                 return;
             } catch (Exception e) {
                 // Not a TM frame
@@ -129,7 +131,7 @@ public class TmAosTab implements Initializable {
                         tmAosFecfChoicebox.getSelectionModel().getSelectedItem().equals(YES),
                         Integer.parseInt(tmAosSecurityHeaderTextField.getText()),
                         Integer.parseInt(tmAosSecurityTrailerTextField.getText()));
-                processAosFrame(aosf);
+                processAosFrame(aosf, reedSolomonVerified, reedSolomonValid);
                 return;
             } catch (Exception e) {
                 // Not a AOS frame
@@ -139,8 +141,13 @@ public class TmAosTab implements Initializable {
         error("Provided dump is not a AOS/TM Frame: " + message);
     }
 
-    private void processAosFrame(AosTransferFrame aosf) {
+    private void processAosFrame(AosTransferFrame aosf, boolean reedSolomonVerified, boolean reedSolomonValid) {
         StringBuilder sb = new StringBuilder("");
+        if(reedSolomonVerified) {
+            addLine(sb, "Reed Solomon Check Result", reedSolomonValid ? "OK" : "Errors");
+            addLine(sb, "Extracted AOS frame", StringUtil.toHexDump(aosf.getFrame()));
+            addLine(sb,"-----------------------------", "");
+        }
         addLine(sb, "Transfer Frame Version Number", aosf.getTransferFrameVersionNumber());
         addLine(sb, "Spacecraft ID", aosf.getSpacecraftId());
         addLine(sb, "Virtual Channel ID", aosf.getVirtualChannelId());
@@ -160,6 +167,7 @@ public class TmAosTab implements Initializable {
         }
         if(aosf.isFecfPresent()) {
             addLine(sb, "FECF", String.format("%04X", aosf.getFecf()));
+            addLine(sb, "Frame Validity", aosf.isValid() ? "OK" : "Error");
         }
         if(aosf.getSecurityHeaderLength() > 0) {
             addLine(sb, "Security Header", StringUtil.toHexDump(aosf.getSecurityHeaderCopy()));
@@ -201,8 +209,13 @@ public class TmAosTab implements Initializable {
         vc.accept(ttf);
     }
 
-    private void processTmFrame(TmTransferFrame ttf) {
+    private void processTmFrame(TmTransferFrame ttf, boolean reedSolomonVerified, boolean reedSolomonValid) {
         StringBuilder sb = new StringBuilder("");
+        if(reedSolomonVerified) {
+            addLine(sb, "Reed Solomon Check Result", reedSolomonValid ? "OK" : "Errors");
+            addLine(sb, "Extracted TM frame", StringUtil.toHexDump(ttf.getFrame()));
+            addLine(sb,"-----------------------------", "");
+        }
         addLine(sb, "Transfer Frame Version Number", ttf.getTransferFrameVersionNumber());
         addLine(sb, "Spacecraft ID", ttf.getSpacecraftId());
         addLine(sb, "Virtual Channel ID", ttf.getVirtualChannelId());
@@ -218,6 +231,7 @@ public class TmAosTab implements Initializable {
         }
         if(ttf.isFecfPresent()) {
             addLine(sb, "FECF", String.format("%04X", ttf.getFecf()));
+            addLine(sb, "Frame Validity", ttf.isValid() ? "OK" : "Error");
         }
         if(ttf.getSecurityHeaderLength() > 0) {
             addLine(sb, "Security Header", StringUtil.toHexDump(ttf.getSecurityHeaderCopy()));
@@ -242,7 +256,18 @@ public class TmAosTab implements Initializable {
             // Try to guess the frame size
             int idepth = (bdata.length - 4) / 255;
             // Extract n blocks of 223 bytes (assuming RS 223/255 is used)
-            processFrame(Arrays.copyOfRange(bdata, 4, 4 + (223 * idepth)));
+            byte[] framePlusRs = Arrays.copyOfRange(bdata, 4, 4 + (223 * idepth));
+            byte[] toCheck = Arrays.copyOfRange(bdata, 4, bdata.length);
+            // Check if it is randomised
+            if(tmAosRandomizedChoicebox.getSelectionModel().getSelectedItem().equals(YES)) {
+                toCheck = new TmRandomizerDecoder().apply(toCheck);
+            }
+            // Check status
+            ReedSolomonDecoder decoder = new ReedSolomonDecoder(ReedSolomonAlgorithm.TM_255_223, idepth, true);
+            byte[] resultingFrame = decoder.apply(toCheck);
+
+            // Now process the frame
+            processFrame(framePlusRs, true, resultingFrame != null);
         } else {
             error("Data does not start with expected sync marker " + StringUtil.toHexDump(TmAsmEncoder.DEFAULT_ATTACHED_SYNC_MARKER).toUpperCase());
         }
