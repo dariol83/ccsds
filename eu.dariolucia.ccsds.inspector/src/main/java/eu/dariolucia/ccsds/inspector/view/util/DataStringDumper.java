@@ -117,10 +117,14 @@ public class DataStringDumper {
         if(t.isOcfPresent()) {
             sb.append("\nCLCW ---------------------------------------------------------------\n");
             // Assume CLCW
-            Clcw clcw = new Clcw(t.getOcfCopy());
-            sb.append(String.format("Version: %2d Status Field: %3d VCID:     %2d COP in Effect: %-10s\n", clcw.getVersionNumber(), clcw.getStatusField(), clcw.getVirtualChannelId(), clcw.getCopInEffect().name()));
-            sb.append(String.format("No RF:   %2d No Bitlock:   %3d Lockout:  %2d Retransmit:   %2d\n", clcw.isNoRfAvailableFlag() ? 1 : 0, clcw.isNoBitlockFlag() ? 1 : 0, clcw.isLockoutFlag() ? 1 : 0, clcw.isRetransmitFlag() ? 1 : 0));
-            sb.append(String.format("FARM-B:  %2d Report:       %3d\n", clcw.getFarmBCounter(), clcw.getReportValue()));
+            try {
+                Clcw clcw = new Clcw(t.getOcfCopy());
+                sb.append(String.format("Version: %2d Status Field: %3d VCID:     %2d COP in Effect: %-10s\n", clcw.getVersionNumber(), clcw.getStatusField(), clcw.getVirtualChannelId(), clcw.getCopInEffect().name()));
+                sb.append(String.format("No RF:   %2d No Bitlock:   %3d Lockout:  %2d Retransmit:   %2d\n", clcw.isNoRfAvailableFlag() ? 1 : 0, clcw.isNoBitlockFlag() ? 1 : 0, clcw.isLockoutFlag() ? 1 : 0, clcw.isRetransmitFlag() ? 1 : 0));
+                sb.append(String.format("FARM-B:  %2d Report:       %3d\n", clcw.getFarmBCounter(), clcw.getReportValue()));
+            } catch (IllegalArgumentException e) {
+                sb.append("Invalid CLCW field\n");
+            }
         }
 
         if(t.isFecfPresent()) {
