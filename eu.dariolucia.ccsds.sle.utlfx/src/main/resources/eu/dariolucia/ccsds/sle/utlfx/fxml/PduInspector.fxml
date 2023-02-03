@@ -40,6 +40,7 @@
 							<items>
 								<ToggleButton fx:id="enablePduInspectionButton" mnemonicParsing="false" onAction="#enablePduInspectionCheckMenuItemSelected" prefWidth="120.0" selected="true" text="Enable" />
 								<Button fx:id="clearPduInspectionButton" mnemonicParsing="false" onAction="#clearPduButtonSelected" prefWidth="120.0" text="Clear..." />
+								<ToggleButton fx:id="enablePduRecordingButton" mnemonicParsing="false" onAction="#enablePduRecordingSelected" prefWidth="120.0" text="Recording..." />
 							</items>
 						</ToolBar>
 						<TableView fx:id="pduTableView" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">

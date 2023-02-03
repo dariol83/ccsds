@@ -8,6 +8,7 @@ module eu.dariolucia.ccsds.sle.utlfx {
     requires com.sun.xml.bind;
     requires eu.dariolucia.ccsds.sle.utl;
 
+    exports eu.dariolucia.ccsds.sle.utlfx.manager;
     exports eu.dariolucia.ccsds.sle.utlfx.application to javafx.graphics;
     exports eu.dariolucia.ccsds.sle.utlfx.controller to javafx.fxml;
     exports eu.dariolucia.ccsds.sle.utlfx.controller.raf to javafx.fxml;
