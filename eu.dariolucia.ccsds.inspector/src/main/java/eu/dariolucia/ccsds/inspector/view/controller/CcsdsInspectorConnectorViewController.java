@@ -30,9 +30,11 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.TcTransferFrame;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.TmTransferFrame;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 import eu.dariolucia.ccsds.tmtc.util.AnnotatedObject;
+import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ObservableValue;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Orientation;
@@ -42,6 +44,8 @@ import javafx.scene.chart.AreaChart;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -544,5 +548,35 @@ public class CcsdsInspectorConnectorViewController implements Initializable, ICo
     @FXML
     public void onWindowMouseReleased(MouseEvent mouseEvent) {
         this.dragActive = false;
+    }
+
+    public void onCopyTextAction(ActionEvent actionEvent) {
+        String text = rawArea.getSelectedText();
+        if(text != null) {
+            ClipboardContent content = new ClipboardContent();
+            content.putString(text);
+            Clipboard.getSystemClipboard().setContent(content);
+        }
+    }
+
+    public void onSelectAllTextAction(ActionEvent actionEvent) {
+        rawArea.selectAll();
+    }
+
+    public void onCopyHexDataAction(ActionEvent actionEvent) {
+        // Get the selected item
+        String toCopy = null;
+        if(packetTable.getSelectionModel().getSelectedItem() != null) {
+            SpacePacket sp = packetTable.getSelectionModel().getSelectedItem();
+            toCopy = StringUtil.toHexDump(sp.getPacket());
+        } else if(frameTable.getSelectionModel().getSelectedItem() != null) {
+            AbstractTransferFrame frame = frameTable.getSelectionModel().getSelectedItem();
+            toCopy = StringUtil.toHexDump(frame.getFrame());
+        }
+        if(toCopy != null) {
+            ClipboardContent content = new ClipboardContent();
+            content.putString(toCopy);
+            Clipboard.getSystemClipboard().setContent(content);
+        }
     }
 }

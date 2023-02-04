@@ -37,6 +37,9 @@
   ~  limitations under the License.
   -->
 
+<?import javafx.scene.control.ContextMenu?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="768.0" prefWidth="1024.0" stylesheets="@CcsdsInspectorConnectorView.css" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="eu.dariolucia.ccsds.inspector.view.controller.CcsdsInspectorConnectorViewController">
    <children>
       <HBox>
@@ -202,10 +205,20 @@
                                     <Font name="Monospaced Bold" size="11.0" />
                                  </font>
                               </TextField>
-                              <TextArea fx:id="rawArea" editable="false" prefHeight="200.0" prefWidth="200.0" text="" VBox.vgrow="ALWAYS">
+                              <TextArea fx:id="rawArea" editable="false" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
                                  <font>
                                     <Font name="Monospaced Regular" size="11.0" />
                                  </font>
+                                 <contextMenu>
+                                    <ContextMenu>
+                                       <items>
+                                          <MenuItem text="Copy" onAction="#onCopyTextAction" />
+                                          <MenuItem text="Copy hex data" onAction="#onCopyHexDataAction" />
+                                          <SeparatorMenuItem />
+                                          <MenuItem text="Select all" onAction="#onSelectAllTextAction" />
+                                       </items>
+                                    </ContextMenu>
+                                 </contextMenu>
                               </TextArea>
                            </children>
                         </VBox>

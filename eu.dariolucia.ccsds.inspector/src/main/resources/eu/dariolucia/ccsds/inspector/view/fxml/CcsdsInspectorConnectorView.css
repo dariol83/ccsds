@@ -44,6 +44,13 @@
     -fx-border-color: transparent;
 }
 
+.context-menu {
+  -fx-background-color: #282828;
+  -fx-border-width: 1;
+  -fx-border-radius: 0;
+  -fx-border-color: lime;
+}
+
 .scroll-bar:vertical,
 .scroll-bar:vertical > .track,
 .scroll-bar:vertical > .track-background,
