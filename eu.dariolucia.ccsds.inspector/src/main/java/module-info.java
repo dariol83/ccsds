@@ -14,9 +14,7 @@
  *  limitations under the License.
  */
 
-import eu.dariolucia.ccsds.inspector.connectors.file.AosFileConnectorFactory;
-import eu.dariolucia.ccsds.inspector.connectors.file.TcFileConnectorFactory;
-import eu.dariolucia.ccsds.inspector.connectors.file.TmCaduFileConnectorFactory;
+import eu.dariolucia.ccsds.inspector.connectors.file.*;
 import eu.dariolucia.ccsds.inspector.connectors.tcp.TmTcpConnectorFactory;
 import eu.dariolucia.ccsds.inspector.connectors.testing.TmTestConnectorFactory;
 
@@ -44,5 +42,7 @@ module eu.dariolucia.ccsds.inspector {
             TmCaduFileConnectorFactory,
             AosFileConnectorFactory,
             TcFileConnectorFactory,
-            TmTcpConnectorFactory;
+            TmTcpConnectorFactory,
+            TmCaduBinaryFileConnectorFactory,
+            AosCaduBinaryFileConnectorFactory;
 }
