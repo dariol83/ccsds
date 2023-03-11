@@ -61,15 +61,15 @@ public class AosReceiverVirtualChannel extends AbstractReceiverVirtualChannel<Ao
     }
 
     @Override
-    protected void extractPacket(AosTransferFrame frame, boolean gapDetected) {
+    protected void extractPacket(AosTransferFrame frame, boolean gapDetected, int missingBytes) {
         if(frame.getUserDataType() != AosTransferFrame.UserDataType.M_PDU) {
             throw new IllegalArgumentException("The provided frame is not marked as M-PDU, space packets cannot be extracted");
         }
-        super.extractPacket(frame, gapDetected);
+        super.extractPacket(frame, gapDetected, missingBytes);
     }
 
     @Override
-    protected void extractBitstream(AosTransferFrame frame, boolean gapDetected) {
+    protected void extractBitstream(AosTransferFrame frame, boolean gapDetected, int missingBytes) {
         if(frame.getUserDataType() != AosTransferFrame.UserDataType.B_PDU) {
             throw new IllegalArgumentException("The provided frame is not marked as B-PDU, bitstream data cannot be extracted");
         }
@@ -79,14 +79,14 @@ public class AosReceiverVirtualChannel extends AbstractReceiverVirtualChannel<Ao
             ++bytesToRead;
         }
         byte[] extracted = Arrays.copyOfRange(frame.getFrame(), startIdx, startIdx + bytesToRead);
-        notifyBitstreamExtracted(frame, extracted, frame.getBitstreamDataPointer());
+        notifyBitstreamExtracted(frame, extracted, frame.getBitstreamDataPointer(), missingBytes);
     }
 
     @Override
-    protected void extractEncapsulationPacket(AosTransferFrame frame, boolean gapDetected) {
+    protected void extractEncapsulationPacket(AosTransferFrame frame, boolean gapDetected, int missingBytes) {
         if(frame.getUserDataType() != AosTransferFrame.UserDataType.M_PDU) {
             throw new IllegalArgumentException("The provided frame is not marked as M-PDU, encapsulation packets cannot be extracted");
         }
-        super.extractEncapsulationPacket(frame, gapDetected);
+        super.extractEncapsulationPacket(frame, gapDetected, missingBytes);
     }
 }

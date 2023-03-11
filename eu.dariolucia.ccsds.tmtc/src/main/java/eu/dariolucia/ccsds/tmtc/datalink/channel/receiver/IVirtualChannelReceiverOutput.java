@@ -18,6 +18,8 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.receiver;
 
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 
+import java.util.List;
+
 /**
  * Implementation of this interface is required to collect information from a specific {@link AbstractReceiverVirtualChannel} object.
  */
@@ -46,6 +48,20 @@ public interface IVirtualChannelReceiverOutput {
     }
 
     /**
+     * This method signals the extraction of the provided space packet, including the first frame, from the provided virtual channel.
+     *
+     * @param vc the virtual channel that extracted the packet
+     * @param firstFrame the frame containing the first part of the packet
+     * @param packet the extracted space packet
+     * @param qualityIndicator true if the packet has been fully extracted, false if there were problems (frame gap, packet overlap)
+     * @param gaps the gaps present in the packet, due to frame gaps
+     */
+    default void spacePacketExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator, List<PacketGap> gaps) {
+        // for backward compatibility
+        spacePacketExtracted(vc, firstFrame, packet, qualityIndicator);
+    }
+
+    /**
      * This method signals the extraction of the provided encapsulation packet, including the first frame, from the provided virtual channel.
      *
      * @param vc the virtual channel that extracted the packet
@@ -55,6 +71,20 @@ public interface IVirtualChannelReceiverOutput {
      */
     default void encapsulationPacketExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
         // None
+    }
+
+    /**
+     * This method signals the extraction of the provided encapsulation packet, including the first frame, from the provided virtual channel.
+     *
+     * @param vc the virtual channel that extracted the packet
+     * @param firstFrame the frame containing the first part of the packet
+     * @param packet the extracted space packet
+     * @param qualityIndicator true if the packet has been fully extracted, false if there were problems (frame gap, packet overlap)
+     * @param gaps the gaps present in the packet, due to frame gaps
+     */
+    default void encapsulationPacketExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator, List<PacketGap> gaps) {
+        // for backward compatibility
+        encapsulationPacketExtracted(vc, firstFrame, packet, qualityIndicator);
     }
 
     /**
@@ -69,6 +99,20 @@ public interface IVirtualChannelReceiverOutput {
     }
 
     /**
+     * This method signals the reception of the provided user data from the provided virtual channel, with the information
+     * related to the number of missing bytes, if a gap is detected.
+     *
+     * @param vc the virtual channel that extracted the user data
+     * @param frame the frame containing the user data
+     * @param data the user data
+     * @param missingBytes the number of bytes missed from the same virtual channel, due to frame gaps
+     */
+    default void dataExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame frame, byte[] data, int missingBytes) {
+        // for backward compatibility
+        dataExtracted(vc, frame, data);
+    }
+
+    /**
      * This method signals the reception of the provided bit data from the provided virtual channel.
      *
      * @param vc the virtual channel that extracted the bit data
@@ -78,6 +122,20 @@ public interface IVirtualChannelReceiverOutput {
      */
     default void bitstreamExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame frame, byte[] data, int numBits) {
         // None
+    }
+
+    /**
+     * This method signals the reception of the provided bit data from the provided virtual channel.
+     *
+     * @param vc the virtual channel that extracted the bit data
+     * @param frame the frame containing the bit data
+     * @param data the bit data
+     * @param numBits the number of valid bits in the bit data
+     * @param missingBytes the number of bytes missed from the same virtual channel, due to frame gaps
+     */
+    default void bitstreamExtracted(AbstractReceiverVirtualChannel vc,AbstractTransferFrame frame, byte[] data, int numBits, int missingBytes) {
+        // for backward compatibility
+        bitstreamExtracted(vc, frame, data, numBits);
     }
 
     /**

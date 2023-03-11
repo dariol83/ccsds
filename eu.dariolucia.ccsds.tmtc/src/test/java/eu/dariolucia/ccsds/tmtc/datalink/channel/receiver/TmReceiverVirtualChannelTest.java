@@ -45,6 +45,8 @@ class TmReceiverVirtualChannelTest {
     private static String FILE_TM4 = "dumpFile_tm_large_packets.hex";
     private static String FILE_TM_ENC = "dumpFile_tm_encapsulation.hex";
     private static String FILE_TM_ENC_GAP = "dumpFile_tm_encapsulation_gap.hex";
+    private static String FILE_TM_GAP = "dumpFile_tm_gap_1.hex";
+    private static String FILE_TM_ENC_GAP_2 = "dumpFile_tm_encapsulation_gap_2.hex";
 
     @Test
     public void testTmVc0SpacePacket() {
@@ -626,7 +628,6 @@ class TmReceiverVirtualChannelTest {
         List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
         List<byte[]> badPackets = new CopyOnWriteArrayList<>();
         IVirtualChannelReceiverOutput output = new IVirtualChannelReceiverOutput() {
-
             @Override
             public void encapsulationPacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
                 if(qualityIndicator) {
@@ -637,28 +638,8 @@ class TmReceiverVirtualChannelTest {
             }
 
             @Override
-            public void transferFrameReceived(AbstractReceiverVirtualChannel vc, AbstractTransferFrame receivedFrame) {
-                //
-            }
-
-            @Override
             public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator) {
                 throw new RuntimeException("Should not be called");
-            }
-
-            @Override
-            public void dataExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data) {
-                //
-            }
-
-            @Override
-            public void bitstreamExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame frame, byte[] data, int numBits) {
-                //
-            }
-
-            @Override
-            public void gapDetected(AbstractReceiverVirtualChannel vc, int expectedVc, int receivedVc, int missingFrames) {
-                //
             }
         };
         vc0.register(output);
@@ -675,6 +656,88 @@ class TmReceiverVirtualChannelTest {
         assertEquals(1, badPackets.size());
 
         assertEquals(10, vc0.getCurrentVcSequenceCounter());
+        vc0.deregister(output);
+    }
+
+    @Test
+    public void testTmVc0SpacePacketGap() {
+        // Create a virtual channel for VC0
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.PACKET, true);
+        // Subscribe a packet collector
+        List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
+        AtomicInteger badPacketsCounter = new AtomicInteger(0);
+        IVirtualChannelReceiverOutput output = new IVirtualChannelReceiverOutput() {
+            @Override
+            public void spacePacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator, List<PacketGap> gaps) {
+                if(qualityIndicator) {
+                    goodPackets.add(packet);
+                } else {
+                    switch(badPacketsCounter.incrementAndGet()) {
+                        case 1: // First packet: gap at the end
+                            assertEquals(1, gaps.size());
+                        break;
+                        case 2: // Second packet: 2 gaps, due to third frame and 5th and 6h frame
+                            assertEquals(2, gaps.size());
+                            assertEquals(1105, gaps.get(0).getLength());
+                            assertEquals(1105*2, gaps.get(1).getLength());
+                            assertTrue(gaps.get(0).getIndex() < gaps.get(1).getIndex());
+                        break;
+                    }
+                }
+            }
+        };
+        vc0.register(output);
+
+        // Build the reader
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM_GAP));
+        // Use stream approach: no need for decoder
+        StreamUtil.from(reader) // Reads the frames, correctly segmented
+                .map(TmTransferFrame.decodingFunction(false)) // Convert to TM frame
+                .filter(o -> o.getVirtualChannelId() == 0) // Filter out VCs not equal to 0
+                .forEach(vc0);
+        // Check the list of packets
+        assertEquals(5, goodPackets.size());
+        vc0.deregister(output);
+    }
+
+    @Test
+    public void testTmVc0EncapsulationPacketGap2() {
+        // Create a virtual channel for VC0
+        TmReceiverVirtualChannel vc0 = new TmReceiverVirtualChannel(0, VirtualChannelAccessMode.ENCAPSULATION, true);
+        // Subscribe a packet collector
+        List<byte[]> goodPackets = new CopyOnWriteArrayList<>();
+        AtomicInteger badPacketsCounter = new AtomicInteger(0);
+        IVirtualChannelReceiverOutput output = new IVirtualChannelReceiverOutput() {
+            @Override
+            public void encapsulationPacketExtracted(AbstractReceiverVirtualChannel vc, AbstractTransferFrame firstFrame, byte[] packet, boolean qualityIndicator, List<PacketGap> gaps) {
+                if(qualityIndicator) {
+                    goodPackets.add(packet);
+                } else {
+                    switch(badPacketsCounter.incrementAndGet()) {
+                        case 1: // First packet: gap at the end
+                            assertEquals(1, gaps.size());
+                            break;
+                        case 2: // Second packet: 2 gaps, due to third frame and 5th and 6h frame
+                            assertEquals(2, gaps.size());
+                            assertEquals(1105, gaps.get(0).getLength());
+                            assertEquals(1105*2, gaps.get(1).getLength());
+                            assertTrue(gaps.get(0).getIndex() < gaps.get(1).getIndex());
+                            break;
+                    }
+                }
+            }
+        };
+        vc0.register(output);
+
+        // Build the reader
+        LineHexDumpChannelReader reader = new LineHexDumpChannelReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TM_ENC_GAP_2));
+        // Use stream approach: no need for decoder
+        StreamUtil.from(reader) // Reads the frames, correctly segmented
+                .map(TmTransferFrame.decodingFunction(false)) // Convert to TM frame
+                .filter(o -> o.getVirtualChannelId() == 0) // Filter out VCs not equal to 0
+                .forEach(vc0);
+        // Check the list of packets
+        assertEquals(3, goodPackets.size());
         vc0.deregister(output);
     }
 }

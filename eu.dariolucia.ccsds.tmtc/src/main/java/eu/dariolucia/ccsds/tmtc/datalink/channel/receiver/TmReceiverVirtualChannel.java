@@ -59,20 +59,20 @@ public class TmReceiverVirtualChannel extends AbstractReceiverVirtualChannel<TmT
     }
 
     @Override
-    protected void extractPacket(TmTransferFrame frame, boolean gapDetected) {
+    protected void extractPacket(TmTransferFrame frame, boolean gapDetected, int missingBytes) {
         // If the frame sync flag is set (1) then the pdu cannot be extracted and an exception is thrown
         if(frame.isSynchronisationFlag()) {
             throw new IllegalArgumentException("The provided frame has the synchronization flag set, space packets cannot be extracted");
         }
-        super.extractPacket(frame, gapDetected);
+        super.extractPacket(frame, gapDetected, missingBytes);
     }
 
     @Override
-    protected void extractEncapsulationPacket(TmTransferFrame frame, boolean gapDetected) {
+    protected void extractEncapsulationPacket(TmTransferFrame frame, boolean gapDetected, int missingBytes) {
         // If the frame sync flag is set (1) then the pdu cannot be extracted and an exception is thrown
         if(frame.isSynchronisationFlag()) {
             throw new IllegalArgumentException("The provided frame has the synchronization flag set, encapsulation packets cannot be extracted");
         }
-        super.extractEncapsulationPacket(frame, gapDetected);
+        super.extractEncapsulationPacket(frame, gapDetected, missingBytes);
     }
 }

@@ -21,7 +21,9 @@ import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.EncapsulationPacket;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
@@ -32,10 +34,10 @@ import java.util.function.Consumer;
  * reception and processing of telecommands. This class expects that an external entity pushes one or more transfer frames.
  * Space packets, bitstream data or user data are emitted as extracted from the frame. If frame gaps are detected, these
  * are reported.
- *
+ * <p>
  * In order to receive the extracted space packets, gap notifications, and other data, registration of a {@link IVirtualChannelReceiverOutput}
  * implementation shall be performed via the register method.
- *
+ * <p>
  * This class is not thread safe.
  *
  * @param <T> the type of transfer frame
@@ -60,6 +62,11 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
     private int currentPacketLength = -1;
     //
     private T currentFirstFrame = null;
+
+    private int detectedFrameDataLength = -1;
+
+    // list of PacketGap objects: start of gap, length of gap
+    private final List<PacketGap> currentGaps = new ArrayList<>(80);
 
     protected AbstractReceiverVirtualChannel(int virtualChannelId, VirtualChannelAccessMode mode, boolean exceptionIfVcViolated) {
         this.virtualChannelId = virtualChannelId;
@@ -93,20 +100,20 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
         this.listeners.forEach(o -> o.transferFrameReceived(this, frame));
     }
 
-    protected final void notifyBitstreamExtracted(T frame, byte[] data, int numBits) {
-        this.listeners.forEach(o -> o.bitstreamExtracted(this, frame, data, numBits));
+    protected final void notifyBitstreamExtracted(T frame, byte[] data, int numBits, int missingBytes) {
+        this.listeners.forEach(o -> o.bitstreamExtracted(this, frame, data, numBits, missingBytes));
     }
 
-    protected final void notifyDataExtracted(T frame, byte[] data) {
-        this.listeners.forEach(o -> o.dataExtracted(this, frame, data));
+    protected final void notifyDataExtracted(T frame, byte[] data, int missingBytes) {
+        this.listeners.forEach(o -> o.dataExtracted(this, frame, data, missingBytes));
     }
 
-    protected final void notifySpacePacketExtracted(T frame, byte[] packet, boolean qualityIndicator) {
-        this.listeners.forEach(o -> o.spacePacketExtracted(this, frame, packet, qualityIndicator));
+    protected final void notifySpacePacketExtracted(T frame, byte[] packet, boolean qualityIndicator, List<PacketGap> gaps) {
+        this.listeners.forEach(o -> o.spacePacketExtracted(this, frame, packet, qualityIndicator, gaps));
     }
 
-    protected final void notifyEncapsulationPacketExtracted(T frame, byte[] packet, boolean qualityIndicator) {
-        this.listeners.forEach(o -> o.encapsulationPacketExtracted(this, frame, packet, qualityIndicator));
+    protected final void notifyEncapsulationPacketExtracted(T frame, byte[] packet, boolean qualityIndicator, List<PacketGap> gaps) {
+        this.listeners.forEach(o -> o.encapsulationPacketExtracted(this, frame, packet, qualityIndicator, gaps));
     }
 
     protected final void notifyGapDetected(int expectedVcCount, int receivedVcCount, int missingFrames) {
@@ -134,6 +141,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
         // check for gaps
         // If gap, notify gap and update counter
         boolean gapDetected = false;
+        int missingBytes = 0;
         if (isGapDetectionApplicable(frame) && this.currentVcSequenceCounter > -1) {
             int expectedNext = (this.currentVcSequenceCounter + 1) % getVcFrameCounterModulo();
             int current = frame.getVirtualChannelFrameCount();
@@ -141,50 +149,91 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                 // Gap found
                 gapDetected = true;
                 int missingFrames = (current > expectedNext) ? (current - expectedNext) : (getVcFrameCounterModulo() - expectedNext + current);
+                // compute the number of missing bytes due to gap here, and provide this info to the methods in the switch block
+                missingBytes = missingFrames * detectedFrameDataLength;
                 notifyGapDetected(expectedNext, current, missingFrames);
             }
         }
         this.currentVcSequenceCounter = frame.getVirtualChannelFrameCount();
 
+        // Get the available data for packets, if not derived yet
+        if(detectedFrameDataLength == -1) {
+            detectedFrameDataLength = frame.getDataFieldLength();
+        }
+
         switch (this.mode) {
             case PACKET:
-                extractPacket(frame, gapDetected);
+                extractPacket(frame, gapDetected, missingBytes);
                 return;
             case ENCAPSULATION:
-                extractEncapsulationPacket(frame, gapDetected);
+                extractEncapsulationPacket(frame, gapDetected, missingBytes);
                 return;
             case DATA:
-                extractData(frame, gapDetected);
+                extractData(frame, gapDetected, missingBytes);
                 return;
             case BITSTREAM:
-                extractBitstream(frame, gapDetected);
-                return;
+                extractBitstream(frame, gapDetected, missingBytes);
         }
     }
 
-    protected final void doExtractPacket(T frame, boolean gapDetected) {
+    protected final void doExtractPacket(T frame, boolean gapDetected, int missingBytes) {
         // If the frame is idle frame, return
         if (frame.isIdleFrame()) {
             return;
         }
-        // If gapDetected and pdu reconstruction is pending, close the pdu with dummy data and forwardItem pdu (quality = false)
+        // If the gap is detected and the reconstruction is pending, you have two possibilities:
+        //  1. The gap spills over the end of the packet -> create packet gap record and close the packet (if you can), there is nothing you can do
+        //  2. The gap is inside the packet (it means you know the packet length at this stage) -> create packet gap record, move the current offset to the new location, extract as usual
         // Clearly, the packet is closed only if you can close it (length fully known)
         if (gapDetected && isReconstructionPending()) {
-            closeCurrentSpacePacket();
+            // Check where the gap is: if the gap spills over the end of the packet (and you need to know the length)
+            if(this.currentPacketLength > -1) {
+                if (this.currentOffset + missingBytes >= this.currentPacketLength) {
+                    // Create a gap from this.currentOffset, length is this.currentPacketLength - this.currentOffset
+                    this.currentGaps.add(new PacketGap(this.currentOffset, this.currentPacketLength - this.currentOffset));
+                    // Close the packet, there is not much you can do
+                    closeCurrentSpacePacket();
+                } else {
+                    // The gap is within the packet, so first create a gap
+                    this.currentGaps.add(new PacketGap(this.currentOffset, missingBytes));
+                    // Increment this.currentOffset by missingBytes
+                    this.currentOffset += missingBytes;
+                    // Keep extracting as usual
+                }
+            } else {
+                // Close the packet and reset, there is not much you can do
+                closeCurrentSpacePacket();
+            }
         }
         // Keep reconstructing/extracting the packets and notify accordingly
         extractPackets(frame);
     }
 
-    protected final void doExtractEncapsulationPacket(T frame, boolean gapDetected) {
+    protected final void doExtractEncapsulationPacket(T frame, boolean gapDetected, int missingBytes) {
         // If the frame is idle frame, return
         if (frame.isIdleFrame()) {
             return;
         }
-        // If gapDetected and pdu reconstruction is pending, close the pdu with dummy data and forwardItem pdu (quality = false)
-        // Clearly, the packet is closed only if you can close it (length fully known)
+        // Same strategy as per doExtractPacket
         if (gapDetected && isReconstructionPending()) {
-            closeCurrentEncapsulationPacket();
+            // Check where the gap is: if the gap spills over the end of the packet (and you need to know the length)
+            if(this.currentPacketLength > -1) {
+                if (this.currentOffset + missingBytes >= this.currentPacketLength) {
+                    // Create a gap from this.currentOffset, length is this.currentPacketLength - this.currentOffset
+                    this.currentGaps.add(new PacketGap(this.currentOffset, this.currentPacketLength - this.currentOffset));
+                    // Close the packet, there is not much you can do
+                    closeCurrentEncapsulationPacket();
+                } else {
+                    // The gap is within the packet, so first create a gap
+                    this.currentGaps.add(new PacketGap(this.currentOffset, missingBytes));
+                    // Increment this.currentOffset by missingBytes
+                    this.currentOffset += missingBytes;
+                    // Keep extracting as usual
+                }
+            } else {
+                // Close the packet and reset, there is not much you can do
+                closeCurrentEncapsulationPacket();
+            }
         }
         // Keep reconstructing/extracting the packets and notify accordingly
         extractEncapsulationPackets(frame);
@@ -246,10 +295,8 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                     if (yetToRead > firstHeaderPointer - alreadyRead) {
                         // Packet overlap: close the reconstruction of the current pdu and notify it with bad quality
                         System.arraycopy(fullFrame, firstFrameDataOffset + alreadyRead, this.currentPacket, this.currentOffset, firstHeaderPointer - alreadyRead);
-                        notifyEncapsulationPacketExtracted(this.currentFirstFrame, toPacket(), false);
-                        this.currentOffset = -1;
-                        this.currentPacketLength = -1;
-                        this.currentFirstFrame = null;
+                        notifyEncapsulationPacketExtracted(this.currentFirstFrame, toPacket(), false, buildGapList());
+                        clearCurrentPacketFields();
                         this.currentPacket = null;
                     } else {
                         // No pdu overlap: close the reconstruction with success
@@ -259,10 +306,8 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                 }
                 // If the pdu is closed, notify it with success
                 if (this.currentPacketLength != -1 && (this.currentPacketLength == this.currentOffset)) {
-                    notifyEncapsulationPacketExtracted(this.currentFirstFrame, toPacket(), true);
-                    this.currentOffset = -1;
-                    this.currentPacketLength = -1;
-                    this.currentFirstFrame = null;
+                    notifyEncapsulationPacketExtracted(this.currentFirstFrame, toPacket(), this.currentGaps.isEmpty(), buildGapList());
+                    clearCurrentPacketFields();
                     this.currentPacket = null;
                 }
             }
@@ -293,10 +338,8 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
             // If the pdu is complete, notify
             if (toRead == this.currentPacketLength) {
                 // Packet complete, notify
-                notifyEncapsulationPacketExtracted(this.currentFirstFrame, toPacket(), true);
-                this.currentOffset = -1;
-                this.currentPacketLength = -1;
-                this.currentFirstFrame = null;
+                notifyEncapsulationPacketExtracted(this.currentFirstFrame, toPacket(), this.currentGaps.isEmpty(), buildGapList());
+                clearCurrentPacketFields();
                 this.currentPacket = null;
             }
             return currentHeaderPointer + toRead;
@@ -361,10 +404,8 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                     if (yetToRead > firstHeaderPointer - alreadyRead) {
                         // Packet overlap: close the reconstruction of the current pdu and notify it with bad quality
                         System.arraycopy(fullFrame, firstFrameDataOffset + alreadyRead, this.currentPacket, this.currentOffset, firstHeaderPointer - alreadyRead);
-                        notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), false);
-                        this.currentOffset = -1;
-                        this.currentPacketLength = -1;
-                        this.currentFirstFrame = null;
+                        notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), false, buildGapList());
+                        clearCurrentPacketFields();
                     } else {
                         // No pdu overlap: close the reconstruction with success
                         System.arraycopy(fullFrame, firstFrameDataOffset + alreadyRead, this.currentPacket, this.currentOffset, yetToRead);
@@ -373,10 +414,8 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                 }
                 // If the pdu is closed, notify it with success
                 if (this.currentPacketLength != -1 && (this.currentPacketLength == this.currentOffset)) {
-                    notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), true);
-                    this.currentOffset = -1;
-                    this.currentPacketLength = -1;
-                    this.currentFirstFrame = null;
+                    notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), this.currentGaps.isEmpty(), buildGapList());
+                    clearCurrentPacketFields();
                 }
             }
         }
@@ -404,10 +443,8 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
             // If the pdu is complete, notify
             if (toRead == this.currentPacketLength) {
                 // Packet complete, notify
-                notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), true);
-                this.currentOffset = -1;
-                this.currentPacketLength = -1;
-                this.currentFirstFrame = null;
+                notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), this.currentGaps.isEmpty(), buildGapList());
+                clearCurrentPacketFields();
             }
             return currentHeaderPointer + toRead;
         } else {
@@ -421,31 +458,38 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
 
     protected final void closeCurrentSpacePacket() {
         if (this.currentOffset == -1) {
-            throw new IllegalStateException("Closing a void space pdu, this is a bug");
+            throw new IllegalStateException("Closing a void space packet, this is a bug");
         }
         // Close only if you can
         if(this.currentPacketLength > -1) {
-            notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), false);
+            notifySpacePacketExtracted(this.currentFirstFrame, toPacket(), false, buildGapList());
         }
         // If you could not close it, then it is impossible to understand the length, there must have been a gap, ignored
-        this.currentOffset = -1;
-        this.currentPacketLength = -1;
-        this.currentFirstFrame = null;
+        clearCurrentPacketFields();
     }
 
     protected final void closeCurrentEncapsulationPacket() {
         if (this.currentOffset == -1) {
-            throw new IllegalStateException("Closing a void space pdu, this is a bug");
+            throw new IllegalStateException("Closing a void encapsulation packet, this is a bug");
         }
         // Close only if you can
         if(this.currentPacketLength > -1) {
-            notifyEncapsulationPacketExtracted(this.currentFirstFrame, toPacket(), false);
+            notifyEncapsulationPacketExtracted(this.currentFirstFrame, toPacket(), false, buildGapList());
         }
         // If you could not close it, then it is impossible to understand the length, there must have been a gap, ignored
+        clearCurrentPacketFields();
+        this.currentPacket = null;
+    }
+
+    private void clearCurrentPacketFields() {
         this.currentOffset = -1;
         this.currentPacketLength = -1;
         this.currentFirstFrame = null;
-        this.currentPacket = null;
+        this.currentGaps.clear();
+    }
+
+    private List<PacketGap> buildGapList() {
+        return this.currentGaps.isEmpty() ? Collections.emptyList() : List.copyOf(this.currentGaps);
     }
 
     protected byte[] toPacket() {
@@ -475,11 +519,12 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
      *
      * @param frame       the frame from which the data field must be retrieved
      * @param gapDetected if a gap in the frame counter was detected
+     * @param missingBytes the number of bytes detected as missing due to one or more frame gaps
      */
-    protected void extractData(T frame, boolean gapDetected) {
+    protected void extractData(T frame, boolean gapDetected, int missingBytes) {
         // This overwrites the setting in the frame
         byte[] dataField = frame.getDataFieldCopy();
-        notifyDataExtracted(frame, dataField);
+        notifyDataExtracted(frame, dataField, missingBytes);
     }
 
     /**
@@ -487,9 +532,10 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
      *
      * @param frame       the frame from which the bit stream must be retrieved
      * @param gapDetected if a gap in the frame counter was detected
+     * @param missingBytes the number of bytes detected as missing due to one or more frame gaps
      */
-    protected void extractBitstream(T frame, boolean gapDetected) {
-        extractData(frame, gapDetected);
+    protected void extractBitstream(T frame, boolean gapDetected, int missingBytes) {
+        extractData(frame, gapDetected, missingBytes);
     }
 
     /**
@@ -497,9 +543,10 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
      *
      * @param frame       the frame from which the packets must be retrieved
      * @param gapDetected if a gap in the frame counter was detected
+     * @param missingBytes the number of bytes detected as missing due to one or more frame gaps
      */
-    protected void extractPacket(T frame, boolean gapDetected) {
-        doExtractPacket(frame, gapDetected);
+    protected void extractPacket(T frame, boolean gapDetected, int missingBytes) {
+        doExtractPacket(frame, gapDetected, missingBytes);
     }
 
     /**
@@ -507,8 +554,9 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
      *
      * @param frame       the frame from which the packets must be retrieved
      * @param gapDetected if a gap in the frame counter was detected
+     * @param missingBytes the number of bytes detected as missing due to one or more frame gaps
      */
-    protected void extractEncapsulationPacket(T frame, boolean gapDetected) {
-        doExtractEncapsulationPacket(frame, gapDetected);
+    protected void extractEncapsulationPacket(T frame, boolean gapDetected, int missingBytes) {
+        doExtractEncapsulationPacket(frame, gapDetected, missingBytes);
     }
 }
