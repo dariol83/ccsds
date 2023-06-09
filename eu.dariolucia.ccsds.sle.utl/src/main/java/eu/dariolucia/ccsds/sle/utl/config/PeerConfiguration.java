@@ -19,8 +19,8 @@ package eu.dariolucia.ccsds.sle.utl.config;
 import eu.dariolucia.ccsds.sle.utl.config.network.PortMapping;
 import eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer;
 
-import javax.xml.bind.DatatypeConverter;
-import javax.xml.bind.annotation.*;
+import jakarta.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.annotation.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;

@@ -19,7 +19,7 @@ package eu.dariolucia.ccsds.viewer.utils;
 import com.beanit.jasn1.ber.types.*;
 import com.beanit.jasn1.ber.types.string.BerVisibleString;
 
-import javax.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 
 public class SlePduAttribute {

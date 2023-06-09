@@ -6,5 +6,5 @@ open module eu.dariolucia.ccsds.examples {
     requires eu.dariolucia.ccsds.tmtc;
     requires eu.dariolucia.ccsds.cfdp;
 
-    requires com.sun.xml.bind;
+    requires jakarta.xml.bind;
 }

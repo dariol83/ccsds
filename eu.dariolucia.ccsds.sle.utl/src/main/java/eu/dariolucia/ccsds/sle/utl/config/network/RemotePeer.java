@@ -19,10 +19,10 @@ package eu.dariolucia.ccsds.sle.utl.config.network;
 import eu.dariolucia.ccsds.sle.utl.si.AuthenticationModeEnum;
 import eu.dariolucia.ccsds.sle.utl.si.HashFunctionEnum;
 
-import javax.xml.bind.DatatypeConverter;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAttribute;
 import java.util.Objects;
 
 /**

@@ -1,6 +1,6 @@
 open module eu.dariolucia.ccsds.cfdp {
     requires java.logging;
-    requires transitive java.xml.bind;
+    requires transitive jakarta.xml.bind;
     requires eu.dariolucia.ccsds.tmtc;
 
     exports eu.dariolucia.ccsds.cfdp.common;

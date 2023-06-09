@@ -23,9 +23,9 @@ import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuNotificationModeEnum;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuPlopInEffectEnum;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.CltuProtocolAbortModeEnum;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
 import java.util.Date;
 import java.util.Objects;
 

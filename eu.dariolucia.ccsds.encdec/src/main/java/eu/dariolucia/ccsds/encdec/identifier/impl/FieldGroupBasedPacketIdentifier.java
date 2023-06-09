@@ -24,7 +24,7 @@ import eu.dariolucia.ccsds.encdec.identifier.IPacketIdentifier;
 import eu.dariolucia.ccsds.encdec.identifier.PacketAmbiguityException;
 import eu.dariolucia.ccsds.encdec.identifier.PacketNotIdentifiedException;
 
-import javax.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.DatatypeConverter;
 import java.util.*;
 import java.util.stream.Collectors;
 

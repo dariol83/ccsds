@@ -16,7 +16,7 @@
 
 package eu.dariolucia.ccsds.sle.utl.pdu;
 
-import javax.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.DatatypeConverter;
 import java.util.regex.Pattern;
 
 /**

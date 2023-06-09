@@ -22,7 +22,7 @@ import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.DatatypeConverter;
 
 import eu.dariolucia.ccsds.sle.utlfx.dialogs.cltu.CltuTransferDataDialog.CltuTransferDataDialogResult;
 import javafx.application.Platform;
