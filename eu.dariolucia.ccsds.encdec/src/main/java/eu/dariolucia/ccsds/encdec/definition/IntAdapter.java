@@ -16,7 +16,7 @@
 
 package eu.dariolucia.ccsds.encdec.definition;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
  * Integer adapter that can convert a string (hex, octal, binary, decimal) to an integer.

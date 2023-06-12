@@ -1,7 +1,7 @@
 open module eu.dariolucia.ccsds.encdec {
-    requires transitive java.xml.bind;
+  requires transitive jakarta.xml.bind;
 
-    uses eu.dariolucia.ccsds.encdec.extension.ILengthMapper;
+  uses eu.dariolucia.ccsds.encdec.extension.ILengthMapper;
     uses eu.dariolucia.ccsds.encdec.extension.ITypeMapper;
     uses eu.dariolucia.ccsds.encdec.extension.IEncoderExtension;
     uses eu.dariolucia.ccsds.encdec.extension.IDecoderExtension;

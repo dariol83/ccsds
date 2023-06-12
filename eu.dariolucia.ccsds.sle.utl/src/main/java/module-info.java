@@ -1,10 +1,9 @@
 open module eu.dariolucia.ccsds.sle.utl {
     requires jasn1;
-    requires java.xml.bind;
+    requires jakarta.xml.bind;
     requires java.logging;
-    requires com.sun.xml.bind;
 
-    exports eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.isp1.credentials;
+  exports eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.isp1.credentials;
     exports eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.bind.types;
     exports eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.pdus;
     exports eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.common.types;

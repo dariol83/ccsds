@@ -3,8 +3,7 @@ open module eu.dariolucia.ccsds.cfdp.fx {
     requires javafx.fxml;
     requires javafx.controls;
     requires java.logging;
-    requires java.xml.bind;
-    requires com.sun.xml.bind;
+    requires jakarta.xml.bind;
     requires eu.dariolucia.ccsds.cfdp;
     requires eu.dariolucia.ccsds.tmtc;
 

@@ -32,9 +32,9 @@ import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfControlWordTypeEnum;
 import eu.dariolucia.ccsds.sle.utl.si.rocf.RocfUpdateModeEnum;
 import org.junit.jupiter.api.Test;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.SchemaOutputResolver;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.SchemaOutputResolver;
 import javax.xml.transform.Result;
 import javax.xml.transform.stream.StreamResult;
 import java.io.ByteArrayInputStream;

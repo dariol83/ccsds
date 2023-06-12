@@ -16,6 +16,7 @@
 
 package eu.dariolucia.ccsds.sle.utl.test;
 
+import java.time.Duration;
 import java.util.function.Supplier;
 
 public class AwaitUtil {
@@ -29,6 +30,10 @@ public class AwaitUtil {
                 break;
             }
         }
+    }
+
+    public static void awaitCondition(Duration waitLimit, Supplier<Boolean> conditionChecker) throws InterruptedException {
+        awaitCondition((int) waitLimit.toMillis(), conditionChecker);
     }
 
     public static void await(int ms) throws InterruptedException {

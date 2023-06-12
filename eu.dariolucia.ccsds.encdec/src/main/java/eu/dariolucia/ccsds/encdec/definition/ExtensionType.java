@@ -20,9 +20,9 @@ import eu.dariolucia.ccsds.encdec.extension.ExtensionId;
 import eu.dariolucia.ccsds.encdec.extension.IDecoderExtension;
 import eu.dariolucia.ccsds.encdec.extension.IEncoderExtension;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAttribute;
 import java.util.Objects;
 
 /**

@@ -18,7 +18,7 @@ package eu.dariolucia.ccsds.cfdp.mib;
 
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.ConditionCode;
 
-import javax.xml.bind.annotation.*;
+import jakarta.xml.bind.annotation.*;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;

@@ -34,7 +34,7 @@ import eu.dariolucia.ccsds.sle.utl.config.network.RemotePeer;
 import eu.dariolucia.ccsds.sle.utl.si.ApplicationIdentifierEnum;
 import eu.dariolucia.ccsds.sle.utl.si.HashFunctionEnum;
 
-import javax.xml.bind.DatatypeConverter;
+import jakarta.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;

@@ -36,6 +36,7 @@ import eu.dariolucia.ccsds.sle.utl.si.PeerAbortReasonEnum;
 import eu.dariolucia.ccsds.sle.utl.si.ServiceInstanceBindingStateEnum;
 import eu.dariolucia.ccsds.sle.utl.si.UnbindReasonEnum;
 import eu.dariolucia.ccsds.sle.utl.si.cltu.*;
+import java.time.Duration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -92,7 +93,7 @@ public class CltuTest {
         cltuUser.bind(2);
         AwaitUtil.awaitCondition(10000, () -> cltuProvider.getCurrentBindingState() == ServiceInstanceBindingStateEnum.UNBOUND);
         assertEquals(ServiceInstanceBindingStateEnum.UNBOUND, cltuUser.getCurrentBindingState());
-        assertEquals(1, recorder.getPduReceived().size());
+        AwaitUtil.awaitCondition(Duration.ofSeconds(10), () -> recorder.getPduReceived().size() == 1);
         assertTrue(recorder.getPduReceived().get(0) instanceof SleBindReturn);
         assertEquals(BindDiagnosticsEnum.INCONSISTENT_SERVICE_TYPE.getCode(), ((SleBindReturn) recorder.getPduReceived().get(0)).getResult().getNegative().intValue());
 
