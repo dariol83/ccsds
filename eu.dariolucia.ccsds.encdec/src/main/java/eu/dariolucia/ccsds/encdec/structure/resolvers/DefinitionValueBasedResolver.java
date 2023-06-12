@@ -71,7 +71,7 @@ public class DefinitionValueBasedResolver implements IEncodeResolver {
             T theObj;
             try {
                 theObj = parseFunction.apply(value);
-                if(theObj == null && delegateCallOnNullOrException) {
+                if(delegateCallOnNullOrException) { // None of the parsing functions used in the code can return null
                     return delegateFunction.apply(parameter, location);
                 }
                 return theObj;
