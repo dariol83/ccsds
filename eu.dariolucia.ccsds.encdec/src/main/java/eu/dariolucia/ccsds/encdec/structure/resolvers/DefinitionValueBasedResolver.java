@@ -40,16 +40,16 @@ public class DefinitionValueBasedResolver implements IEncodeResolver {
 
     private final IEncodeResolver delegate;
 
-    private final boolean delegateCallOnNullOrException;
+    private final boolean delegateCallOnException;
 
     protected PacketDefinition currentDefinition;
 
-    public DefinitionValueBasedResolver(IEncodeResolver delegate, boolean delegateCallOnNullOrException) {
+    public DefinitionValueBasedResolver(IEncodeResolver delegate, boolean delegateCallOnException) {
         if(delegate == null) {
             throw new NullPointerException("Delegate resolver must be provided");
         }
         this.delegate = delegate;
-        this.delegateCallOnNullOrException = delegateCallOnNullOrException;
+        this.delegateCallOnException = delegateCallOnException;
     }
 
     /**
@@ -71,12 +71,10 @@ public class DefinitionValueBasedResolver implements IEncodeResolver {
             T theObj;
             try {
                 theObj = parseFunction.apply(value);
-                if(delegateCallOnNullOrException) { // None of the parsing functions used in the code can return null
-                    return delegateFunction.apply(parameter, location);
-                }
+                // None of the parsing functions used in the code can return null
                 return theObj;
             } catch (Exception e) {
-                if(delegateCallOnNullOrException) {
+                if(delegateCallOnException) {
                     return delegateFunction.apply(parameter, location);
                 } else {
                     throw new EncodingException("No definition-value retrievable for " + location, e);
@@ -105,12 +103,12 @@ public class DefinitionValueBasedResolver implements IEncodeResolver {
             T theObj;
             try {
                 theObj = parseFunction.apply(value);
-                if(theObj == null && delegateCallOnNullOrException) {
+                if(theObj == null && delegateCallOnException) {
                     return delegateFunction.apply(parameter, location, length);
                 }
                 return theObj;
             } catch (Exception e) {
-                if(delegateCallOnNullOrException) {
+                if(delegateCallOnException) {
                     return delegateFunction.apply(parameter, location, length);
                 } else {
                     throw new EncodingException("No definition-value retrievable for " + location, e);
