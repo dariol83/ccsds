@@ -38,7 +38,6 @@ public class CcsdsInspector extends Application {
 	public static final String NAME = "CCSDS TM/TC Inspector";
 	public static final String VERSION = "1.1.0";
 	public static final String TITLE = NAME + " - " + VERSION;
-	public static final String FILE_SEPARATOR = System.getProperty("file.separator");
 
 	private static final Logger LOG = Logger.getLogger(CcsdsInspector.class.getName());
 

@@ -48,9 +48,9 @@ public class CfdpFxTestTool extends Application {
 	private static final Logger LOG = Logger.getLogger(CfdpFxTestTool.class.getName());
 	
 	public static final String NAME = "CFDP FX Application";
-	public static final String VERSION = "0.4.0";
+	public static final String VERSION = "1.0.0";
 	public static final String AUTHOR = "Dario Lucia (dario.lucia@gmail.com) - https://www.dariolucia.eu";
-	public static final String YEARS = "(c) 2021";
+	public static final String YEARS = "(c) 2021-2023";
 
 	private static final String MIB_FLAG = "--mib";
 	private static final String UDP_PORT_FLAG = "--udp";
