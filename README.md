@@ -158,6 +158,7 @@ A special mention goes to the people that took some of their time to contribute 
 - sv5d (https://github.com/sv5d) for bug fixes to the SLE code
 - Artur Scholz (https://gitlab.com/artur-scholz) and Sarah Quehl (https://gitlab.com/Sarah2610) for the interoperability tests with the Python CFDP implementation from LibreCube: https://gitlab.com/librecube/lib/python-cfdp 
 - Lucas Bremond (https://github.com/lucas-bremond) for the optimisation of the COP-1 ACK implementation
+- Mark Doyle (https://github.com/markjohndoyle) for the migration to Jakarta JAXB and the fix of a buggy test
 
 # Contributions
 If you find any issue with the provided code or you would like to see a specific feature implemented, please raise a 
