@@ -22,7 +22,7 @@
     <parent>
         <groupId>eu.dariolucia.ccsds</groupId>
         <artifactId>eu.dariolucia.ccsds</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
