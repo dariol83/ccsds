@@ -27,7 +27,6 @@ import java.util.stream.Collectors;
 
 /**
  * A basic filestore, composed of a flat list of directories, each containing a file.
- *
  * A full path is composed by the format &lt;directory name&gt;/&lt;file name&gt;. &lt;directory name&gt; can be omitted
  * if the file resides in the root folder of the virtual file store.
  */
@@ -212,7 +211,7 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
         }
     }
 
-    private String fileToName(File file) {
+    protected String fileToName(File file) {
         String fullPath = file.getAbsolutePath().substring(root.getAbsolutePath().length());
         String matcher = File.separator;
         // Handle Windows separator
@@ -287,13 +286,24 @@ public class FilesystemBasedFilestore implements IVirtualFilestore {
         }
     }
 
-    private File constructTarget(String fullPath) {
+    /**
+     * Method that map a file name into a physical location in the file store.
+     * Subclasses can override.
+     *
+     * @param fullPath the name of the file, as it is delivered by the Metadata PDU
+     * @return the {@link File} on disk
+     */
+    protected File constructTarget(String fullPath) {
         String[] splt = fullPath.split(DIR_FILE_SEPARATOR, -1);
         if(splt.length == 2) {
             return new File(root.getAbsolutePath() + (splt[0] != null ? File.separator + splt[0] : "") + File.separator + splt[1]);
         } else {
             return new File(root.getAbsolutePath() + File.separator + splt[0]);
         }
+    }
+
+    protected File getRoot() {
+        return root;
     }
 
     @Override
