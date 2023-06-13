@@ -411,7 +411,8 @@ public abstract class CfdpTransaction {
     }
 
     protected void startTransactionInactivityTimer() {
-        if(transactionInactivityLimitTimer != null) {
+        if(transactionInactivityLimitTimer != null || getRemoteDestination().getTransactionInactivityLimit() < 0) {
+            // Inactivity timer already started or disabled by configuration
             return;
         }
         if(LOG.isLoggable(Level.FINEST)) {
