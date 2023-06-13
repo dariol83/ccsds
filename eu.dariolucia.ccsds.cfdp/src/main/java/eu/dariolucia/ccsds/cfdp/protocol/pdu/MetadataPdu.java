@@ -101,6 +101,10 @@ public class MetadataPdu extends FileDirectivePdu {
 
     private int parseFlowLabel(byte[] pdu, int currentOffset) {
         int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
+        if(length == 0) {
+            // No flow label despite the TLV entry
+            return currentOffset + 2;
+        }
         FlowLabelTLV fr = new FlowLabelTLV(pdu, currentOffset + 2, length);
         if(fr.getLength() != length) {
             throw new CfdpRuntimeException(String.format("Length mismatch when parsing FlowLabel in Metadata PDU: read length is %d, but parsed %d", length, fr.getLength()));
@@ -112,6 +116,10 @@ public class MetadataPdu extends FileDirectivePdu {
 
     private int parseFaultHandlerOverride(byte[] pdu, int currentOffset) {
         int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
+        if(length == 0) {
+            // No fault handler override despite the TLV entry
+            return currentOffset + 2;
+        }
         FaultHandlerOverrideTLV fr = new FaultHandlerOverrideTLV(pdu, currentOffset + 2);
         if(fr.getLength() != length) {
             throw new CfdpRuntimeException(String.format("Length mismatch when parsing FaultHandlerOverride in Metadata PDU: read length is %d, but parsed %d", length, fr.getLength()));
@@ -123,6 +131,10 @@ public class MetadataPdu extends FileDirectivePdu {
 
     private int parseMessageToUser(byte[] pdu, int currentOffset) {
         int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
+        if(length == 0) {
+            // No message to user despite the TLV entry
+            return currentOffset + 2;
+        }
         MessageToUserTLV fr = new MessageToUserTLV(pdu, currentOffset + 2, length);
         if(fr.getLength() != length) {
             throw new CfdpRuntimeException(String.format("Length mismatch when parsing MessageToUser in Metadata PDU: read length is %d, but parsed %d", length, fr.getLength()));
@@ -134,6 +146,10 @@ public class MetadataPdu extends FileDirectivePdu {
 
     private int parseFilestoreRequest(byte[] pdu, int currentOffset) {
         int length = Byte.toUnsignedInt(pdu[currentOffset + 1]);
+        if(length == 0) {
+            // No filestore requests despite the TLV entry
+            return currentOffset + 2;
+        }
         FilestoreRequestTLV fr = new FilestoreRequestTLV(pdu, currentOffset + 2);
         if(fr.getLength() != length) {
             throw new CfdpRuntimeException(String.format("Length mismatch when parsing FilestoreRequest in Metadata PDU: read length is %d, but parsed %d", length, fr.getLength()));
