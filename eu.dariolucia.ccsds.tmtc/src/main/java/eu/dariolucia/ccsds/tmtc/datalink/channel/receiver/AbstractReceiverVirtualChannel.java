@@ -55,7 +55,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
     private volatile int currentVcSequenceCounter = -1;
 
     // If not null, it indicates that a space pdu of the already allocated length is under reconstruction (segmented)
-    private byte[] currentPacket = new byte[65536]; // Max pdu length for space packets
+    private byte[] currentPacket = new byte[65536 + 6]; // Max pdu length for space packets
     // It points to the next byte to the written in currentPacket
     private int currentOffset = -1;
     //
