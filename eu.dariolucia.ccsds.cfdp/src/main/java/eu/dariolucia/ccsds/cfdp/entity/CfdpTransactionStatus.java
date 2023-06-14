@@ -38,10 +38,12 @@ public class CfdpTransactionStatus {
     private final long progress;
     private final long totalFileSize;
     private final CfdpTransmissionMode transmissionMode;
+    private final Instant lastReceivedPduTime;
+    private final Instant lastSentPduTime;
 
     public CfdpTransactionStatus(Instant time, ICfdpEntity managingEntity, long transactionId, long sourceEntityId, long destinationEntityId,  // NOSONAR: long constructor
                                  boolean isDestination, ConditionCode lastConditionCode, Long lastFaultEntity, CfdpTransactionState cfdpTransactionState,
-                                 long progress, long totalFileSize, CfdpTransmissionMode transmissionMode) {
+                                 long progress, long totalFileSize, CfdpTransmissionMode transmissionMode, Instant lastReceivedPduTime, Instant lastSentPduTime) {
         this.time = time;
         this.managingEntity = managingEntity;
         this.transactionId = transactionId;
@@ -54,6 +56,8 @@ public class CfdpTransactionStatus {
         this.totalFileSize = totalFileSize;
         this.lastFaultEntity = lastFaultEntity;
         this.transmissionMode = transmissionMode;
+        this.lastReceivedPduTime = lastReceivedPduTime;
+        this.lastSentPduTime = lastSentPduTime;
     }
 
     public Instant getTime() {
@@ -104,6 +108,14 @@ public class CfdpTransactionStatus {
         return transmissionMode;
     }
 
+    public Instant getLastReceivedPduTime() {
+        return lastReceivedPduTime;
+    }
+
+    public Instant getLastSentPduTime() {
+        return lastSentPduTime;
+    }
+
     @Override
     public String toString() {
         return "CfdpTransactionStatus{" +
@@ -119,6 +131,8 @@ public class CfdpTransactionStatus {
                 ", progress=" + getProgress() +
                 ", totalFileSize=" + getTotalFileSize() +
                 ", transmissionMode=" + getTransmissionMode() +
+                ", lastReceivedPduTime=" + getLastReceivedPduTime() +
+                ", lastSentPduTime=" + getLastSentPduTime() +
                 '}';
     }
 }

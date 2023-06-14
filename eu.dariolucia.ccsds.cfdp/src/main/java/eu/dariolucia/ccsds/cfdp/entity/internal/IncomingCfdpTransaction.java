@@ -47,9 +47,6 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     private static final byte[] FILE_PADDING_BUFFER = new byte[4096];
 
     private final CfdpPdu initialPdu;
-
-    private final List<CfdpPdu> pendingUtTransmissionPduList = new LinkedList<>();
-
     private MetadataPdu metadataPdu;
 
     private Map<Long, FileDataPduSummary> fileReconstructionMap; // optimisation: use a temporary random access file, use a stripped down version of the FileDataPdu, only offset, length
@@ -1177,30 +1174,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     @Override
     protected void forwardPdu(CfdpPdu pdu) throws UtLayerException {
-        // Add to the pending list
-        this.pendingUtTransmissionPduList.add(pdu);
-        // Send all PDUs you have to send, stop if you fail
-        if(LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: sending %d pending PDUs to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), getTransmissionLayer().getName()));
-        }
-        while(!pendingUtTransmissionPduList.isEmpty()) {
-            CfdpPdu toSend = pendingUtTransmissionPduList.get(0);
-            try {
-                if(LOG.isLoggable(Level.FINEST)) {
-                    LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: sending PDU %s to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), toSend, getTransmissionLayer().getName()));
-                }
-                getTransmissionLayer().request(toSend, this.initialPdu.getSourceEntityId());
-                this.pendingUtTransmissionPduList.remove(0);
-            } catch(UtLayerException e) {
-                if(LOG.isLoggable(Level.WARNING)) {
-                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: PDU rejected by UT layer %s: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName(), e.getMessage()), e);
-                }
-                throw e;
-            }
-        }
-        if(LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: pending PDUs sent to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName()));
-        }
+        internalForwardPdu(pdu, this.initialPdu.getSourceEntityId());
     }
 
     /**
@@ -1442,7 +1416,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     @Override
     protected void handlePreDispose() {
         // Cleanup resources and memory
-        this.pendingUtTransmissionPduList.clear();
+        clearTransmissionQueue();
         if(this.fileReconstructionMap != null) {
             this.fileReconstructionMap.clear();
         }

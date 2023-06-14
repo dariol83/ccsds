@@ -52,7 +52,7 @@ public abstract class CfdpTransaction {
     private final int entityIdLength;
     private final RemoteEntityConfigurationInformation remoteDestination;
     private final IUtLayer transmissionLayer;
-
+    private final List<CfdpPdu> pendingUtTransmissionPduList = new LinkedList<>();
     private final ExecutorService confiner;
 
     private final Map<ConditionCode, FaultHandlerStrategy.Action> faultHandlers = new EnumMap<>(ConditionCode.class);
@@ -77,6 +77,8 @@ public abstract class CfdpTransaction {
     private ConditionCode lastConditionCode = ConditionCode.CC_NOERROR;
     private EntityIdTLV lastFaultEntity = null;
 
+    private Instant lastReceivedPduTime;
+    private Instant lastSentPduTime;
 
     public CfdpTransaction(long transactionId, CfdpEntity cfdpEntity, long remoteEntityId) {
         this.transactionId = transactionId;
@@ -317,7 +319,11 @@ public abstract class CfdpTransaction {
     }
 
     public void indication(CfdpPdu pdu) {
-        handle(() -> handleIndication(pdu));
+        handle(() -> {
+            // Remember the time of the received PDU
+            lastReceivedPduTime = Instant.now();
+            handleIndication(pdu);
+        });
     }
 
     public void cancel(ConditionCode conditionCode) {
@@ -538,7 +544,12 @@ public abstract class CfdpTransaction {
 
     protected CfdpTransactionStatus createStateObject() {
         return new CfdpTransactionStatus(Instant.now(), getEntity(), getTransactionId(), getSourceEntityId(), getDestinationEntityId(), getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId(),
-                getLastConditionCode(), getLastFaultEntityAsLong(), getCurrentState(), getProgress(), getTotalFileSize(), getTransmissionMode());
+                getLastConditionCode(), getLastFaultEntityAsLong(), getCurrentState(), getProgress(), getTotalFileSize(), getTransmissionMode(),
+                lastReceivedPduTime, lastSentPduTime);
+    }
+
+    protected void setLastSentPduTime(Instant lastSentPduTime) {
+        this.lastSentPduTime = lastSentPduTime;
     }
 
     protected abstract long getSourceEntityId();
@@ -572,4 +583,39 @@ public abstract class CfdpTransaction {
     protected abstract CfdpTransmissionMode getTransmissionMode();
 
     protected abstract void forwardPdu(CfdpPdu pdu) throws UtLayerException;
+
+    protected void internalForwardPdu(CfdpPdu pdu, long destinationId) throws UtLayerException {
+        // Add to the pending list
+        this.pendingUtTransmissionPduList.add(pdu);
+        // Send all PDUs you have to send, stop if you fail
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), sending %d pending PDUs to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), getTransmissionLayer().getName()));
+        }
+        while(!this.pendingUtTransmissionPduList.isEmpty()) {
+            CfdpPdu toSend = pendingUtTransmissionPduList.get(0);
+            try {
+                if(LOG.isLoggable(Level.FINEST)) {
+                    LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), pending %d, sending PDU %s to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), toSend, getTransmissionLayer().getName()));
+                }
+                getTransmissionLayer().request(toSend, destinationId);
+                if(LOG.isLoggable(Level.FINEST)) {
+                    LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), PDU %s sent, pending %d - 1", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), toSend, this.pendingUtTransmissionPduList.size()));
+                }
+                this.pendingUtTransmissionPduList.remove(0);
+                setLastSentPduTime(Instant.now());
+            } catch(UtLayerException e) {
+                if(LOG.isLoggable(Level.WARNING)) {
+                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), PDU rejected by UT layer %s: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName(), e.getMessage()), e);
+                }
+                throw e;
+            }
+        }
+        if(LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: pending PDUs sent to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName()));
+        }
+    }
+
+    protected void clearTransmissionQueue() {
+        this.pendingUtTransmissionPduList.clear();
+    }
 }
