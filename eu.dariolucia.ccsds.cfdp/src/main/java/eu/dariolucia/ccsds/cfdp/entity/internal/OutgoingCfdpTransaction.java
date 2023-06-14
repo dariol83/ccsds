@@ -31,10 +31,16 @@ import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpChecksumRegistry;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.CfdpUnsupportedChecksumType;
 import eu.dariolucia.ccsds.cfdp.protocol.checksum.ICfdpChecksum;
 import eu.dariolucia.ccsds.cfdp.protocol.pdu.*;
-import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.*;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FaultHandlerOverrideTLV;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FilestoreRequestTLV;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.FlowLabelTLV;
+import eu.dariolucia.ccsds.cfdp.protocol.pdu.tlvs.MessageToUserTLV;
 import eu.dariolucia.ccsds.cfdp.ut.UtLayerException;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,8 +52,6 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
 
     // Variables to handle file data transfer
     private final List<CfdpPdu> sentPduList = new LinkedList<>();
-    private final List<CfdpPdu> pendingUtTransmissionPduList = new LinkedList<>();
-
     private ICfdpFileSegmenter segmentProvider;
     private ICfdpChecksum checksum;
     private long totalFileSize;
@@ -629,7 +633,6 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
      *     in chunks of equal, predefined size</li>
      * </ol>
      * From the point of view of the receiver, nothing changes.
-     *
      * In order to free up the confiner thread, this method does not put all the chunks for transmission, but put in the
      * execution queue only a task that:
      * <ol>
@@ -759,33 +762,8 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
             // Remember the PDU
             this.sentPduList.add(pdu);
         }
-        // Add to the pending list
-        this.pendingUtTransmissionPduList.add(pdu);
-        // Send all PDUs you have to send, stop if you fail
-        if(LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), sending %d pending PDUs to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), getTransmissionLayer().getName()));
-        }
-        while(!this.pendingUtTransmissionPduList.isEmpty()) {
-            CfdpPdu toSend = pendingUtTransmissionPduList.get(0);
-            try {
-                if(LOG.isLoggable(Level.FINEST)) {
-                    LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), pending %d, sending PDU %s to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), this.pendingUtTransmissionPduList.size(), toSend, getTransmissionLayer().getName()));
-                }
-                getTransmissionLayer().request(toSend, getRemoteDestination().getRemoteEntityId());
-                if(LOG.isLoggable(Level.FINEST)) {
-                    LOG.log(Level.FINEST, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), PDU %s sent, pending %d - 1", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), toSend, this.pendingUtTransmissionPduList.size()));
-                }
-                this.pendingUtTransmissionPduList.remove(0);
-            } catch(UtLayerException e) {
-                if(LOG.isLoggable(Level.WARNING)) {
-                    LOG.log(Level.WARNING, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: forwardPdu(), PDU rejected by UT layer %s: %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName(), e.getMessage()), e);
-                }
-                throw e;
-            }
-        }
-        if(LOG.isLoggable(Level.FINER)) {
-            LOG.log(Level.FINER, String.format("CFDP Entity [%d]: [%d] with remote entity [%d]: pending PDUs sent to UT layer %s", getLocalEntityId(), getTransactionId(), getRemoteDestination().getRemoteEntityId(), getTransmissionLayer().getName()));
-        }
+        // Internal forward
+        internalForwardPdu(pdu, getRemoteDestination().getRemoteEntityId());
     }
 
     private MetadataPdu prepareMetadataPdu() {
@@ -922,7 +900,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
         // a) release all unreleased portions of the file retransmission buffer
         this.sentPduList.clear();
         // b) stop transmission of file segments and metadata.
-        this.pendingUtTransmissionPduList.clear();
+        clearTransmissionQueue();
         this.txRunning = false;
 
         // 4.11.1.1.2 If sending in acknowledged mode,
@@ -988,7 +966,7 @@ public class OutgoingCfdpTransaction extends CfdpTransaction {
     protected void handlePreDispose() {
         // Cleanup resources and memory
         this.sentPduList.clear();
-        this.pendingUtTransmissionPduList.clear();
+        clearTransmissionQueue();
         this.txRunning = false;
         if(this.segmentProvider != null) {
             this.segmentProvider.close();
