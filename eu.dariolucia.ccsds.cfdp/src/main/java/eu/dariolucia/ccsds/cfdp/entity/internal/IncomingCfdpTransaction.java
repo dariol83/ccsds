@@ -84,6 +84,10 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
     private CfdpTransmissionMode transmissionMode;
 
+    // Contains all the good bytes received in this transaction, even if not contiguous. It provides a better indication,
+    // for class-2 transactions, of the real progress of the transaction, compared to this.progress.
+    private long realProgress;
+
     public IncomingCfdpTransaction(CfdpPdu pdu, CfdpEntity entity) {
         super(pdu.getTransactionSequenceNumber(), entity, pdu.getSourceEntityId());
         this.initialPdu = pdu;
@@ -216,6 +220,50 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
     @Override
     protected long getProgress() {
         return this.receivedContiguousFileBytes;
+    }
+
+    @Override
+    public long getRealProgress() {
+        return this.realProgress;
+    }
+
+    private void computeRealProgress() {
+        if(!this.gapDetected) {
+            this.realProgress = this.receivedContiguousFileBytes;
+        } else {
+            long realProgress = this.receivedContiguousFileBytes;
+            long temporaryStartOffset = this.receivedContiguousFileBytes;
+            long temporaryEndOffset = this.receivedContiguousFileBytes;
+            // Iterate on received file PDUs: if the offset is less than this.receivedContiguousFileBytes, then ignore (already computed)
+            for (Map.Entry<Long, FileDataPduSummary> e : this.fileReconstructionMap.entrySet()) {
+                // All segments having an offset lower than receivedContiguousFileBytes can be safely skipped
+                if (e.getKey() >= this.receivedContiguousFileBytes) {
+                    // Here we have a segment that it is above the consolidated received part
+                    // Check if the offset matches the temporaryStartOffset
+                    if(e.getKey() == temporaryEndOffset) {
+                        // Perfect, it is contiguous, and therefore we can add the data
+                        temporaryEndOffset += e.getValue().length;
+                    } else if(e.getKey() > temporaryEndOffset) {
+                        // It is not contiguous and it is after the end of the part under current process, so we have to
+                        // increase the realProgress with what we computed so far, and re-initialise the counters
+                        realProgress += (temporaryEndOffset - temporaryStartOffset);
+                        temporaryStartOffset = e.getValue().offset;
+                        temporaryEndOffset = e.getValue().offset + e.getValue().length;
+                    } else {
+                        // In this case we need only to check if the pdu.offset + pdu.length is greater than temporaryEndOffset and,
+                        // if that is the case, we need to update it with this value only and move on
+                        long endOffset = e.getValue().offset + e.getValue().length;
+                        if(endOffset > temporaryEndOffset) {
+                            temporaryEndOffset = endOffset;
+                        }
+                    }
+                }
+            }
+            // The last part must be considered here (it is zero if no FilePDU were received or processed)
+            realProgress += (temporaryEndOffset - temporaryStartOffset);
+            // Set the value
+            this.realProgress = realProgress;
+        }
     }
 
     @Override
@@ -386,7 +434,6 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
 
         // Identify the fully completed part offset and if there are gaps (to request retransmission if enabled), compute progress
         verifyGapPresence(pdu);
-
         // Receipt of a File Data PDU may optionally cause the receiving CFDP, if it is the
         // transaction's destination, to issue a File-Segment-Recv.indication.
         if(pdu.getDestinationEntityId() == getLocalEntityId() &&
@@ -444,15 +491,15 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         if(pdu.getOffset() < this.receivedContiguousFileBytes) {
             throw new IllegalStateException("Software bug: FileDataPdu offset is " + pdu.getOffset() + " but completion is at " + this.receivedContiguousFileBytes + ", the PDU should have been ignored");
         }
-        // Assuming that this.fullyCompletedPartSize reports the number of consecutive, no-gaps bytes of the file from the file start,
-        // if pdu.offset is equal to this number and there was so gap signalled before, then the pdu will increase this.fullyCompletedPartSize
+        // Assuming that this.receivedContiguousFileBytes reports the number of consecutive, no-gaps bytes of the file from the file start,
+        // if pdu.offset is equal to this number and there was so gap signalled before, then the pdu will increase this.receivedContiguousFileBytes
         // by pdu.getFileData().length.
         if(pdu.getOffset() == this.receivedContiguousFileBytes) {
             this.receivedContiguousFileBytes += pdu.getFileData().length;
-            // If there was a gap detected beforehand, then it could be that fullyCompletedPartSize is actually larger
+            // If there was a gap detected beforehand, then it could be that receivedContiguousFileBytes is actually larger
             if(this.gapDetected) {
                 for(Map.Entry<Long, FileDataPduSummary> e : this.fileReconstructionMap.entrySet()) {
-                    // All segments having an offset lower than fullyCompletedPartSize can be safely skipped
+                    // All segments having an offset lower than receivedContiguousFileBytes can be safely skipped
                     if(e.getKey() == receivedContiguousFileBytes) {
                         // We found a segment that can contribute to the progress of the file, so we take this into account, and we go on
                         this.receivedContiguousFileBytes += e.getValue().length;
@@ -475,6 +522,8 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 restartNakComputation();
             }
         }
+        // Compute real progress
+        computeRealProgress();
     }
 
     private void handleEndOfFilePdu(EndOfFilePdu pdu) throws FaultDeclaredException {
