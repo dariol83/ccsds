@@ -231,7 +231,7 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
         if(!this.gapDetected) {
             this.realProgress = this.receivedContiguousFileBytes;
         } else {
-            long realProgress = this.receivedContiguousFileBytes;
+            long tempRealProgress = this.receivedContiguousFileBytes;
             long temporaryStartOffset = this.receivedContiguousFileBytes;
             long temporaryEndOffset = this.receivedContiguousFileBytes;
             // Iterate on received file PDUs: if the offset is less than this.receivedContiguousFileBytes, then ignore (already computed)
@@ -245,8 +245,8 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                         temporaryEndOffset += e.getValue().length;
                     } else if(e.getKey() > temporaryEndOffset) {
                         // It is not contiguous and it is after the end of the part under current process, so we have to
-                        // increase the realProgress with what we computed so far, and re-initialise the counters
-                        realProgress += (temporaryEndOffset - temporaryStartOffset);
+                        // increase the tempRealProgress with what we computed so far, and re-initialise the counters
+                        tempRealProgress += (temporaryEndOffset - temporaryStartOffset);
                         temporaryStartOffset = e.getValue().offset;
                         temporaryEndOffset = e.getValue().offset + e.getValue().length;
                     } else {
@@ -260,9 +260,9 @@ public class IncomingCfdpTransaction extends CfdpTransaction {
                 }
             }
             // The last part must be considered here (it is zero if no FilePDU were received or processed)
-            realProgress += (temporaryEndOffset - temporaryStartOffset);
+            tempRealProgress += (temporaryEndOffset - temporaryStartOffset);
             // Set the value
-            this.realProgress = realProgress;
+            this.realProgress = tempRealProgress;
         }
     }
 

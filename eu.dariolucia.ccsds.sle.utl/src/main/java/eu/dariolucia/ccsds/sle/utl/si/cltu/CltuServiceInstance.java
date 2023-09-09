@@ -629,8 +629,9 @@ public class CltuServiceInstance extends ServiceInstance {
 			}
 		} else {
 			// Dump warning with diagnostic
-			LOG.warning(getServiceInstanceIdentifier() + ": Get parameter return received, negative result: "
-					+ CltuDiagnosticsStrings.getGetParameterDiagnostic(pdu.getResult().getNegativeResult()));
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Get parameter return received, negative result: %s", getServiceInstanceIdentifier(), CltuDiagnosticsStrings.getGetParameterDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 
 		}
 		// Notify PDU
@@ -732,8 +733,9 @@ public class CltuServiceInstance extends ServiceInstance {
 			}
 		} else {
 			// Dump warning with diagnostic
-			LOG.warning(getServiceInstanceIdentifier() + ": Get parameter return received, negative result: "
-					+ CltuDiagnosticsStrings.getGetParameterDiagnostic(pdu.getResult().getNegativeResult()));
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Get parameter return received, negative result: %s", getServiceInstanceIdentifier(), CltuDiagnosticsStrings.getGetParameterDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 
 		}
 		// Notify PDU
@@ -767,8 +769,9 @@ public class CltuServiceInstance extends ServiceInstance {
 		if (pdu.getResult().getPositiveResult() != null) {
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
 		} else {
-			LOG.warning(getServiceInstanceIdentifier() + ": Start return received, negative result: "
-					+ CltuDiagnosticsStrings.getStartDiagnostic(pdu.getResult().getNegativeResult()));
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Start return received, negative result: %s", getServiceInstanceIdentifier(), CltuDiagnosticsStrings.getStartDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 			// Reset requested GVCID
 			this.firstCltuIdentification = null;
 
@@ -808,8 +811,9 @@ public class CltuServiceInstance extends ServiceInstance {
 			// Reset requested GVCID
 			this.firstCltuIdentification = null;
 		} else {
-			LOG.warning(getServiceInstanceIdentifier() + ": Stop return received, negative result: "
-					+ CltuDiagnosticsStrings.getDiagnostic(pdu.getResult().getNegativeResult()));
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Stop return received, negative result: %s", getServiceInstanceIdentifier(), CltuDiagnosticsStrings.getDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 			// If problems (result negative), ACTIVE
 			setServiceInstanceState(ServiceInstanceBindingStateEnum.ACTIVE);
 		}
@@ -988,8 +992,9 @@ public class CltuServiceInstance extends ServiceInstance {
 			//
 			LOG.info(getServiceInstanceIdentifier() + ": Schedule status report return received, positive result");
 		} else {
-			LOG.warning(getServiceInstanceIdentifier() + ": Schedule status report return received, negative result: "
-					+ CltuDiagnosticsStrings.getScheduleStatusReportDiagnostic(pdu.getResult().getNegativeResult()));
+			if(LOG.isLoggable(Level.WARNING)) {
+				LOG.warning(String.format("%s: Schedule status report return received, negative result: %s", getServiceInstanceIdentifier(), CltuDiagnosticsStrings.getScheduleStatusReportDiagnostic(pdu.getResult().getNegativeResult())));
+			}
 		}
 		// Notify PDU
 		pduReceptionOk(pdu, SCHEDULE_STATUS_REPORT_RETURN_NAME);
