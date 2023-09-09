@@ -545,7 +545,11 @@ public abstract class CfdpTransaction {
     protected CfdpTransactionStatus createStateObject() {
         return new CfdpTransactionStatus(Instant.now(), getEntity(), getTransactionId(), getSourceEntityId(), getDestinationEntityId(), getDestinationEntityId() == getEntity().getMib().getLocalEntity().getLocalEntityId(),
                 getLastConditionCode(), getLastFaultEntityAsLong(), getCurrentState(), getProgress(), getTotalFileSize(), getTransmissionMode(),
-                lastReceivedPduTime, lastSentPduTime);
+                lastReceivedPduTime, lastSentPduTime, getRealProgress());
+    }
+
+    public long getRealProgress() {
+        return getProgress();
     }
 
     protected void setLastSentPduTime(Instant lastSentPduTime) {

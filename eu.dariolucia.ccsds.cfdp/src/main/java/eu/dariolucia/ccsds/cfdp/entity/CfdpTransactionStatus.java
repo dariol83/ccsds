@@ -40,10 +40,19 @@ public class CfdpTransactionStatus {
     private final CfdpTransmissionMode transmissionMode;
     private final Instant lastReceivedPduTime;
     private final Instant lastSentPduTime;
+    private final long realProgress;
 
     public CfdpTransactionStatus(Instant time, ICfdpEntity managingEntity, long transactionId, long sourceEntityId, long destinationEntityId,  // NOSONAR: long constructor
                                  boolean isDestination, ConditionCode lastConditionCode, Long lastFaultEntity, CfdpTransactionState cfdpTransactionState,
                                  long progress, long totalFileSize, CfdpTransmissionMode transmissionMode, Instant lastReceivedPduTime, Instant lastSentPduTime) {
+        this(time, managingEntity, transactionId, sourceEntityId, destinationEntityId, isDestination, lastConditionCode, lastFaultEntity, cfdpTransactionState,
+                progress, totalFileSize, transmissionMode, lastReceivedPduTime, lastSentPduTime, progress);
+    }
+
+    public CfdpTransactionStatus(Instant time, ICfdpEntity managingEntity, long transactionId, long sourceEntityId, long destinationEntityId,  // NOSONAR: long constructor
+                                 boolean isDestination, ConditionCode lastConditionCode, Long lastFaultEntity, CfdpTransactionState cfdpTransactionState,
+                                 long progress, long totalFileSize, CfdpTransmissionMode transmissionMode, Instant lastReceivedPduTime, Instant lastSentPduTime,
+                                 long realProgress) {
         this.time = time;
         this.managingEntity = managingEntity;
         this.transactionId = transactionId;
@@ -58,6 +67,7 @@ public class CfdpTransactionStatus {
         this.transmissionMode = transmissionMode;
         this.lastReceivedPduTime = lastReceivedPduTime;
         this.lastSentPduTime = lastSentPduTime;
+        this.realProgress = realProgress;
     }
 
     public Instant getTime() {
@@ -116,6 +126,10 @@ public class CfdpTransactionStatus {
         return lastSentPduTime;
     }
 
+    public long getRealProgress() {
+        return realProgress;
+    }
+
     @Override
     public String toString() {
         return "CfdpTransactionStatus{" +
@@ -133,6 +147,7 @@ public class CfdpTransactionStatus {
                 ", transmissionMode=" + getTransmissionMode() +
                 ", lastReceivedPduTime=" + getLastReceivedPduTime() +
                 ", lastSentPduTime=" + getLastSentPduTime() +
+                ", realProgress=" + getRealProgress() +
                 '}';
     }
 }
