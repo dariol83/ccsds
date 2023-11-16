@@ -78,8 +78,12 @@ public class AosReceiverVirtualChannel extends AbstractReceiverVirtualChannel<Ao
         if(frame.getBitstreamDataPointer() % 8 != 0) {
             ++bytesToRead;
         }
+        // If all bits are valid, override bytesToRead value
+        if(frame.isBitstreamAllValid()) {
+            bytesToRead = frame.getFrame().length - startIdx - (frame.isOcfPresent() ? 2 : 0) - (frame.isFecfPresent() ? 2 : 0);
+        }
         byte[] extracted = Arrays.copyOfRange(frame.getFrame(), startIdx, startIdx + bytesToRead);
-        notifyBitstreamExtracted(frame, extracted, frame.getBitstreamDataPointer(), missingBytes);
+        notifyBitstreamExtracted(frame, extracted, frame.isBitstreamAllValid() ? bytesToRead * 8 : frame.getBitstreamDataPointer(), missingBytes);
     }
 
     @Override
