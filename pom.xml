@@ -22,7 +22,7 @@
 
     <groupId>eu.dariolucia.ccsds</groupId>
     <artifactId>eu.dariolucia.ccsds</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <packaging>pom</packaging>
 
     <name>CCSDS</name>
