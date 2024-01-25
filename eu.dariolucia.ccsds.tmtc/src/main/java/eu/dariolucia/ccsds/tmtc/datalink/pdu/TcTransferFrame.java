@@ -135,13 +135,13 @@ public class TcTransferFrame extends AbstractTransferFrame {
      */
     public enum SequenceFlagType {
         /**
-         * First block
-         */
-        FIRST,
-        /**
          * Continuation block
          */
         CONTINUE,
+        /**
+         * First block
+         */
+        FIRST,
         /**
          * Last block
          */
