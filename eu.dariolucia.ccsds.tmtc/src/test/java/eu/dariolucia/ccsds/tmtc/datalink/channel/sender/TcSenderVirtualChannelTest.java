@@ -394,10 +394,13 @@ class TcSenderVirtualChannelTest {
 
             byte[] segment = fr.getDataFieldCopy();
             if (i == 0) {
+                assertEquals(1, (segment[0] & 0xC0) >> 6);
                 assertEquals(TcTransferFrame.SequenceFlagType.FIRST, fr.getSequenceFlag());
             } else if (i == 3) {
+                assertEquals(2, (segment[0] & 0xC0) >> 6);
                 assertEquals(TcTransferFrame.SequenceFlagType.LAST, fr.getSequenceFlag());
             } else {
+                assertEquals(0, (segment[0] & 0xC0) >> 6);
                 assertEquals(TcTransferFrame.SequenceFlagType.CONTINUE, fr.getSequenceFlag());
             }
             assertEquals(12, fr.getMapId());
