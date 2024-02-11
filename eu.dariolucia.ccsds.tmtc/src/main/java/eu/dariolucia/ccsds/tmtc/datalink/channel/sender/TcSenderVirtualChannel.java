@@ -154,16 +154,13 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
      * This method generates and dispatches an Unlock BC-frame, to remove the Lockout state from the on-board FARM.
      */
     public void dispatchUnlock() {
-        byte[] secH = secHeaderSupplier != null ? secHeaderSupplier.get() : new byte[0];
-        byte[] secT = secTrailerSupplier != null ? secTrailerSupplier.get() : new byte[0];
-
+        // As per CCSDS 232.0-B-4, 6.3.1: no security header/trailer for BC frames
         TcTransferFrame tc = TcTransferFrameBuilder.create(isFecfPresent())
                 .setSpacecraftId(getSpacecraftId())
                 .setVirtualChannelId(getVirtualChannelId())
                 .setFrameSequenceNumber(0) // As per 4.1.2.8 of CCSDS 232.0-B-3, point 3
                 .setBypassFlag(true)
                 .setControlCommandFlag(true)
-                .setSecurity(secH, secT)
                 .setUnlockControlCommand()
                 .build();
 
@@ -176,16 +173,13 @@ public class TcSenderVirtualChannel extends AbstractSenderVirtualChannel<TcTrans
      * @param frameNumber the frame number for the Set_V(R)
      */
     public void dispatchSetVr(int frameNumber) {
-        byte[] secH = secHeaderSupplier != null ? secHeaderSupplier.get() : new byte[0];
-        byte[] secT = secTrailerSupplier != null ? secTrailerSupplier.get() : new byte[0];
-
+        // As per CCSDS 232.0-B-4, 6.3.1: no security header/trailer for BC frames
         TcTransferFrame tc = TcTransferFrameBuilder.create(isFecfPresent())
                 .setSpacecraftId(getSpacecraftId())
                 .setVirtualChannelId(getVirtualChannelId())
                 .setFrameSequenceNumber(0) // As per 4.1.2.8 of CCSDS 232.0-B-3, point 3
                 .setBypassFlag(true)
                 .setControlCommandFlag(true)
-                .setSecurity(secH, secT)
                 .setSetVrControlCommand(frameNumber)
                 .build();
         notifyTransferFrameGenerated(tc, 0);
