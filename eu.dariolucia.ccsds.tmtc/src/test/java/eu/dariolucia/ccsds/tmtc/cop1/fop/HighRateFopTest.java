@@ -122,7 +122,7 @@ class HighRateFopTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -244,7 +244,7 @@ class HighRateFopTest {
         Thread.sleep(2000);
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
         Thread.sleep(2000);
         assertEquals(50, sink.size());

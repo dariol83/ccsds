@@ -32,7 +32,6 @@ import java.util.function.Supplier;
 
 /**
  * This class implements the FOP side of the COP-1 protocol, as defined by CCSDS 232.1-B-2 Cor. 1.
- *
  * This class is thread-safe.
  */
 @SuppressWarnings("StatementWithEmptyBody")
@@ -70,7 +69,6 @@ public class FopEngine {
     private final Timer fopTimer;
 
     private TimerTask currentTimer;
-
 
     // ---------------------------------------------------------------------------------------------------------
     // FOP variables as per CCSDS 232.1-B-2 Cor. 1, section 5.1
@@ -164,7 +162,6 @@ public class FopEngine {
 
     /**
      * Constructor of the FOP engine.
-     *
      * Being this class fully decoupled from the way {@link TcTransferFrame} are constructed and forwarded to the encoding
      * layer, the constructor accepts functional objects for the operations to be delegated to the external interfaces.
      *
@@ -247,7 +244,6 @@ public class FopEngine {
     /**
      * Request the FOP engine to transmit a AD or BD frame. This operation allows simple flow control, as the method will
      * return when the frame will be either accepted or rejected by the FOP engine.
-     *
      * The use of this operation is a convenience operation and shall not be mixed with the other transmit operation. The
      * behaviour of this class if the two operations are mixed is undefined.
      *
@@ -327,7 +323,6 @@ public class FopEngine {
      * Request the FOP engine to transmit a AD or BD frame. This operation is fully asynchronous and does not implement
      * any flow control mechanism, as per COP-1 standard. Users of this method shall wait for the acceptance or rejection
      * of the frame as reported by the callback method on the {@link IFopObserver} interface.
-     *
      * The use of this operation shall not be mixed with the other transmit operation. The behaviour of this class if
      * the two operations are mixed is undefined.
      *
@@ -392,7 +387,6 @@ public class FopEngine {
     /**
      * This action includes clearing the Sent_Queue by generating a 'Negative Confirm Response to Request to
      * Transfer FDU' for each Transfer Frame on the queue and deleting the Transfer Frame.
-     *
      * Ref. 5.2.2
      */
     void purgeSentQueue() {
@@ -413,7 +407,6 @@ public class FopEngine {
     /**
      * This action includes clearing the Wait_Queue and generating a 'Reject Response to Request to Transfer
      * FDU' for the queued FDU.
-     *
      * Ref. 5.2.3
      */
     void purgeWaitQueue() {
@@ -427,7 +420,6 @@ public class FopEngine {
     /**
      * This action includes all the functions necessary to prepare a Type-AD Transfer Frame for
      * transmission.
-     *
      * Ref. 5.2.4
      *
      * @param frame the frame to send
@@ -448,7 +440,6 @@ public class FopEngine {
     /**
      * This action includes all the functions necessary to prepare a Type-BC Transfer Frame for
      * transmission.
-     *
      * Ref. 5.2.5
      *
      * @param frame the frame to send
@@ -465,7 +456,6 @@ public class FopEngine {
     /**
      * This action includes all the functions necessary to prepare a Type-BD Transfer Frame for
      * transmission.
-     *
      * Ref. 5.2.6
      *
      * @param frame the frame to send
@@ -667,12 +657,12 @@ public class FopEngine {
 
     void confirm(TcTransferFrame frame) {
         checkThreadAccess();
-        observers.forEach(o -> o.transferNotification(this, FopOperationStatus.POSIIVE_CONFIRM, frame));
+        observers.forEach(o -> o.transferNotification(this, FopOperationStatus.POSITIVE_CONFIRM, frame));
     }
 
     void confirm(Object tag, FopDirective directive, int qualifier) {
         checkThreadAccess();
-        observers.forEach(o -> o.directiveNotification(this, FopOperationStatus.POSIIVE_CONFIRM, tag, directive, qualifier));
+        observers.forEach(o -> o.directiveNotification(this, FopOperationStatus.POSITIVE_CONFIRM, tag, directive, qualifier));
     }
 
     void addToWaitQueue(FopEvent fopEvent) {
