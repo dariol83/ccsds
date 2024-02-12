@@ -84,7 +84,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -105,7 +105,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
 
         fop.deregister(stub);
@@ -160,7 +160,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -180,7 +180,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
 
         fop.deregister(stub);
@@ -228,7 +228,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -284,7 +284,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
         Thread.sleep(2000);
         assertEquals(8, sink.size());
@@ -334,7 +334,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -427,7 +427,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -472,7 +472,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
         Thread.sleep(2000);
         assertEquals(4, sink.size());
@@ -522,7 +522,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -589,7 +589,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
         Thread.sleep(2000);
         assertEquals(8, sink.size());
@@ -653,7 +653,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
 
         fop.deregister(stub);
@@ -701,7 +701,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -789,7 +789,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -848,7 +848,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -921,7 +921,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
         Thread.sleep(2000);
         assertEquals(6, sink.size());
@@ -971,7 +971,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -1079,7 +1079,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
         Thread.sleep(2000);
         assertEquals(4, sink.size());
@@ -1129,7 +1129,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send some frame and (later) check that it is sent with VCC 10
@@ -1231,7 +1231,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Retransmission and Wait at S1
@@ -1255,7 +1255,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
 
         fop.deregister(stub);
@@ -1303,7 +1303,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Retransmission and Wait at S1 with no outstanding AD
@@ -1327,7 +1327,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
 
         fop.deregister(stub);
@@ -1375,7 +1375,7 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Retransmission and Wait at S1 with no outstanding AD
@@ -1473,7 +1473,7 @@ class FopEngineTest {
         fop.directive(8, FopDirective.RESUME, 0);
         fop.directive(5, FopDirective.INIT_AD_WITHOUT_CLCW, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send a frame and (later) check that it is sent with VCC 10
@@ -1496,7 +1496,7 @@ class FopEngineTest {
                 .setStatusField(0)
                 .build();
         fop.clcw(clcw);
-        assertTrue(stub.waitForFrame(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && o[1] == frame, 5000));
+        assertTrue(stub.waitForFrame(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && o[1] == frame, 5000));
 
         // Send 3 frames and then ack the first 2 frames
         tcVc.dispatch(true, 0, new byte[200]);
@@ -1546,11 +1546,11 @@ class FopEngineTest {
                 .build();
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForFrame(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && o[1] == frame4, 5000));
+        assertTrue(stub.waitForFrame(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && o[1] == frame4, 5000));
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
         Thread.sleep(2000);
         assertEquals(4, sink.size());
@@ -1584,7 +1584,7 @@ class FopEngineTest {
         fop.directive(8, FopDirective.RESUME, 0);
         fop.directive(5, FopDirective.INIT_AD_WITHOUT_CLCW, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         // Send a frame and (later) check that it is sent with VCC 10
@@ -1607,7 +1607,7 @@ class FopEngineTest {
                 .setStatusField(0)
                 .build();
         fop.clcw(clcw);
-        assertTrue(stub.waitForFrame(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && o[1] == frame, 5000));
+        assertTrue(stub.waitForFrame(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && o[1] == frame, 5000));
 
         // Send 3 frames and then ack the first 2 frames
         tcVc.dispatch(true, 0, new byte[200]);
@@ -1688,14 +1688,14 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         Thread.sleep(3000);
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
         Thread.sleep(2000);
         assertEquals(1, sink.size()); // 1 frames
@@ -1880,7 +1880,7 @@ class FopEngineTest {
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
         Thread.sleep(2000);
         assertEquals(2, sink.size()); // 2 frames
@@ -1945,12 +1945,12 @@ class FopEngineTest {
 
         fop.clcw(clcw);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 5), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S1, 5000));
 
         fop.directive(6, FopDirective.TERMINATE, 0);
 
-        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSIIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
+        assertTrue(stub.waitForDirective(o -> o[0] == FopOperationStatus.POSITIVE_CONFIRM && Objects.equals(o[1], 6), 5000));
         assertTrue(stub.waitForStatus(o -> o.getCurrentState() == FopState.S6, 5000));
 
         Thread.sleep(2000);

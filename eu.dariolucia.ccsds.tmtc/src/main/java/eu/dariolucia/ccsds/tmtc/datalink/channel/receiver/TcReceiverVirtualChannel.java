@@ -40,7 +40,7 @@ public class TcReceiverVirtualChannel extends AbstractReceiverVirtualChannel<TcT
 
     @Override
     protected int retrieveFirstHeaderPointer(TcTransferFrame frame) {
-        return (frame.isSegmented() ? 1 : 0);
+        return 0;
     }
 
     @Override

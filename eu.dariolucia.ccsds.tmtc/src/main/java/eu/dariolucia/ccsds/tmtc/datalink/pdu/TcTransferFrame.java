@@ -43,7 +43,6 @@ public class TcTransferFrame extends AbstractTransferFrame {
      * This method returns a decoding function (to be used in a {@link ChannelDecoder} chain,
      * which converts bytes arrays into TC frames. The function can deal with virtual fill bytes as decoded from a
      * CLTU, i.e. virtual fill bytes are removed before calling the {@link TcTransferFrame} constructor.
-     *
      * Segmentation depends on VC, so hardcoding it here is wrong: use a Function TC VC ID to boolean
      *
      * @param segmented function that returns true if the TC frame contains TC segments
@@ -59,7 +58,6 @@ public class TcTransferFrame extends AbstractTransferFrame {
      * which converts bytes arrays into TC frames and takes into account the security information. The function can deal
      * with virtual fill bytes as decoded from a CLTU, i.e. virtual fill bytes are removed before calling the
      * {@link TcTransferFrame} constructor.
-     *
      * Segmentation depends on VC, so hardcoding it here is wrong: use a Function TC VC ID to boolean
      *
      * @param segmented function that returns true if the TC frame contains TC segments
@@ -190,9 +188,6 @@ public class TcTransferFrame extends AbstractTransferFrame {
     public TcTransferFrame(byte[] frame, IntFunction<Boolean> segmented, boolean fecfPresent, int securityHeaderLength, int securityTrailerLength) {
         super(frame, fecfPresent);
 
-        this.securityHeaderLength = securityHeaderLength;
-        this.securityTrailerLength = securityTrailerLength;
-
         ByteBuffer in = ByteBuffer.wrap(frame);
         // First 2 octets
         short twoOctets = in.getShort();
@@ -213,8 +208,8 @@ public class TcTransferFrame extends AbstractTransferFrame {
 
         virtualChannelId = (short) ((twoOctets & (short) 0xFC00) >> 10);
 
-        // At this stage, you know if the TC frame has segmentation active
-        this.segmented = segmented.apply(virtualChannelId);
+        // At this stage, you know if the TC frame has segmentation active (only if not BC: TODO: check)
+        this.segmented = getFrameType() != FrameType.BC && segmented.apply(virtualChannelId);
 
         // 4.1.2.7.2
         frameLength = (short) ((twoOctets & (short) 0x03FF) + 1);
@@ -228,19 +223,27 @@ public class TcTransferFrame extends AbstractTransferFrame {
         virtualChannelFrameCount = (short) Byte.toUnsignedInt(in.get());
 
         // If security is present, then the Transfer Frame Data Field is located as specified by CCSDS 232.0-B-3, 6.3.1.
-        if(securityHeaderLength > 0) {
+        if(getFrameType() == FrameType.BC) {
+            dataFieldStart = (short) (TC_PRIMARY_HEADER_LENGTH);
+            dataFieldLength = frameLength - dataFieldStart - (fecfPresent ? 2 : 0);
+            this.securityHeaderLength = 0;
+            this.securityTrailerLength = 0;
+        } else if(securityHeaderLength > 0) {
             dataFieldStart = (short) (TC_PRIMARY_HEADER_LENGTH + (this.segmented ? 1 : 0) + securityHeaderLength);
             dataFieldLength = frameLength - dataFieldStart - securityTrailerLength - (fecfPresent ? 2 : 0);
+            this.securityHeaderLength = securityHeaderLength;
+            this.securityTrailerLength = securityTrailerLength;
         } else {
-            dataFieldStart = TC_PRIMARY_HEADER_LENGTH;
+            dataFieldStart = (short) (TC_PRIMARY_HEADER_LENGTH + (this.segmented ? 1 : 0));
             dataFieldLength = frameLength - dataFieldStart - (fecfPresent ? 2 : 0);
+            this.securityHeaderLength = 0;
+            this.securityTrailerLength = 0;
         }
 
         // 4.1.3.3
         if(getFrameType() == FrameType.BC) {
-            int dataFieldLength = frame.length - dataFieldStart - (fecfPresent ? 2 : 0) - securityTrailerLength;
             if(dataFieldLength == 1) {
-                controlCommandType = frame[dataFieldStart + securityHeaderLength] == 0x00 ? ControlCommandType.UNLOCK : ControlCommandType.RESERVED;
+                controlCommandType = frame[dataFieldStart] == 0x00 ? ControlCommandType.UNLOCK : ControlCommandType.RESERVED;
             } else if (dataFieldLength == 3) {
                 if(frame[dataFieldStart] == (byte) 0x82 && frame[dataFieldStart + 1] == 0x00) {
                     controlCommandType = ControlCommandType.SET_VR;

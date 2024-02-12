@@ -23,7 +23,6 @@ import eu.dariolucia.ccsds.tmtc.transport.builder.SpacePacketBuilder;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.EncapsulationPacket;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.IPacket;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
-import eu.dariolucia.ccsds.tmtc.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -171,10 +170,10 @@ class TcSenderVirtualChannelTest {
             TcTransferFrame fr = list.get(i);
             assertFalse(fr.isBypassFlag());
             assertFalse(fr.isControlCommandFlag());
-            byte[] segment = fr.getDataFieldCopy();
+            byte[] tcPacket = fr.getDataFieldCopy();
             assertEquals(TcTransferFrame.SequenceFlagType.NO_SEGMENT, fr.getSequenceFlag());
             assertEquals(i, fr.getMapId());
-            SpacePacket sp = new SpacePacket(Arrays.copyOfRange(segment, 1, segment.length), true);
+            SpacePacket sp = new SpacePacket(tcPacket, true);
             assertEquals(300, sp.getApid());
             assertEquals(i, sp.getPacketSequenceCount());
             assertEquals(400 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getLength());
@@ -207,10 +206,10 @@ class TcSenderVirtualChannelTest {
             assertFalse(fr.isControlCommandFlag());
             assertTrue(fr.isValid());
             assertTrue(fr.getFecf() != 0);
-            byte[] segment = fr.getDataFieldCopy();
+            byte[] tcPacket = fr.getDataFieldCopy();
             assertEquals(TcTransferFrame.SequenceFlagType.NO_SEGMENT, fr.getSequenceFlag());
             assertEquals(i, fr.getMapId());
-            SpacePacket sp = new SpacePacket(Arrays.copyOfRange(segment, 1, segment.length), true);
+            SpacePacket sp = new SpacePacket(tcPacket, true);
             assertEquals(300, sp.getApid());
             assertEquals(i, sp.getPacketSequenceCount());
             assertEquals(400 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getLength());
@@ -299,21 +298,21 @@ class TcSenderVirtualChannelTest {
             assertFalse(fr.isBypassFlag());
             assertFalse(fr.isControlCommandFlag());
 
-            byte[] segment = fr.getDataFieldCopy();
+            byte[] tcPackets = fr.getDataFieldCopy();
             assertEquals(TcTransferFrame.SequenceFlagType.NO_SEGMENT, fr.getSequenceFlag());
             assertEquals(i, fr.getMapId());
 
-            SpacePacket sp = new SpacePacket(Arrays.copyOfRange(segment, 1, 407), true);
+            SpacePacket sp = new SpacePacket(Arrays.copyOfRange(tcPackets, 0, 406), true);
             assertEquals(300, sp.getApid());
             assertEquals(i, sp.getPacketSequenceCount());
             assertEquals(400 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getLength());
 
-            sp = new SpacePacket(Arrays.copyOfRange(segment, 407, 613), true);
+            sp = new SpacePacket(Arrays.copyOfRange(tcPackets, 406, 612), true);
             assertEquals(200, sp.getApid());
             assertEquals(i, sp.getPacketSequenceCount());
             assertEquals(200 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getLength());
 
-            sp = new SpacePacket(Arrays.copyOfRange(segment, 613, 719), true);
+            sp = new SpacePacket(Arrays.copyOfRange(tcPackets, 612, 718), true);
             assertEquals(2000, sp.getApid());
             assertEquals(i, sp.getPacketSequenceCount());
             assertEquals(100 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getLength());
@@ -392,20 +391,20 @@ class TcSenderVirtualChannelTest {
             assertFalse(fr.isBypassFlag());
             assertFalse(fr.isControlCommandFlag());
 
-            byte[] segment = fr.getDataFieldCopy();
+            byte segment = fr.getFrame()[TcTransferFrame.TC_PRIMARY_HEADER_LENGTH];
             if (i == 0) {
-                assertEquals(1, (segment[0] & 0xC0) >> 6);
+                assertEquals(1, (segment & 0xC0) >> 6);
                 assertEquals(TcTransferFrame.SequenceFlagType.FIRST, fr.getSequenceFlag());
             } else if (i == 3) {
-                assertEquals(2, (segment[0] & 0xC0) >> 6);
+                assertEquals(2, (segment & 0xC0) >> 6);
                 assertEquals(TcTransferFrame.SequenceFlagType.LAST, fr.getSequenceFlag());
             } else {
-                assertEquals(0, (segment[0] & 0xC0) >> 6);
+                assertEquals(0, (segment & 0xC0) >> 6);
                 assertEquals(TcTransferFrame.SequenceFlagType.CONTINUE, fr.getSequenceFlag());
             }
             assertEquals(12, fr.getMapId());
 
-            bos.write(Arrays.copyOfRange(segment, 1, segment.length));
+            bos.write(fr.getDataFieldCopy());
         }
 
         byte[] fullPacket = bos.toByteArray();
@@ -503,26 +502,26 @@ class TcSenderVirtualChannelTest {
 
             byte[] segment = fr.getDataFieldCopy();
             if (i == 0) {
-                SpacePacket sp = new SpacePacket(Arrays.copyOfRange(segment, 1, 207), true);
+                SpacePacket sp = new SpacePacket(Arrays.copyOfRange(segment, 0, 206), true);
                 assertEquals(300, sp.getApid());
                 assertEquals(22, sp.getPacketSequenceCount());
                 assertEquals(200 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getLength());
 
-                sp = new SpacePacket(Arrays.copyOfRange(segment, 207, 813), true);
+                sp = new SpacePacket(Arrays.copyOfRange(segment, 206, 812), true);
                 assertEquals(300, sp.getApid());
                 assertEquals(23, sp.getPacketSequenceCount());
                 assertEquals(600 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getLength());
             } else if (i == 1) {
                 assertEquals(TcTransferFrame.SequenceFlagType.FIRST, fr.getSequenceFlag());
-                bos.write(Arrays.copyOfRange(segment, 1, segment.length));
+                bos.write(Arrays.copyOfRange(segment, 0, segment.length));
             } else if (i == 4) {
                 assertEquals(TcTransferFrame.SequenceFlagType.LAST, fr.getSequenceFlag());
-                bos.write(Arrays.copyOfRange(segment, 1, segment.length));
+                bos.write(Arrays.copyOfRange(segment, 0, segment.length));
             } else if (i == 2 || i == 3) {
                 assertEquals(TcTransferFrame.SequenceFlagType.CONTINUE, fr.getSequenceFlag());
-                bos.write(Arrays.copyOfRange(segment, 1, segment.length));
-            } else if (i == 5) {
-                SpacePacket sp = new SpacePacket(Arrays.copyOfRange(segment, 1, 107), true);
+                bos.write(Arrays.copyOfRange(segment, 0, segment.length));
+            } else { // 5
+                SpacePacket sp = new SpacePacket(Arrays.copyOfRange(segment, 0, 106), true);
                 assertEquals(300, sp.getApid());
                 assertEquals(25, sp.getPacketSequenceCount());
                 assertEquals(100 + SpacePacket.SP_PRIMARY_HEADER_LENGTH, sp.getLength());
@@ -565,14 +564,14 @@ class TcSenderVirtualChannelTest {
             TcTransferFrame fr = list.get(i);
             assertFalse(fr.isBypassFlag());
             assertFalse(fr.isControlCommandFlag());
-            byte[] segment = fr.getDataFieldCopy();
+            byte[] tcPacket = fr.getDataFieldCopy();
             assertEquals(TcTransferFrame.SequenceFlagType.NO_SEGMENT, fr.getSequenceFlag());
             if(i < 5) {
                 assertEquals(44, fr.getMapId());
-                assertEquals(vc0.getMaxUserDataLength() + 1, segment.length); // it is a segment, so +1 for the segment header
+                assertEquals(vc0.getMaxUserDataLength(), tcPacket.length); // it is a segment, so +1 for the segment header
             } else {
                 assertEquals(45, fr.getMapId());
-                assertEquals(vc0.getMaxUserDataLength()/2 + 1, segment.length); // same as above
+                assertEquals(vc0.getMaxUserDataLength()/2, tcPacket.length); // same as above
             }
         }
     }
@@ -642,13 +641,13 @@ class TcSenderVirtualChannelTest {
             assertEquals(44, fr.getMapId());
             if(i % 3 == 0) {
                 assertEquals(TcTransferFrame.SequenceFlagType.FIRST, fr.getSequenceFlag());
-                assertEquals(vc0.getMaxUserDataLength() + 1, segment.length); // it is a segment, so +1 for the segment header
+                assertEquals(vc0.getMaxUserDataLength(), segment.length); // it is a segment, so +1 for the segment header
             } else if(i % 3 == 1) {
                 assertEquals(TcTransferFrame.SequenceFlagType.CONTINUE, fr.getSequenceFlag());
-                assertEquals(vc0.getMaxUserDataLength() + 1, segment.length); // same as above
-            } else if(i % 3 == 2) {
+                assertEquals(vc0.getMaxUserDataLength(), segment.length); // same as above
+            } else { // 2
                 assertEquals(TcTransferFrame.SequenceFlagType.LAST, fr.getSequenceFlag());
-                assertEquals(vc0.getMaxUserDataLength() + 1, segment.length); // same as above
+                assertEquals(vc0.getMaxUserDataLength(), segment.length); // same as above
             }
         }
     }

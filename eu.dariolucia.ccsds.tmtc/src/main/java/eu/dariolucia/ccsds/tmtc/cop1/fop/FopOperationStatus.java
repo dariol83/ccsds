@@ -19,6 +19,6 @@ package eu.dariolucia.ccsds.tmtc.cop1.fop;
 public enum FopOperationStatus {
     ACCEPT_RESPONSE,
     REJECT_RESPONSE,
-    POSIIVE_CONFIRM,
+    POSITIVE_CONFIRM,
     NEGATIVE_CONFIRM
 }
