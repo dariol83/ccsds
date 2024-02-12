@@ -208,7 +208,7 @@ public class TcTransferFrame extends AbstractTransferFrame {
 
         virtualChannelId = (short) ((twoOctets & (short) 0xFC00) >> 10);
 
-        // At this stage, you know if the TC frame has segmentation active (only if not BC: TODO: check)
+        // At this stage, you know if the TC frame has segmentation active (only if not BC)
         this.segmented = getFrameType() != FrameType.BC && segmented.apply(virtualChannelId);
 
         // 4.1.2.7.2
