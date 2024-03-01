@@ -28,6 +28,39 @@ import static org.junit.jupiter.api.Assertions.fail;
 class SyncMarkerVariableLengthChannelReaderTest {
 
 	private static final String FILE_TC1 = "dumpFile_tc_1.hex";
+	private static final String FILE_TC2 = "dumpFile_tc_2.hex";
+
+	@Test
+	public void testReadNext2() throws IOException {
+		// Prepare the input
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		BufferedReader br = new BufferedReader(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(FILE_TC2)));
+		String read = null;
+		while ((read = br.readLine()) != null) {
+			if (read.trim().isEmpty()) {
+				continue;
+			}
+			bos.writeBytes(StringUtil.toByteArray(read.toUpperCase()));
+		}
+
+		ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+		// Use CLTU markers
+		SyncMarkerVariableLengthChannelReader smReader = new SyncMarkerVariableLengthChannelReader(bis,
+				new byte[]{(byte) 0xEB, (byte) 0x90},
+				new byte[]{(byte) 0xC5, (byte) 0xC5, (byte) 0xC5, (byte) 0xC5, (byte) 0xC5, (byte) 0xC5, (byte) 0xC5, 0x79},
+				true,
+				false,
+				5000);
+
+		byte[] cltu = null;
+		int counter = 0;
+		while ((cltu = smReader.readNext()) != null) {
+			++counter;
+		}
+		smReader.close();
+
+		assertEquals(3, counter);
+	}
 
 	@Test
 	public void testReadNext() throws IOException {
