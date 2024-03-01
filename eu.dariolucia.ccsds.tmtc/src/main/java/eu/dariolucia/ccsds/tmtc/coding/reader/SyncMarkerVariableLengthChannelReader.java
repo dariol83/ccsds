@@ -25,7 +25,6 @@ import java.util.Arrays;
  * preceded by a synchronisation marker and closed by a trailer. The implementation verifies the presence of the
  * synchronisation markers and, depending on its construction, can try to recover a synchronisation loss or can throw
  * an exception.
- *
  * When the readNext(): byte[] method is intended to be used, the defaultMaxBufferSize shall be correctly dimensioned
  * in a conservative way: default is 4096 bytes.
  */
@@ -101,7 +100,7 @@ public class SyncMarkerVariableLengthChannelReader extends AbstractChannelReader
         while(!smFound) {
             // Check size
             // Read one byte
-            byte readByte = (byte) stream.read();
+            int readByte = stream.read();
             if(readByte == -1) {
                 throw new IOException("Stream unexpectedly closed (-1) while looking for trailer");
             }
@@ -109,10 +108,10 @@ public class SyncMarkerVariableLengthChannelReader extends AbstractChannelReader
             if(offset + read >= maxLength) {
                 throw new IOException("Buffer too small: got " + maxLength + " but read at least " + (read + 1));
             }
-            b[offset + read] = readByte;
+            b[offset + read] = (byte) readByte;
             ++read;
             // Check if readByte is the expected one in the SM location (expected SM index: smCurrIdx)
-            if(readByte == endSyncMarker[smCurrIdx]) {
+            if((byte) readByte == endSyncMarker[smCurrIdx]) {
                 // If so, increment smCurrIdx by one, and check if the SM is over
                 ++smCurrIdx;
                 if(smCurrIdx == endSyncMarker.length) {
