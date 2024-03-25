@@ -1,0 +1,52 @@
+<!--
+  ~   Copyright (c) 2019 Dario Lucia (https://www.dariolucia.eu)
+  ~
+  ~   Licensed under the Apache License, Version 2.0 (the "License");
+  ~   you may not use this file except in compliance with the License.
+  ~   You may obtain a copy of the License at
+  ~
+  ~        http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~   Unless required by applicable law or agreed to in writing, software
+  ~   distributed under the License is distributed on an "AS IS" BASIS,
+  ~   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~   See the License for the specific language governing permissions and
+  ~   limitations under the License.
+  -->
+
+<utl-configuration-file>
+    <peer-configuration id="RESPONDER" password="AABBCCDDEEFF00" auth-delay="6">
+        <port-mappings>
+            <mapping port-name="TM_PORT" address="127.0.0.1:10001" dead-factor="4" heartbeat-time="30" tcp-tx-buffer="0" tcp-rx-buffer="0" />
+        </port-mappings>
+        <remote-peers>
+            <peer id="INITIATOR" auth-mode="NONE" auth-hash="SHA_1" password="AABBCCDDEEFF00" />
+        </remote-peers>
+    </peer-configuration>
+    <service-instances>
+        <raf>
+            <service-instance-id>sagr=abc.spack=xyz.rsl-fg=1.raf=onlc91</service-instance-id>
+            <service-version-number>2</service-version-number> <!-- optional -->
+            <initiator>USER</initiator>
+            <initiator-id>INITIATOR</initiator-id>
+            <responder-id>RESPONDER</responder-id>
+            <responder-port-id>TM_PORT</responder-port-id>
+            <return-timeout-period>30</return-timeout-period>
+            <!-- Everything below is optional -->
+            <reporting-cycle>30</reporting-cycle>
+
+            <delivery-mode>TIMELY_ONLINE</delivery-mode>
+            <latency-limit>2</latency-limit>
+            <transfer-buffer-size>10</transfer-buffer-size>
+            <minimum-reporting-cycle>0</minimum-reporting-cycle>
+            <permitted-frame-quality-set>
+                <quality>GOOD_FRAMES_ONLY</quality>
+                <quality>BAD_FRAMES_ONLY</quality>
+                <quality>ALL_FRAMES</quality>
+            </permitted-frame-quality-set>
+
+            <requested-frame-quality>GOOD_FRAMES_ONLY</requested-frame-quality>
+            <!-- start-time and end-time omitted: both null -->
+        </raf>
+    </service-instances>
+</utl-configuration-file>
