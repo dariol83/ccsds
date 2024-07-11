@@ -1,6 +1,6 @@
 [![Build](https://github.com/dariol83/ccsds/actions/workflows/maven-17.yml/badge.svg)](https://github.com/dariol83/ccsds/actions/workflows/maven-17.yml) [<img src="https://img.shields.io/maven-central/v/eu.dariolucia.ccsds/eu.dariolucia.ccsds?color=greem&style=flat">](https://search.maven.org/search?q=eu.dariolucia.ccsds) [<img src="https://img.shields.io/sonar/quality_gate/eu.dariolucia.ccsds:eu.dariolucia.ccsds?server=https%3A%2F%2Fsonarcloud.io&style=flat">](https://sonarcloud.io/dashboard?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds) [<img src="https://img.shields.io/sonar/violations/eu.dariolucia.ccsds:eu.dariolucia.ccsds?format=long&server=https%3A%2F%2Fsonarcloud.io&style=flat">](https://sonarcloud.io/project/issues?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds&resolved=false) [<img src="https://img.shields.io/sonar/coverage/eu.dariolucia.ccsds:eu.dariolucia.ccsds?server=https%3A%2F%2Fsonarcloud.io&style=flat">](https://sonarcloud.io/component_measures?id=eu.dariolucia.ccsds%3Aeu.dariolucia.ccsds&metric=coverage&view=list) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fdariol83%2Fccsds.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fdariol83%2Fccsds?ref=badge_shield)
 
-# An open source implementation of CCSDS protocols and formats in Java 11
+# An open source implementation of CCSDS protocols and formats in Java
 
 This repository contains an open source implementation of public available CCSDS standards:
 
@@ -19,10 +19,6 @@ This repository contains an open source implementation of public available CCSDS
 - **CCSDS 911.5-B-3** Space Link Extension--Return Operational Control Fields Service Specification
 - **CCSDS 912.1-B-4** Space Link Extension--Forward CLTU Service Specification
 - **CCSDS 913.1-B-2** Space Link Extension--Internet Protocol for Transfer Services
-
-The implementation has been done in Java and follows the latest modular changes in the Java platform since version 9. 
-Stable releases are published on Maven Central. The latest code version is always available on the master branch here on 
-GitHub.
 
 **Disclaimer: this code is implemented as personal hobby, and it is not endorsed by any organization, 
 association or company. As such, strict compliance to the different standards as well as correct behaviour cannot be 
@@ -132,8 +128,6 @@ License, including the distribution of the NOTICE files of the modules you use/m
 deliver commercially or free of charge, in binary or source code. A copy of the relevant licenses must be provided: 
 relevant links are provided in the NOTICE file.** 
 
-**_Make sure you comply with all license terms. I take this point very seriously. Really._**
-
 If by any chance I forgot/missed to provide due credits to authors or I made inappropriate use of any license terms, please contact me here on GitHub.
 
 # Acknowledgements
@@ -161,6 +155,4 @@ A special mention goes to the people that took some of their time to contribute 
 - Mark Doyle (https://github.com/markjohndoyle) for the migration to Jakarta JAXB and the fix of a buggy test
 
 # Contributions
-If you find any issue with the provided code or you would like to see a specific feature implemented, please raise a 
-request on GitHub. If you spot and fix any issue by using the provided code, please consider contributing back to the 
-project, by raising the issue on GitHub, hopefully with your solution attached and/or a pull request. 
+No further updates (besides bug fixes) are planned to be performed.
