@@ -72,6 +72,7 @@
         <maven.surefire.version>3.1.2</maven.surefire.version>
         <maven.compiler.version>3.11.0</maven.compiler.version>
         <maven.gpg.version>1.6</maven.gpg.version>
+        <maven.sonatype.version>0.12.0</maven.sonatype.version>
         <maven.version>2.5</maven.version>
         <maven.bundle.version>5.1.8</maven.bundle.version>
         <maven.eclipse>1.0.0</maven.eclipse>
@@ -235,12 +236,6 @@
     <profiles>
         <profile>
             <id>release</id>
-            <distributionManagement>
-                <repository>
-                    <id>ossrh</id>
-                    <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
-            </distributionManagement>
             <build>
                 <plugins>
                     <plugin>
@@ -256,6 +251,15 @@
                                 </goals>
                             </execution>
                         </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${maven.sonatype.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
