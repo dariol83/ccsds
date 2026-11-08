@@ -301,7 +301,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         if(this.lastProcessed != null) {
             pdu.getCltuLastProcessed().setCltuProcessed(new eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.structures.CltuLastProcessed.CltuProcessed());
             pdu.getCltuLastProcessed().getCltuProcessed().setCltuIdentification(new CltuIdentification(this.lastProcessed.getCltuIdentification()));
-            pdu.getCltuLastProcessed().getCltuProcessed().setCltuStatus(new CltuStatus(this.lastProcessed.getCltuStatus().ordinal()));
+            pdu.getCltuLastProcessed().getCltuProcessed().setCltuStatus(new CltuStatus(this.lastProcessed.getCltuStatus().getCode()));
             pdu.getCltuLastProcessed().getCltuProcessed().setStartRadiationTime(new ConditionalTime());
             if(this.lastProcessed.getRadiationStartTime() == null) {
                 pdu.getCltuLastProcessed().getCltuProcessed().getStartRadiationTime().setUndefined(new BerNull());
@@ -1182,7 +1182,7 @@ public class CltuServiceInstanceProvider extends ServiceInstance {
         } else {
             pdu.getCltuLastProcessed().setCltuProcessed(new eu.dariolucia.ccsds.sle.generated.ccsds.sle.transfer.service.cltu.structures.CltuLastProcessed.CltuProcessed());
             pdu.getCltuLastProcessed().getCltuProcessed().setCltuIdentification(new CltuIdentification(this.lastProcessed.getCltuIdentification()));
-            pdu.getCltuLastProcessed().getCltuProcessed().setCltuStatus(new CltuStatus(this.lastProcessed.getCltuStatus().ordinal()));
+            pdu.getCltuLastProcessed().getCltuProcessed().setCltuStatus(new CltuStatus(this.lastProcessed.getCltuStatus().getCode()));
             pdu.getCltuLastProcessed().getCltuProcessed().setStartRadiationTime(new ConditionalTime());
             if(this.lastProcessed.getRadiationStartTime() == null) {
                 pdu.getCltuLastProcessed().getCltuProcessed().getStartRadiationTime().setUndefined(new BerNull());
