@@ -266,16 +266,19 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                     this.currentOffset = -1;
                     this.currentPacket = null;
                 } else {
-                    // Read what is remaining and derive the length
-                    System.arraycopy(fullFrame, firstFrameDataOffset, this.currentPacket, this.currentOffset, headerToRead);
-                    this.currentOffset += headerToRead;
+                    // A header can span several frames: read only the available packet data field.
+                    int toRead = Math.min(headerToRead, frameDataLength);
+                    System.arraycopy(fullFrame, firstFrameDataOffset, this.currentPacket, this.currentOffset, toRead);
+                    this.currentOffset += toRead;
+                    if (toRead < headerToRead) {
+                        return; // No packet starts in this frame and the header is still incomplete.
+                    }
                     this.currentPacketLength = (int) EncapsulationPacket.getEncapsulationPacketLength(this.currentPacket);
-                    // Replace the currentPacket (which has 8 bytes) with a byte array with the correct length, capable to
-                    // hold the entire packet
+                    // Preserve only the header bytes collected, not the unused temporary buffer capacity.
                     byte[] fullPacket = new byte[this.currentPacketLength];
-                    System.arraycopy(this.currentPacket, 0, fullPacket, 0, this.currentPacket.length);
+                    System.arraycopy(this.currentPacket, 0, fullPacket, 0, this.currentOffset);
                     this.currentPacket = fullPacket;
-                    alreadyRead = headerToRead;
+                    alreadyRead = toRead;
                 }
             }
             // If now currentOffset is -1, the pdu reconstruction was aborted. If not, we can go on
@@ -328,7 +331,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
         // read the byte and derive the length of the header
         int headerLength = EncapsulationPacket.getPrimaryHeaderLength(fullFrame[firstFrameDataOffset + currentHeaderPointer]);
         // If at least headerLength bytes are available, then the pdu length can be derived, do it
-        if (currentHeaderPointer + headerLength < frameDataLength) {
+        if (currentHeaderPointer + headerLength <= frameDataLength) {
             this.currentPacketLength = (int) EncapsulationPacket.getEncapsulationPacketLength(fullFrame, firstFrameDataOffset + currentHeaderPointer);
             this.currentPacket = new byte[this.currentPacketLength];
             // Now read as much as you can, which is the minimum between the packet length and the remaining data in the frame.
