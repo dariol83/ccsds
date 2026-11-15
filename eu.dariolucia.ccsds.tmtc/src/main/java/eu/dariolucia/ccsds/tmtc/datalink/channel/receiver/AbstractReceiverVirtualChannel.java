@@ -435,7 +435,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
         this.currentOffset = 0;
         this.currentFirstFrame = frame;
         // If at least 6 bytes are available, then the pdu length can be derived, do it
-        if (currentHeaderPointer + 6 < frameDataLength) {
+        if (currentHeaderPointer + 6 <= frameDataLength) {
             ByteBuffer bb = ByteBuffer.wrap(fullFrame, firstFrameDataOffset + currentHeaderPointer, 6);
             bb.getInt(); // discard
             this.currentPacketLength = Short.toUnsignedInt(bb.getShort()) + 1 + 6; // the field returns the length of the packet data field - 1, we have to add also the header length (6)
