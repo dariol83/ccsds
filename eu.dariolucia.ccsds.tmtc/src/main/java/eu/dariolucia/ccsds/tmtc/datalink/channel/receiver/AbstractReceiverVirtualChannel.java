@@ -19,6 +19,7 @@ package eu.dariolucia.ccsds.tmtc.datalink.channel.receiver;
 import eu.dariolucia.ccsds.tmtc.datalink.channel.VirtualChannelAccessMode;
 import eu.dariolucia.ccsds.tmtc.datalink.pdu.AbstractTransferFrame;
 import eu.dariolucia.ccsds.tmtc.transport.pdu.EncapsulationPacket;
+import eu.dariolucia.ccsds.tmtc.transport.pdu.SpacePacket;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -55,7 +56,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
     private volatile int currentVcSequenceCounter = -1;
 
     // If not null, it indicates that a space pdu of the already allocated length is under reconstruction (segmented)
-    private byte[] currentPacket = new byte[65536 + 6]; // Max pdu length for space packets
+    private byte[] currentPacket = new byte[65536 + SpacePacket.SP_PRIMARY_HEADER_LENGTH]; // Max pdu length for space packets
     // It points to the next byte to the written in currentPacket
     private int currentOffset = -1;
     //
@@ -375,7 +376,7 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                 // before the start of the next pdu, or the end of the pdu, then we silently discard the initial piece
                 // of pdu we read. In such a case, there is a big problem with the data handling ... maybe we should
                 // just fail.
-                int headerToRead = 6 - this.currentOffset;
+                int headerToRead = SpacePacket.SP_PRIMARY_HEADER_LENGTH - this.currentOffset;
                 if (!frameContainsNoStartOfPacket(frame) && headerToRead > retrieveFirstHeaderPointer(frame)) {
                     // Problem: abort, what was read is really to short to make any guess about the pdu
                     alreadyRead = -1;
@@ -384,9 +385,9 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
                     // Read what is remaining and derive the length
                     System.arraycopy(fullFrame, firstFrameDataOffset, this.currentPacket, this.currentOffset, headerToRead);
                     this.currentOffset += headerToRead;
-                    ByteBuffer bb = ByteBuffer.wrap(this.currentPacket, 0, 6);
+                    ByteBuffer bb = ByteBuffer.wrap(this.currentPacket, 0, SpacePacket.SP_PRIMARY_HEADER_LENGTH);
                     bb.getInt(); // discard
-                    this.currentPacketLength = Short.toUnsignedInt(bb.getShort()) + 1 + 6;
+                    this.currentPacketLength = Short.toUnsignedInt(bb.getShort()) + 1 + SpacePacket.SP_PRIMARY_HEADER_LENGTH;
                     alreadyRead = headerToRead;
                 }
             }
@@ -435,10 +436,10 @@ public abstract class AbstractReceiverVirtualChannel<T extends AbstractTransferF
         this.currentOffset = 0;
         this.currentFirstFrame = frame;
         // If at least 6 bytes are available, then the pdu length can be derived, do it
-        if (currentHeaderPointer + 6 <= frameDataLength) {
-            ByteBuffer bb = ByteBuffer.wrap(fullFrame, firstFrameDataOffset + currentHeaderPointer, 6);
+        if (currentHeaderPointer + SpacePacket.SP_PRIMARY_HEADER_LENGTH <= frameDataLength) {
+            ByteBuffer bb = ByteBuffer.wrap(fullFrame, firstFrameDataOffset + currentHeaderPointer, SpacePacket.SP_PRIMARY_HEADER_LENGTH);
             bb.getInt(); // discard
-            this.currentPacketLength = Short.toUnsignedInt(bb.getShort()) + 1 + 6; // the field returns the length of the packet data field - 1, we have to add also the header length (6)
+            this.currentPacketLength = Short.toUnsignedInt(bb.getShort()) + 1 + SpacePacket.SP_PRIMARY_HEADER_LENGTH; // the field returns the length of the packet data field - 1, we have to add also the header length (6)
             // Now read as much as you can, which is the minimum between the packet length and the remaining data in the frame.
             int toRead = Math.min(this.currentPacketLength, (frameDataLength + firstFrameDataOffset) - (firstFrameDataOffset + currentHeaderPointer));
             System.arraycopy(fullFrame, firstFrameDataOffset + currentHeaderPointer, this.currentPacket, this.currentOffset, toRead);
